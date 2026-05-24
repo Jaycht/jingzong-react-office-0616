@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button, DatePicker, Divider, Form, Input, InputNumber, Modal, Select, Space, Upload } from 'antd';
 import { InboxOutlined, PlusOutlined } from '@ant-design/icons';
+import { useUnsavedChanges } from "../utils/useUnsavedChanges";
 import { useAppStore } from "../store/appStore"
 import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
@@ -9,6 +10,7 @@ import { useCustomModules } from '../customModules';
 interface Props { onClose: () => void; }
 
 export default function ModalNewRecord({ onClose }: Props) {
+  useUnsavedChanges(true);
     const currentPage = useAppStore((s) => s.currentPage);
   const showToast = useAppStore((s) => s.showToast);
   const { allModules } = useCustomModules();

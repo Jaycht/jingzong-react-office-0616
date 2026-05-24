@@ -6,7 +6,9 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import { InboxOutlined, PlusOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { useAppStore } from "../store/appStore"
+
+import { useUnsavedChanges } from '../utils/useUnsavedChanges';
+import { useAppStore } from '../store/appStore';
 import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { saveMassRecord, updateMassRecord, getClueProjectNames, getLegalReportMatters, getEvidenceClueNames } from '../store/massStore';
@@ -56,6 +58,8 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError:
 interface Props { onClose: () => void; editRecord?: import('../store/massStore').MassRecord | null; }
 
 export default function DrawerNewRecord({ onClose, editRecord }: Props) {
+  useUnsavedChanges(true);
+  
     const currentPage = useAppStore((s) => s.currentPage);
   const showToast = useAppStore((s) => s.showToast);
   const { allModules } = useCustomModules();
