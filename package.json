@@ -75,6 +75,7 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@electron/packager": "^20.0.0",
     "@eslint/js": "^10.0.1",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^24.12.3",
@@ -84,6 +85,7 @@
     "concurrently": "^9.2.1",
     "electron": "^35.7.5",
     "electron-builder": "^25.1.8",
+    "electron-packager": "^17.1.2",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
