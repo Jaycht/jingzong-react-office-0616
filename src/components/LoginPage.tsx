@@ -14,6 +14,7 @@ const STORAGE_KEY = "jingzong.login.v1";
 interface SavedCredentials {
   account: string;
   password: string;
+  rememberAccount: boolean;
   remember: boolean;
   autoLogin: boolean;
 }
@@ -23,7 +24,7 @@ function loadCredentials(): SavedCredentials {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
-  return { account: "", password: "", remember: false, autoLogin: false };
+  return { account: "", password: "", rememberAccount: false, remember: false, autoLogin: false };
 }
 
 function saveCredentials(data: SavedCredentials): void {
@@ -40,6 +41,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [rememberAccount, setRememberAccount] = useState(false);
   const [remember, setRemember] = useState(false);
   const [autoLogin, setAutoLogin] = useState(false);
   const [ready, setReady] = useState(false);
@@ -47,8 +49,10 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
   // 加载保存的登录凭据
   useEffect(() => {
     const saved = loadCredentials();
-    if (saved.remember) {
+    if (saved.rememberAccount) {
       setAccount(saved.account);
+    }
+    if (saved.remember) {
       setPassword(saved.password);
       setRemember(true);
       setAutoLogin(saved.autoLogin);
@@ -86,13 +90,14 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
     setError("");
     setTimeout(() => {
       setLoading(false);
-      saveCredentials({ account, password, remember, autoLogin });
+      saveCredentials({ account, password, rememberAccount: rememberAccount || remember, remember, autoLogin });
       onLogin(account, "用户");
     }, 600);
   };
 
   const handleRememberChange = (checked: boolean) => {
     setRemember(checked);
+    if (checked) setRememberAccount(true);
     if (!checked) setAutoLogin(false);
   };
 
@@ -254,6 +259,21 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               transition={{ delay: 0.6 }}
               style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12 }}
             >
+              <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#6B7280", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={rememberAccount}
+                  onChange={(e) => {
+                    setRememberAccount(e.target.checked);
+                    if (!e.target.checked && !remember) {
+                      // Also clear saved data
+                      localStorage.removeItem(STORAGE_KEY);
+                    }
+                  }}
+                  style={{ accentColor: "#1B5E9B" }}
+                />
+                记住用户名
+              </label>
               <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#6B7280", cursor: "pointer" }}>
                 <input
                   type="checkbox"
