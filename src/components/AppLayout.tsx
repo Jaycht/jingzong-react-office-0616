@@ -154,7 +154,7 @@ export default function AppLayout() {
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <Sidebar />
         <div className="content-area" style={{
-          flex: 1, overflow: 'auto', padding: 20,
+          flex: 1, overflow: 'auto', padding: '20px 20px 48px',
           background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5',
         }}>
             <motion.div
@@ -189,7 +189,7 @@ export default function AppLayout() {
       <PasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
       {/* 底部版权信息（无边框窗口用）*/}
       <div style={{
-        height: 28, flexShrink: 0,
+        height: 28,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: darkMode ? '#0D1117' : '#0F3A5F',
         color: 'rgba(255,255,255,0.5)',
@@ -197,6 +197,8 @@ export default function AppLayout() {
         borderTop: darkMode ? '1px solid rgba(66,71,79,0.3)' : '1px solid rgba(255,255,255,0.08)',
         gap: 12,
         userSelect: 'none',
+        /* 固定在底部，不受 flex 布局影响 */
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000,
       }}>
         <span>© 2026 陈洪涛 — Economic Investigation Work Log Registration System</span>
         <span style={{ color: 'rgba(255,255,255,0.35)' }}>|</span>
