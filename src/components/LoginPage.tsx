@@ -167,8 +167,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 color:"#e2e2e6", marginBottom:24, letterSpacing:"-0.02em",
               }}
             >
-              欢迎进入<span style={{ color:"#a3c9ff" }}>经侦大队工作记录管理系统</span>
               <span style={{ color:"#a3c9ff" }}>经侦大队工作记录管理系统</span>
+
             </motion.h2>
 
             <motion.p
@@ -361,14 +361,14 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                   textShadow: "0 0 8px rgba(0,219,231,0.08)",
                 }}
               >
-                严禁工作日早、中午饮酒
-                <br/>严禁酒后执行公务
-                <br/>严禁安保、执法期间饮酒
-                <br/>严禁携警械、涉密文件、着警服饮酒
-                <br/>严禁在公安内部场所饮酒
-                <br/>严禁参加影响公正履职酒局
-                <br/>严禁酗酒滋事
-                <br/>严禁其他涉酒违纪行为。
+
+
+
+
+
+
+
+
               </motion.div>
             </motion.div>
 
