@@ -43,6 +43,8 @@ export default function AppLayout() {
   const closeDrawer = useAppStore((s) => s.closeDrawer);
   const darkMode = useAppStore((s) => s.darkMode);
   const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
+  const lowPerfMode = useAppStore((s) => s.lowPerfMode);
+  const toggleLowPerfMode = useAppStore((s) => s.toggleLowPerfMode);
   const currentPage = useAppStore((s) => s.currentPage);
   const userName = useAppStore((s) => s.userName);
   const userRole = useAppStore((s) => s.userRole);
