@@ -220,22 +220,11 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             }
           }
 
-          // 2. 处理普通非重复字段（所有模块均处理）
-          //    同时跳过已在 repeatable section 中处理的字段
-          const sectionFieldIds = new Set<string>();
-          for (const f of allFields) {
-            if (f.type === 'section' && f.repeatable && f.listName) {
-              // 将该 section 下所有字段加入跳过列表
-              for (const sf of allFields) {
-                if (sf.type === 'section' || sf.type === 'attachment') continue;
-                sectionFieldIds.add(sf.id);
-              }
-            }
-          }
+          // 2. 处理所有普通字段
+          //    repeatable section 数据已通过 listName 存入 formData
+          //    普通字段按 ID 直接填充，互不冲突
           for (const f of allFields) {
             if (f.type === 'section' || f.type === 'attachment') continue;
-            // 跳过已在 repeatable section 中处理的字段
-            if (sectionFieldIds.has(f.id)) continue;
             const raw = editRecord.data?.[f.id];
             if (raw === undefined || raw === null) continue;
             if (f.type === 'date' && typeof raw === 'string') {
