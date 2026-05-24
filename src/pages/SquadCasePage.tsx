@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Button, Modal, Form, Input, InputNumber, Select, DatePicker, Tag } from 'antd';
+import { Button, Modal, Form, Input, InputNumber, Select, DatePicker } from 'antd';
 import { Plus, Search, BriefcaseBusiness } from 'lucide-react';
 import { useApp } from '../App';
 import { getCases, saveCase, type SquadCase } from '../store/caseStore';

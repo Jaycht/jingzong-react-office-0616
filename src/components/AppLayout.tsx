@@ -42,7 +42,7 @@ interface Props {
 }
 
 export default function AppLayout({ modalId, closeModal, drawerOpen, closeDrawer }: Props) {
-  const { currentPage, userName, userRole, showToast, logout, editRecord, setEditRecord } = useApp();
+  const { currentPage, userName, userRole, logout, editRecord, setEditRecord } = useApp();
   const [searchVal, setSearchVal] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);

@@ -12,9 +12,6 @@ import { exportModuleToExcel, exportSelectedRecords, importExcelToModule } from 
 import { generateFundReport } from '../utils/reportUtils';
 
 /** 判断模块是否有 repeatable section */
-function hasRepeatableSection(fields: FieldDefinition[]): boolean {
-  return fields.some((f) => f.type === 'section' && f.repeatable);
-}
 
 /** 获取第一个 repeatable section 的字段列表 */
 function getRepeatableSectionFields(fields: FieldDefinition[]): FieldDefinition[] {

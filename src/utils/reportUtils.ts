@@ -5,8 +5,6 @@
 
 import { saveAs } from 'file-saver';
 import { getMassRecords } from '../store/massStore';
-import { findModule, getBaseModules } from '../moduleConfig';
-import type { FieldDefinition } from '../moduleConfig';
 
 const MODULE_ID = 'evidence-report';
 
