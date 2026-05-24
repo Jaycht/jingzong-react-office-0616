@@ -11,7 +11,11 @@ export default function Sidebar() {
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
   const { customModules } = useCustomModules();
   const [expanded, setExpanded] = useState<string | null>('office');
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("jingzong.sidebar.collapsed") === "true";
+    } catch { return false; }
+  });
 
   const departments = useMemo(() => {
     return DEPARTMENTS.map((dept) => ({
@@ -73,7 +77,7 @@ export default function Sidebar() {
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => setCollapsed((value) => !value)}
+        onClick={() => setCollapsed((value) => { const next = !value; localStorage.setItem("jingzong.sidebar.collapsed", String(next)); return next; })}
         style={{
           position: 'absolute', top: 14, right: -12, zIndex: 10,
           width: 24, height: 24, borderRadius: '50%', background: '#fff',

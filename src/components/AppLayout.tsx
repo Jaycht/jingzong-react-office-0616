@@ -9,6 +9,7 @@ import PasswordModal from "./PasswordModal";
 import DrawerNewRecord from "./DrawerNewRecord";
 import ModalNewUser from "./ModalNewUser";
 import Drawer from "./Drawer";
+import Breadcrumb from "./Breadcrumb";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const CaseList = lazy(() => import("../pages/CaseList"));
@@ -140,6 +141,7 @@ export default function AppLayout() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
+              <Breadcrumb />
               <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: "#9CA3AF" }}>加载中...</div>}>
                 <Page />
               </Suspense>

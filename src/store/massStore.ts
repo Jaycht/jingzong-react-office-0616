@@ -1,3 +1,4 @@
+import { addOperationLog } from './operationLogStore';
 // 涉众模块数据存储
 // 使用 localStorage 持久化涉众各模块（线索登记、数据统计等）的记录
 
@@ -43,6 +44,7 @@ export function saveMassRecord(
   };
   records.unshift(record);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  addOperationLog({ user: "system", action: "新建", detail: `新建记录 (${moduleId}/${tabId})`, ip: "local", type: "create" });
   return record;
 }
 
@@ -60,6 +62,7 @@ export function updateMassRecord(
     updatedAt: new Date().toISOString(),
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  addOperationLog({ user: "system", action: "更新", detail: `更新记录 (${records[index].moduleId})`, ip: "local", type: "edit" });
   return records[index];
 }
 
@@ -67,6 +70,7 @@ export function updateMassRecord(
 export function deleteMassRecord(id: string): void {
   const records = getMassRecords().filter((r) => r.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  addOperationLog({ user: "system", action: "删除", detail: `删除记录 ${id}`, ip: "local", type: "delete" });
 }
 
 /** 批量删除涉众记录 */
@@ -74,6 +78,7 @@ export function deleteMassRecords(ids: string[]): void {
   const idSet = new Set(ids);
   const records = getMassRecords().filter((r) => !idSet.has(r.id));
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  addOperationLog({ user: "system", action: "批量删除", detail: `批量删除 ${ids.length} 条记录`, ip: "local", type: "delete" });
 }
 
 /** 获取涉众线索登记中所有已录入的项目名称（去重） */

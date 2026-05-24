@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { getMassRecords, type MassRecord } from '../store/massStore';
 import { APP_VERSION } from '../version';
+import EmptyState from '../components/EmptyState';
 import ReactECharts from 'echarts-for-react';
 
 const container = {
@@ -294,7 +295,7 @@ export default function Dashboard() {
                 const entries = Object.entries(dist).sort((a, b) => b[1] - a[1]);
                 const total = entries.reduce((s, [, v]) => s + v, 0);
                 if (entries.length === 0) {
-                  return <div style={{ width: '100%', textAlign: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无数据</div>;
+                  return <EmptyState title="暂无数据" description="还没有工作记录，开始新建第一条吧" />;
                 }
                 const colors = ['#2E7DCA', '#38A169', '#E67E22', '#9C27B0', '#00ACC1', '#D32F2F'];
                 const segments = entries.map((_e, i) => {
@@ -349,7 +350,7 @@ export default function Dashboard() {
             </div>
             <div>
               {nextSteps.length === 0 ? (
-                <div style={{ padding: 20, textAlign: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无下一步工作安排</div>
+                <div style={{ padding: 20, textAlign: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无下一步工作</div>
               ) : (
                 nextSteps.map((s, i) => (
                   <motion.div
