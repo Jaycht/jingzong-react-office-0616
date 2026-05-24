@@ -1,9 +1,14 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Landmark, User, KeyRound, LogOut } from 'lucide-react';
-import { Dropdown, Modal, Form, Input, Select } from 'antd';
+import { Dropdown, Modal } from 'antd';
 import { useApp } from '../App';
 import Sidebar from './Sidebar';
+import ProfileModal from './ProfileModal';
+import PasswordModal from './PasswordModal';
+import DrawerNewRecord from './DrawerNewRecord';
+import ModalNewUser from './ModalNewUser';
+import Drawer from './Drawer';
 import Dashboard from '../pages/Dashboard';
 import CaseList from '../pages/CaseList';
 import Statistics from '../pages/Statistics';
@@ -16,9 +21,6 @@ import Attachments from '../pages/Attachments';
 import PlaceholderPage from '../pages/PlaceholderPage';
 import SquadCasePage from '../pages/SquadCasePage';
 import ModulePage from '../pages/ModulePage';
-import DrawerNewRecord from './DrawerNewRecord';
-import ModalNewUser from './ModalNewUser';
-import Drawer from './Drawer';
 
 const PAGES: Record<string, React.FC> = {
   dashboard: Dashboard, caseList: CaseList, statistics: Statistics,
@@ -40,17 +42,15 @@ interface Props {
 }
 
 export default function AppLayout({ modalId, closeModal, drawerOpen, closeDrawer }: Props) {
-  const { currentPage, setCurrentPage, userName, userRole, showToast, logout, editRecord, setEditRecord } = useApp();
+  const { currentPage, userName, userRole, showToast, logout, editRecord, setEditRecord } = useApp();
   const [searchVal, setSearchVal] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
-  const [passwordForm] = Form.useForm();
 
   const Page = PAGES[currentPage] || ModulePage;
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F0F2F5' }}>
-      {/* Top Nav */}
       <motion.div
         initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -62,13 +62,11 @@ export default function AppLayout({ modalId, closeModal, drawerOpen, closeDrawer
           position: 'relative', gap: 16,
         }}
       >
-        {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fff', flexShrink: 0 }}>
           <Landmark size={22} />
           <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: 1, whiteSpace: 'nowrap' }}>经侦大队工作记录管理系统</span>
         </div>
 
-        {/* Search */}
         <div style={{ flex: 1, maxWidth: 480, position: 'relative', margin: '0 24px' }}>
           <Search size={14} color="rgba(255,255,255,0.6)" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
           <input
@@ -86,11 +84,7 @@ export default function AppLayout({ modalId, closeModal, drawerOpen, closeDrawer
           />
         </div>
 
-        {/* Right */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-
-
-          {/* User Dropdown */}
           <Dropdown
             menu={{
               items: [
@@ -114,35 +108,33 @@ export default function AppLayout({ modalId, closeModal, drawerOpen, closeDrawer
               },
             }}
             placement="bottomRight"
-            trigger={['click']}
           >
-            <motion.div
-              whileHover={{ background: 'rgba(255,255,255,0.15)' }}
-              style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 10px', borderRadius: 8, cursor: 'pointer' }}
-            >
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: '#fff' }}>
-                {userName[0]}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>{userName}</span>
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', lineHeight: 1.3 }}>{userRole}</span>
-              </div>
-            </motion.div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+              padding: '4px 8px', borderRadius: 6,
+              background: 'rgba(255,255,255,0.1)', color: '#fff',
+            }}>
+              <User size={15} />
+              <span style={{ fontSize: 12.5, fontWeight: 600 }}>{userName || '用户'}</span>
+              <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.7)' }}>{userRole}</span>
+            </div>
           </Dropdown>
         </div>
       </motion.div>
 
-      {/* Main */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <Sidebar />
-        <div style={{ flex: 1, overflowY: 'auto', padding: 22, background: '#F4F7FA' }} className="content-area">
+        <div className="content-area" style={{
+          flex: 1, overflow: 'auto', padding: 20,
+          background: '#F0F2F5',
+        }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPage}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
             >
               <Page />
             </motion.div>
@@ -150,123 +142,22 @@ export default function AppLayout({ modalId, closeModal, drawerOpen, closeDrawer
         </div>
       </div>
 
-      {/* Modals */}
       <AnimatePresence>
         {modalId === 'newRecord' && (
           <DrawerNewRecord
-            onClose={() => {
-              closeModal();
-              setEditRecord(null);
-            }}
+            onClose={() => { closeModal(); setEditRecord(null); }}
             editRecord={editRecord}
           />
         )}
         {modalId === 'newUser' && <ModalNewUser onClose={closeModal} />}
       </AnimatePresence>
 
-      {/* Drawer */}
       <AnimatePresence>
         {drawerOpen && <Drawer onClose={closeDrawer} />}
       </AnimatePresence>
 
-      {/* 个人信息 Modal */}
-      <Modal
-        title="个人信息"
-        open={profileOpen}
-        onCancel={() => setProfileOpen(false)}
-        footer={null}
-        width={460}
-        destroyOnClose
-      >
-        <Form layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item label="姓名" name="name" initialValue={userName}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="警号" name="badge">
-            <Input placeholder="请输入警号" />
-          </Form.Item>
-          <Form.Item label="手机号" name="phone">
-            <Input placeholder="请输入手机号" />
-          </Form.Item>
-          <Form.Item label="所属科室" name="department">
-            <Select
-              placeholder="请选择所属科室"
-              options={[
-                { label: '大队领导', value: '大队领导' },
-                { label: '办公室', value: '办公室' },
-                { label: '涉众办', value: '涉众办' },
-                { label: '法制室', value: '法制室' },
-                { label: '一中队', value: '一中队' },
-                { label: '二中队', value: '二中队' },
-                { label: '三中队', value: '三中队' },
-              ]}
-            />
-          </Form.Item>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-            <button onClick={() => setProfileOpen(false)}
-              style={{ height: 34, padding: '0 16px', background: '#fff', border: '1px solid #D8E1EA', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
-              取消
-            </button>
-            <button onClick={() => { showToast('个人信息已保存', 'success'); setProfileOpen(false); }}
-              style={{ height: 34, padding: '0 16px', background: '#155A8A', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
-              保存
-            </button>
-          </div>
-        </Form>
-      </Modal>
-
-      {/* 修改密码 Modal */}
-      <Modal
-        title="修改密码"
-        open={passwordOpen}
-        onCancel={() => setPasswordOpen(false)}
-        footer={null}
-        width={420}
-        destroyOnClose
-      >
-        <Form form={passwordForm} layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item label="原密码" name="oldPassword" rules={[{ required: true, message: '请输入原密码' }]}>
-            <Input.Password placeholder="请输入原密码" />
-          </Form.Item>
-          <Form.Item label="新密码" name="newPassword" rules={[{ required: true, message: '请输入新密码' }, { min: 6, message: '密码至少6位' }]}>
-            <Input.Password placeholder="请输入新密码（至少6位）" />
-          </Form.Item>
-          <Form.Item
-            label="确认新密码"
-            name="confirmPassword"
-            dependencies={['newPassword']}
-            rules={[
-              { required: true, message: '请再次输入新密码' },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue('newPassword') === value) return Promise.resolve();
-                  return Promise.reject(new Error('两次输入的密码不一致'));
-                },
-              }),
-            ]}
-          >
-            <Input.Password placeholder="请再次输入新密码" />
-          </Form.Item>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-            <button onClick={() => setPasswordOpen(false)}
-              style={{ height: 34, padding: '0 16px', background: '#fff', border: '1px solid #D8E1EA', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
-              取消
-            </button>
-            <button
-              onClick={() => {
-                passwordForm.validateFields().then(() => {
-                  showToast('密码修改成功', 'success');
-                  passwordForm.resetFields();
-                  setPasswordOpen(false);
-                }).catch(() => {});
-              }}
-              style={{ height: 34, padding: '0 16px', background: '#155A8A', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}
-            >
-              确认修改
-            </button>
-          </div>
-        </Form>
-      </Modal>
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
+      <PasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
     </div>
   );
 }
