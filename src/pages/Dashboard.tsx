@@ -26,6 +26,8 @@ const MODULE_NAMES: Record<string, string> = {
   "squad-coercive": "强制措施", "squad-property": "涉案财物",
   "evidence-clue": "线索登记", "evidence-request": "调证登记",
   "evidence-freeze": "资金查控", "evidence-report": "资金分析",
+  "legal-process": "法制流程",
+  "mass-visit": "走访管理",
 };
 
 const KPI_COLORS = [
@@ -121,7 +123,7 @@ function recentActivity(records: any[]) {
   return records.slice(0, 10).map((r) => ({
     moduleName: MODULE_NAMES[r.moduleId] || r.moduleId,
     date: r.createdAt?.slice(0, 10) || "",
-    title: r.data?.title || r.data?.name || r.data?.caseName || r.data?.summary || r.moduleId,
+    title: r.data?.title || r.data?.name || r.data?.caseName || r.data?.summary || MODULE_NAMES[r.moduleId] || r.moduleId,
   }));
 }
 
