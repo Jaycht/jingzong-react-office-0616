@@ -17,12 +17,14 @@ const REPORT_LABELS: Record<ReportType, string> = {
 
 function getPeriodRange(type: ReportType): { start: Date; end: Date; label: string } {
   const now = new Date();
-  const end = new Date(now);
+  let end = new Date(now);
   let start: Date;
 
   switch (type) {
     case 'daily':
       start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      end = new Date(start);
+      end.setHours(23, 59, 59, 999);
       break;
     case 'weekly':
       const dayOfWeek = now.getDay();
@@ -30,9 +32,14 @@ function getPeriodRange(type: ReportType): { start: Date; end: Date; label: stri
       start = new Date(now);
       start.setDate(now.getDate() - diff);
       start.setHours(0, 0, 0, 0);
+      // 结束时间设为当周周日 23:59:59
+      end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
       break;
     case 'monthly':
       start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
       break;
   }
 
