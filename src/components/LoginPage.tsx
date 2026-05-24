@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
@@ -430,20 +430,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer style={{
-        background:"rgba(12,14,17,0.8)", backdropFilter:"blur(12px)",
-        borderTop:"1px solid #42474f",
-        display:"flex", justifyContent:"space-between", alignItems:"center",
-        padding:"14px 32px", width:"100%", position:"fixed", bottom:0, zIndex:50,
-      }}>
-        <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:"#e2e2e6" }}>
-          &copy; 2026 陈洪涛 &mdash; Economic Investigation Work Log Registration System
-        </div>
-        <div>
-          <DateTimeDisplay />
-        </div>
-      </footer>
+
 
       {/* Register Modal */}
       <AnimatePresence>

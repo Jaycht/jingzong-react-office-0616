@@ -1,4 +1,4 @@
-﻿import { useMemo } from "react";
+﻿import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, CheckCircle2, ArrowUp, ArrowDown,
@@ -216,6 +216,33 @@ export default function Dashboard() {
     }],
   }), [ranking, darkMode]);
 
+
+  /* ===== 实时时间 ===== */
+  const [now, setNow] = useState(() => {
+    const d = new Date();
+    const days = ['周日','周一','周二','周三','周四','周五','周六'];
+    return d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0') + ' ' +
+      days[d.getDay()] + ' ' +
+      String(d.getHours()).padStart(2,'0') + ':' +
+      String(d.getMinutes()).padStart(2,'0') + ':' +
+      String(d.getSeconds()).padStart(2,'0');
+  });
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const d = new Date();
+      const days = ['周日','周一','周二','周三','周四','周五','周六'];
+      setNow(d.getFullYear() + '-' +
+        String(d.getMonth()+1).padStart(2,'0') + '-' +
+        String(d.getDate()).padStart(2,'0') + ' ' +
+        days[d.getDay()] + ' ' +
+        String(d.getHours()).padStart(2,'0') + ':' +
+        String(d.getMinutes()).padStart(2,'0') + ':' +
+        String(d.getSeconds()).padStart(2,'0'));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
   const activities = useMemo(() => recentActivity(records), [records]);
   const nextSteps = useMemo(() => extractNextSteps(records), [records]);
 

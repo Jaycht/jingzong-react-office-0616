@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+﻿import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dropdown, Modal, Switch } from "antd";
 import { Search, Landmark, User, KeyRound, LogOut } from "lucide-react";
@@ -37,25 +37,6 @@ const PAGES: Record<string, React.FC> = {
 };
 
 export default function AppLayout() {
-  // 底部时间实时更新
-  useEffect(() => {
-    const el = document.getElementById('footer-datetime');
-    if (!el) return;
-    function update() {
-      const now = new Date();
-      const days = ['周日','周一','周二','周三','周四','周五','周六'];
-      el.textContent = now.getFullYear() + '-' +
-        String(now.getMonth()+1).padStart(2,'0') + '-' +
-        String(now.getDate()).padStart(2,'0') + ' ' +
-        days[now.getDay()] + ' ' +
-        String(now.getHours()).padStart(2,'0') + ':' +
-        String(now.getMinutes()).padStart(2,'0') + ':' +
-        String(now.getSeconds()).padStart(2,'0');
-    }
-    update();
-    const timer = setInterval(update, 1000);
-    return () => clearInterval(timer);
-  }, []);
     const modalId = useAppStore((s) => s.modalId);
   const closeModal = useAppStore((s) => s.closeModal);
   const drawerOpen = useAppStore((s) => s.drawerOpen);
@@ -154,7 +135,7 @@ export default function AppLayout() {
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <Sidebar />
         <div className="content-area" style={{
-          flex: 1, overflow: 'auto', padding: '20px 20px 48px',
+          flex: 1, overflow: 'auto', padding: 20,
           background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5',
         }}>
             <motion.div
@@ -187,23 +168,6 @@ export default function AppLayout() {
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       <PasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
-      {/* 底部版权信息（无边框窗口用）*/}
-      <div style={{
-        height: 28,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: darkMode ? '#0D1117' : '#0F3A5F',
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 11, letterSpacing: 0.5,
-        borderTop: darkMode ? '1px solid rgba(66,71,79,0.3)' : '1px solid rgba(255,255,255,0.08)',
-        gap: 12,
-        userSelect: 'none',
-        /* 固定在底部，不受 flex 布局影响 */
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000,
-      }}>
-        <span>© 2026 陈洪涛 — Economic Investigation Work Log Registration System</span>
-        <span style={{ color: 'rgba(255,255,255,0.35)' }}>|</span>
-        <span id="footer-datetime"></span>
-      </div>
     </div>
   );
 }
