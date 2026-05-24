@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+﻿import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, CheckCircle2, ArrowUp, ArrowDown,
@@ -54,9 +54,9 @@ const TOP_MODULES = [
   { id: "squad-case",     label: "中队案件",    icon: Gavel,       color: "#7C3AED" },
   { id: "legal-case-ledger", label: "案件台账", icon: FileText,    color: "#0891B2" },
   { id: "squad-coercive", label: "强制措施",    icon: Shield,      color: "#DC2626" },
-  { id: "legal-report-case", label: "接报案",  icon: ClipboardList, color: "#D97706" },
+  { id: "legal-report-case", label: "报案登记",  icon: ClipboardList, color: "#D97706" },
   { id: "evidence-freeze", label: "资金查控",  icon: Database,    color: "#059669" },
-  { id: "legal-assessment", label: "考核管理", icon: Scale,       color: "#6D28D9" },
+  { id: "office-finance-assets", label: "经费保障", icon: Scale,       color: "#6D28D9" },
   { id: "mass-petition",  label: "信访反馈",    icon: Users,       color: "#E11D48" },
 ];
 
@@ -497,31 +497,27 @@ export default function Dashboard() {
               const IconComp = m.icon;
               return (
                 <motion.div
-                  key={m.id}
-                  initial={{ opacity: 0, y: 12, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: 0.52 + i * 0.05, type: "spring", stiffness: 260, damping: 22 }}
-                  whileHover={{ y: -4, boxShadow: "0 10px 30px rgba(0,0,0,.2)" }}
+                  whileHover={{ y: -3, backgroundColor: darkMode ? "rgba(46,125,202,0.08)" : "rgba(46,125,202,0.04)" }}
                   onClick={() => setCurrentPage(m.id)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 12,
-                    cursor: "pointer", borderRadius: 12,
+                    display: "flex", alignItems: "center", gap: 10,
+                    cursor: "pointer", borderRadius: 10,
                     padding: "14px 16px",
-                    background: KPI_ENTRY_GRADIENTS[i % KPI_ENTRY_GRADIENTS.length],
-                    transition: "box-shadow .25s, transform .25s",
-                    boxShadow: "0 4px 14px rgba(0,0,0,.12)",
-                    color: "#fff",
+                    background: darkMode ? "rgba(28, 31, 38, 0.6)" : "#fff",
+                    border: darkMode ? "1px solid rgba(163, 201, 255, 0.12)" : "1px solid #E5E7EB",
+                    transition: "all .2s",
+                    boxShadow: darkMode ? "0 1px 6px rgba(0,0,0,.2)" : "0 1px 3px rgba(0,0,0,.04)",
                   }}
                 >
                   <div style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    background: "rgba(255,255,255,0.15)",
+                    width: 34, height: 34, borderRadius: 8,
+                    background: darkMode ? "rgba(163, 201, 255, 0.1)" : m.color + "15",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     flexShrink: 0,
                   }}>
-                    <IconComp size={20} color="rgba(255,255,255,0.95)" />
+                    <IconComp size={17} color={darkMode ? "#a3c9ff" : m.color} />
                   </div>
-                  <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: 0.5 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: darkMode ? "#e2e2e6" : "#374151" }}>
                     {m.label}
                   </span>
                 </motion.div>
