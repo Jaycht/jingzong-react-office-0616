@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dropdown, Modal, Switch } from "antd";
 import { Search, Landmark, User, KeyRound, LogOut } from "lucide-react";
@@ -138,7 +138,7 @@ export default function AppLayout() {
           flex: 1, overflow: 'auto', padding: 20,
           background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5',
         }}>
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             <motion.div
               key={currentPage}
               initial={{ opacity: 0, y: 8 }}
