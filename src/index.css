@@ -1,15 +1,10 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+﻿*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: "Microsoft YaHei", "Microsoft YaHei UI", "PingFang SC", "Noto Sans SC", sans-serif;
   background: #F0F2F5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* 全局统一数字字体使用微软雅黑 */
-.metric-value, .stat-number, .echarts-text {
-  font-family: "Microsoft YaHei", "Microsoft YaHei UI", sans-serif !important;
 }
 
 * {
@@ -37,9 +32,7 @@ button:focus-visible {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes scrollText {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
 }
-@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
