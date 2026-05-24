@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Button, Descriptions, Empty, Input, Modal, Space, Table, Tabs, Tag } from 'antd';
+import { Button, Descriptions, Dropdown, Empty, Input, Modal, Space, Table, Tabs, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { Download, Eye, FileText, Pen, Plus, Search, Trash2, Upload } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
@@ -9,6 +9,7 @@ import { useCustomModules } from '../customModules';
 import { deleteMassRecord, deleteMassRecords, getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import { exportModuleToExcel, exportSelectedRecords, importExcelToModule } from '../utils/excelUtils';
+import { exportModuleReport } from '../utils/reportGenerator';
 import { generateFundReport } from '../utils/reportUtils';
 
 /** 判断模块是否有 repeatable section */
@@ -95,6 +96,7 @@ export default function ModulePage() {
   const [viewRecord, setViewRecord] = useState<MassRecord | null>(null);
   // 多选
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [reporting, setReporting] = useState(false);
 
   useEffect(() => {
     setActiveTab(module?.tabs[0]?.id || '');
