@@ -328,6 +328,37 @@ export default function ModulePage() {
             }}
           />
           <Button icon={<Upload size={14} />} onClick={() => fileInputRef.current?.click()}>导入</Button>
+          <Dropdown
+            menu={{
+              items: [
+                { key: 'daily', icon: <FileText size={13} />, label: '生成日报' },
+                { key: 'weekly', icon: <FileText size={13} />, label: '生成周报' },
+                { key: 'monthly', icon: <FileText size={13} />, label: '生成月报' },
+              ],
+              onClick: ({ key }) => {
+                if (!module) return;
+                setReporting(true);
+                try {
+                  exportModuleReport(module, key);
+                  showToast('正在导出' + module.label + '的' + (key === 'daily' ? '日报' : key === 'weekly' ? '周报' : '月报'));
+                } catch (err) {
+                  showToast(err.message || '导出失败', 'error');
+                } finally {
+                  setReporting(false);
+                }
+              },
+            }}
+            placement="bottomLeft"
+          >
+            <Button
+              type="primary"
+              icon={<FileText size={14} />}
+              loading={reporting}
+              style={{ background: '#0F766E', borderColor: '#0F766E' }}
+            >
+              生成报告
+            </Button>
+          </Dropdown>
           <Button
             icon={<Download size={14} />}
             onClick={() => {
