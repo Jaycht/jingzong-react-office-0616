@@ -1,0 +1,492 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Button, Descriptions, Empty, Input, Modal, Space, Table, Tabs, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { Download, Eye, FileText, Pen, Plus, Search, Trash2, Upload } from 'lucide-react';
+import { useApp } from '../App';
+import { findModule, type FieldDefinition } from '../moduleConfig';
+import { useCustomModules } from '../customModules';
+import { deleteMassRecord, deleteMassRecords, getMassRecords } from '../store/massStore';
+import type { MassRecord } from '../store/massStore';
+import { exportModuleToExcel, exportSelectedRecords, importExcelToModule } from '../utils/excelUtils';
+import { generateFundReport } from '../utils/reportUtils';
+
+/** 判断模块是否有 repeatable section */
+function hasRepeatableSection(fields: FieldDefinition[]): boolean {
+  return fields.some((f) => f.type === 'section' && f.repeatable);
+}
+
+/** 获取第一个 repeatable section 的字段列表 */
+function getRepeatableSectionFields(fields: FieldDefinition[]): FieldDefinition[] {
+  for (const f of fields) {
+    if (f.type === 'section' && f.repeatable) return [];
+  }
+  // 遍历找 section 之后直到下一个 section 的字段
+  const result: FieldDefinition[] = [];
+  let inSection = false;
+  for (const f of fields) {
+    if (f.type === 'section' && f.repeatable) { inSection = true; continue; }
+    if (f.type === 'section' && !f.repeatable && inSection) break;
+    if (inSection && f.type !== 'section' && f.type !== 'attachment') result.push(f);
+  }
+  return result;
+}
+
+/** 取字段定义中前 N 个数据字段（跳过 section / attachment） */
+function getDataFields(fields: FieldDefinition[], n = 6): FieldDefinition[] {
+  const dataFields = fields.filter((f) => f.type !== 'section' && f.type !== 'attachment');
+  // 如果是 repeatable section 模块，从 section 内的字段取
+  if (dataFields.length === 0) {
+    const sectionFields = getRepeatableSectionFields(fields);
+    return sectionFields.slice(0, n);
+  }
+  return dataFields.slice(0, n);
+}
+
+/** 从记录中获取值，支持 repeatable section 嵌套取值 */
+function getFieldValue(rec: MassRecord, fieldId: string, fields: FieldDefinition[]): any {
+  const val = rec.data?.[fieldId];
+  if (val !== undefined && val !== null) return val;
+
+  // 尝试从 repeatable section 数组中取值
+  for (const f of fields) {
+    if (f.type === 'section' && f.repeatable) {
+      const listName = f.listName || 'items';
+      const arr = rec.data?.[listName];
+      if (Array.isArray(arr) && arr.length > 0) {
+        const itemVal = arr[0][fieldId];
+        if (itemVal !== undefined && itemVal !== null) return itemVal;
+      }
+    }
+  }
+  return undefined;
+}
+
+/** 格式化显示值：如果是ISO日期字符串则格式化为 YYYY-MM-DD */
+function displayValue(val: unknown): string {
+  if (val === null || val === undefined) return '—';
+  if (Array.isArray(val)) return val.join('、');
+  if (typeof val === 'object') return JSON.stringify(val).slice(0, 30);
+  // 检测 ISO 日期字符串 (如 2026-05-23T10:29:07.100Z) 并格式化
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) {
+    return val.slice(0, 16).replace('T', ' ');
+  }
+  return String(val);
+}
+
+/** 时间戳截取到分钟：2026-05-23 09:41 */
+function fmtTime(iso: string): string {
+  if (!iso) return '—';
+  return iso.slice(0, 16).replace('T', ' ');
+}
+
+export default function ModulePage() {
+  const { currentPage, openModal, showToast, modalId, editRecord, setEditRecord } = useApp();
+  const { allModules } = useCustomModules();
+  const module = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
+  const [activeTab, setActiveTab] = useState(module?.tabs[0]?.id || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 详情弹窗
+  const [viewRecord, setViewRecord] = useState<MassRecord | null>(null);
+  // 多选
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+  useEffect(() => {
+    setActiveTab(module?.tabs[0]?.id || '');
+  }, [module?.id]);
+
+  // 从 localStorage 读取真实数据
+  const [refreshKey, setRefreshKey] = useState(0);
+  const realRecords = useMemo(() => {
+    if (!module) return [];
+    return getMassRecords(module.id);
+  }, [module?.id, refreshKey]);
+
+  // 编辑/新建保存后刷新列表
+  const prevEditRef = useRef(editRecord);
+  useEffect(() => {
+    // editRecord 从有值变为 null → 编辑完成，刷新
+    if (prevEditRef.current && !editRecord) {
+      setRefreshKey(k => k + 1);
+    }
+    prevEditRef.current = editRecord;
+  }, [editRecord]);
+
+  // 新建弹窗关闭后（无 editRecord）也刷新
+  const prevModalRef = useRef(modalId);
+  useEffect(() => {
+    if (prevModalRef.current === 'newRecord' && modalId === null) {
+      setRefreshKey(k => k + 1);
+    }
+    prevModalRef.current = modalId;
+  }, [modalId]);
+
+  if (!module) {
+    return (
+      <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, minHeight: 420, display: 'grid', placeItems: 'center' }}>
+        <Empty description="当前模块不存在或已被删除" />
+      </div>
+    );
+  }
+
+  const active = module.tabs.find((tab) => tab.id === activeTab) || module.tabs[0];
+  const activeRecords = realRecords.filter((r) => r.tabId === activeTab);
+
+  // ─── 动态生成列 ──────────────────────────────
+  const fields = active?.fields || [];
+  const dataFields = getDataFields(fields, 6);
+
+  interface DynamicRow {
+    key: string;
+    code: string;
+    [fieldId: string]: any;
+    _handler: string;
+    _status: string;
+    _updatedAt: string;
+    _record: MassRecord;
+  }
+
+  const rows: DynamicRow[] = activeRecords.map((rec, index) => {
+    const row: DynamicRow = {
+      key: rec.id,
+      code: String(index + 1).padStart(4, '0'),
+      _handler: rec.data?.handler || rec.data?.handlerName || '—',
+      _status: rec.data?.status === '已完成' ? '已完成' : rec.data?.status === '待补充' ? '待补充' : '办理中',
+      _updatedAt: fmtTime(rec.updatedAt),
+      _record: rec,
+    };
+    for (const f of dataFields) {
+      row[f.id] = displayValue(getFieldValue(rec, f.id, fields));
+    }
+    return row;
+  });
+
+  const dynamicColumns: ColumnsType<DynamicRow> = [
+    { title: '编号', dataIndex: 'code', width: 60, fixed: 'left' as const },
+    ...dataFields.map((f) => ({
+      title: f.label,
+      dataIndex: f.id,
+      width: 120,
+      ellipsis: true,
+    })),
+    { title: '经办人', dataIndex: '_handler', width: 80, ellipsis: true },
+    { title: '更新时间', dataIndex: '_updatedAt', width: 130 },
+    {
+      title: '操作',
+      dataIndex: '_action',
+      width: 180,
+      fixed: 'right' as const,
+      render: (_: any, record: DynamicRow) => (
+        <Space size={4}>
+          <Button
+            type="link" size="small"
+            icon={<Eye size={13} />}
+            onClick={() => setViewRecord(record._record)}
+          >
+            查看
+          </Button>
+          <Button
+            type="link" size="small"
+            icon={<Pen size={13} />}
+            onClick={() => {
+              setEditRecord(record._record);
+              openModal('newRecord');
+            }}
+          >
+            编辑
+          </Button>
+          <Button
+            type="link" size="small"
+            danger
+            icon={<Trash2 size={13} />}
+            onClick={() => handleDeleteSingle(record._record)}
+          >
+            删除
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  // ─── 导入处理 ─────────────────────────────────
+  const handleImport = async (file: File) => {
+    try {
+      const result = await importExcelToModule(file, module.id, activeTab);
+      if (result.success > 0) {
+        showToast(`成功导入 ${result.success} 条记录${result.failed > 0 ? `，${result.failed} 条失败` : ''}`, result.failed > 0 ? 'warning' : 'success');
+        setRefreshKey(k => k + 1);
+      } else {
+        showToast(result.errors[0] || '导入失败', 'error');
+      }
+    } catch (err: any) {
+      showToast(`导入出错: ${err.message}`, 'error');
+    }
+  };
+
+  // ─── 删除处理 ─────────────────────────────────
+  const handleDeleteSingle = (record: MassRecord) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除该记录吗？删除后不可恢复。`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        deleteMassRecord(record.id);
+        setRefreshKey(k => k + 1);
+        showToast('记录已删除', 'success');
+      },
+    });
+  };
+
+  const handleBatchDelete = () => {
+    const ids = selectedRowKeys as string[];
+    if (ids.length === 0) return;
+    Modal.confirm({
+      title: '批量删除',
+      content: `确定要删除选中的 ${ids.length} 条记录吗？删除后不可恢复。`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        deleteMassRecords(ids);
+        setSelectedRowKeys([]);
+        setRefreshKey(k => k + 1);
+        showToast(`已删除 ${ids.length} 条记录`, 'success');
+      },
+    });
+  };
+
+  const handleExportSelected = () => {
+    const ids = selectedRowKeys as string[];
+    if (ids.length === 0) {
+      showToast('请先勾选要导出的记录', 'warning');
+      return;
+    }
+    exportSelectedRecords(ids, module.id, activeTab);
+    showToast(`正在导出 ${ids.length} 条记录...`, 'info');
+  };
+
+  return (
+    <div>
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 8, background: 'linear-gradient(135deg, #0F3A5F, #155A8A)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 12px rgba(15,58,95,.24)' }}>
+            <FileText size={20} color="#fff" />
+          </div>
+          <div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: '#172033' }}>{module.label}</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{module.departmentLabel} · {module.description}</div>
+          </div>
+        </div>
+        <Space>
+          {module.id === 'evidence-report' && (
+            <Button
+              type="primary"
+              icon={<FileText size={14} />}
+              onClick={() => {
+                try {
+                  generateFundReport();
+                  showToast('正在生成资金分析报告...', 'info');
+                } catch (err: any) {
+                  showToast(err.message || '生成报告失败', 'error');
+                }
+              }}
+              style={{ background: '#0F766E', borderColor: '#0F766E' }}
+            >
+              生成报告
+            </Button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImport(file);
+              e.target.value = '';
+            }}
+          />
+          <Button icon={<Upload size={14} />} onClick={() => fileInputRef.current?.click()}>导入</Button>
+          <Button
+            icon={<Download size={14} />}
+            onClick={() => {
+              exportModuleToExcel(module.id, activeTab);
+              showToast('正在生成 Excel...', 'info');
+            }}
+          >导出</Button>
+        </Space>
+      </motion.div>
+
+      {/* 新建提示条 */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        style={{
+          background: 'linear-gradient(135deg, #E6F1F8, #F8FBFD)',
+          border: '1px solid #B9D4E6',
+          borderLeft: '4px solid #155A8A',
+          borderRadius: 8,
+          padding: '14px 16px',
+          marginBottom: 16,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          boxShadow: '0 6px 18px rgba(21,90,138,.08)',
+        }}
+      >
+        <Button
+          type="primary"
+          size="large"
+          icon={<Plus size={16} />}
+          onClick={() => openModal('newRecord')}
+          style={{ height: 42, paddingInline: 22, boxShadow: '0 8px 20px rgba(21,90,138,.25)', flexShrink: 0 }}
+        >
+          新建{active?.label || module.label}
+        </Button>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#123852' }}>当前可新建：{active?.label || module.label}</div>
+          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>点击左侧按钮进入登记窗口，系统会自动带出当前类目的字段模板。</div>
+        </div>
+      </motion.div>
+
+      {/* 统计卡片 */}
+      {(() => {
+        const total = realRecords.length;
+        const thisMonth = realRecords.filter((r) => r.createdAt?.startsWith(new Date().toISOString().slice(0, 7))).length;
+        const ongoing = realRecords.filter((r) => r.data?.status !== '已完成' && r.data?.status !== '待补充').length;
+        const pending = realRecords.filter((r) => r.data?.status === '待补充').length;
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(150px, 1fr))', gap: 12, marginBottom: 16 }}>
+            {[
+              ['全部记录', String(total), '#155A8A'],
+              ['本月新增', String(thisMonth), '#0F766E'],
+              ['办理中', String(ongoing), '#D97706'],
+              ['待补充', String(pending), '#DC2626'],
+            ].map(([label, value, color]) => (
+              <div key={label} style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, padding: 16 }}>
+                <div style={{ fontSize: 12, color: '#64748B', marginBottom: 6 }}>{label}</div>
+                <div style={{ fontSize: 24, fontWeight: 700, color }}>{value}</div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, overflow: 'hidden' }}>
+        {module.tabs.length > 1 && (
+          <div style={{ padding: '14px 16px 0', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+            <style>{`
+              .work-template-tabs .ant-tabs-nav { margin: 0; }
+              .work-template-tabs .ant-tabs-tab {
+                border-radius: 7px 7px 0 0 !important;
+                background: #EAF1F6 !important;
+                border-color: #C8D9E6 !important;
+                padding: 8px 16px !important;
+                font-weight: 700;
+              }
+              .work-template-tabs .ant-tabs-tab-active {
+                background: #155A8A !important;
+                border-color: #155A8A !important;
+                box-shadow: 0 -2px 10px rgba(21,90,138,.16);
+              }
+              .work-template-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: #fff !important; }
+            `}</style>
+            <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 8 }}>请选择记录类型</div>
+            <Tabs
+              className="work-template-tabs"
+              type="card"
+              activeKey={active?.id}
+              onChange={setActiveTab}
+              items={module.tabs.map((tab) => ({ key: tab.id, label: tab.label }))}
+            />
+          </div>
+        )}
+        <div style={{ padding: 16, borderTop: '1px solid #EDF2F7' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+            <Input
+              prefix={<Search size={14} color="#94A3B8" />}
+              placeholder={`搜索${active?.label || module.label}记录`}
+              style={{ width: 300 }}
+            />
+            <Tag color="blue">{dataFields.length} 个字段</Tag>
+          </div>
+          {/* 批量操作栏 */}
+          {selectedRowKeys.length > 0 && (
+            <div style={{
+              background: '#F0F7FF', border: '1px solid #B9D4E6', borderRadius: 8,
+              padding: '8px 16px', marginBottom: 12,
+              display: 'flex', alignItems: 'center', gap: 12,
+            }}>
+              <span style={{ fontSize: 13, color: '#155A8A', fontWeight: 600 }}>
+                已选 {selectedRowKeys.length} 项
+              </span>
+              <Button size="small" icon={<Trash2 size={13} />} danger onClick={handleBatchDelete}>
+                批量删除
+              </Button>
+              <Button size="small" icon={<Download size={13} />} onClick={handleExportSelected}>
+                导出选中
+              </Button>
+              <Button size="small" type="text" onClick={() => setSelectedRowKeys([])}>
+                取消选择
+              </Button>
+            </div>
+          )}
+          <Table<DynamicRow>
+            size="middle"
+            columns={dynamicColumns}
+            dataSource={rows}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: 'max-content' }}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: (keys) => setSelectedRowKeys(keys),
+            }}
+          />
+        </div>
+      </div>
+
+      {/* 查看/编辑详情弹窗 */}
+      <Modal
+        title="记录详情"
+        open={!!viewRecord}
+        onCancel={() => setViewRecord(null)}
+        footer={
+          <Space>
+            <Button onClick={() => setViewRecord(null)}>关闭</Button>
+            {viewRecord && (
+              <Button type="primary" onClick={() => {
+                setEditRecord(viewRecord);
+                setViewRecord(null);
+                openModal('newRecord');
+              }}>
+                编辑
+              </Button>
+            )}
+          </Space>
+        }
+        width={700}
+        destroyOnClose
+      >
+        {viewRecord && (
+          <Descriptions column={2} size="small" bordered style={{ marginTop: 16 }}>
+            {fields.filter((f) => f.type !== 'section' && f.type !== 'attachment').map((f) => (
+              <Descriptions.Item key={f.id} label={f.label} span={f.type === 'textarea' ? 2 : 1}>
+                {displayValue(viewRecord.data?.[f.id])}
+              </Descriptions.Item>
+            ))}
+            <Descriptions.Item label="创建时间">{fmtTime(viewRecord.createdAt)}</Descriptions.Item>
+            <Descriptions.Item label="更新时间">{fmtTime(viewRecord.updatedAt)}</Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
+    </div>
+  );
+}
