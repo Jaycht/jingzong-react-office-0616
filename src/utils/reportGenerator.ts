@@ -81,6 +81,17 @@ export function exportModuleReport(
   saveAs(blob, fileName);
 }
 
+
+function getFieldValue(val: any): string {
+  if (val === null || val === undefined) return '—';
+  if (Array.isArray(val)) return val.join('、');
+  if (typeof val === 'object') return JSON.stringify(val).slice(0, 50);
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val)) {
+    return val.slice(0, 16).replace('T', ' ');
+  }
+  return String(val);
+}
+
 function buildReportHtml(
   module: WorkModule,
   type: ReportType,
@@ -95,40 +106,37 @@ function buildReportHtml(
   });
   const totalCount = records.length;
 
-  // Build detail tables for each tab
-  const tabTables = module.tabs.map((tab) => {
+  // Build narrative text for each tab
+  const tabDetails = module.tabs.map((tab) => {
     const tabRecords = records.filter((r) => r.tabId === tab.id);
-    if (tabRecords.length === 0 && tabStats.length <= 1) return '';
+    if (tabRecords.length === 0) return '';
 
     const fields = (tab.fields || []).filter((f) => f.type !== 'section' && f.type !== 'attachment');
     if (fields.length === 0) return '';
 
-    const th = fields.map((f) => `<th>${f.label}</th>`).join('');
-    const tr = tabRecords.map((rec) => {
-      const cells = fields.map((f) => {
-        let val = rec.data?.[f.id];
-        if (val === null || val === undefined) val = '—';
-        if (Array.isArray(val)) val = val.join('、');
-        if (typeof val === 'object') val = JSON.stringify(val).slice(0, 50);
-        if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val)) {
-          val = val.slice(0, 16).replace('T', ' ');
+    const recordItems = tabRecords.map((rec, idx) => {
+      const fieldLines = fields.map((f) => {
+        const val = getFieldValue(rec.data?.[f.id]);
+        if (val === '—') return '';
+        const isLong = val.length > 30;
+        if (isLong) {
+          return `<div style="margin:2px 0 4px 20px;"><span style="font-weight:600;color:#1a5276;">${f.label}：</span><br/><span style="margin-left:0;color:#444;line-height:1.6;">${val}</span></div>`;
         }
-        return `<td>${safe(val)}</td>`;
-      }).join('');
-      return `<tr>${cells}</tr>`;
+        return `<div style="margin:2px 0 2px 20px;"><span style="font-weight:600;color:#1a5276;">${f.label}：</span><span style="margin-left:6px;color:#444;">${val}</span></div>`;
+      }).filter(Boolean).join('');
+
+      return `<div style="margin:12px 0 16px;padding:10px 14px;background:#f9fafb;border-left:3px solid #1a5276;border-radius:2px;">
+        <div style="font-weight:700;color:#1a5276;margin-bottom:6px;font-size:12pt;">第${idx + 1}项</div>
+        ${fieldLines}
+      </div>`;
     }).join('');
 
     return `
-  <h2 style="font-size:14px;margin:16px 0 8px;padding:4px 0;border-bottom:2px solid #1a5276;color:#1a5276;">${tab.label}（${tabRecords.length} 条）</h2>
-  <table style="width:100%;border-collapse:collapse;font-size:11px;">
-    <thead><tr style="background:#1a5276;color:#fff;">${th}</tr></thead>
-    <tbody>${tr}</tbody>
-  </table>`;
+  <h2 style="font-size:15px;margin:20px 0 10px;padding:6px 0;border-bottom:2px solid #1a5276;color:#1a5276;">${tab.label}（${tabRecords.length} 条记录）</h2>
+  ${recordItems}`;
   }).join('');
 
-  // Summary stats
-  const statsRows = tabStats.map((s) => `
-    <tr><td style="padding:4px 12px;border:1px solid #ccc;">${s.label}</td><td style="padding:4px 12px;border:1px solid #ccc;text-align:center;">${s.count} 条</td></tr>`).join('');
+  const statsText = tabStats.map((s) => s.label + s.count + '条').join('，');
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -143,10 +151,6 @@ function buildReportHtml(
   .report-period { text-align: center; font-size: 11pt; color: #888; margin-bottom: 20px; }
   hr { border: none; border-top: 2px solid #1a5276; margin: 12px 0 20px; }
   h1 { font-size: 16px; margin: 20px 0 10px; padding: 6px 10px; background: #f0f4f8; border-left: 4px solid #1a5276; }
-  table { width: 100%; border-collapse: collapse; margin: 8px 0; }
-  th, td { border: 1px solid #ccc; padding: 5px 8px; text-align: left; font-size: 10.5pt; }
-  th { background: #1a5276; color: #fff; font-weight: 600; white-space: nowrap; }
-  tr:nth-child(even) { background: #f8fafc; }
   .footer { margin-top: 40px; text-align: center; font-size: 10pt; color: #999; }
   .sign { display: flex; justify-content: space-between; margin-top: 30px; }
   .sign-item { text-align: center; min-width: 120px; }
@@ -161,14 +165,10 @@ function buildReportHtml(
 <hr />
 
 <h1>一、数据概览</h1>
-<p>本报告期内，${module.label} 共产生 <strong>${totalCount}</strong> 条工作记录。</p>
-<table style="width:auto;min-width:300px;">
-  <thead><tr><th>记录类型</th><th>数量</th></tr></thead>
-  <tbody>${statsRows}</tbody>
-</table>
+<p>本报告期内，${module.label} 共产生 <strong>${totalCount}</strong> 条工作记录。其中：${statsText}。</p>
 
 <h1>二、详细记录</h1>
-${tabTables || '<p style="color:#999;">无详细记录数据。</p>'}
+${tabDetails || '<p style="color:#999;">无详细记录数据。</p>'}
 
 <div class="footer">
   <hr style="border-top:1px dashed #ccc;margin:30px 0 10px;" />

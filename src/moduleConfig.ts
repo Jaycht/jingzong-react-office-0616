@@ -232,6 +232,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
         '资金初查', '移交办案中队', '暂缓受理',
       ]),
       f('transferDetail', '流转去向说明', 'textarea'),
+      f('briefCase', '简要案情', 'textarea'),
 
       ...commonTail,
     ];
@@ -314,6 +315,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('riskOtherClues', '其他线索', 'textarea'),
       f('riskRelatedCase', '关联案件'),
       f('riskOtherReporters', '其他举报人情况', 'textarea'),
+      f('briefDescription', '简要说明', 'textarea'),
 
       ...commonTail,
     ];
@@ -477,6 +479,8 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('archiveDate', '办结归档日期', 'date'),
       f('materialCompleteness', '材料齐全情况'),
 
+      f('petitionMatter', '信访事项', 'textarea'),
+
       ...commonTail,
     ];
   }
@@ -558,6 +562,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       ], 'mass.interview.intervieweeAttitude', true),
       f('nextFollowUpDate', '下次回访/约谈时间', 'date'),
       f('followUpOfficer', '后续稳控责任人'),
+      f('interviewMatter', '约谈事项', 'textarea'),
 
       ...commonTail,
     ];
@@ -570,7 +575,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('assigner', '交办人'),
       f('assignMatter', '交办事项', 'textarea', false),
       f('feedbackResult', '反馈结果', 'textarea'),
-      f('remark', '备注', 'textarea'),
+      f('clueDetail', '线索详情', 'textarea'),
       ...commonTail,
     ];
   }
@@ -962,7 +967,8 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('receiveDate', '受案时间', 'date', false),
       f('filingDate', '立案时间', 'date'),
       f('noFilingDate', '不予立案时间', 'date'),
-      f('noFilingReason', '不予立案理由', 'textarea'),
+      f('noFilingReason', '不予立案理由', 'text'),
+      f('briefCase', '简要案情', 'textarea'),
       f('caseSource', '案件来源', 'select', false, [
         '群众报案', '举报', '上级交办', '部门移送', '工作发现', '12345转办',
       ], 'legal.caseSource'),

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Button, Modal, Form, Input, InputNumber, Select, DatePicker } from 'antd';
-import { Plus, Search, BriefcaseBusiness } from 'lucide-react';
+import { Button, Modal, Form, Input, InputNumber, Select, DatePicker, Dropdown } from 'antd';
+import { Plus, Search, BriefcaseBusiness, FileText, Download } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
+import { exportModuleReport } from "../utils/reportGenerator";
+import { findModule } from "../moduleConfig";
 import { getCases, saveCase, type SquadCase } from '../store/caseStore';
 
 const CASE_TYPES = [
@@ -59,6 +61,7 @@ export default function SquadCasePage() {
   const [searchVal, setSearchVal] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [form] = Form.useForm();
+  const [reporting, setReporting] = useState(false);
 
   useEffect(() => {
     setCases(getCases());
@@ -125,6 +128,38 @@ export default function SquadCasePage() {
         >
           新建案件
         </Button>
+          <Dropdown
+            menu={{
+              items: [
+                { key: 'daily', icon: <FileText size={13} />, label: '生成日报' },
+                { key: 'weekly', icon: <FileText size={13} />, label: '生成周报' },
+                { key: 'monthly', icon: <FileText size={13} />, label: '生成月报' },
+              ],
+              onClick: ({ key }) => {
+                const mod = findModule('squad-case');
+                if (!mod) return;
+                setReporting(true);
+                try {
+                  exportModuleReport(mod, key as any);
+                  showToast('正在导出' + mod.label + '的' + (key === 'daily' ? '日报' : key === 'weekly' ? '周报' : '月报'));
+                } catch (err: any) {
+                  showToast(err.message || '导出失败', 'error');
+                } finally {
+                  setReporting(false);
+                }
+              },
+            }}
+            placement="bottomLeft"
+          >
+            <Button
+              type="primary"
+              icon={<FileText size={16} />}
+              loading={reporting}
+              style={{ height: 42, paddingInline: 18, background: '#0F766E', borderColor: '#0F766E', flexShrink: 0 }}
+            >
+              生成报告
+            </Button>
+          </Dropdown>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#123852' }}>创建新案件</div>
           <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>点击左侧按钮进入新建案件登记窗口，填写案件基础信息。</div>
@@ -316,6 +351,9 @@ export default function SquadCasePage() {
           </Form.Item>
           <Form.Item name="transferUnit" label="移交单位" style={{ gridColumn: '1 / -1', marginBottom: 12 }}>
             <Input placeholder="移交单位名称" />
+          </Form.Item>
+          <Form.Item name="briefCase" label="简要案情" style={{ gridColumn: '1 / -1', marginBottom: 12 }}>
+            <Input.TextArea rows={4} placeholder="请输入简要案情说明" />
           </Form.Item>
         </Form>
         </div>
