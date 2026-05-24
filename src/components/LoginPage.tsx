@@ -10,74 +10,24 @@ interface Props {
 }
 
 const STORAGE_KEY = "jingzong.login.v1";
-
 interface SavedCredentials {
-  account: string;
-  password: string;
-  rememberAccount: boolean;
-  remember: boolean;
-  autoLogin: boolean;
+  account: string; password: string;
+  rememberAccount: boolean; remember: boolean; autoLogin: boolean;
 }
-
 function loadCredentials(): SavedCredentials {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return JSON.parse(raw); } catch {}
   return { account: "", password: "", rememberAccount: false, remember: false, autoLogin: false };
 }
-
 function saveCredentials(data: SavedCredentials): void {
-  if (data.remember) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } else {
-    localStorage.removeItem(STORAGE_KEY);
-  }
+  if (data.remember) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  else localStorage.removeItem(STORAGE_KEY);
 }
 
 /* ---- Current time hook ---- */
 function useCurrentTime() {
   const [now, setNow] = useState(new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
+  useEffect(() => { const id = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(id); }, []);
   return now;
-}
-
-/* ---- Animated Waves Canvas ---- */
-function WavesCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = canvasRef.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
-    if (!ctx) return;
-    let offset = 0, id: number;
-
-    function resize() { c!.width = c!.parentElement!.offsetWidth; c!.height = c!.parentElement!.offsetHeight; }
-    resize();
-    window.addEventListener("resize", resize);
-
-    function draw() {
-      ctx!.clearRect(0, 0, c!.width, c!.height);
-      ctx!.strokeStyle = "rgba(163, 201, 255, 0.04)";
-      ctx!.lineWidth = 1;
-      for (let i = 0; i < c!.width; i += 24) { ctx!.beginPath(); ctx!.moveTo(i, 0); ctx!.lineTo(i, c!.height); ctx!.stroke(); }
-      for (let i = 0; i < c!.height; i += 24) { ctx!.beginPath(); ctx!.moveTo(0, i); ctx!.lineTo(c!.width, i); ctx!.stroke(); }
-      ctx!.strokeStyle = "#a3c9ff"; ctx!.lineWidth = 1.5; ctx!.beginPath();
-      for (let x = 0; x < c!.width; x++) { const n = Math.sin(x*0.01+offset*0.5)*4; const y = c!.height/2 + Math.sin(x*0.03+offset)*(12+n); if(x===0) ctx!.moveTo(x,y); else ctx!.lineTo(x,y); }
-      ctx!.stroke();
-      ctx!.strokeStyle = "#00dbe7"; ctx!.lineWidth = 1; ctx!.beginPath();
-      for (let x = 0; x < c!.width; x++) { const p = Math.pow(Math.sin(x*0.01-offset*2),10)*16; const y = c!.height/2 + Math.cos(x*0.05+offset*1.5)*6 + p; if(x===0) ctx!.moveTo(x,y); else ctx!.lineTo(x,y); }
-      ctx!.stroke();
-      offset += 0.035;
-      id = requestAnimationFrame(draw);
-    }
-    draw();
-    return () => { window.removeEventListener("resize", resize); cancelAnimationFrame(id); };
-  }, []);
-  return <canvas ref={canvasRef} style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none", opacity:0.5 }} />;
 }
 
 /* ---- Current DateTime display ---- */
@@ -91,13 +41,16 @@ function DateTimeDisplay() {
   const h = String(now.getHours()).padStart(2,"0");
   const mi = String(now.getMinutes()).padStart(2,"0");
   const s = String(now.getSeconds()).padStart(2,"0");
-  return <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:"#c2c6d0" }}>{y}-{mo}-{d} 周{day} {h}:{mi}:{s}</span>;
+  return (
+    <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:"#c2c6d0" }}>
+      {y}-{mo}-{d} 周{day} {h}:{mi}:{s}
+    </span>
+  );
 }
 
 /* ================================================================== */
 /*  Component                                                          */
 /* ================================================================== */
-
 export default function LoginPage({ onLogin, onRegister }: Props) {
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
@@ -148,7 +101,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
 
   if (!ready) return null;
 
-  /* ---------- Shared Styles ---------- */
   const inputBase: React.CSSProperties = {
     width: "100%", height: 46, paddingLeft: 40, paddingRight: 14,
     background: "rgba(12,14,17,0.8)", border: "1.5px solid #42474f",
@@ -159,25 +111,33 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
 
   return (
     <div
-      className="tactical-grid-bg"
       style={{
         minHeight: "100vh", display: "flex", flexDirection: "column",
         position: "relative", overflow: "auto",
         fontFamily: "'Noto Sans SC','Microsoft YaHei','PingFang SC',sans-serif",
         cursor: "none",
+        background: "#111316",
+        backgroundImage: [
+          "radial-gradient(rgba(0, 59, 109, 0.25) 1px, transparent 1px)",
+          "linear-gradient(to right, rgba(0, 59, 109, 0.06) 1px, transparent 1px)",
+          "linear-gradient(to bottom, rgba(0, 59, 109, 0.06) 1px, transparent 1px)",
+        ].join(", "),
+        backgroundSize: "32px 32px, 128px 128px, 128px 128px",
       }}
     >
-      {/* Overlays */}
+      {/* Scanline overlay */}
       <div className="scanline-overlay" />
-      <WavesCanvas />
+
+      {/* Custom cursor */}
       <div style={{ position:"fixed", width:20, height:20, border:"1px solid #00dbe7", borderRadius:"50%", pointerEvents:"none", zIndex:9999, transform:"translate(-50%,-50%)", transition:"transform 0.1s ease" }} id="cursor" />
       <div style={{ position:"fixed", width:4, height:4, background:"#00dbe7", borderRadius:"50%", pointerEvents:"none", zIndex:9999, transform:"translate(-50%,-50%)" }} id="cursor-dot" />
 
       {/* Main Content */}
-      <main style={{ flex:1, padding:"32px", maxWidth:1440, margin:"0 auto", width:"100%", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:0, position:"relative", zIndex:10 }}>
-        {/* Hero Section - Welcome + Login Form (left) + Logo + 欢迎使用 (right) */}
+      <main style={{ flex:1, padding:"32px", maxWidth:1440, margin:"0 auto", width:"100%", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", position:"relative", zIndex:10 }}>
+
+        {/* Hero Section */}
         <section style={{ width:"100%", display:"flex", flexDirection:"row", alignItems:"center", justifyContent:"space-between", gap:48, marginBottom:80, marginTop:40, flexWrap:"wrap" }}>
-          
+
           {/* Left: Welcome text + Login form */}
           <div style={{ maxWidth:520, textAlign:"left" }}>
             {/* System Online badge */}
@@ -196,7 +156,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               }}
             >
               <span style={{ width:7, height:7, borderRadius:"50%", background:"#00dbe7", display:"inline-block", animation:"pulse 2s infinite" }} />
-              System Online · v{APP_VERSION.replace("V","")}
+              System Online &middot; v{APP_VERSION.replace("V","")}
             </motion.div>
 
             {/* Title */}
@@ -224,7 +184,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               专为追求极致精准的专业人员设计的本地化日志记录系统。
             </motion.p>
 
-            {/* ---- Login Form (replaces the two buttons) ---- */}
+            {/* Login Form */}
             <motion.form
               initial={{ opacity:0, y:20 }}
               animate={{ opacity:1, y:0 }}
@@ -245,7 +205,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 )}
               </AnimatePresence>
 
-              {/* Account */}
+              {/* Account input */}
               <div style={{ position:"relative" }}>
                 <User size={16} color="#8c919a" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", zIndex:1 }} />
                 <input
@@ -258,7 +218,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 />
               </div>
 
-              {/* Password */}
+              {/* Password input */}
               <div style={{ position:"relative" }}>
                 <Lock size={16} color="#8c919a" style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", zIndex:1 }} />
                 <input
@@ -275,8 +235,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 </button>
               </div>
 
-              {/* Checkboxes row */}
-              <div style={{ display:"flex", gap:16, fontSize:12, color:"#c2c6d0" }}>
+              {/* Checkboxes */}
+              <div style={{ display:"flex", gap:16, fontSize:12, color:"#c2c6d0", flexWrap:"wrap" }}>
                 <label style={{ display:"flex", alignItems:"center", gap:5, cursor:"pointer" }}>
                   <input type="checkbox" checked={rememberAccount} onChange={e => { setRememberAccount(e.target.checked); if(!e.target.checked && !remember) localStorage.removeItem(STORAGE_KEY); }} style={{ accentColor:"#a3c9ff" }} />
                   记住账号
@@ -293,7 +253,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 )}
               </div>
 
-              {/* Buttons row */}
+              {/* Buttons */}
               <div style={{ display:"flex", alignItems:"center", gap:12, marginTop:4 }}>
                 <motion.button
                   type="submit"
@@ -337,7 +297,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               />
             </div>
 
-            {/* 欢迎使用 panel (replacing CPU LOAD) */}
+            {/* 欢迎使用 panel */}
             <motion.div
               initial={{ opacity:0, x:20 }}
               animate={{ opacity:1, x:0 }}
@@ -371,9 +331,9 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         {/* Feature Cards */}
         <section style={{ width:"100%", display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:80 }}>
           {[
-            { icon:"⚡", title:"快速录入", desc:"毫秒级响应，支持快捷键触发。专为高压环境下的瞬间灵感捕捉而设计。", accent:"#a3c9ff" },
-            { icon:"📊", title:"深度分析", desc:"自动生成周报与月报。基于本地算法的个人产出可视化，洞察每一项任务的耗时分布。", accent:"#00dbe7" },
-            { icon:"🔒", title:"本地加密", desc:"数据存储于本地，多重加密保护。完全脱离云端，确保绝对的数据隐私与主权。", accent:"#e9c349" },
+            { icon:"\u26A1", title:"快速录入", desc:"毫秒级响应，支持快捷键触发。专为高压环境下的瞬间灵感捕捉而设计。", accent:"#a3c9ff" },
+            { icon:"\uD83D\uDCCA", title:"深度分析", desc:"自动生成周报与月报。基于本地算法的个人产出可视化，洞察每一项任务的耗时分布。", accent:"#00dbe7" },
+            { icon:"\uD83D\uDD12", title:"本地加密", desc:"数据存储于本地，多重加密保护。完全脱离云端，确保绝对的数据隐私与主权。", accent:"#e9c349" },
           ].map((card, i) => (
             <motion.div
               key={card.title}
@@ -383,19 +343,11 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               className="glass-panel corner-accent"
               style={{ padding:28, borderRadius:12, position:"relative" }}
             >
-              <div style={{
-                width:48, height:48, display:"flex", alignItems:"center", justifyContent:"center",
-                background:"rgba(0,59,109,0.2)", borderRadius:10, marginBottom:20,
-                fontSize:24, transition:"transform .2s",
-              }}>
+              <div style={{ width:48, height:48, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,59,109,0.2)", borderRadius:10, marginBottom:20, fontSize:24, transition:"transform .2s" }}>
                 {card.icon}
               </div>
-              <h3 style={{ fontFamily:"'Hanken Grotesk','Noto Sans SC',sans-serif", fontSize:20, fontWeight:600, color:"#e2e2e6", marginBottom:10 }}>
-                {card.title}
-              </h3>
-              <p style={{ fontSize:14, lineHeight:1.6, color:"#c2c6d0" }}>
-                {card.desc}
-              </p>
+              <h3 style={{ fontFamily:"'Hanken Grotesk','Noto Sans SC',sans-serif", fontSize:20, fontWeight:600, color:"#e2e2e6", marginBottom:10 }}>{card.title}</h3>
+              <p style={{ fontSize:14, lineHeight:1.6, color:"#c2c6d0" }}>{card.desc}</p>
             </motion.div>
           ))}
         </section>
@@ -409,7 +361,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         padding:"14px 32px", width:"100%", position:"fixed", bottom:0, zIndex:50,
       }}>
         <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:"#e2e2e6" }}>
-          © 2026 陈洪涛 — Economic Investigation Work Log Registration System
+          &copy; 2026 陈洪涛 &mdash; Economic Investigation Work Log Registration System
         </div>
         <div>
           <DateTimeDisplay />
@@ -419,26 +371,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
       {/* Custom cursor JS */}
       <script
         dangerouslySetInnerHTML={{
-          __html: `
-            document.addEventListener('mousemove', function(e) {
-              var c = document.getElementById('cursor');
-              var d = document.getElementById('cursor-dot');
-              if(c) { c.style.left = e.clientX+'px'; c.style.top = e.clientY+'px'; }
-              if(d) { d.style.left = e.clientX+'px'; d.style.top = e.clientY+'px'; }
-            });
-            document.addEventListener('mousedown', function(e) {
-              var p = document.createElement('div');
-              p.style.cssText = 'position:fixed;border:1px solid #00dbe7;border-radius:50%;pointer-events:none;z-index:9998;animation:radar-out 1s ease-out forwards;left:'+e.clientX+'px;top:'+e.clientY+'px';
-              document.body.appendChild(p);
-              setTimeout(function(){p.remove()},1000);
-              var c = document.getElementById('cursor');
-              if(c) c.style.transform = 'translate(-50%,-50%) scale(0.8)';
-            });
-            document.addEventListener('mouseup', function() {
-              var c = document.getElementById('cursor');
-              if(c) c.style.transform = 'translate(-50%,-50%) scale(1)';
-            });
-          `
+          __html: "document.addEventListener('mousemove',function(e){var c=document.getElementById('cursor');var d=document.getElementById('cursor-dot');if(c){c.style.left=e.clientX+'px';c.style.top=e.clientY+'px'}if(d){d.style.left=e.clientX+'px';d.style.top=e.clientY+'px'}});document.addEventListener('mousedown',function(e){var p=document.createElement('div');p.style.cssText='position:fixed;border:1px solid #00dbe7;border-radius:50%;pointer-events:none;z-index:9998;animation:radar-out 1s ease-out forwards;left:'+e.clientX+'px;top:'+e.clientY+'px';document.body.appendChild(p);setTimeout(function(){p.remove()},1000);var c=document.getElementById('cursor');if(c)c.style.transform='translate(-50%,-50%) scale(0.8)'});document.addEventListener('mouseup',function(){var c=document.getElementById('cursor');if(c)c.style.transform='translate(-50%,-50%) scale(1)'});"
         }}
       />
     </div>
