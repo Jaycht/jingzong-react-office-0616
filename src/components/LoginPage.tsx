@@ -297,6 +297,43 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               />
             </div>
 
+            {/* 纪律警示文字 */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 1.5 }}
+              style={{
+                marginTop: -20,
+                textAlign: "center",
+                position: "relative",
+                zIndex: 10,
+              }}
+            >
+              <motion.div
+                animate={{ opacity: [0.15, 0.25, 0.15] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                style={{
+                  fontSize: 11,
+                  lineHeight: 1.9,
+                  color: "rgba(194, 198, 208, 0.2)",
+                  fontFamily: "'JetBrains Mono','Noto Sans SC',monospace",
+                  letterSpacing: "0.05em",
+                  maxWidth: 380,
+                  margin: "0 auto",
+                  userSelect: "none",
+                }}
+              >
+                严禁工作日早、中午饮酒
+                <br/>严禁酒后执行公务
+                <br/>严禁安保、执法期间饮酒
+                <br/>严禁携警械、涉密文件、着警服饮酒
+                <br/>严禁在公安内部场所饮酒
+                <br/>严禁参加影响公正履职酒局
+                <br/>严禁酗酒滋事
+                <br/>严禁其他涉酒违纪行为。
+              </motion.div>
+            </motion.div>
+
             {/* 欢迎使用 panel */}
             <motion.div
               initial={{ opacity:0, x:20 }}
