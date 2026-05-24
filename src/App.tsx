@@ -1,4 +1,4 @@
-import { ConfigProvider, theme } from "antd";
+﻿import { ConfigProvider, theme } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { AnimatePresence, motion } from "framer-motion";
 import { Toaster } from "./components/Toaster";
@@ -6,6 +6,17 @@ import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import AppLayout from "./components/AppLayout";
 import { useAppStore } from "./store/appStore";
+
+// Electron 环境检测
+declare global {
+  interface Window {
+    electronAPI?: {
+      switchToMain: () => void;
+      closeLogin: () => void;
+      isElectron: boolean;
+    };
+  }
+}
 
 export default function App() {
   const view = useAppStore((s) => s.view);
@@ -15,9 +26,21 @@ export default function App() {
   const removeToast = useAppStore((s) => s.removeToast);
   const darkMode = useAppStore((s) => s.darkMode);
 
+  const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
+
   const handleLogin = (name: string, role: string) => {
     setUser(name, role);
     setView("app");
+    // Electron 环境：关闭登录窗口，打开主窗口
+    if (isElectron) {
+      window.electronAPI!.switchToMain();
+    }
+  };
+
+  const handleCloseLogin = () => {
+    if (isElectron) {
+      window.electronAPI!.closeLogin();
+    }
   };
 
   return (
@@ -44,6 +67,23 @@ export default function App() {
         <AnimatePresence mode="wait">
           {view === "login" && (
             <motion.div key="login" initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
+              {/* Electron 无边框窗口关闭按钮 */}
+              {isElectron && (
+                <div
+                  onClick={handleCloseLogin}
+                  style={{
+                    position: "fixed", top: 12, right: 16, zIndex: 9999,
+                    width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center",
+                    borderRadius: 6, cursor: "pointer", color: "#64748B", fontSize: 16, fontWeight: 700,
+                    transition: "all .15s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#EF4444"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#64748B"; }}
+                  title="关闭"
+                >
+                  ✕
+                </div>
+              )}
               <LoginPage onLogin={handleLogin} onRegister={() => setView("register")} />
             </motion.div>
           )}

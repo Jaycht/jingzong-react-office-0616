@@ -1,13 +1,62 @@
 {
-  "name": "jingzong-react",
+  "name": "jingzong-work-log",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.5.4",
+  "description": "经侦大队工作记录管理系统",
+  "author": "陈洪涛",
+  "license": "MIT",
   "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
+    "electron:dev": "concurrently \"vite --host\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "vite build && electron-builder",
+    "electron:build:dir": "vite build && electron-builder --dir",
     "lint": "eslint .",
     "preview": "vite preview"
+  },
+  "build": {
+    "appId": "com.jingzong.worklog",
+    "productName": "经侦大队工作记录管理系统",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "app.ico"
+    ],
+    "win": {
+      "icon": "app.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "经侦大队工作记录管理系统",
+      "installerIcon": "app.ico",
+      "uninstallerIcon": "app.ico",
+      "installerHeaderIcon": "app.ico"
+    },
+    "portable": {
+      "artifactName": "${productName}-便携版-${version}.exe"
+    }
   },
   "dependencies": {
     "antd": "^6.4.3",
@@ -32,12 +81,16 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
+    "electron": "^35.7.5",
+    "electron-builder": "^25.1.8",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "wait-on": "^8.0.5"
   }
 }
