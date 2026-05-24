@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, CheckCircle2, ArrowUp, ArrowDown,
@@ -564,22 +564,22 @@ export default function Dashboard() {
       >
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '12px 18px',
-          background: darkMode ? 'rgba(28, 31, 38, 0.5)' : '#fff',
+          padding: '14px 20px',
+          background: 'linear-gradient(135deg, #1a237e, #283593)',
           borderRadius: 10,
-          border: darkMode ? '1px solid rgba(163, 201, 255, 0.08)' : '1px solid #E5E7EB',
-          boxShadow: darkMode ? '0 1px 6px rgba(0,0,0,.15)' : '0 1px 3px rgba(0,0,0,.04)',
+          border: '2px solid #ffd740',
+          boxShadow: '0 4px 20px rgba(255,215,64,0.3)',
         }}>
           <span style={{
-            fontSize: 12, color: darkMode ? 'rgba(226,226,230,0.5)' : 'rgba(107,114,128,0.7)',
-            letterSpacing: 0.5,
+            fontSize: 13, color: '#ffd740',
+            fontWeight: 600, letterSpacing: 0.5,
           }}>
             © 2026 陈洪涛 — Economic Investigation Work Log Registration System
           </span>
           <span style={{
-            fontSize: 12, color: darkMode ? 'rgba(226,226,230,0.5)' : 'rgba(107,114,128,0.7)',
+            fontSize: 13, color: '#b0bec5',
             fontFamily: "'Courier New', monospace",
-            letterSpacing: 0.5,
+            fontWeight: 600, letterSpacing: 0.5,
           }}>
             {now}
           </span>
