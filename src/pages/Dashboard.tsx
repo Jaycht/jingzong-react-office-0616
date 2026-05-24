@@ -28,13 +28,11 @@ const MODULE_NAMES: Record<string, string> = {
 };
 
 const KPI_COLORS = [
-  { bg: "linear-gradient(135deg,#1B5E9B,#2E7DCA)", accent: "#fff" },
-  { bg: "linear-gradient(135deg,#0E7C4B,#38A169)", accent: "#fff" },
-  { bg: "linear-gradient(135deg,#C2410C,#E67E22)", accent: "#fff" },
-  { bg: "linear-gradient(135deg,#6D28D9,#8B5CF6)", accent: "#fff" },
+  { bg: "linear-gradient(135deg,#1B5E9B,#2E7DCA)" },
+  { bg: "linear-gradient(135deg,#0E7C4B,#38A169)" },
+  { bg: "linear-gradient(135deg,#C2410C,#E67E22)" },
+  { bg: "linear-gradient(135deg,#6D28D9,#8B5CF6)" },
 ];
-
-
 
 const CHART_COLORS = ["#2E7DCA", "#38A169", "#E67E22", "#9C27B0", "#00ACC1", "#D32F2F", "#F59E0B", "#6366F1"];
 
@@ -43,8 +41,13 @@ const TOP_MODULES = [
   { id: "squad-case", label: "中队案件", icon: "📋" },
   { id: "legal-case-ledger", label: "案件台账", icon: "📁" },
   { id: "squad-coercive", label: "强制措施", icon: "⚖️" },
-  { id: "squad-property", label: "涉案财物", icon: "💰" },
-  { id: "office-doc-report", label: "文件与报表", icon: "📄" },
+];
+
+const MODULE_CARD_STYLES = [
+  { bg: "linear-gradient(135deg,#EBF5FF,#F0F9FF)", border: "#BFDBFE" },
+  { bg: "linear-gradient(135deg,#F0FFF4,#ECFDF5)", border: "#BBF7D0" },
+  { bg: "linear-gradient(135deg,#FFF7ED,#FFFBEB)", border: "#FED7AA" },
+  { bg: "linear-gradient(135deg,#F5F3FF,#EDE9FE)", border: "#DDD6FE" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -58,7 +61,6 @@ function calcKpi(records: any[]) {
     const s = r.data?.status;
     return s && s !== "已完成" && s !== "已办结";
   }).length;
-  // Fake trend: ideally compare with last month; for now derive from data
   return [
     { label: "总记录数", value: total, unit: "条", trend: total > 0 ? Math.round((total / Math.max(total, 10)) * 100) : 0 },
     { label: "已完成", value: completed, unit: "条", trend: total > 0 ? Math.round((completed / total) * 100) : 0 },
@@ -143,7 +145,7 @@ export default function Dashboard() {
   /* ------ ECharts options ------ */
 
   const trendOpt = useMemo(() => ({
-    tooltip: { trigger: "axis" as const, backgroundColor: "rgba(255,255,255,.96)", borderWidth: 0, boxShadow: "0 4px 12px rgba(0,0,0,.1)" },
+    tooltip: { trigger: "axis" as const, backgroundColor: "rgba(255,255,255,.96)", borderWidth: 0 },
     grid: { left: 36, right: 12, top: 28, bottom: 22 },
     xAxis: { type: "category" as const, data: months, axisLine: { lineStyle: { color: "#E5E7EB" } }, axisLabel: { fontSize: 10, color: "#9CA3AF" } },
     yAxis: { type: "value" as const, minInterval: 1, splitLine: { lineStyle: { color: "#F3F4F6", type: "dashed" as const } }, axisLabel: { fontSize: 10, color: "#9CA3AF" } },
@@ -271,8 +273,8 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      {/* ============= Bottom Row ============= */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+      {/* ============= Bottom Row: Activity + Next Steps ============= */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 18 }}>
         {/* Recent Activity Timeline */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -320,105 +322,107 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Right column: Quick module cards + Next steps */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {/* Quick Module Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            whileHover={{ boxShadow: "0 4px 16px rgba(0,0,0,.08)" }}
-            style={{ background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB", boxShadow: "0 1px 4px rgba(0,0,0,.04)", overflow: "hidden", transition: "box-shadow .2s" }}
-          >
-            <div style={{ padding: "14px 18px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 8 }}>
-              <Zap size={15} color="#F59E0B" />
-              <span style={{ fontSize: 13, fontWeight: 600 }}>快捷入口</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 0 }}>
-              {TOP_MODULES.map((m, i) => (
+        {/* Next Steps */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          whileHover={{ boxShadow: "0 4px 16px rgba(0,0,0,.08)" }}
+          style={{ background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB", boxShadow: "0 1px 4px rgba(0,0,0,.04)", overflow: "hidden", transition: "box-shadow .2s" }}
+        >
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 8 }}>
+            <CheckCircle2 size={15} color="#E67E22" />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>待办工作</span>
+            {nextSteps.length > 0 && (
+              <span style={{ marginLeft: "auto", background: "#E67E221A", color: "#E67E22", fontSize: 10, padding: "2px 8px", borderRadius: 8, fontWeight: 600 }}>
+                {nextSteps.length} 项
+              </span>
+            )}
+          </div>
+          <div style={{ maxHeight: 340, overflowY: "auto" }}>
+            {!hasData ? (
+              <EmptyState title="暂无待办" description="填写记录时将自动提取待办内容" />
+            ) : nextSteps.length === 0 ? (
+              <EmptyState title="暂无待办" />
+            ) : (
+              nextSteps.map((s, i) => (
                 <motion.div
-                  key={m.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.42 + i * 0.04 }}
-                  whileHover={{ background: "#F3F6FC", y: -1 }}
-                  onClick={() => setCurrentPage(m.id)}
+                  key={i}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.43 + i * 0.05 }}
                   style={{
-                    display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-                    padding: "14px 8px", cursor: "pointer",
-                    borderRight: (i + 1) % 3 !== 0 ? "1px solid #F3F4F6" : "none",
-                    borderBottom: i < 3 ? "1px solid #F3F4F6" : "none",
-                    transition: "background .15s, transform .15s",
+                    padding: "10px 14px",
+                    borderBottom: i < nextSteps.length - 1 ? "1px solid #F9FAFB" : "none",
                   }}
                 >
-                  <span style={{ fontSize: 22, lineHeight: 1 }}>{m.icon}</span>
-                  <span style={{ fontSize: 11, color: "#374151", fontWeight: 500, textAlign: "center" }}>{m.label}</span>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Next Steps */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            whileHover={{ boxShadow: "0 4px 16px rgba(0,0,0,.08)" }}
-            style={{ flex: 1, background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB", boxShadow: "0 1px 4px rgba(0,0,0,.04)", overflow: "hidden", transition: "box-shadow .2s" }}
-          >
-            <div style={{ padding: "14px 18px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 8 }}>
-              <CheckCircle2 size={15} color="#E67E22" />
-              <span style={{ fontSize: 13, fontWeight: 600 }}>待办工作</span>
-              {nextSteps.length > 0 && (
-                <span style={{ marginLeft: "auto", background: "#E67E221A", color: "#E67E22", fontSize: 10, padding: "2px 8px", borderRadius: 8, fontWeight: 600 }}>
-                  {nextSteps.length} 项
-                </span>
-              )}
-            </div>
-            <div style={{ maxHeight: 210, overflowY: "auto" }}>
-              {!hasData ? (
-                <EmptyState title="暂无待办" description="填写记录时将自动提取待办内容" />
-              ) : nextSteps.length === 0 ? (
-                <EmptyState title="暂无待办" />
-              ) : (
-                nextSteps.map((s, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.48 + i * 0.05 }}
-                    style={{
-                      padding: "10px 14px",
-                      borderBottom: i < nextSteps.length - 1 ? "1px solid #F9FAFB" : "none",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                      <div style={{
-                        width: 28, height: 28, borderRadius: 8,
-                        background: i === 0 ? "#E67E221A" : "#F3F4F6",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        flexShrink: 0, fontSize: 12,
-                      }}>
-                        {i + 1}
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 8,
+                      background: i === 0 ? "#E67E221A" : "#F3F4F6",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0, fontSize: 12,
+                    }}>
+                      {i + 1}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: "#374151", fontWeight: 500, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {s.title}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, color: "#374151", fontWeight: 500, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                          {s.title}
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                          <span style={{ fontSize: 10, color: "#9CA3AF" }}>{s.module}</span>
-                          <span style={{ fontSize: 9, color: "#D1D5DB" }}>·</span>
-                          <span style={{ fontSize: 10, color: "#9CA3AF" }}>{s.time}</span>
-                        </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                        <span style={{ fontSize: 10, color: "#9CA3AF" }}>{s.module}</span>
+                        <span style={{ fontSize: 9, color: "#D1D5DB" }}>·</span>
+                        <span style={{ fontSize: 10, color: "#9CA3AF" }}>{s.time}</span>
                       </div>
                     </div>
-                  </motion.div>
-                ))
-              )}
-            </div>
-          </motion.div>
-        </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </motion.div>
       </div>
+
+      {/* ============= Quick Entry Bottom ============= */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <div style={{
+          background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB",
+          boxShadow: "0 1px 4px rgba(0,0,0,.04)", overflow: "hidden",
+        }}>
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 8 }}>
+            <Zap size={15} color="#F59E0B" />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>快捷入口</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", padding: "24px 18px", gap: 24 }}>
+            {TOP_MODULES.map((m, i) => (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.52 + i * 0.06, type: "spring", stiffness: 260, damping: 22 }}
+                whileHover={{ y: -4, boxShadow: "0 8px 24px rgba(0,0,0,.1)" }}
+                onClick={() => setCurrentPage(m.id)}
+                style={{
+                  width: 160, height: 115,
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                  gap: 10, cursor: "pointer", borderRadius: 12,
+                  background: MODULE_CARD_STYLES[i].bg,
+                  border: "1px solid " + MODULE_CARD_STYLES[i].border,
+                  transition: "box-shadow .2s, transform .2s",
+                  boxShadow: "0 1px 3px rgba(0,0,0,.04)",
+                }}
+              >
+                <span style={{ fontSize: 32, lineHeight: 1 }}>{m.icon}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#1F2937" }}>{m.label}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
