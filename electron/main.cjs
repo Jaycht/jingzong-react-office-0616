@@ -1,103 +1,64 @@
-﻿const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
+﻿const { app, BrowserWindow, ipcMain } = require("electron");
+const path = require("path");
 
-// 判断是否为开发模式
 const isDev = !app.isPackaged;
+let appWindow = null;
 
-let loginWindow = null;
-let mainWindow = null;
-
-function createLoginWindow() {
-  loginWindow = new BrowserWindow({
+function createWindow() {
+  appWindow = new BrowserWindow({
     width: 520,
-    height: 680,
-    resizable: false,
-    frame: true,            // 无边框
-    transparent: false,      // 有背景色
-    backgroundColor: '#0B0F1A',
-    icon: path.join(__dirname, '..', 'app.ico'),
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  // 居中显示
-  loginWindow.center();
-
-  if (isDev) {
-    loginWindow.loadURL('http://localhost:5173/');
-    loginWindow.webContents.openDevTools({ mode: 'detach' });
-  } else {
-    loginWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
-  }
-
-  loginWindow.on('closed', () => {
-    loginWindow = null;
-  });
-}
-
-function createMainWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 1100,
-    minHeight: 700,
-    frame: true,             // 主窗口有边框
-    icon: path.join(__dirname, '..', 'app.ico'),
+    height: 720,
+    resizable: true,
+    frame: true,
+    backgroundColor: "#0B0F1A",
+    icon: path.join(__dirname, "..", "app.ico"),
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
 
-  mainWindow.center();
-  mainWindow.setTitle('经侦大队工作记录管理系统');
+  appWindow.center();
 
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173/');
+    appWindow.loadURL("http://localhost:5173/");
   } else {
-    mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+    appWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+  appWindow.once("ready-to-show", () => {
+    appWindow.show();
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  appWindow.on("closed", () => {
+    appWindow = null;
   });
 }
 
-// 从渲染进程接收：切换窗口
-ipcMain.on('switch-to-main', () => {
-  if (loginWindow) {
-    loginWindow.close();
-  }
-  createMainWindow();
+// 登录成功后：放大窗口、改标题（不关窗不重开）
+ipcMain.on("switch-to-main", () => {
+  if (!appWindow) return;
+  appWindow.setMinimumSize(1100, 700);
+  appWindow.setSize(1400, 900);
+  appWindow.center();
+  appWindow.setResizable(true);
+  appWindow.setTitle("\u7ecf\u4fde\u5927\u961f\u5de5\u4f5c\u8bb0\u5f55\u7ba1\u7406\u7cfb\u7edf");
 });
 
-ipcMain.on('close-login', () => {
-  if (loginWindow) {
-    loginWindow.close();
-  }
+ipcMain.on("close-login", () => {
+  if (appWindow) appWindow.close();
 });
 
 app.whenReady().then(() => {
   createWindow();
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
 });
 
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createLoginWindow();
-  }
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
