@@ -115,7 +115,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         minHeight: "100vh", display: "flex", flexDirection: "column",
         position: "relative", overflow: "auto",
         fontFamily: "'Noto Sans SC','Microsoft YaHei','PingFang SC',sans-serif",
-        cursor: "none",
+        
         background: "#111316",
         backgroundImage: [
           "radial-gradient(rgba(0, 59, 109, 0.25) 1px, transparent 1px)",
@@ -128,9 +128,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
       {/* Scanline overlay */}
       <div className="scanline-overlay" />
 
-      {/* Custom cursor */}
-      <div style={{ position:"fixed", width:20, height:20, border:"1px solid #00dbe7", borderRadius:"50%", pointerEvents:"none", zIndex:9999, transform:"translate(-50%,-50%)", transition:"transform 0.1s ease" }} id="cursor" />
-      <div style={{ position:"fixed", width:4, height:4, background:"#00dbe7", borderRadius:"50%", pointerEvents:"none", zIndex:9999, transform:"translate(-50%,-50%)" }} id="cursor-dot" />
 
       {/* Main Content */}
       <main style={{ flex:1, padding:"32px", maxWidth:1440, margin:"0 auto", width:"100%", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", position:"relative", zIndex:10 }}>
@@ -297,30 +294,33 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               />
             </div>
 
-            {/* 纪律警示文字 */}
+            {/* 纪律警示文字 - 右侧独立展示 */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8, duration: 1.5 }}
               style={{
-                marginTop: -20,
+                position: "absolute",
+                right: -160,
+                top: "50%",
+                transform: "translateY(-50%)",
+                zIndex: 5,
                 textAlign: "center",
-                position: "relative",
-                zIndex: 10,
+                pointerEvents: "none",
               }}
             >
               <motion.div
-                animate={{ opacity: [0.15, 0.25, 0.15] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                animate={{ opacity: [0.25, 0.4, 0.25] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 style={{
-                  fontSize: 11,
-                  lineHeight: 1.9,
-                  color: "rgba(194, 198, 208, 0.2)",
+                  fontSize: 13,
+                  lineHeight: 2.2,
+                  color: "rgba(194, 198, 208, 0.35)",
                   fontFamily: "'JetBrains Mono','Noto Sans SC',monospace",
-                  letterSpacing: "0.05em",
-                  maxWidth: 380,
-                  margin: "0 auto",
+                  letterSpacing: "0.08em",
+                  whiteSpace: "nowrap",
                   userSelect: "none",
+                  textShadow: "0 0 8px rgba(0,219,231,0.08)",
                 }}
               >
                 严禁工作日早、中午饮酒
