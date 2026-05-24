@@ -46,7 +46,8 @@ export default function AppLayout() {
   const editRecord = useAppStore((s) => s.editRecord);
   const setEditRecord = useAppStore((s) => s.setEditRecord);
   const logout = () => { useAppStore.getState().setView("login"); useAppStore.getState().showToast("已退出登录", "info"); }
-  const [searchVal, setSearchVal] = useState('');
+  const searchQuery = useAppStore((s) => s.searchQuery);
+  const setSearchQuery = useAppStore((s) => s.setSearchQuery);
   const [profileOpen, setProfileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
 
@@ -73,8 +74,8 @@ export default function AppLayout() {
         <div style={{ flex: 1, maxWidth: 480, position: 'relative', margin: '0 24px' }}>
           <Search size={14} color="rgba(255,255,255,0.6)" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
           <input
-            value={searchVal}
-            onChange={e => setSearchVal(e.target.value)}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
             placeholder="搜索工作记录、案件、受害人..."
             style={{
               width: '100%', height: 34, paddingLeft: 36, paddingRight: 12,

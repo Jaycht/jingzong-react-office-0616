@@ -88,6 +88,8 @@ export default function ModulePage() {
   const module = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [activeTab, setActiveTab] = useState(module?.tabs[0]?.id || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchQuery = useAppStore((s) => s.searchQuery);
+  const setSearchQuery = useAppStore((s) => s.setSearchQuery);
 
   // 详情弹窗
   const [viewRecord, setViewRecord] = useState<MassRecord | null>(null);
@@ -102,8 +104,16 @@ export default function ModulePage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const realRecords = useMemo(() => {
     if (!module) return [];
-    return getMassRecords(module.id);
-  }, [module?.id, refreshKey]);
+    let records = getMassRecords(module.id);
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      records = records.filter((r) => {
+        const vals = Object.values(r.data || {}).map((v) => String(v || "").toLowerCase());
+        return vals.some((v) => v.includes(q));
+      });
+    }
+    return records;
+  }, [module?.id, refreshKey, searchQuery]);
 
   // 编辑/新建保存后刷新列表
   const prevEditRef = useRef(editRecord);
@@ -417,7 +427,9 @@ export default function ModulePage() {
               prefix={<Search size={14} color="#94A3B8" />}
               placeholder={`搜索${active?.label || module.label}记录`}
               style={{ width: 300 }}
-            />
+            
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}/>
             <Tag color="blue">{dataFields.length} 个字段</Tag>
           </div>
           {/* 批量操作栏 */}

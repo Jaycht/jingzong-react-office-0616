@@ -33,6 +33,10 @@ interface AppState {
   openDrawer: () => void;
   closeDrawer: () => void;
 
+  // Search
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+
   // Edit
   editRecord: MassRecord | null;
   setEditRecord: (r: MassRecord | null) => void;
@@ -66,6 +70,9 @@ export const useAppStore = create<AppState>((set) => ({
   drawerOpen: false,
   openDrawer: () => set({ drawerOpen: true }),
   closeDrawer: () => set({ drawerOpen: false }),
+
+  searchQuery: "",
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
 
   editRecord: null,
   setEditRecord: (editRecord) => set({ editRecord }),
