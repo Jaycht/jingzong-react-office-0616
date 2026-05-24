@@ -33,6 +33,7 @@ export default function ProfileModal({ open, onClose }: Props) {
               { label: '一中队', value: '一中队' },
               { label: '二中队', value: '二中队' },
               { label: '三中队', value: '三中队' },
+              { label: '资金组', value: '资金组' },
             ]}
           />
         </Form.Item>

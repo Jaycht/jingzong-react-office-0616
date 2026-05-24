@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { UserPlus, ArrowLeft, CheckCircle, X } from "lucide-react";
 
 const POSITION_LIST = [
-  "大队领导", "办公室", "涉众组", "法制室", "一中队", "二中队", "三中队",
+  "大队领导", "办公室", "涉众组", "法制室", "一中队", "二中队", "三中队", "资金组",
 ] as const;
 
 interface Props {

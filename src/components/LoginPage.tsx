@@ -179,8 +179,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               transition={{ delay:0.3, duration:0.7, ease:[0.22,1,0.36,1] }}
               style={{ fontSize:16, lineHeight:1.6, color:"#c2c6d0", marginBottom:36, maxWidth:480 }}
             >
-              系统已就绪。记录每一刻的成长，打造个人高效工作流。
-              专为追求极致精准的专业人员设计的本地化日志记录系统。
+              数智赋能经侦履职，数据镌刻办案征程。系统已就位，欢迎使用。
+
             </motion.p>
 
             {/* Login Form */}
