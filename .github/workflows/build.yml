@@ -43,8 +43,8 @@ jobs:
           cp 启动网页版.bat release/web-portable/启动.bat
           # 打包为 zip
           cd release
-          zip -r 经侦大队工作记录管理系统_网页版.zip web-portable/
+          zip -r web-portable.zip web-portable/
       - uses: actions/upload-artifact@v4
         with:
-          name: 网页便携版
-          path: release/*.zip
+          name: web-portable
+          path: release/web-portable.zip
