@@ -37,6 +37,10 @@ interface AppState {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
 
+  // Theme
+  darkMode: boolean;
+  toggleDarkMode: () => void;
+
   // Edit
   editRecord: MassRecord | null;
   setEditRecord: (r: MassRecord | null) => void;
@@ -73,6 +77,14 @@ export const useAppStore = create<AppState>((set) => ({
 
   searchQuery: "",
   setSearchQuery: (searchQuery) => set({ searchQuery }),
+
+  darkMode: localStorage.getItem("jingzong.darkMode") === "true",
+  toggleDarkMode: () =>
+    set((s) => {
+      const next = !s.darkMode;
+      localStorage.setItem("jingzong.darkMode", String(next));
+      return { darkMode: next };
+    }),
 
   editRecord: null,
   setEditRecord: (editRecord) => set({ editRecord }),

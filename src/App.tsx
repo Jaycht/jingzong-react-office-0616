@@ -1,4 +1,4 @@
-import { ConfigProvider } from "antd";
+import { ConfigProvider, theme } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { AnimatePresence, motion } from "framer-motion";
 import { Toaster } from "./components/Toaster";
@@ -13,6 +13,7 @@ export default function App() {
   const setUser = useAppStore((s) => s.setUser);
   const toasts = useAppStore((s) => s.toasts);
   const removeToast = useAppStore((s) => s.removeToast);
+  const darkMode = useAppStore((s) => s.darkMode);
 
   const handleLogin = (name: string, role: string) => {
     setUser(name, role);
@@ -23,6 +24,7 @@ export default function App() {
     <ConfigProvider
       locale={zhCN}
       theme={{
+        algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
         token: {
           colorPrimary: "#155A8A",
           colorInfo: "#155A8A",

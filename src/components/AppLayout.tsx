@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dropdown, Modal } from "antd";
+import { Dropdown, Modal, Switch } from "antd";
 import { Search, Landmark, User, KeyRound, LogOut } from "lucide-react";
 import { useAppStore } from "../store/appStore"
 import Sidebar from "./Sidebar";
@@ -41,6 +41,8 @@ export default function AppLayout() {
   const closeModal = useAppStore((s) => s.closeModal);
   const drawerOpen = useAppStore((s) => s.drawerOpen);
   const closeDrawer = useAppStore((s) => s.closeDrawer);
+  const darkMode = useAppStore((s) => s.darkMode);
+  const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
   const currentPage = useAppStore((s) => s.currentPage);
   const userName = useAppStore((s) => s.userName);
   const userRole = useAppStore((s) => s.userRole);
@@ -96,11 +98,14 @@ export default function AppLayout() {
                 { key: 'profile', icon: <User size={13} />, label: '个人信息' },
                 { key: 'password', icon: <KeyRound size={13} />, label: '修改密码' },
                 { type: 'divider' },
+                { key: 'darkmode', icon: null, label: <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: 12 }}>暗色模式<Switch size="small" checked={darkMode} /></span> },
+                { type: 'divider' },
                 { key: 'logout', icon: <LogOut size={13} />, label: '退出登录', danger: true },
               ],
               onClick: ({ key }) => {
                 if (key === 'profile') setProfileOpen(true);
                 else if (key === 'password') setPasswordOpen(true);
+                else if (key === 'darkmode') toggleDarkMode();
                 else if (key === 'logout') {
                   Modal.confirm({
                     title: '确认退出登录？',
