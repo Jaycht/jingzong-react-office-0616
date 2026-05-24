@@ -299,23 +299,6 @@ export default function ModulePage() {
           </div>
         </div>
         <Space>
-          {module.id === 'evidence-report' && (
-            <Button
-              type="primary"
-              icon={<FileText size={14} />}
-              onClick={() => {
-                try {
-                  generateFundReport();
-                  showToast('正在生成资金分析报告...', 'info');
-                } catch (err: any) {
-                  showToast(err.message || '生成报告失败', 'error');
-                }
-              }}
-              style={{ background: '#7C3AED', borderColor: '#7C3AED' }}
-            >
-              资金分析报告
-            </Button>
-          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -328,37 +311,6 @@ export default function ModulePage() {
             }}
           />
           <Button icon={<Upload size={14} />} onClick={() => fileInputRef.current?.click()}>导入</Button>
-          <Dropdown
-            menu={{
-              items: [
-                { key: 'daily', icon: <FileText size={13} />, label: '生成日报' },
-                { key: 'weekly', icon: <FileText size={13} />, label: '生成周报' },
-                { key: 'monthly', icon: <FileText size={13} />, label: '生成月报' },
-              ],
-              onClick: ({ key }) => {
-                if (!module) return;
-                setReporting(true);
-                try {
-                  exportModuleReport(module, key);
-                  showToast('正在导出' + module.label + '的' + (key === 'daily' ? '日报' : key === 'weekly' ? '周报' : '月报'));
-                } catch (err) {
-                  showToast(err.message || '导出失败', 'error');
-                } finally {
-                  setReporting(false);
-                }
-              },
-            }}
-            placement="bottomLeft"
-          >
-            <Button
-              type="primary"
-              icon={<FileText size={14} />}
-              loading={reporting}
-              style={{ background: '#0F766E', borderColor: '#0F766E' }}
-            >
-              生成报告
-            </Button>
-          </Dropdown>
           <Button
             icon={<Download size={14} />}
             onClick={() => {
@@ -396,6 +348,55 @@ export default function ModulePage() {
         >
           新建{active?.label || module.label}
         </Button>
+          {module.id === 'evidence-report' ? (
+            <Button
+              type="primary"
+              icon={<FileText size={16} />}
+              onClick={() => {
+                try {
+                  generateFundReport();
+                  showToast('正在生成资金分析报告...', 'info');
+                } catch (err: any) {
+                  showToast(err.message || '生成报告失败', 'error');
+                }
+              }}
+              style={{ height: 42, paddingInline: 18, background: '#7C3AED', borderColor: '#7C3AED', flexShrink: 0 }}
+            >
+              资金分析报告
+            </Button>
+          ) : (
+            <Dropdown
+              menu={{
+                items: [
+                  { key: 'daily', icon: <FileText size={13} />, label: '生成日报' },
+                  { key: 'weekly', icon: <FileText size={13} />, label: '生成周报' },
+                  { key: 'monthly', icon: <FileText size={13} />, label: '生成月报' },
+                ],
+                onClick: ({ key }) => {
+                  if (!module) return;
+                  setReporting(true);
+                  try {
+                    exportModuleReport(module, key);
+                    showToast('正在导出' + module.label + '的' + (key === 'daily' ? '日报' : key === 'weekly' ? '周报' : '月报'));
+                  } catch (err) {
+                    showToast(err.message || '导出失败', 'error');
+                  } finally {
+                    setReporting(false);
+                  }
+                },
+              }}
+              placement="bottomLeft"
+            >
+              <Button
+                type="primary"
+                icon={<FileText size={16} />}
+                loading={reporting}
+                style={{ height: 42, paddingInline: 18, background: '#0F766E', borderColor: '#0F766E', flexShrink: 0 }}
+              >
+                生成报告
+              </Button>
+            </Dropdown>
+          )}
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#123852' }}>当前可新建：{active?.label || module.label}</div>
           <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>点击左侧按钮进入登记窗口，系统会自动带出当前类目的字段模板。</div>
