@@ -193,14 +193,14 @@ export default function RegisterPage({ onBack }: Props) {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
                   <label style={labelStyle}>登录账号 <span style={{ color: "#ffb4ab" }}>*</span></label>
-                  <input value={account} onChange={e => setAccount(e.target.value)} placeholder="设置账号" style={inputStyle}
+                  <input value={account} onChange={e => setAccount(e.target.value)} placeholder="设置账号" autoComplete="off" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = "#a3c9ff"; e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)"; }}
                     onBlur={e => { e.target.style.borderColor = "#42474f"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
                 <div>
                   <label style={labelStyle}>登录密码 <span style={{ color: "#ffb4ab" }}>*</span></label>
-                  <input type="password" value={pwd} onChange={e => setPwd(e.target.value)} placeholder="6位以上" style={inputStyle}
+                  <input type="password" value={pwd} onChange={e => setPwd(e.target.value)} placeholder="6位以上" autoComplete="new-password" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = "#a3c9ff"; e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)"; }}
                     onBlur={e => { e.target.style.borderColor = "#42474f"; e.target.style.boxShadow = "none"; }}
                   />
