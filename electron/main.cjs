@@ -12,7 +12,7 @@ function createLoginWindow() {
     width: 520,
     height: 680,
     resizable: false,
-    frame: false,            // 无边框
+    frame: true,            // 无边框
     transparent: false,      // 有背景色
     backgroundColor: '#0B0F1A',
     icon: path.join(__dirname, '..', 'app.ico'),
@@ -87,7 +87,7 @@ ipcMain.on('close-login', () => {
 });
 
 app.whenReady().then(() => {
-  createLoginWindow();
+  createWindow();
 });
 
 app.on('window-all-closed', () => {
