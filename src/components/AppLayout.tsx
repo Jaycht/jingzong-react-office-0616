@@ -2,7 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dropdown, Modal } from "antd";
 import { Search, Landmark, User, KeyRound, LogOut } from "lucide-react";
-import { useApp } from "../App";
+import { useAppStore } from "../store/appStore"
 import Sidebar from "./Sidebar";
 import ProfileModal from "./ProfileModal";
 import PasswordModal from "./PasswordModal";
@@ -35,15 +35,17 @@ const PAGES: Record<string, React.FC> = {
   'squad-case': SquadCasePage,
 };
 
-interface Props {
-  modalId: string | null;
-  closeModal: () => void;
-  drawerOpen: boolean;
-  closeDrawer: () => void;
-}
-
-export default function AppLayout({ modalId, closeModal, drawerOpen, closeDrawer }: Props) {
-  const { currentPage, userName, userRole, logout, editRecord, setEditRecord } = useApp();
+export default function AppLayout() {
+    const modalId = useAppStore((s) => s.modalId);
+  const closeModal = useAppStore((s) => s.closeModal);
+  const drawerOpen = useAppStore((s) => s.drawerOpen);
+  const closeDrawer = useAppStore((s) => s.closeDrawer);
+  const currentPage = useAppStore((s) => s.currentPage);
+  const userName = useAppStore((s) => s.userName);
+  const userRole = useAppStore((s) => s.userRole);
+  const editRecord = useAppStore((s) => s.editRecord);
+  const setEditRecord = useAppStore((s) => s.setEditRecord);
+  const logout = () => { useAppStore.getState().setView("login"); useAppStore.getState().showToast("已退出登录", "info"); }
   const [searchVal, setSearchVal] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);

@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import { InboxOutlined, PlusOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { saveMassRecord, updateMassRecord, getClueProjectNames, getLegalReportMatters, getEvidenceClueNames } from '../store/massStore';
@@ -56,7 +56,8 @@ class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError:
 interface Props { onClose: () => void; editRecord?: import('../store/massStore').MassRecord | null; }
 
 export default function DrawerNewRecord({ onClose, editRecord }: Props) {
-  const { currentPage, showToast } = useApp();
+    const currentPage = useAppStore((s) => s.currentPage);
+  const showToast = useAppStore((s) => s.showToast);
   const { allModules } = useCustomModules();
   const currentModule = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [selectedModuleId, setSelectedModuleId] = useState(

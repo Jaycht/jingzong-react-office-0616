@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, Upload, FileText, CheckCircle, XCircle } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import {
   exportAllModulesToExcel,
   exportCasesToExcel,
@@ -14,7 +14,7 @@ import { getMassRecords } from '../store/massStore';
 import { getBaseModules } from '../moduleConfig';
 
 export default function ImportExport() {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
   const [importResult, setImportResult] = useState<{
     show: boolean;
     success: number;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson } from '../utils/excelUtils';
 
 interface BackupMeta {
@@ -51,7 +51,7 @@ function getRecordStats(): Record<string, number> {
 }
 
 export default function Backup() {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
   const [backups, setBackups] = useState<BackupMeta[]>([]);
   const [restoring, setRestoring] = useState(false);
   const [restoreResult, setRestoreResult] = useState<{ success: boolean; message: string } | null>(null);

@@ -1,5 +1,5 @@
 ﻿import { Modal, Form, Input, Select } from 'antd';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 
 interface Props {
   open: boolean;
@@ -7,7 +7,8 @@ interface Props {
 }
 
 export default function ProfileModal({ open, onClose }: Props) {
-  const { userName, showToast } = useApp();
+    const userName = useAppStore((s) => s.userName);
+  const showToast = useAppStore((s) => s.showToast);
 
   return (
     <Modal title="个人信息" open={open} onCancel={onClose} footer={null} width={460} destroyOnClose>

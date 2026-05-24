@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Button, Empty, Form, Input, Popconfirm, Select, Space, Switch, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { Plus, Save, Settings, Trash2 } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { createCustomModule, useCustomModules } from '../customModules';
 import { DEPARTMENTS, type FieldDefinition, type FieldType, type WorkModule } from '../moduleConfig';
 
@@ -26,7 +26,7 @@ interface FieldDraft {
 const defaultField: FieldDraft = { label: '', type: 'text', required: false, options: '' };
 
 export default function SettingsPage() {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
   const { customModules, addCustomModule, removeCustomModule } = useCustomModules();
   const [form] = Form.useForm();
   const [fields, setFields] = useState<FieldDraft[]>([

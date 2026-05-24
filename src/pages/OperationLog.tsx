@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { History, User, FileText, Download } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { getOperationLogs, clearOperationLogs } from '../store/operationLogStore';
 import type { OperationLog as OpLog } from '../store/operationLogStore';
 
@@ -18,7 +18,7 @@ const TYPE_COLORS: Record<string, { bg: string; color: string; label: string }> 
 };
 
 export default function OperationLog() {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
   const [refreshKey, setRefreshKey] = useState(0);
   const [filterType, setFilterType] = useState<string>('全部');
   const [searchText, setSearchText] = useState('');

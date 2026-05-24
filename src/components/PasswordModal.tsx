@@ -1,5 +1,5 @@
 ﻿import { Modal, Form, Input } from 'antd';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 
 interface Props {
   open: boolean;
@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function PasswordModal({ open, onClose }: Props) {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
   const [form] = Form.useForm();
 
   const handleSubmit = () => {

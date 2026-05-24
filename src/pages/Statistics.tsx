@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, FileText, Check, Users, Paperclip, TrendingUp, TrendingDown } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { getMassRecords } from '../store/massStore';
 import { getCases } from '../store/caseStore';
 import { getBaseModules } from '../moduleConfig';
@@ -10,7 +10,7 @@ const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } 
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 26 } } };
 
 export default function Statistics() {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
 
   // 从 localStorage 读取真实数据（每次进入页面刷新）
   const [refreshKey, setRefreshKey] = useState(0);

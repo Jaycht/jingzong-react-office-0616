@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { X, Eye, Pen, Download, Trash2, Clock } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 
 interface Props { onClose: () => void; }
 
 export default function Drawer({ onClose }: Props) {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
 
   return (
     <>

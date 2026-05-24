@@ -2,14 +2,15 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button, DatePicker, Divider, Form, Input, InputNumber, Modal, Select, Space, Upload } from 'antd';
 import { InboxOutlined, PlusOutlined } from '@ant-design/icons';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 
 interface Props { onClose: () => void; }
 
 export default function ModalNewRecord({ onClose }: Props) {
-  const { currentPage, showToast } = useApp();
+    const currentPage = useAppStore((s) => s.currentPage);
+  const showToast = useAppStore((s) => s.showToast);
   const { allModules } = useCustomModules();
   const currentModule = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [selectedModuleId, setSelectedModuleId] = useState(currentModule?.id || allModules[0]?.id || '');

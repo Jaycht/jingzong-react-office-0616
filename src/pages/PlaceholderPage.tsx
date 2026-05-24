@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
 import { FileText, Plus } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 
 export default function PlaceholderPage() {
-  const { openModal, showToast } = useApp();
+    const openModal = useAppStore((s) => s.openModal);
+  const showToast = useAppStore((s) => s.showToast);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center' }}>

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Briefcase, Plus, Upload, Download, Eye, Pen, Trash2 } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { CASE_STATS, KANBAN_COLUMNS } from '../data';
 import { exportCasesToExcel, importExcelToModule } from '../utils/excelUtils';
 
@@ -32,7 +32,9 @@ const container = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } 
 const cardItem = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 26 } } };
 
 export default function CaseList() {
-  const { openModal, openDrawer, showToast } = useApp();
+    const openModal = useAppStore((s) => s.openModal);
+  const openDrawer = useAppStore((s) => s.openDrawer);
+  const showToast = useAppStore((s) => s.showToast);
   const [activeTab, setActiveTab] = useState<'kanban' | 'table'>('kanban');
   const fileInputRef = useRef<HTMLInputElement>(null);
 

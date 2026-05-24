@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { UserCog, Plus, UserCheck, UserX, Edit, Trash2 } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { MOCK_USERS } from '../data';
 
 const ROLE_MAP: Record<string, { bg: string; color: string }> = {
@@ -16,7 +16,8 @@ const STATUS_MAP: Record<string, { bg: string; color: string; label: string }> =
 };
 
 export default function UserManage() {
-  const { openModal, showToast } = useApp();
+    const openModal = useAppStore((s) => s.openModal);
+  const showToast = useAppStore((s) => s.showToast);
 
   return (
     <div>

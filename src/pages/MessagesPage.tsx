@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Bell, CheckCheck, AlertTriangle, Info, CheckCircle, Trash2 } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { MOCK_NOTIFICATIONS } from '../data';
 
 const ICON_MAP = { danger: AlertTriangle, warning: AlertTriangle, info: Info, success: CheckCircle };
@@ -8,7 +8,7 @@ const COLOR_MAP: Record<string, string> = { danger: '#D32F2F', warning: '#E67E22
 const BG_MAP: Record<string, string> = { danger: '#FFEBEE', warning: '#FFF3E0', info: '#EBF5FF', success: '#E8F5E9' };
 
 export default function MessagesPage() {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
 
   return (
     <div>

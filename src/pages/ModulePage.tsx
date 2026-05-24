@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Button, Descriptions, Empty, Input, Modal, Space, Table, Tabs, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { Download, Eye, FileText, Pen, Plus, Search, Trash2, Upload } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { deleteMassRecord, deleteMassRecords, getMassRecords } from '../store/massStore';
@@ -78,7 +78,12 @@ function fmtTime(iso: string): string {
 }
 
 export default function ModulePage() {
-  const { currentPage, openModal, showToast, modalId, editRecord, setEditRecord } = useApp();
+    const currentPage = useAppStore((s) => s.currentPage);
+  const openModal = useAppStore((s) => s.openModal);
+  const showToast = useAppStore((s) => s.showToast);
+  const modalId = useAppStore((s) => s.modalId);
+  const editRecord = useAppStore((s) => s.editRecord);
+  const setEditRecord = useAppStore((s) => s.setEditRecord);
   const { allModules } = useCustomModules();
   const module = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [activeTab, setActiveTab] = useState(module?.tabs[0]?.id || '');

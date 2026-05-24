@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, UserPlus, CheckCircle } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 
 const POSITIONS = ['法制室', '涉众办', '资金分析小组', '办公室', '内勤', '分管控领导', '各中队长', '办案民警', '中队内勤'];
 const ROLES = ['管理员', '部门主管', '普通用户'];
@@ -9,7 +9,7 @@ const ROLES = ['管理员', '部门主管', '普通用户'];
 interface Props { onClose: () => void; }
 
 export default function ModalNewUser({ onClose }: Props) {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
   const [form, setForm] = useState({ name: '', badge: '', position: '', role: '', account: '', pwd: '' });
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);

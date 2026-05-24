@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronLeft, Database, Settings, ShieldCheck } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { DEPARTMENTS, PLATFORM_NAV } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 
 export default function Sidebar() {
-  const { currentPage, setCurrentPage } = useApp();
+    const currentPage = useAppStore((s) => s.currentPage);
+  const setCurrentPage = useAppStore((s) => s.setCurrentPage);
   const { customModules } = useCustomModules();
   const [expanded, setExpanded] = useState<string | null>('office');
   const [collapsed, setCollapsed] = useState(false);

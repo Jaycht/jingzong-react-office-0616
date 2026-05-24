@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button, Modal, Form, Input, InputNumber, Select, DatePicker } from 'antd';
 import { Plus, Search, BriefcaseBusiness } from 'lucide-react';
-import { useApp } from '../App';
+import { useAppStore } from "../store/appStore"
 import { getCases, saveCase, type SquadCase } from '../store/caseStore';
 
 const CASE_TYPES = [
@@ -54,7 +54,7 @@ const stageStyle = (active: boolean) => ({
 });
 
 export default function SquadCasePage() {
-  const { showToast } = useApp();
+    const showToast = useAppStore((s) => s.showToast);
   const [cases, setCases] = useState<SquadCase[]>([]);
   const [searchVal, setSearchVal] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
