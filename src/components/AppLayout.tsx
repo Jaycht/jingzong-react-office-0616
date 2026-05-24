@@ -50,7 +50,18 @@ export default function AppLayout() {
   const userRole = useAppStore((s) => s.userRole);
   const editRecord = useAppStore((s) => s.editRecord);
   const setEditRecord = useAppStore((s) => s.setEditRecord);
-  const logout = () => { useAppStore.getState().setView("login"); useAppStore.getState().showToast("已退出登录", "info"); }
+  const logout = () => {
+    try {
+      const raw = localStorage.getItem("jingzong.login.v1");
+      if (raw) {
+        const saved = JSON.parse(raw);
+        saved.autoLogin = false;
+        localStorage.setItem("jingzong.login.v1", JSON.stringify(saved));
+      }
+    } catch {}
+    useAppStore.getState().setView("login");
+    useAppStore.getState().showToast("已退出登录", "info");
+  }
   const searchQuery = useAppStore((s) => s.searchQuery);
   const setSearchQuery = useAppStore((s) => s.setSearchQuery);
   const [profileOpen, setProfileOpen] = useState(false);
