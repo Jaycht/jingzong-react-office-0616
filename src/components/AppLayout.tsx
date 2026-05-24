@@ -1,26 +1,27 @@
-﻿import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Landmark, User, KeyRound, LogOut } from 'lucide-react';
-import { Dropdown, Modal } from 'antd';
-import { useApp } from '../App';
-import Sidebar from './Sidebar';
-import ProfileModal from './ProfileModal';
-import PasswordModal from './PasswordModal';
-import DrawerNewRecord from './DrawerNewRecord';
-import ModalNewUser from './ModalNewUser';
-import Drawer from './Drawer';
-import Dashboard from '../pages/Dashboard';
-import CaseList from '../pages/CaseList';
-import Statistics from '../pages/Statistics';
-import SettingsPage from '../pages/SettingsPage';
-import OperationLog from '../pages/OperationLog';
-import ImportExport from '../pages/ImportExport';
-import Backup from '../pages/Backup';
-import Version from '../pages/Version';
-import Attachments from '../pages/Attachments';
-import PlaceholderPage from '../pages/PlaceholderPage';
-import SquadCasePage from '../pages/SquadCasePage';
-import ModulePage from '../pages/ModulePage';
+import { lazy, Suspense, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Dropdown, Modal } from "antd";
+import { Search, Landmark, User, KeyRound, LogOut } from "lucide-react";
+import { useApp } from "../App";
+import Sidebar from "./Sidebar";
+import ProfileModal from "./ProfileModal";
+import PasswordModal from "./PasswordModal";
+import DrawerNewRecord from "./DrawerNewRecord";
+import ModalNewUser from "./ModalNewUser";
+import Drawer from "./Drawer";
+
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const CaseList = lazy(() => import("../pages/CaseList"));
+const Statistics = lazy(() => import("../pages/Statistics"));
+const SettingsPage = lazy(() => import("../pages/SettingsPage"));
+const OperationLog = lazy(() => import("../pages/OperationLog"));
+const ImportExport = lazy(() => import("../pages/ImportExport"));
+const Backup = lazy(() => import("../pages/Backup"));
+const Version = lazy(() => import("../pages/Version"));
+const Attachments = lazy(() => import("../pages/Attachments"));
+const PlaceholderPage = lazy(() => import("../pages/PlaceholderPage"));
+const SquadCasePage = lazy(() => import("../pages/SquadCasePage"));
+const ModulePage = lazy(() => import("../pages/ModulePage"));
 
 const PAGES: Record<string, React.FC> = {
   dashboard: Dashboard, caseList: CaseList, statistics: Statistics,
@@ -136,7 +137,9 @@ export default function AppLayout({ modalId, closeModal, drawerOpen, closeDrawer
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              <Page />
+              <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: "#9CA3AF" }}>加载中...</div>}>
+                <Page />
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </div>

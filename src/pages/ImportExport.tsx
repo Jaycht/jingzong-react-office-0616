@@ -231,7 +231,7 @@ export default function ImportExport() {
               </motion.button>
             ))}
             <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
-              更多模块模板请在各模块页面下载
+              点击模块名称下载对应导入模板（Excel 格式）
             </div>
           </div>
         </motion.div>
