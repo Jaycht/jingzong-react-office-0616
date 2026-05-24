@@ -6,7 +6,7 @@ let appWindow = null;
 
 function createWindow() {
   appWindow = new BrowserWindow({
-    width: 520,
+    width: 660,
     height: 720,
     resizable: true,
     frame: true,
