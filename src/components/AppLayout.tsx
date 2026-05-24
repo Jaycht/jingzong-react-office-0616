@@ -138,12 +138,10 @@ export default function AppLayout() {
           flex: 1, overflow: 'auto', padding: 20,
           background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5',
         }}>
-          <AnimatePresence>
             <motion.div
               key={currentPage}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
               <Breadcrumb />
@@ -151,7 +149,6 @@ export default function AppLayout() {
                 <Page />
               </Suspense>
             </motion.div>
-          </AnimatePresence>
         </div>
       </div>
 
