@@ -17,7 +17,7 @@ function createLoginWindow() {
     backgroundColor: '#0B0F1A',
     icon: path.join(__dirname, '..', 'app.ico'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -48,7 +48,7 @@ function createMainWindow() {
     icon: path.join(__dirname, '..', 'app.ico'),
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },

@@ -27,7 +27,7 @@ jobs:
       - name: Package with electron-builder
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --config.extraMetadata.main=electron/main.js
+        run: npx electron-builder --config.extraMetadata.main=electron/main.cjs
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
