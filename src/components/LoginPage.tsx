@@ -167,7 +167,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 color:"#e2e2e6", marginBottom:24, letterSpacing:"-0.02em",
               }}
             >
-              欢迎进入<br/>
+              欢迎进入<span style={{ color:"#a3c9ff" }}>经侦大队工作记录管理系统</span>
               <span style={{ color:"#a3c9ff" }}>经侦大队工作记录管理系统</span>
             </motion.h2>
 
@@ -277,6 +277,44 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               </div>
             </motion.form>
           </div>
+
+          {/* 中间：纪律警示文字 */}
+          <motion.div
+            initial={{ opacity:0 }}
+            animate={{ opacity:1 }}
+            transition={{ delay:0.6, duration:1.5 }}
+            style={{
+              flex:1,
+              display:"flex",
+              alignItems:"center",
+              justifyContent:"center",
+              padding:"0 20px",
+            }}
+          >
+            <motion.div
+              animate={{ opacity: [0.3, 0.5, 0.3] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                fontSize: 13,
+                lineHeight: 2.2,
+                color: "rgba(194, 198, 208, 0.4)",
+                fontFamily: "'JetBrains Mono','Noto Sans SC',monospace",
+                letterSpacing: "0.08em",
+                textAlign: "center",
+                whiteSpace: "nowrap",
+                userSelect: "none",
+              }}
+            >
+              严禁工作日早、中午饮酒<br/>
+              严禁酒后执行公务<br/>
+              严禁安保、执法期间饮酒<br/>
+              严禁携警械、涉密文件、着警服饮酒<br/>
+              严禁在公安内部场所饮酒<br/>
+              严禁参加影响公正履职酒局<br/>
+              严禁酗酒滋事<br/>
+              严禁其他涉酒违纪行为。
+            </motion.div>
+          </motion.div>
 
           {/* Right: Logo + 欢迎使用 panel */}
           <motion.div
@@ -405,12 +443,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         </div>
       </footer>
 
-      {/* Custom cursor JS */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: "document.addEventListener('mousemove',function(e){var c=document.getElementById('cursor');var d=document.getElementById('cursor-dot');if(c){c.style.left=e.clientX+'px';c.style.top=e.clientY+'px'}if(d){d.style.left=e.clientX+'px';d.style.top=e.clientY+'px'}});document.addEventListener('mousedown',function(e){var p=document.createElement('div');p.style.cssText='position:fixed;border:1px solid #00dbe7;border-radius:50%;pointer-events:none;z-index:9998;animation:radar-out 1s ease-out forwards;left:'+e.clientX+'px;top:'+e.clientY+'px';document.body.appendChild(p);setTimeout(function(){p.remove()},1000);var c=document.getElementById('cursor');if(c)c.style.transform='translate(-50%,-50%) scale(0.8)'});document.addEventListener('mouseup',function(){var c=document.getElementById('cursor');if(c)c.style.transform='translate(-50%,-50%) scale(1)'});"
-        }}
-      />
     </div>
   );
 }
