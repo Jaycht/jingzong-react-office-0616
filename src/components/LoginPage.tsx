@@ -427,38 +427,28 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               <p style={{ fontSize:14, lineHeight:1.6, color:"#c2c6d0" }}>{card.desc}</p>
             </motion.div>
           ))}
-        </section>
-      </main>
-      {/* 版权信息 */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9, duration: 0.5 }}
-        style={{
+                <div style={{
+          gridColumn: 'span 3',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '12px 24px',
-          marginTop: 8,
-          background: 'rgba(12,14,17,0.6)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: 8,
-          border: '1px solid rgba(66,71,79,0.3)',
-        }}
-      >
-        <span style={{
-          fontSize: 11.5, color: 'rgba(226,226,230,0.45)',
-          letterSpacing: 0.5, fontFamily: "'JetBrains Mono',monospace",
+          padding: '4px 0', marginTop: 4,
         }}>
-          © 2026 陈洪涛 — Economic Investigation Work Log Registration System
-        </span>
-        <span style={{
-          fontSize: 11.5, color: 'rgba(226,226,230,0.45)',
-          fontFamily: "'JetBrains Mono',monospace",
-          letterSpacing: 0.5,
-        }}>
-          {now.getFullYear()}-{String(now.getMonth()+1).padStart(2,'0')}-{String(now.getDate()).padStart(2,'0')} {'周' + ['日','一','二','三','四','五','六'][now.getDay()]} {String(now.getHours()).padStart(2,'0')}:{String(now.getMinutes()).padStart(2,'0')}:{String(now.getSeconds()).padStart(2,'0')}
-        </span>
-      </motion.div>
+          <span style={{
+            fontSize: 12, color: 'rgba(226,226,230,0.4)',
+            letterSpacing: 0.5, fontFamily: "'JetBrains Mono',monospace",
+          }}>
+            © 2026 陈洪涛 — Economic Investigation Work Log Registration System
+          </span>
+          <span style={{
+            fontSize: 12, color: 'rgba(226,226,230,0.4)',
+            fontFamily: "'JetBrains Mono',monospace",
+            letterSpacing: 0.5,
+          }}>
+            {now.getFullYear()}-{String(now.getMonth()+1).padStart(2,'0')}-{String(now.getDate()).padStart(2,'0')} {'\u5468' + ['\u65e5','\u4e00','\u4e8c','\u4e09','\u56db','\u4e94','\u516d'][now.getDay()]} {String(now.getHours()).padStart(2,'0')}:{String(now.getMinutes()).padStart(2,'0')}:{String(now.getSeconds()).padStart(2,'0')}
+          </span>
+        </div>
+</section>
+      </main>
+      
 
 
 
