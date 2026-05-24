@@ -39,29 +39,8 @@ jobs:
           mkdir -p release/web-portable
           cp -r dist release/web-portable/
           cp app.ico release/web-portable/
-          # 创建启动脚本
-          cat > release/web-portable/启动.bat << 'BATEOF'
-@echo off
-title 经侦大队工作记录管理系统
-chcp 65001 >nul
-set "CHROME="
-for %%p in (
-  "%ProgramFiles%\Google\Chrome\Application\chrome.exe"
-  "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
-  "%LocalAppData%\Google\Chrome\Application\chrome.exe"
-) do if exist "%%~p" set "CHROME=%%~p" & goto found
-for %%p in (
-  "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
-  "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
-) do if exist "%%~p" set "CHROME=%%~p" & goto found
-:found
-if "%CHROME%"=="" (
-  echo [错误] 未找到 Chrome 或 Edge，请安装后重试
-  pause & exit /b 1
-)
-start "" "%CHROME%" --new-window --app="%~dp0dist\index.html"
-exit
-BATEOF
+          # 复制启动脚本（已存放在仓库根目录）
+          cp 启动网页版.bat release/web-portable/启动.bat
           # 打包为 zip
           cd release
           zip -r 经侦大队工作记录管理系统_网页版.zip web-portable/
