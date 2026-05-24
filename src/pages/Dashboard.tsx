@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+﻿import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, CheckCircle2, ArrowUp, ArrowDown,
@@ -215,7 +215,6 @@ export default function Dashboard() {
       barWidth: 10,
     }],
   }), [ranking, darkMode]);
-
 
   const activities = useMemo(() => recentActivity(records), [records]);
   const nextSteps = useMemo(() => extractNextSteps(records), [records]);
@@ -529,36 +528,7 @@ export default function Dashboard() {
           </div>
         </div>
       </motion.div>
-
-      {/* 版权信息卡片 */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-      >
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '14px 20px',
-          background: 'linear-gradient(135deg, #1a237e, #283593)',
-          borderRadius: 10,
-          border: '2px solid #ffd740',
-          boxShadow: '0 4px 20px rgba(255,215,64,0.3)',
-        }}>
-          <span style={{
-            fontSize: 13, color: '#ffd740',
-            fontWeight: 600, letterSpacing: 0.5,
-          }}>
-            © 2026 陈洪涛 — Economic Investigation Work Log Registration System
-          </span>
-          <span style={{
-            fontSize: 13, color: '#b0bec5',
-            fontFamily: "'Courier New', monospace",
-            fontWeight: 600, letterSpacing: 0.5,
-          }}>
-            {new Date().toLocaleString("zh-CN")}
-          </span>
-        </div>
-      </motion.div>
     </div>
   );
 }
+
