@@ -220,22 +220,31 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             }
           }
 
-          // 2. 处理普通字段（非 repeatable 模块）
-          //    此轮只处理没有 repeatable section 的简单模块（如查看详情等）
-          const hasRepeatableSection = allFields.some((f) => f.type === 'section' && f.repeatable);
-          if (!hasRepeatableSection) {
-            for (const f of allFields) {
-              if (f.type === 'section' || f.type === 'attachment') continue;
-              const raw = editRecord.data?.[f.id];
-              if (raw === undefined || raw === null) continue;
-              if (f.type === 'date' && typeof raw === 'string') {
-                const d = dayjs(raw);
-                formData[f.id] = d.isValid() ? d : undefined;
-              } else if (f.multiple && typeof raw === 'string') {
-                formData[f.id] = [raw];
-              } else {
-                formData[f.id] = raw;
+          // 2. 处理普通非重复字段（所有模块均处理）
+          //    同时跳过已在 repeatable section 中处理的字段
+          const sectionFieldIds = new Set<string>();
+          for (const f of allFields) {
+            if (f.type === 'section' && f.repeatable && f.listName) {
+              // 将该 section 下所有字段加入跳过列表
+              for (const sf of allFields) {
+                if (sf.type === 'section' || sf.type === 'attachment') continue;
+                sectionFieldIds.add(sf.id);
               }
+            }
+          }
+          for (const f of allFields) {
+            if (f.type === 'section' || f.type === 'attachment') continue;
+            // 跳过已在 repeatable section 中处理的字段
+            if (sectionFieldIds.has(f.id)) continue;
+            const raw = editRecord.data?.[f.id];
+            if (raw === undefined || raw === null) continue;
+            if (f.type === 'date' && typeof raw === 'string') {
+              const d = dayjs(raw);
+              formData[f.id] = d.isValid() ? d : undefined;
+            } else if (f.multiple && typeof raw === 'string') {
+              formData[f.id] = [raw];
+            } else {
+              formData[f.id] = raw;
             }
           }
           form.setFieldsValue(formData);

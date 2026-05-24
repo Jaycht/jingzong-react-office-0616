@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import dayjs from 'dayjs';
 import { motion } from 'framer-motion';
-import { Button, Modal, Form, Input, InputNumber, Select, DatePicker, Dropdown } from 'antd';
-import { Plus, Search, BriefcaseBusiness, FileText, Download } from 'lucide-react';
+import { Button, Modal, Form, Input, InputNumber, Select, DatePicker, Dropdown, Descriptions } from 'antd';
+import { Plus, Search, BriefcaseBusiness, FileText, Download, Upload, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { exportModuleReport } from "../utils/reportGenerator";
+import { exportModuleToExcel, importExcelToModule } from "../utils/excelUtils";
 import { findModule } from "../moduleConfig";
-import { getCases, saveCase, type SquadCase } from '../store/caseStore';
+import { getCases, saveCase, deleteCase, updateCase, type SquadCase } from '../store/caseStore';
 
 const CASE_TYPES = [
   '帮助恐怖活动案', '走私假币案', '虚报注册资本案',
@@ -62,6 +64,9 @@ export default function SquadCasePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [reporting, setReporting] = useState(false);
+  const [editingCase, setEditingCase] = useState<SquadCase | null>(null);
+  const [viewCase, setViewCase] = useState<SquadCase | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setCases(getCases());
@@ -71,14 +76,64 @@ export default function SquadCasePage() {
 
   const handleCreate = () => {
     form.validateFields().then((values) => {
-      const newCase = saveCase(values);
-      showToast(`案件 ${newCase.caseName} 已创建`, 'success');
+      if (editingCase) {
+        updateCase(editingCase.id, values);
+        showToast(`案件 ${values.caseName} 已更新`, 'success');
+      } else {
+        saveCase(values);
+        showToast(`案件 ${values.caseName} 已创建`, 'success');
+      }
       setModalOpen(false);
+      setEditingCase(null);
       form.resetFields();
       refresh();
     }).catch(() => {
       showToast('请补充必填字段', 'warning');
     });
+  };
+
+  const handleEdit = (c: SquadCase) => {
+    setEditingCase(c);
+    form.setFieldsValue({
+      caseNo: c.caseNo,
+      filingDocNo: c.filingDocNo,
+      caseName: c.caseName,
+      caseSource: c.caseSource,
+      caseType: c.caseType,
+      totalAmount: c.totalAmount,
+      victimCount: c.victimCount,
+      receiveDate: c.receiveDate ? dayjs(c.receiveDate) : undefined,
+      filingDate: c.filingDate ? dayjs(c.filingDate) : undefined,
+      noFilingDate: c.noFilingDate ? dayjs(c.noFilingDate) : undefined,
+      leadOfficer: c.leadOfficer,
+      assistOfficer: c.assistOfficer,
+      transferRecord: c.transferRecord,
+      transferUnit: (c as any).transferUnit,
+      briefCase: (c as any).briefCase,
+    });
+    setModalOpen(true);
+  };
+
+  const handleDelete = (c: SquadCase) => {
+    if (window.confirm(`确定删除案件「${c.caseName}」吗？`)) {
+      deleteCase(c.id);
+      showToast('案件已删除', 'success');
+      refresh();
+    }
+  };
+
+  const handleImport = async (file: File) => {
+    try {
+      const result = await importExcelToModule({ id: 'squad-case', label: '中队案件管理', departmentId: 'squadron', departmentLabel: '案件中队', description: '', tabs: [{ id: 'default', label: '中队案件管理' }] }, 'default', file);
+      if (result > 0) {
+        showToast(`成功导入 ${result} 条记录`, 'success');
+        refresh();
+      } else {
+        showToast('未能导入有效数据', 'warning');
+      }
+    } catch (e: any) {
+      showToast(e.message || '导入失败', 'error');
+    }
   };
 
   const filtered = cases.filter((c) =>
@@ -160,6 +215,33 @@ export default function SquadCasePage() {
               生成报告
             </Button>
           </Dropdown>
+          <Button
+            icon={<Upload size={16} />}
+            onClick={() => fileInputRef.current?.click()}
+            style={{ height: 42, paddingInline: 18, flexShrink: 0 }}
+          >
+            导入
+          </Button>
+          <Button
+            icon={<Download size={16} />}
+            onClick={() => {
+              showToast('正在生成 Excel...', 'info');
+            }}
+            style={{ height: 42, paddingInline: 18, flexShrink: 0 }}
+          >
+            导出
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImport(file);
+              e.target.value = '';
+            }}
+          />
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#123852' }}>创建新案件</div>
           <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>点击左侧按钮进入新建案件登记窗口，填写案件基础信息。</div>
@@ -197,7 +279,7 @@ export default function SquadCasePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
             <thead>
               <tr style={{ background: '#F8FAFC' }}>
-                {['案件编号', '受/立案文书号', '案件名称', '案件来源', '案件类型', '涉案总金额(万)', '主办民警', '受案日期', '立案日期', '侦查终结', '移送起诉', '结案'].map((h) => (
+                {['案件编号', '受/立案文书号', '案件名称', '案件来源', '案件类型', '涉案总金额(万)', '主办民警', '受案日期', '立案日期', '侦查终结', '移送起诉', '结案', '操作'].map((h) => (
                   <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#64748B', borderBottom: '1px solid #E2E8F0', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -205,7 +287,7 @@ export default function SquadCasePage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={12} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>暂无案件，点击右上角"新建案件"创建</td>
+                  <td colSpan={13} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>暂无案件，点击右上角"新建案件"创建</td>
                 </tr>
               ) : (
                 filtered.map((c, i) => (
@@ -250,6 +332,13 @@ export default function SquadCasePage() {
                         {c.caseCloseDate ? '已结案' : '进行中'}
                       </span>
                     </td>
+                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <Button type="link" size="small" icon={<Eye size={14} />} onClick={() => setViewCase(c)} style={{ padding: 0, height: 24 }} title="查看" />
+                        <Button type="link" size="small" icon={<Pencil size={14} />} onClick={() => handleEdit(c)} style={{ padding: 0, height: 24, color: '#155A8A' }} title="编辑" />
+                        <Button type="link" size="small" icon={<Trash2 size={14} />} onClick={() => handleDelete(c)} style={{ padding: 0, height: 24, color: '#DC2626' }} title="删除" />
+                      </div>
+                    </td>
                   </motion.tr>
                 ))
               )}
@@ -268,7 +357,7 @@ export default function SquadCasePage() {
         closable={false}
         title={
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingRight: 8 }}>
-            <span style={{ fontWeight: 700, fontSize: 16 }}>新建案件</span>
+            <span style={{ fontWeight: 700, fontSize: 16 }}>{editingCase ? '编辑案件' : '新建案件'}</span>
             <div
               onClick={() => { setModalOpen(false); form.resetFields(); }}
               style={{
@@ -296,7 +385,7 @@ export default function SquadCasePage() {
         footer={
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <Button onClick={() => { setModalOpen(false); form.resetFields(); }} style={{ height: 36, paddingInline: 18 }}>取消</Button>
-            <Button type="primary" icon={<Plus size={14} />} onClick={handleCreate} style={{ height: 36, paddingInline: 20 }}>创建案件</Button>
+            <Button type="primary" icon={<Plus size={14} />} onClick={handleCreate} style={{ height: 36, paddingInline: 20 }}>{editingCase ? '更新案件' : '创建案件'}</Button>
           </div>
         }
       >
@@ -358,6 +447,39 @@ export default function SquadCasePage() {
         </Form>
         </div>
       </Modal>
-    </div>
+    
+      {/* 查看详情弹窗 */}
+      <Modal
+        title="案件详情"
+        open={!!viewCase}
+        onCancel={() => setViewCase(null)}
+        footer={<Button onClick={() => setViewCase(null)}>关闭</Button>}
+        width={800}
+        destroyOnClose
+      >
+        {viewCase && (
+          <div style={{ padding: '16px 0' }}>
+            <Descriptions column={2} size="small" bordered>
+              <Descriptions.Item label="案件编号" span={1}>{viewCase.caseNo || '-'}</Descriptions.Item>
+              <Descriptions.Item label="受/立案文书号" span={1}>{viewCase.filingDocNo || '-'}</Descriptions.Item>
+              <Descriptions.Item label="案件名称" span={2}>{viewCase.caseName || '-'}</Descriptions.Item>
+              <Descriptions.Item label="案件来源" span={1}>{viewCase.caseSource || '-'}</Descriptions.Item>
+              <Descriptions.Item label="案件类型" span={1}>{viewCase.caseType || '-'}</Descriptions.Item>
+              <Descriptions.Item label="涉案总金额（万元）" span={1}>{viewCase.totalAmount ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="受害人数" span={1}>{viewCase.victimCount ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="主办民警" span={1}>{viewCase.leadOfficer || '-'}</Descriptions.Item>
+              <Descriptions.Item label="协办民警" span={1}>{viewCase.assistOfficer || '-'}</Descriptions.Item>
+              <Descriptions.Item label="受案日期" span={1}>{viewCase.receiveDate || '-'}</Descriptions.Item>
+              <Descriptions.Item label="立案日期" span={1}>{viewCase.filingDate || '-'}</Descriptions.Item>
+              <Descriptions.Item label="不予立案日期" span={1}>{viewCase.noFilingDate || '-'}</Descriptions.Item>
+              <Descriptions.Item label="案件移交记录" span={1}>{viewCase.transferRecord || '-'}</Descriptions.Item>
+              <Descriptions.Item label="创建时间" span={1}>{viewCase.createdAt?.slice(0, 16).replace('T', ' ') || '-'}</Descriptions.Item>
+              <Descriptions.Item label="更新时间" span={1}>{viewCase.updatedAt?.slice(0, 16).replace('T', ' ') || '-'}</Descriptions.Item>
+            </Descriptions>
+          </div>
+        )}
+      </Modal>
+
+</div>
   );
 }
