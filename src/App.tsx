@@ -1,4 +1,4 @@
-import { useState, useCallback, createContext, useContext } from 'react';
+﻿import { useState, useCallback, createContext, useContext } from 'react';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -6,11 +6,10 @@ import { Toaster } from './components/Toaster';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import AppLayout from './components/AppLayout';
-import BigScreen from './pages/BigScreen';
 import type { PageId, Toast, ToastType } from './types';
 import type { MassRecord } from './store/massStore';
 
-type AppView = 'login' | 'register' | 'app' | 'bigscreen';
+type AppView = 'login' | 'register' | 'app';
 
 interface AppContextType {
   showToast: (msg: string, type?: ToastType) => void;
@@ -23,12 +22,10 @@ interface AppContextType {
   closeModal: () => void;
   openDrawer: () => void;
   logout: () => void;
-  openBigScreen: () => void;
   toasts: Toast[];
   removeToast: (id: string) => void;
   editRecord: MassRecord | null;
   setEditRecord: (r: MassRecord | null) => void;
-
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -38,12 +35,13 @@ let toastId = 0;
 
 export default function App() {
   const [view, setView] = useState<AppView>('login');
-  const openBigScreen = useCallback(() => setView('bigscreen'), []);
   const [currentPage, setCurrentPage] = useState<PageId>('dashboard');
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [modalId, setModalId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<MassRecord | null>(null);
+  const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('');
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = String(++toastId);
@@ -57,12 +55,13 @@ export default function App() {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  const handleLogin = useCallback(() => {
+  const handleLogin = useCallback((name: string, role: string) => {
+    setUserName(name);
+    setUserRole(role);
     setView('app');
-    showToast('登录成功，欢迎回来，张明！', 'success');
+    showToast('登录成功！', 'success');
   }, [showToast]);
 
-  // handleRegister is used by RegisterPage onBack callback
   const _handleRegister = useCallback(() => {
     setView('login');
     showToast('注册成功！请等待管理员审核', 'success');
@@ -74,14 +73,17 @@ export default function App() {
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   const handleLogout = useCallback(() => {
+    setUserName('');
+    setUserRole('');
     setView('login');
     showToast('已退出登录', 'info');
   }, [showToast]);
 
   const ctx: AppContextType = {
     showToast, currentPage, setCurrentPage, modalId,
-    userName: '张明', userRole: '法制室 · 管理员',
-    openModal, closeModal, openDrawer, logout: handleLogout, openBigScreen, toasts, removeToast,
+    userName, userRole,
+    openModal, closeModal, openDrawer, logout: handleLogout,
+    toasts, removeToast,
     editRecord, setEditRecord,
   };
 
@@ -106,7 +108,7 @@ export default function App() {
           },
         }}
       >
-      <div style={{ fontFamily: '"Microsoft YaHei UI","PingFang SC","Noto Sans SC",sans-serif', minHeight: '100vh' }}>
+      <div style={{ minHeight: '100vh' }}>
         <AnimatePresence mode="wait">
           {view === 'login' && (
             <motion.div key="login" initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
@@ -121,11 +123,6 @@ export default function App() {
           {view === 'app' && (
             <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
               <AppLayout modalId={modalId} closeModal={closeModal} drawerOpen={drawerOpen} closeDrawer={closeDrawer} />
-            </motion.div>
-          )}
-          {view === 'bigscreen' && (
-            <motion.div key="bigscreen" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }} style={{ width: '100vw', height: '100vh' }}>
-              <BigScreen onBack={() => setView('app')} />
             </motion.div>
           )}
         </AnimatePresence>

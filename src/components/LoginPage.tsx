@@ -1,21 +1,20 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { APP_VERSION } from '../version';
 
 interface Props {
-  onLogin: () => void;
+  onLogin: (name: string, role: string) => void;
   onRegister: () => void;
 }
 
 export default function LoginPage({ onLogin, onRegister }: Props) {
-  const [account, setAccount] = useState('zhangming');
-  const [password, setPassword] = useState('123456');
+  const [account, setAccount] = useState('');
+  const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [remember, setRemember] = useState(true);
 
   const handle = (e: FormEvent) => {
     e.preventDefault();
@@ -24,9 +23,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
     setError('');
     setTimeout(() => {
       setLoading(false);
-      if (account === 'zhangming' && password === '123456') onLogin();
-      else setError('账号或密码错误，请重新输入');
-    }, 900);
+      onLogin(account, '用户');
+    }, 600);
   };
 
   return (
@@ -36,7 +34,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       position: 'relative', overflow: 'hidden',
     }}>
-      {/* Animated background circles */}
       {[...Array(6)].map((_, i) => (
         <motion.div
           key={i}
@@ -50,8 +47,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           transition={{ duration: 8 + i * 2, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
         />
       ))}
-
-      {/* Grid pattern */}
       <div style={{
         position: 'absolute', inset: 0,
         backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)',
@@ -68,7 +63,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           boxShadow: '0 8px 40px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.1)',
         }}
       >
-        {/* 软件 Logo */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -101,7 +95,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         </motion.div>
 
         <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {/* Error banner */}
           <AnimatePresence>
             {error && (
               <motion.div
@@ -121,7 +114,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
             )}
           </AnimatePresence>
 
-          {/* Account */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -133,7 +125,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               <User size={14} color="#9CA3AF" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 value={account} onChange={e => setAccount(e.target.value)}
-                style={{ width: '100%', height: 42, paddingLeft: 38, paddingRight: 12, border: '1.5px solid #D1D5DB', borderRadius: 8, fontSize: 13, outline: 'none', transition: 'border-color .2s', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                style={{ width: '100%', height: 42, paddingLeft: 38, border: '1.5px solid #D1D5DB', borderRadius: 8, fontSize: 13, outline: 'none', transition: 'border-color .2s', fontFamily: 'inherit', boxSizing: 'border-box' }}
                 onFocus={e => (e.target.style.borderColor = '#2E7DCA', e.target.style.boxShadow = '0 0 0 3px rgba(46,125,202,.13)')}
                 onBlur={e => (e.target.style.borderColor = '#D1D5DB', e.target.style.boxShadow = 'none')}
                 placeholder="请输入账号"
@@ -141,7 +133,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
             </div>
           </motion.div>
 
-          {/* Password */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -165,25 +156,12 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
             </div>
           </motion.div>
 
-
-
-          {/* Options */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}
-          >
-            <label style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#6B7280', cursor: 'pointer' }}>
-              <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} style={{ accentColor: '#1B5E9B' }} />
-              记住密码
-            </label>
-            <button type="button" onClick={onRegister} style={{ background: 'none', border: 'none', color: '#2E7DCA', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', textDecoration: 'none' }}>
-              注册账号？
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontSize: 12 }}>
+            <button type="button" onClick={onRegister} style={{ background: 'none', border: 'none', color: '#2E7DCA', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }}>
+              注册账号
             </button>
-          </motion.div>
+          </div>
 
-          {/* Submit */}
           <motion.button
             type="submit"
             whileHover={{ scale: 1.01, boxShadow: '0 4px 16px rgba(27,94,155,.3)' }}
@@ -197,20 +175,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               opacity: loading ? 0.85 : 1,
             }}
           >
-            <AnimatePresence>
-              {loading && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{
-                    position: 'absolute', inset: 0,
-                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%)',
-                    animation: 'shimmer 1.4s infinite',
-                  }}
-                />
-              )}
-            </AnimatePresence>
             <span style={{ position: 'relative', zIndex: 1 }}>
               {loading ? '登录中...' : '登 录 系 统'}
             </span>
@@ -223,8 +187,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           <div>Copyright © 2026 经侦大队工作记录管理系统. All Rights Reserved.</div>
         </div>
       </motion.div>
-
-      <style>{`@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }`}</style>
     </div>
   );
 }
