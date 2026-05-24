@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { APP_VERSION } from "../version";
+import RegisterPage from "./RegisterPage";
 
 interface Props {
   onLogin: (name: string, role: string) => void;
@@ -61,6 +62,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
   const [remember, setRemember] = useState(false);
   const [autoLogin, setAutoLogin] = useState(false);
   const [ready, setReady] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const now = useCurrentTime();
 
   useEffect(() => {
@@ -163,8 +165,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               transition={{ delay:0.2, duration:0.7, ease:[0.22,1,0.36,1] }}
               style={{
                 fontFamily:"'Hanken Grotesk','Noto Sans SC',sans-serif",
-                fontSize:48, fontWeight:700, lineHeight:1.2,
-                color:"#e2e2e6", marginBottom:24, letterSpacing:"-0.02em",
+                fontSize:40, fontWeight:700, lineHeight:1.2,
+                letterSpacing:"-0.02em", whiteSpace:"nowrap",
               }}
             >
               <span style={{ color:"#a3c9ff" }}>经侦大队工作记录管理系统</span>
@@ -271,7 +273,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 >
                   <span style={{ position:"relative", zIndex:1 }}>{loading ? "登录中..." : "登 录 系 统"}</span>
                 </motion.button>
-                <button type="button" onClick={onRegister} style={{ background:"none", border:"none", color:"#a3c9ff", cursor:"pointer", fontSize:12, fontFamily:"inherit", whiteSpace:"nowrap" }}>
+                <button type="button" onClick={() => setShowRegister(true)} style={{ background:"none", border:"none", color:"#a3c9ff", cursor:"pointer", fontSize:12, fontFamily:"inherit", whiteSpace:"nowrap" }}>
                   注册账号
                 </button>
               </div>
@@ -442,6 +444,11 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           <DateTimeDisplay />
         </div>
       </footer>
+
+      {/* Register Modal */}
+      <AnimatePresence>
+        {showRegister && <RegisterPage onBack={() => setShowRegister(false)} />}
+      </AnimatePresence>
 
     </div>
   );
