@@ -134,6 +134,7 @@ function recentActivity(records: any[]) {
 export default function Dashboard() {
   const { setCurrentPage } = useAppStore();
   const darkMode = useAppStore((s) => s.darkMode);
+  const lowPerfMode = useAppStore((s) => s.lowPerfMode);
   const records = getMassRecords();
   const hasData = records.length > 0;
 
@@ -144,6 +145,7 @@ export default function Dashboard() {
   const trend = useMemo(() => monthlyTrend(records), [records]);
 
   const trendOpt = useMemo(() => ({
+    animation: !lowPerfMode,
     tooltip: {
       trigger: "axis" as const,
       backgroundColor: darkMode ? "rgba(28,31,38,0.9)" : "#fff",
@@ -182,6 +184,7 @@ export default function Dashboard() {
   const ranking = useMemo(() => moduleRanking(records), [records]);
 
   const rankOpt = useMemo(() => ({
+    animation: !lowPerfMode,
     tooltip: {
       trigger: "axis" as const, axisPointer: { type: "shadow" as const },
       backgroundColor: darkMode ? "rgba(28,31,38,0.9)" : "#fff",

@@ -106,6 +106,7 @@ export default function AppLayout() {
                 if (key === 'profile') setProfileOpen(true);
                 else if (key === 'password') setPasswordOpen(true);
                 else if (key === 'darkmode') toggleDarkMode();
+                    else if (key === 'lowperf') toggleLowPerfMode();
                 else if (key === 'logout') {
                   Modal.confirm({
                     title: '确认退出登录？',

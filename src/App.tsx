@@ -1,6 +1,6 @@
 ﻿import { ConfigProvider, theme } from "antd";
 import zhCN from "antd/locale/zh_CN";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { Toaster } from "./components/Toaster";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
@@ -25,6 +25,8 @@ export default function App() {
   const toasts = useAppStore((s) => s.toasts);
   const removeToast = useAppStore((s) => s.removeToast);
   const darkMode = useAppStore((s) => s.darkMode);
+
+  const lowPerfMode = useAppStore((s) => s.lowPerfMode);
 
   const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
 
@@ -63,10 +65,11 @@ export default function App() {
         },
       }}
     >
-      <div className={darkMode ? "theme-dark" : ""} style={{ minHeight: "100vh" }}>
+      <div className={(darkMode ? "theme-dark " : "") + (lowPerfMode ? "low-perf-mode" : "")} style={{ minHeight: "100vh" }}>
+        <MotionConfig reducedMotion={lowPerfMode ? "always" : "never"}>
         <AnimatePresence mode="wait">
           {view === "login" && (
-            <motion.div key="login" initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
+            <motion.div key="login" {...(lowPerfMode ? { initial: false, animate: true, transition: { duration: 0 } } : { initial: { opacity: 0, x: -40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: 40 }, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } })}>
               {/* Electron 无边框窗口关闭按钮 */}
               {isElectron && (
                 <div
@@ -88,17 +91,18 @@ export default function App() {
             </motion.div>
           )}
           {view === "register" && (
-            <motion.div key="register" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
+            <motion.div key="register" {...(lowPerfMode ? { initial: false, animate: true, transition: { duration: 0 } } : { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 }, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } })}>
               <RegisterPage onBack={() => setView("login")} />
             </motion.div>
           )}
           {view === "app" && (
-            <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+            <motion.div key="app" {...(lowPerfMode ? { initial: false, animate: true, transition: { duration: 0 } } : { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.4 } })}>
               <AppLayout />
             </motion.div>
           )}
         </AnimatePresence>
         <Toaster toasts={toasts} removeToast={removeToast} />
+        </MotionConfig>
       </div>
     </ConfigProvider>
   );

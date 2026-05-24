@@ -41,6 +41,10 @@ interface AppState {
   darkMode: boolean;
   toggleDarkMode: () => void;
 
+  // Low Performance Mode
+  lowPerfMode: boolean;
+  toggleLowPerfMode: () => void;
+
   // Edit
   editRecord: MassRecord | null;
   setEditRecord: (r: MassRecord | null) => void;
@@ -84,6 +88,14 @@ export const useAppStore = create<AppState>((set) => ({
       const next = !s.darkMode;
       localStorage.setItem("jingzong.darkMode", String(next));
       return { darkMode: next };
+    }),
+
+  lowPerfMode: localStorage.getItem("jingzong.lowPerfMode") === "true",
+  toggleLowPerfMode: () =>
+    set((s) => {
+      const next = !s.lowPerfMode;
+      localStorage.setItem("jingzong.lowPerfMode", String(next));
+      return { lowPerfMode: next };
     }),
 
   editRecord: null,
