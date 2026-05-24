@@ -1,4 +1,4 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+﻿*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: "Microsoft YaHei", "Microsoft YaHei UI", "PingFang SC", "Noto Sans SC", sans-serif;
@@ -7,12 +7,172 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ============================================================
+   Stitch Tactical Theme – 经侦大队深色战术风格
+   ============================================================ */
+:root {
+  --stitch-surface: #111316;
+  --stitch-surface-dim: #111316;
+  --stitch-surface-bright: #37393d;
+  --stitch-surface-container-lowest: #0c0e11;
+  --stitch-surface-container-low: #1a1c1f;
+  --stitch-surface-container: #1e2023;
+  --stitch-surface-container-high: #282a2d;
+  --stitch-surface-container-highest: #333538;
+  --stitch-on-surface: #e2e2e6;
+  --stitch-on-surface-variant: #c2c6d0;
+  --stitch-primary: #a3c9ff;
+  --stitch-primary-container: #003b6d;
+  --stitch-on-primary-container: #7da6df;
+  --stitch-secondary: #e9c349;
+  --stitch-tertiary: #00dbe7;
+  --stitch-outline: #8c919a;
+  --stitch-outline-variant: #42474f;
+  --stitch-surface-tint: #a3c9ff;
+  --stitch-background: #111316;
+  --stitch-on-background: #e2e2e6;
+  --stitch-error: #ffb4ab;
+}
+
+/* ---- Tactical grid background ---- */
+.tactical-grid-bg {
+  background-color: var(--stitch-surface);
+  background-image:
+    radial-gradient(rgba(0, 59, 109, 0.25) 1px, transparent 1px),
+    linear-gradient(to right, rgba(0, 59, 109, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 59, 109, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px, 128px 128px, 128px 128px;
+  animation: grid-pulse 8s ease-in-out infinite;
+}
+@keyframes grid-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* ---- Glass panel (tactical card) ---- */
+.glass-panel,
+.glass-panel-tactical {
+  background: rgba(28, 31, 38, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(163, 201, 255, 0.12);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-panel:hover {
+  border-color: rgba(163, 201, 255, 0.4);
+  box-shadow: 0 0 20px rgba(163, 201, 255, 0.1);
+}
+
+/* ---- Corner accent (cyber corners) ---- */
+.corner-accent {
+  position: relative;
+}
+.corner-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--stitch-tertiary);
+  border-left: 2px solid var(--stitch-tertiary);
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+.corner-accent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-bottom: 2px solid var(--stitch-tertiary);
+  border-right: 2px solid var(--stitch-tertiary);
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+.glass-panel:hover .corner-accent::before,
+.glass-panel:hover .corner-accent::after {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px var(--stitch-tertiary));
+  border-width: 3px;
+}
+
+/* ---- Shimmer button ---- */
+.shimmer-btn {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.08), transparent);
+  transform: rotate(45deg);
+  animation: shimmer 3s infinite;
+}
+
+/* ---- Scanline overlay ---- */
+.scanline-overlay {
+  width: 100%;
+  height: 120px;
+  z-index: 5;
+  background: linear-gradient(0deg, rgba(0, 219, 231, 0) 0%, rgba(0, 219, 231, 0.04) 50%, rgba(0, 219, 231, 0) 100%);
+  position: fixed;
+  top: -120px;
+  left: 0;
+  pointer-events: none;
+  animation: scanline 12s linear infinite;
+}
+@keyframes scanline {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(calc(100vh + 120px)); }
+}
+
+/* ---- Smoke/drift background for login ---- */
+.smoke-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120%;
+  height: 120%;
+  z-index: 0;
+  opacity: 0.35;
+  filter: blur(40px);
+  background: radial-gradient(circle, rgba(0, 59, 109, 0.3) 0%, transparent 70%);
+  animation: smoke-drift 20s ease-in-out infinite alternate;
+}
+@keyframes smoke-drift {
+  0% { transform: translate(-55%, -45%) scale(1); }
+  100% { transform: translate(-45%, -55%) scale(1.1); }
+}
+
+/* ---- Theme-dark overrides with Stitch ---- */
 .theme-dark body,
 .theme-dark {
-  background: #141414;
+  background: var(--stitch-background);
+  color: var(--stitch-on-surface);
 }
 .theme-dark .content-area {
-  background: #141414 !important;
+  background: var(--stitch-surface-container-low) !important;
+}
+.theme-dark ::selection {
+  background: rgba(163, 201, 255, 0.25);
+}
+.theme-dark * {
+  scrollbar-color: var(--stitch-outline-variant) transparent;
+}
+.theme-dark *::-webkit-scrollbar-thumb {
+  background: var(--stitch-outline-variant);
+}
+.theme-dark *::-webkit-scrollbar-thumb:hover {
+  background: var(--stitch-outline);
 }
 
 * {

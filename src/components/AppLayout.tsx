@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+﻿import { lazy, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dropdown, Modal, Switch } from "antd";
 import { Search, Landmark, User, KeyRound, LogOut } from "lucide-react";
@@ -57,13 +57,13 @@ export default function AppLayout() {
   const Page = PAGES[currentPage] || ModulePage;
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#F0F2F5' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5' }}>
       <motion.div
         initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         style={{
-          height: 54, background: '#0F3A5F',
+          height: 54, background: darkMode ? 'var(--stitch-primary-container)' : '#0F3A5F',
           display: 'flex', alignItems: 'center', padding: '0 20px',
           boxShadow: '0 2px 12px rgba(0,0,0,.2)', flexShrink: 0, zIndex: 200,
           position: 'relative', gap: 16,
@@ -136,7 +136,7 @@ export default function AppLayout() {
         <Sidebar />
         <div className="content-area" style={{
           flex: 1, overflow: 'auto', padding: 20,
-          background: '#F0F2F5',
+          background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5',
         }}>
           <AnimatePresence mode="wait">
             <motion.div
@@ -174,3 +174,8 @@ export default function AppLayout() {
     </div>
   );
 }
+
+
+
+
+
