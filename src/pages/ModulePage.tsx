@@ -311,9 +311,9 @@ export default function ModulePage() {
                   showToast(err.message || '生成报告失败', 'error');
                 }
               }}
-              style={{ background: '#0F766E', borderColor: '#0F766E' }}
+              style={{ background: '#7C3AED', borderColor: '#7C3AED' }}
             >
-              生成报告
+              资金分析报告
             </Button>
           )}
           <input
