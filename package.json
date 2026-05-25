@@ -12,6 +12,8 @@
     "prebuild": "node scripts/bump-version.js",
     "build": "vite build && node scripts/inline-html.js",
     "build:web": "vite build && node scripts/inline-html.js",
+    "package:web": "xcopy /E /I /H dist ..\\jingzong-网页版 >nul",
+    "dist:web": "npm run build:web && npm run package:web",
     "electron:dev": "concurrently \"vite --host\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "vite build && electron-builder",
     "electron:build:dir": "vite build && electron-builder --dir",

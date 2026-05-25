@@ -18,8 +18,12 @@ export default defineConfig({
     cssCodeSplit: false,
     rollupOptions: {
       output: {
-        inlineDynamicImports: true,
         manualChunks: undefined,
+      },
+    },
+    rolldownOptions: {
+      output: {
+        codeSplitting: false,
       },
     },
   },
