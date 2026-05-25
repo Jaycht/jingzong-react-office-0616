@@ -52,15 +52,22 @@ console.log(`✅ 已生成自包含 HTML：${outPath}`);
 // 4. 生成 启动.bat — 用 Edge/Chrome 的 --app 模式创建无边框窗口
 const batPath = resolve(distDir, '启动.bat');
 const batContent = `@echo off
-chcp 65001 >nul
 title 经侦大队工作记录管理系统
 
-REM 尝试 Edge（Windows 自带），失败则尝试 Chrome
-start msedge --app="file:///%~dp0standalone.html" --no-first-run
-if errorlevel 1 (
-  start chrome --app="file:///%~dp0standalone.html" --no-first-run
-)
-exit
+REM 尝试方式1：Edge App 模式（无边框窗口）
+start "" msedge --app="file:///%~dp0standalone.html" --no-first-run
+if not errorlevel 1 goto :eof
+
+REM 尝试方式2：Edge 协议处理（有边框但有独立窗口）
+start microsoft-edge:"file:///%~dp0standalone.html"
+if not errorlevel 1 goto :eof
+
+REM 尝试方式3：Chrome App 模式
+start "" chrome --app="file:///%~dp0standalone.html" --no-first-run
+if not errorlevel 1 goto :eof
+
+REM 最后尝试：默认浏览器直接打开
+start "" "%~dp0standalone.html"
 `;
 writeFileSync(batPath, batContent, 'utf-8');
 console.log(`✅ 已生成启动脚本：${batPath}`);
