@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronLeft, Database, Settings, ShieldCheck, Menu, User, KeyRound, LogOut, Search, Moon, Sun } from 'lucide-react';
-import { Modal, Switch } from "antd";
+import { ChevronDown, ChevronLeft, Database, Settings, ShieldCheck, User, KeyRound, LogOut, Search, Moon, Sun } from 'lucide-react';
+import { Modal } from "antd";
 import { useAppStore } from "../store/appStore"
 import { DEPARTMENTS, PLATFORM_NAV } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
@@ -26,10 +26,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
   const { customModules } = useCustomModules();
   const [expanded, setExpanded] = useState<string | null>('office');
 
-  // 自动折叠逻辑：窗口 < 900px 时自动折叠
-  const autoCollapse = useCallback(() => {
-    return window.innerWidth < 900;
-  }, []);
+  const autoCollapse = useCallback(() => window.innerWidth < 900, []);
 
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -39,19 +36,13 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
     return autoCollapse();
   });
 
-  // 窗口变化时自动切换
   useEffect(() => {
     const onResize = () => {
       const shouldCollapse = autoCollapse();
       setCollapsed((prev) => {
-        // 只有跨越阈值时才自动切换，不覆盖用户手动设置
         if (shouldCollapse && !prev) return true;
         if (!shouldCollapse && prev) {
-          // 恢复用户上次的手动设置
-          try {
-            const saved = localStorage.getItem("jingzong.sidebar.collapsed");
-            return saved === "true";
-          } catch { return false; }
+          try { const saved = localStorage.getItem("jingzong.sidebar.collapsed"); return saved === "true"; } catch { return false; }
         }
         return prev;
       });
@@ -81,8 +72,23 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
     }));
   }, [customModules]);
 
-  const toggleExpand = (id: string) => {
-    setExpanded((prev) => (prev === id ? null : id));
+  const toggleExpand = (id: string) => setExpanded((prev) => (prev === id ? null : id));
+
+  const handleLogout = () => {
+    Modal.confirm({
+      title: '确认退出登录？',
+      content: '退出后需要重新登录。',
+      okText: '退出',
+      cancelText: '取消',
+      onOk: () => {
+        try {
+          const raw = localStorage.getItem("jingzong.login.v1");
+          if (raw) { const saved = JSON.parse(raw); saved.autoLogin = false; localStorage.setItem("jingzong.login.v1", JSON.stringify(saved)); }
+        } catch {}
+        useAppStore.getState().setView("login");
+        useAppStore.getState().showToast("已退出登录", "info");
+      },
+    });
   };
 
   const renderPlatformItem = (item: typeof PLATFORM_NAV.top[number]) => {
@@ -96,25 +102,18 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         onClick={() => setCurrentPage(item.id)}
         style={{
           display: 'flex', alignItems: 'center', gap: 9,
-          padding: '13px 14px', cursor: 'pointer',
+          padding: '10px 14px', cursor: 'pointer',
           borderLeft: '3px solid',
           borderLeftColor: active ? '#7DD3FC' : 'transparent',
           background: active ? 'rgba(255,255,255,0.12)' : 'transparent',
         }}
       >
         <Icon size={15} color={active ? '#fff' : 'rgba(255,255,255,0.72)'} style={{ flexShrink: 0 }} />
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ fontSize: 13, color: active ? '#fff' : 'rgba(255,255,255,0.72)', flex: 1, whiteSpace: 'nowrap' }}
-            >
-              {item.label}
-            </motion.span>
-          )}
-        </AnimatePresence>
+        {!collapsed && (
+          <span style={{ fontSize: 13, color: active ? '#fff' : 'rgba(255,255,255,0.72)', flex: 1, whiteSpace: 'nowrap' }}>
+            {item.label}
+          </span>
+        )}
       </motion.div>
     );
   };
@@ -128,12 +127,16 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         overflow: 'hidden', flexShrink: 0, position: 'relative',
       }}
     >
+      {/* Electron 无边框窗口拖拽区域 */}
+      <div style={{ WebkitAppRegion: 'drag', height: 30, flexShrink: 0 }} />
+
+      {/* 折叠按钮 */}
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={toggleCollapsed}
         style={{
-          position: 'absolute', top: 14, right: -12, zIndex: 10,
+          position: 'absolute', top: 32, right: -12, zIndex: 10,
           width: 24, height: 24, borderRadius: '50%', background: '#fff',
           border: '1px solid #D8E1EA', cursor: 'pointer', display: 'flex',
           alignItems: 'center', justifyContent: 'center',
@@ -145,16 +148,16 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         </motion.div>
       </motion.button>
 
-      {/* Search bar */}
+      {/* 搜索栏 */}
       {!collapsed && (
-        <div style={{ padding: '10px 10px 4px', position: 'relative' }}>
-          <Search size={13} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: 18, top: 18, zIndex: 1 }} />
+        <div style={{ padding: '4px 10px 2px', position: 'relative' }}>
+          <Search size={13} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: 18, top: 12, zIndex: 1 }} />
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="搜索..."
             style={{
-              width: '100%', height: 30, paddingLeft: 28, paddingRight: 8,
+              width: '100%', height: 28, paddingLeft: 28, paddingRight: 8,
               borderRadius: 4, border: 'none', outline: 'none',
               background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12,
               fontFamily: 'inherit', boxSizing: 'border-box',
@@ -163,7 +166,41 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         </div>
       )}
 
-      <div className="sb" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 0' }}>
+      {/* 用户工具栏 — 紧凑图标行 */}
+      {!collapsed && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 2,
+          padding: '6px 10px 2px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          marginBottom: 2,
+        }}>
+          <div style={{
+            width: 22, height: 22, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.12)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0,
+          }}>
+            {(userName || '用')[0]}
+          </div>
+          <span style={{
+            fontSize: 11, color: 'rgba(255,255,255,0.6)', marginLeft: 4,
+            flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {userName || '用户'}
+          </span>
+          <ToolbarIcon icon={User} title="个人信息" onClick={onOpenProfile} />
+          <ToolbarIcon icon={KeyRound} title="修改密码" onClick={onOpenPassword} />
+          <ToolbarIcon icon={darkMode ? Sun : Moon} title={darkMode ? '浅色模式' : '深色模式'} onClick={toggleDarkMode} />
+          <ToolbarIcon
+            icon={() => <span style={{fontSize:11}}>{lowPerfMode ? '⚡' : '🐢'}</span>}
+            title={lowPerfMode ? '高性能模式' : '低性能模式'}
+            onClick={toggleLowPerfMode}
+          />
+          <ToolbarIcon icon={LogOut} title="退出登录" onClick={handleLogout} />
+        </div>
+      )}
+
+      {/* 侧边栏主导航区域 */}
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 2 }}>
         {PLATFORM_NAV.top.map(renderPlatformItem)}
 
         {departments.map((dept) => {
@@ -179,25 +216,18 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
                 onClick={() => toggleExpand(dept.id)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 9,
-                  padding: '13px 14px', cursor: 'pointer',
+                  padding: '10px 14px', cursor: 'pointer',
                   borderLeft: '3px solid',
                   borderLeftColor: childActive || isExpanded ? '#7DD3FC' : 'transparent',
                   background: childActive || isExpanded ? 'rgba(255,255,255,0.1)' : 'transparent',
                 }}
               >
                 <Icon size={15} color={childActive || isExpanded ? '#fff' : 'rgba(255,255,255,0.72)'} style={{ flexShrink: 0 }} />
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      style={{ fontSize: 13, color: childActive || isExpanded ? '#fff' : 'rgba(255,255,255,0.72)', flex: 1, whiteSpace: 'nowrap' }}
-                    >
-                      {dept.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                {!collapsed && (
+                  <span style={{ fontSize: 13, color: childActive || isExpanded ? '#fff' : 'rgba(255,255,255,0.72)', flex: 1, whiteSpace: 'nowrap' }}>
+                    {dept.label}
+                  </span>
+                )}
                 {!collapsed && (
                   <motion.div animate={{ rotate: isExpanded ? 0 : -90 }} style={{ flexShrink: 0 }}>
                     <ChevronDown size={13} color="rgba(255,255,255,0.5)" />
@@ -224,7 +254,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
                           onClick={() => setCurrentPage(module.id)}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 9,
-                            padding: '11px 14px 11px 42px',
+                            padding: '9px 14px 9px 42px',
                             cursor: 'pointer', position: 'relative',
                             background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
                           }}
@@ -269,75 +299,37 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         {renderPlatformItem({ id: 'version', label: '版权信息', icon: ShieldCheck })}
       </div>
 
-      {/* User section at bottom */}
-      <div style={{
-        borderTop: '1px solid rgba(255,255,255,0.08)', padding: collapsed ? '8px 0' : '8px 10px',
-        flexShrink: 0,
-      }}>
-        {!collapsed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 4px 8px', color: '#fff' }}>
-            <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600 }}>{(userName || '用')[0]}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName || '用户'}</div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{userRole}</div>
-            </div>
-          </div>
-        )}
-        <div style={{ display: 'flex', flexDirection: collapsed ? 'column' : 'row', gap: 2, justifyContent: collapsed ? 'center' : 'flex-start' }}>
-          <UserAction icon={User} label="个人" collapsed={collapsed} onClick={onOpenProfile} />
-          <UserAction icon={KeyRound} label="密码" collapsed={collapsed} onClick={onOpenPassword} />
-          {!collapsed && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 4, cursor: 'pointer', fontSize: 11, color: 'rgba(255,255,255,0.5)' }} onClick={toggleDarkMode}>
-                {darkMode ? <Sun size={12} /> : <Moon size={12} />}
-                <span>{darkMode ? '浅色' : '深色'}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 4, cursor: 'pointer', fontSize: 11, color: 'rgba(255,255,255,0.5)' }} onClick={toggleLowPerfMode}>
-                <span>{lowPerfMode ? '⚡' : '🐢'}</span>
-                <span>{lowPerfMode ? '高性能' : '低性能'}</span>
-              </div>
-            </>
-          )}
+      {/* 底部：仅保留版权年份小字 */}
+      {!collapsed && (
+        <div style={{
+          padding: '4px 14px 8px', flexShrink: 0,
+          fontSize: 10, color: 'rgba(255,255,255,0.25)',
+          textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)',
+          fontFamily: "'JetBrains Mono',monospace",
+        }}>
+          © 2026
         </div>
-        <div style={{ padding: collapsed ? '4px 0' : '2px 4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: 6, color: 'rgba(255,255,255,0.4)', fontSize: 11 }}
-          onClick={() => {
-            Modal.confirm({
-              title: '确认退出登录？',
-              content: '退出后需要重新登录。',
-              okText: '退出',
-              cancelText: '取消',
-              onOk: () => {
-                try {
-                  const raw = localStorage.getItem("jingzong.login.v1");
-                  if (raw) { const saved = JSON.parse(raw); saved.autoLogin = false; localStorage.setItem("jingzong.login.v1", JSON.stringify(saved)); }
-                } catch {}
-                useAppStore.getState().setView("login");
-                useAppStore.getState().showToast("已退出登录", "info");
-              },
-            });
-          }}
-        >
-          <LogOut size={12} />
-          {!collapsed && <span>退出登录</span>}
-        </div>
-      </div>
+      )}
     </motion.div>
   );
 }
 
-function UserAction({ icon: Icon, label, collapsed, onClick }: { icon: any; label: string; collapsed: boolean; onClick: () => void }) {
+/** 紧凑工具栏图标按钮 */
+function ToolbarIcon({ icon: Icon, title, onClick }: { icon: any; title: string; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
+      title={title}
       style={{
-        display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
-        gap: 4, padding: collapsed ? '6px 0' : '4px 6px', borderRadius: 4,
-        cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 11,
-        flex: collapsed ? 0 : 1,
+        width: 24, height: 24, borderRadius: 4,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', color: 'rgba(255,255,255,0.45)', flexShrink: 0,
+        fontSize: 12,
       }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLDivElement).style.color = '#fff'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; (e.currentTarget as HTMLDivElement).style.color = 'rgba(255,255,255,0.45)'; }}
     >
-      <Icon size={12} />
-      {!collapsed && <span>{label}</span>}
+      {typeof Icon === 'function' ? <Icon size={13} /> : Icon}
     </div>
   );
 }
@@ -366,7 +358,7 @@ function NavGroup({ id, label, icon: Icon, expanded, collapsed, currentPage, ite
         onClick={() => onToggle(id)}
         style={{
           display: 'flex', alignItems: 'center', gap: 9,
-          padding: '13px 14px', cursor: 'pointer',
+          padding: '10px 14px', cursor: 'pointer',
           borderLeft: '3px solid',
           borderLeftColor: childActive || isExpanded ? '#7DD3FC' : 'transparent',
           background: childActive || isExpanded ? 'rgba(255,255,255,0.1)' : 'transparent',
@@ -392,7 +384,7 @@ function NavGroup({ id, label, icon: Icon, expanded, collapsed, currentPage, ite
                   key={item.id}
                   whileHover={{ background: 'rgba(255,255,255,0.07)' }}
                   onClick={() => onNavigate(item.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px 11px 42px', cursor: 'pointer', background: active ? 'rgba(255,255,255,0.1)' : 'transparent' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px 9px 42px', cursor: 'pointer', background: active ? 'rgba(255,255,255,0.1)' : 'transparent' }}
                 >
                   <ChildIcon size={13} color={active ? '#fff' : 'rgba(255,255,255,0.6)'} />
                   <span style={{ fontSize: 12.5, color: active ? '#fff' : 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' }}>{item.label}</span>
