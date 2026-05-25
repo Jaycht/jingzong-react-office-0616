@@ -55,19 +55,19 @@ const batContent = `@echo off
 chcp 65001 >nul
 title Jingzong Work Log System
 
-set "HTML=file:///%~dp0standalone.html"
+set "FILE=%~dp0standalone.html"
 
 REM --- Chrome install paths (user install first) ---
 set "CHROME1=%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe"
 set "CHROME2=%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe"
 set "CHROME3=%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe"
 
-if exist "%CHROME1%" start "" "%CHROME1%" --app="%HTML%" --no-first-run & exit
-if exist "%CHROME2%" start "" "%CHROME2%" --app="%HTML%" --no-first-run & exit
-if exist "%CHROME3%" start "" "%CHROME3%" --app="%HTML%" --no-first-run & exit
+if exist "%CHROME1%" start "" "%CHROME1%" --app="%FILE%" --no-first-run & exit
+if exist "%CHROME2%" start "" "%CHROME2%" --app="%FILE%" --no-first-run & exit
+if exist "%CHROME3%" start "" "%CHROME3%" --app="%FILE%" --no-first-run & exit
 
 REM --- Fallback: chrome in PATH ---
-start "" chrome --app="%HTML%" --no-first-run
+start "" chrome --app="%FILE%" --no-first-run
 exit
 `;
 writeFileSync(batPath, batContent, 'utf-8');
