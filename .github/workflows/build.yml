@@ -22,7 +22,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Electron-installer
-          path: release/*.exe
+          path: dist/*.exe
 
   build-web:
     name: Web Portable
