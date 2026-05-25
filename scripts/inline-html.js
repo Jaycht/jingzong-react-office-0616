@@ -59,22 +59,25 @@ console.log(`✅ 已生成自包含 HTML：${outPath}`);
 // 4. 生成 启动.bat — 用 Edge/Chrome 的 --app 模式创建无边框窗口
 const batPath = resolve(distDir, '启动.bat');
 const batContent = `@echo off
-chcp 65001 >nul
 title Jingzong Work Log System
 
 set "FILE=%~dp0standalone.html"
 
 REM --- Chrome install paths (user install first) ---
 set "CHROME1=%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe"
-set "CHROME2=%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe"
-set "CHROME3=%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe"
 
-if exist "%CHROME1%" start "" "%CHROME1%" --new-window --app="%FILE%" --no-first-run & exit
-if exist "%CHROME2%" start "" "%CHROME2%" --new-window --app="%FILE%" --no-first-run & exit
-if exist "%CHROME3%" start "" "%CHROME3%" --new-window --app="%FILE%" --no-first-run & exit
+if not exist "%CHROME1%" (
+    echo Chrome not found
+    pause
+    exit
+)
 
-REM --- Fallback: chrome in PATH ---
-start "" chrome --new-window --app="%FILE%" --no-first-run
+REM Kill existing Chrome to force --app mode
+taskkill /f /im chrome.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
+
+REM Launch in --app frameless mode
+start "" "%CHROME1%" --new-window --app="%FILE%" --no-first-run
 exit
 `;
 writeFileSync(batPath, batContent, 'utf-8');
