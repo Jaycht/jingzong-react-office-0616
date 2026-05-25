@@ -30,7 +30,7 @@ html = html.replace(
   }
 );
 
-// 2. 读取 JS 文件内容，替换 import.meta
+// 2. 读取 JS 文件内容，替换 import.meta，并移到 </body> 前执行
 let jsContent = '';
 html = html.replace(
   /<script type="module" crossorigin src="\.\/assets\/([^"]+)"><\/script>/g,
@@ -40,9 +40,16 @@ html = html.replace(
     jsContent = readFileSync(jsPath, 'utf-8');
     jsContent = jsContent
       .replace(/\bimport\.meta\b/g, '({url:globalThis.location&&globalThis.location.href||""})');
-    return `<script>\n${jsContent}\n</script>`;
+    return ''; // 从 head 中移除
   }
 );
+// 在最后一个 </body> 前插入脚本（确保 DOM 已解析完毕，且不会误替换 JS 中的 </body> 字符串）
+if (jsContent) {
+  const bodyPos = html.lastIndexOf('</body>');
+  if (bodyPos !== -1) {
+    html = html.slice(0, bodyPos) + `<script>\n${jsContent}\n</script>\n</body>` + html.slice(bodyPos + 7);
+  }
+}
 
 // 3. 写入 standalone.html
 const outPath = resolve(distDir, 'standalone.html');
