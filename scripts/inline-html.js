@@ -52,26 +52,21 @@ console.log(`✅ 已生成自包含 HTML：${outPath}`);
 // 4. 生成 启动.bat — 用 Edge/Chrome 的 --app 模式创建无边框窗口
 const batPath = resolve(distDir, '启动.bat');
 const batContent = `@echo off
-title 经侦大队工作记录管理系统
+chcp 65001 >nul
+title Jingzong Work Log System
+
 set "HTML=file:///%~dp0standalone.html"
 
-REM 方式1：Chrome App 模式（无边框窗口）
-where chrome >nul 2>&1
-if %errorlevel%==0 goto :launch_chrome
+REM --- Chrome install paths (user install first) ---
+set "CHROME1=%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe"
+set "CHROME2=%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe"
+set "CHROME3=%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe"
 
-REM Chrome 不在 PATH 中，检查常见安装位置
-for %%p in (
-  "%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe"
-  "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe"
-  "%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe"
-) do (
-  if exist %%p (
-    start "" %%p --app="%HTML%" --no-first-run
-    exit
-  )
-)
+if exist "%CHROME1%" start "" "%CHROME1%" --app="%HTML%" --no-first-run & exit
+if exist "%CHROME2%" start "" "%CHROME2%" --app="%HTML%" --no-first-run & exit
+if exist "%CHROME3%" start "" "%CHROME3%" --app="%HTML%" --no-first-run & exit
 
-:launch_chrome
+REM --- Fallback: chrome in PATH ---
 start "" chrome --app="%HTML%" --no-first-run
 exit
 `;
