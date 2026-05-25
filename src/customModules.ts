@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DEPARTMENTS, getBaseModules, type FieldDefinition, type WorkModule } from './moduleConfig';
+import { localStorageAdapter } from './store/adapter';
 
 const STORAGE_KEY = 'jingzong.customModules.v1';
 
@@ -10,18 +11,11 @@ const defaultFields: FieldDefinition[] = [
 ];
 
 export function loadCustomModules(): WorkModule[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return localStorageAdapter.getItem<WorkModule[]>(STORAGE_KEY, []);
 }
 
 function saveCustomModules(modules: WorkModule[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(modules));
+  localStorageAdapter.setItem(STORAGE_KEY, modules);
 }
 
 function notifyCustomModulesUpdated() {

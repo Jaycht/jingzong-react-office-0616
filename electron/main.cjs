@@ -2,20 +2,22 @@
 const path = require("path");
 
 const isDev = !app.isPackaged;
-let appWindow = null;
+let loginWindow = null;
+let mainWindow = null;
 
-// 移除默认菜单栏
+// 移除默认菜单栏（全局生效）
 Menu.setApplicationMenu(null);
 
-function createWindow() {
-  appWindow = new BrowserWindow({
+function createLoginWindow() {
+  loginWindow = new BrowserWindow({
     width: 660,
     height: 720,
     resizable: true,
-    frame: false,           // 无边框窗口（无标题栏、无菜单栏）
+    frame: false,           // 登录页：完全无边框
     backgroundColor: "#0B0F1A",
     icon: path.join(__dirname, "..", "app.ico"),
     show: false,
+    title: "经侦大队工作记录管理系统",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -23,38 +25,75 @@ function createWindow() {
     },
   });
 
-  appWindow.center();
+  loginWindow.center();
 
   if (isDev) {
-    appWindow.loadURL("http://localhost:5173/");
+    loginWindow.loadURL("http://localhost:5173/");
   } else {
-    appWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+    loginWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
 
-  appWindow.once("ready-to-show", () => {
-    appWindow.show();
+  loginWindow.once("ready-to-show", () => {
+    loginWindow.show();
   });
 
-  appWindow.on("closed", () => {
-    appWindow = null;
+  loginWindow.on("closed", () => {
+    loginWindow = null;
   });
 }
 
-// 登录成功后：放大窗口（无边框无菜单栏）
+function createMainWindow() {
+  const hash = "#/app/dashboard";
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1100,
+    minHeight: 700,
+    resizable: true,
+    frame: true,                // 登录后窗口：有标题栏
+    backgroundColor: "#0B0F1A",
+    icon: path.join(__dirname, "..", "app.ico"),
+    show: false,
+    title: "经侦大队工作记录管理系统",
+    webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  mainWindow.center();
+
+  if (isDev) {
+    mainWindow.loadURL("http://localhost:5173/#/app/dashboard");
+  } else {
+    mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"), { hash: "/app/dashboard" });
+  }
+
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.show();
+  });
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+}
+
+// 登录成功后：关闭登录窗口，打开主窗口
 ipcMain.on("switch-to-main", () => {
-  if (!appWindow) return;
-  appWindow.setMinimumSize(1100, 700);
-  appWindow.setSize(1400, 900);
-  appWindow.center();
-  appWindow.setResizable(true);
+  if (loginWindow) {
+    loginWindow.close();
+    loginWindow = null;
+  }
+  createMainWindow();
 });
 
 ipcMain.on("close-login", () => {
-  if (appWindow) appWindow.close();
+  if (loginWindow) loginWindow.close();
 });
 
 app.whenReady().then(() => {
-  createWindow();
+  createLoginWindow();
 });
 
 app.on("window-all-closed", () => {
@@ -62,5 +101,5 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  if (BrowserWindow.getAllWindows().length === 0) createLoginWindow();
 });

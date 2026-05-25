@@ -4,3 +4,10 @@ release/
 *.exe
 *.zip
 *.7z
+.restore-point
+dev_error.txt
+dev_output.txt
+_extract_types.cjs
+_fix*.cjs
+_fix*.b64
+*.log

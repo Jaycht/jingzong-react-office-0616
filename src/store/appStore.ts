@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { PageId, Toast, ToastType } from "../types";
 import type { MassRecord } from "./massStore";
+import { localStorageAdapter } from "./adapter";
 
 let toastId = 0;
 
@@ -82,19 +83,19 @@ export const useAppStore = create<AppState>((set) => ({
   searchQuery: "",
   setSearchQuery: (searchQuery) => set({ searchQuery }),
 
-  darkMode: localStorage.getItem("jingzong.darkMode") === "true",
+  darkMode: localStorageAdapter.getItem("jingzong.darkMode", false),
   toggleDarkMode: () =>
     set((s) => {
       const next = !s.darkMode;
-      localStorage.setItem("jingzong.darkMode", String(next));
+      localStorageAdapter.setItem("jingzong.darkMode", next);
       return { darkMode: next };
     }),
 
-  lowPerfMode: localStorage.getItem("jingzong.lowPerfMode") !== "false",
+  lowPerfMode: localStorageAdapter.getItem("jingzong.lowPerfMode", false),
   toggleLowPerfMode: () =>
     set((s) => {
       const next = !s.lowPerfMode;
-      localStorage.setItem("jingzong.lowPerfMode", String(next));
+      localStorageAdapter.setItem("jingzong.lowPerfMode", next);
       return { lowPerfMode: next };
     }),
 

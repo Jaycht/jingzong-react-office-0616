@@ -1210,8 +1210,6 @@ export const PLATFORM_NAV = {
     { id: 'importExport', label: '导入导出', icon: TableProperties },
     { id: 'attachments', label: '附件档案', icon: FileArchive },
     { id: 'operationLog', label: '操作日志', icon: ScrollText },
-  ],
-  system: [
     { id: 'settings', label: '模板字段', icon: FileCog },
     { id: 'backup', label: '备份恢复', icon: DatabaseBackup },
   ],

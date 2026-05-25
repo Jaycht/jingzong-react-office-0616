@@ -81,14 +81,22 @@ function calcKpi(records: any[]) {
   ];
 }
 
-function monthlyTrend(records: any[]) {
+// 从 6 个指定模块中统计案件类型分布
+// 从 6 个模块的 caseType 字段中统计案件类型（拉下菜单中的值）
+function caseTypeStats(records: any[]) {
+  const targets = new Set([
+    'mass-statistics', 'legal-report-case', 'legal-case-ledger',
+    'squad-case', 'squad-daily', 'evidence-request'
+  ]);
   const map: Record<string, number> = {};
   for (const r of records) {
-    const m = r.createdAt?.slice(0, 7);
-    if (m) map[m] = (map[m] || 0) + 1;
+    if (!r.data || !targets.has(r.moduleId)) continue;
+    const val = r.data.caseType;
+    if (typeof val === "string" && val.trim()) {
+      map[val.trim()] = (map[val.trim()] || 0) + 1;
+    }
   }
-  const sorted = Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]));
-  return { months: sorted.map(([m]) => m), counts: sorted.map(([, c]) => c) };
+  return Object.entries(map).sort((a, b) => b[1] - a[1]);
 }
 
 function moduleRanking(records: any[]) {
@@ -142,44 +150,9 @@ export default function Dashboard() {
 
   /* ------ ECharts options ------ */
 
-  const trend = useMemo(() => monthlyTrend(records), [records]);
+  const caseTypes = useMemo(() => caseTypeStats(records), [records]);
 
-  const trendOpt = useMemo(() => ({
-    animation: !lowPerfMode,
-    tooltip: {
-      trigger: "axis" as const,
-      backgroundColor: darkMode ? "rgba(28,31,38,0.9)" : "#fff",
-      borderColor: darkMode ? "rgba(163,201,255,0.15)" : "#E5E7EB",
-      textStyle: { fontSize: 11, color: darkMode ? "#e2e2e6" : "#333" },
-    },
-    grid: { top: 16, bottom: 16, left: 36, right: 8 },
-    xAxis: {
-      type: "category" as const, data: trend.months,
-      axisLabel: { fontSize: 10, color: darkMode ? "#8c919a" : "#9CA3AF" },
-      axisLine: { lineStyle: { color: darkMode ? "rgba(66,71,79,0.5)" : "#E5E7EB" } },
-      axisTick: { show: false },
-    },
-    yAxis: {
-      type: "value" as const,
-      splitLine: { lineStyle: { color: darkMode ? "rgba(66,71,79,0.3)" : "#F3F4F6" } },
-      axisLabel: { fontSize: 10, color: darkMode ? "#8c919a" : "#9CA3AF" },
-    },
-    series: [{
-      type: "line", smooth: true, data: trend.counts,
-      areaStyle: {
-        color: {
-          type: "linear", x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [
-            { offset: 0, color: darkMode ? "rgba(163,201,255,0.2)" : "rgba(46,125,202,0.25)" },
-            { offset: 1, color: darkMode ? "rgba(163,201,255,0.02)" : "rgba(46,125,202,0.02)" },
-          ],
-        },
-      },
-      lineStyle: { color: darkMode ? "#a3c9ff" : "#2E7DCA", width: 2 },
-      itemStyle: { color: darkMode ? "#a3c9ff" : "#2E7DCA" },
-      symbol: "circle" as const, symbolSize: 5,
-    }],
-  }), [trend, darkMode]);
+  
 
   const ranking = useMemo(() => moduleRanking(records), [records]);
 
@@ -328,9 +301,40 @@ export default function Dashboard() {
 
       {/* ============= Charts Row (1:1 grid) ============= */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <PanelShell icon={<TrendingUp size={15} color={darkMode ? "#a3c9ff" : "#2E7DCA"}/>} title="月度记录趋势" delay={0.1}>
+        <PanelShell icon={<TrendingUp size={15} color={darkMode ? "#a3c9ff" : "#2E7DCA"}/>} title="案件类型分布" delay={0.1}>
           <div style={{ padding: "4px 0" }}>
-            <ReactECharts option={trendOpt} style={{ height: 220 }} />
+    <div style={{ padding: '4px 0' }}>
+            {caseTypes.length > 0 ? (
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 160, padding: '10px 4px', overflowX: 'auto' }}>
+                {caseTypes.slice(0, 5).map(([type, count], i) => {
+                  const maxCount = Math.max(...caseTypes.map(([, c]) => c), 1);
+                  const pct = (count / maxCount) * 100;
+                  const color = '#3B82F6';
+                  return (
+                    <div key={type} style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 48 }}>
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: pct + '%', opacity: 1 }}
+                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: i * 0.05 }}
+                        style={{
+                          width: 32, minHeight: 6, borderRadius: '4px 4px 2px 2px',
+                          background: 'linear-gradient(180deg, rgba(59,130,246,0.7), rgba(59,130,246,0.15))',
+                          boxShadow: '0 0 8px rgba(59,130,246,0.3)',
+                          border: '1px solid rgba(59,130,246,0.2)',
+                          position: 'relative',
+                        }}
+                      >
+                        <span style={{ position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)', fontSize: 10, fontWeight: 600, color: '#3B82F6', whiteSpace: 'nowrap', textShadow: 'none' }}>{count}</span>
+                      </motion.div>
+                      <span style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', lineHeight: 1.2, maxWidth: 48, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{type.length > 6 ? type.slice(0, 6) + '..' : type}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无案件类型数据</div>
+            )}
+          </div>
           </div>
         </PanelShell>
         <PanelShell icon={<Activity size={15} color={darkMode ? "#00dbe7" : "#38A169"}/>} title="模块活跃排行" delay={0.14}>

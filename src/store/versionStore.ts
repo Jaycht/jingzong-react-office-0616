@@ -4,6 +4,7 @@
  */
 
 import { APP_VERSION, VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, CHANGELOG } from '../version';
+import { localStorageAdapter } from './adapter';
 
 const STORAGE_KEY = 'jingzong.version.v1';
 
@@ -26,46 +27,32 @@ const DEFAULT_VERSION: VersionInfo = {
 };
 
 function loadVersion(): VersionInfo {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      // 首次使用，写入默认版本
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_VERSION));
-      return DEFAULT_VERSION;
-    }
-    const parsed = JSON.parse(raw);
+  const parsed = localStorageAdapter.getItem<VersionInfo>(STORAGE_KEY, DEFAULT_VERSION);
 
-    // ===== 版本号自动迁移 =====
-    // 如果 localStorage 中的版本号与源码版本号不一致，说明代码已更新
-    if (parsed.version !== APP_VERSION) {
-      // 保留旧 changelog
-      const oldChangelog: string[] = parsed.changelog || [];
-      // 追加 CHANGELOG 中尚未记录的条目（排除旧版本已经有的）
-      const existingEntries = new Set(oldChangelog);
-      const newEntries = CHANGELOG.filter((entry) => !existingEntries.has(entry));
-      if (newEntries.length > 0) {
-        oldChangelog.push(...newEntries);
-      } else {
-        // 如果没有新条目，加一条通用迁移记录
-        oldChangelog.push(`自动升级至 ${APP_VERSION}`);
-      }
-      parsed.version = APP_VERSION;
-      parsed.major = VERSION_MAJOR;
-      parsed.minor = VERSION_MINOR;
-      parsed.patch = VERSION_PATCH;
-      parsed.updatedAt = new Date().toISOString().slice(0, 10);
-      parsed.changelog = oldChangelog;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+  // 如果 localStorage 中的版本号与源码版本号不一致，说明代码已更新
+  if (parsed.version !== APP_VERSION) {
+    const oldChangelog: string[] = parsed.changelog || [];
+    const existingEntries = new Set(oldChangelog);
+    const newEntries = CHANGELOG.filter((entry) => !existingEntries.has(entry));
+    if (newEntries.length > 0) {
+      oldChangelog.push(...newEntries);
+    } else {
+      oldChangelog.push(`自动升级至${APP_VERSION}`);
     }
-
-    return parsed;
-  } catch {
-    return DEFAULT_VERSION;
+    parsed.version = APP_VERSION;
+    parsed.major = VERSION_MAJOR;
+    parsed.minor = VERSION_MINOR;
+    parsed.patch = VERSION_PATCH;
+    parsed.updatedAt = new Date().toISOString().slice(0, 10);
+    parsed.changelog = oldChangelog;
+    localStorageAdapter.setItem(STORAGE_KEY, parsed);
   }
+
+  return parsed;
 }
 
 function saveVersion(v: VersionInfo): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
+  localStorageAdapter.setItem(STORAGE_KEY, v);
 }
 
 let _versionCache: VersionInfo | null = null;

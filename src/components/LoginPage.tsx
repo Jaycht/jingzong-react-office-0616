@@ -103,9 +103,9 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
 
   /* ---- 低性能模式：简化所有特效 ---- */
   const bgStyle = lowPerfMode
-    ? { background: "#111316" }
+    ? { backgroundColor: "#111316" }
     : {
-        background: "#111316",
+        backgroundColor: "#111316",
         backgroundImage: [
           "radial-gradient(rgba(0, 59, 109, 0.25) 1px, transparent 1px)",
           "linear-gradient(to right, rgba(0, 59, 109, 0.06) 1px, transparent 1px)",
@@ -137,8 +137,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         <section style={{
           width: "100%",
           display: "grid",
-          gridTemplateColumns: "minmax(380px, 440px) minmax(160px, 1fr) minmax(300px, 1fr)",
-          gap: "clamp(16px, 3vw, 40px)",
+          gridTemplateColumns: lowPerfMode ? "minmax(380px, 440px) minmax(200px, 1fr)" : "minmax(380px, 440px) minmax(160px, 1fr) minmax(300px, 1fr)",          gap: lowPerfMode ? "clamp(12px, 2vw, 24px)" : "clamp(16px, 3vw, 40px)",
           alignItems: "center",
           marginBottom: "clamp(24px, 5vw, 48px)",
         }}>
@@ -307,11 +306,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           )}
 
           {/* ===== 右列：Logo + 实时时钟面板 ===== */}
-          {!lowPerfMode && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.7 }}
+          
+            <div
               style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}
             >
               {/* 大Logo */}
@@ -344,8 +340,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                   系统运行中
                 </div>
               </motion.div>
-            </motion.div>
-          )}
+            </div>
         </section>
 
         {/* ===== 底部三张特性卡片 ===== */}
@@ -383,7 +378,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           padding: "clamp(8px, 1.5vw, 16px) 0 0", marginTop: "clamp(12px, 2vw, 24px)",
         }}>
           <span style={{ fontSize: "clamp(10px, 1vw, 12px)", color: "rgba(226,226,230,0.35)", fontFamily: "'JetBrains Mono',monospace" }}>
-            © 2026 陈洪涛 — Economic Investigation Work Log Registration System
+            © 2026 陈洪涛 — 经侦大队工作记录管理系统 V2.5.20
           </span>
           <span style={{ fontSize: "clamp(10px, 1vw, 12px)", color: "rgba(226,226,230,0.35)", fontFamily: "'JetBrains Mono',monospace" }}>
             {now.getFullYear()}-{String(now.getMonth() + 1).padStart(2, "0")}-{String(now.getDate()).padStart(2, "0")} {String(now.getHours()).padStart(2, "0")}:{String(now.getMinutes()).padStart(2, "0")}:{String(now.getSeconds()).padStart(2, "0")}

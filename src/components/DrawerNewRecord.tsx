@@ -1,4 +1,4 @@
-import { Component, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   AutoComplete, Button, DatePicker, Divider, Form, Input, InputNumber,
@@ -11,49 +11,14 @@ import { useUnsavedChanges } from '../utils/useUnsavedChanges';
 import { useAppStore } from '../store/appStore';
 import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
-import { saveMassRecord, updateMassRecord, getClueProjectNames, getLegalReportMatters, getEvidenceClueNames } from '../store/massStore';
-import { getCases } from '../store/caseStore';
-
-// 简单错误边界，防止整个页面白屏
-class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: any }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error: any, info: any) {
-    console.error('[DrawerNewRecord ErrorBoundary]', error, info);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <Modal
-          open
-          width={500}
-          title="表单渲染出错"
-          footer={
-            <Button type="primary" onClick={() => this.setState({ hasError: false, error: null })}>
-              关闭
-            </Button>
-          }
-          closable
-          maskClosable
-          onCancel={() => this.setState({ hasError: false, error: null })}
-        >
-          <div style={{ padding: 20, textAlign: 'center', color: '#DC2626' }}>
-            <div style={{ fontSize: 14, marginBottom: 8 }}>表单组件渲染异常</div>
-            <div style={{ fontSize: 12, color: '#6B7280' }}>
-              请在控制台查看详细错误，或点击关闭后重新打开
-            </div>
-          </div>
-        </Modal>
-      );
-    }
-    return this.props.children;
-  }
-}
+import { saveMassRecord, updateMassRecord } from '../store/massStore';
+import ErrorBoundary from './ErrorBoundary';
+import {
+  CaseNameAutoComplete, CaseNameMatchClue, CaseNameMatchReport,
+  CaseNameMatchSquad, CaseNoMatchSquad,
+  MultiPersonField, PersistedSelect,
+} from './SharedFormFields';
+import { saveAttachment } from '../store/attachmentStore';
 
 interface Props { onClose: () => void; editRecord?: import('../store/massStore').MassRecord | null; }
 
@@ -570,7 +535,6 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
           beforeUpload={async (file) => {
             // 保存到 IndexedDB
             try {
-              const { saveAttachment } = await import('../store/attachmentStore');
               const recordId = `pending-${Date.now()}`;
               await saveAttachment(recordId, moduleId, field.id, file);
               console.log(`[attachment] 已保存: ${file.name}`);
@@ -589,22 +553,36 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
     );
   }
 
-  // 多人输入字段（可添加多条记录）
-  if (['inquiryRecord', 'interrogationRecord', 'reception', 'evidenceObtained', 'fundFlowAnalysis', 'documentPreparation', 'coerciveMeasuresResult', 'closedClues', 'clueCheck', 'legalCoordination', 'stabilityWork', 'specialAction', 'publicityWork', 'otherWork', 'seizedProperty', 'seizedVehicle', 'seizedEquity', 'otherAssets', 'companyAccount', 'bankAccount', 'personalBank', 'personalBalance'].includes(field.id)) {
+  // 多人输入字段（对应 moduleConfig 中 squad-daily 模块的特定字段）
+  // 这些字段在设计上允许多个姓名/值，以"、"分隔存储
+  const MULTI_PERSON_FIELDS = new Set([
+    'inquiryRecord', 'interrogationRecord', 'reception',
+    'evidenceObtained', 'fundFlowAnalysis', 'documentPreparation',
+    'coerciveMeasuresResult', 'closedClues', 'clueCheck',
+    'legalCoordination', 'stabilityWork', 'specialAction',
+    'publicityWork', 'otherWork', 'seizedProperty', 'seizedVehicle',
+    'seizedEquity', 'otherAssets', 'companyAccount', 'bankAccount',
+    'personalBank', 'personalBalance',
+  ]);
+  if (MULTI_PERSON_FIELDS.has(field.id)) {
     return <MultiPersonField field={field} />;
   }
 
-  // 案件编号字段统一使用格式提示
-  // 冻结解冻字段特殊提示
-  const customPlaceholder = field.id === 'caseNo'
-    ? 'A3703231200002026******'
-    : moduleId === 'evidence-freeze' && field.id === 'suspect'
-      ? '批量冻结可填写：***等**人'
-      : moduleId === 'evidence-freeze' && field.id === 'bankAccount'
-        ? '批量冻结可填写：***等**个账号，详见附件'
-        : moduleId === 'evidence-report' && field.id === 'investigateAccount'
-          ? '***等***个'
-          : `请输入${field.label}`;
+  // 特定字段的自定义 placeholder 提示
+  const PLACEHOLDER_MAP: Record<string, Record<string, string>> = {
+    caseNo: { _: 'A3703231200002026******' },
+    'evidence-freeze': {
+      suspect: '批量冻结可填写：***等**人',
+      bankAccount: '批量冻结可填写：***等**个账号，详见附件',
+    },
+    'evidence-report': {
+      investigateAccount: '***等***个',
+    },
+  };
+  const customPlaceholder = PLACEHOLDER_MAP[field.id]?.[moduleId]
+    || PLACEHOLDER_MAP[field.id]?.['_']
+    || PLACEHOLDER_MAP[moduleId]?.[field.id]
+    || `请输入${field.label}`;
   return (
     <Form.Item name={name} label={field.label} rules={rules}>
       <Input placeholder={customPlaceholder} />
@@ -612,313 +590,4 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
   );
 }
 
-/* ===================== 涉众数据统计 - 案件名称自动匹配 ===================== */
-
-function CaseNameAutoComplete({ field, subName }: { field: FieldDefinition; subName?: number }) {
-  const [open, setOpen] = useState(false);
-  const projectNames = useMemo(() => getClueProjectNames(), []);
-  const options = useMemo(() =>
-    projectNames.map((name) => ({ value: name, label: name })),
-    [projectNames],
-  );
-  const rules = field.required
-    ? [{ required: true, message: `请填写${field.label}` }]
-    : undefined;
-  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
-
-  return (
-    <Form.Item name={fieldName} label={field.label} rules={rules}>
-      <AutoComplete
-        open={open}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        options={options}
-        placeholder="请输入案件名称，可匹配涉众项目"
-        filterOption={(inputValue, option) =>
-          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-        }
-        style={{ width: '100%' }}
-      />
-    </Form.Item>
-  );
-}
-
-/* ===================== 法制室·案件总台账 - 匹配接报案事项 ===================== */
-
-function CaseNameMatchReport({ field, subName }: { field: FieldDefinition; subName?: number }) {
-  const [open, setOpen] = useState(false);
-  const matters = useMemo(() => getLegalReportMatters(), []);
-  const options = useMemo(() =>
-    matters.map((m) => ({ value: m, label: m })),
-    [matters],
-  );
-  const rules = field.required
-    ? [{ required: true, message: `请填写${field.label}` }]
-    : undefined;
-  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
-
-  return (
-    <Form.Item name={fieldName} label={field.label} rules={rules}>
-      <AutoComplete
-        open={open}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        options={options}
-        placeholder="请输入案件名称，可匹配接报事项"
-        filterOption={(inputValue, option) =>
-          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-        }
-        style={{ width: '100%' }}
-      />
-    </Form.Item>
-  );
-}
-
-/* ===================== 调证登记 - 匹配线索名称 ===================== */
-
-function CaseNameMatchClue({ field, subName }: { field: FieldDefinition; subName?: number }) {
-  const [open, setOpen] = useState(false);
-  const clueNames = useMemo(() => getEvidenceClueNames(), []);
-  const options = useMemo(() =>
-    clueNames.map((n) => ({ value: n, label: n })),
-    [clueNames],
-  );
-  const rules = field.required
-    ? [{ required: true, message: `请填写${field.label}` }]
-    : undefined;
-  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
-
-  return (
-    <Form.Item name={fieldName} label={field.label} rules={rules}>
-      <AutoComplete
-        open={open}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        options={options}
-        placeholder="请输入案件名称，可匹配线索登记中的交办线索名称"
-        filterOption={(inputValue, option) =>
-          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-        }
-        style={{ width: '100%' }}
-      />
-    </Form.Item>
-  );
-}
-
-/* ===================== 多人输入 ===================== */
-
-/** 统一宽度的多人输入控件，点击+增加输入框 */
-/** 姓名类字段(询问笔录/讯问笔录/接待报案/信访人)用compact横向排列；其余字段纵向添加 */
-const NAME_FIELDS = ['inquiryRecord', 'interrogationRecord', 'reception'];
-
-function MultiPersonInput({ value, onChange, compact }: { value?: string; onChange?: (val: string) => void; compact?: boolean }) {
-  const [items, setItems] = useState<string[]>(() => {
-    if (!value) return [''];
-    return value.split('、').filter(Boolean);
-  });
-
-  const sync = (next: string[]) => {
-    setItems(next);
-    onChange?.(next.filter(Boolean).join('、'));
-  };
-
-  const addItem = () => sync([...items, '']);
-  const removeItem = (i: number) => {
-    const next = items.filter((_, idx) => idx !== i);
-    sync(next.length === 0 ? [''] : next);
-  };
-  const updateItem = (i: number, v: string) => {
-    const next = [...items];
-    next[i] = v;
-    sync(next);
-  };
-
-  const itemStyle: React.CSSProperties = compact
-    ? { display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }
-    : { display: 'flex', alignItems: 'center', gap: 2, width: '100%' };
-
-  const inputStyle: React.CSSProperties = compact
-    ? { width: 80, textAlign: 'center' as const }
-    : { flex: 1, minWidth: 80 };
-
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: compact ? 'row' : 'column',
-      flexWrap: compact ? 'wrap' : undefined,
-      gap: 8,
-      alignItems: compact ? 'center' : 'stretch',
-    }}>
-      {items.map((item, i) => (
-        <div key={i} style={itemStyle}>
-          <Input value={item} onChange={(e) => updateItem(i, e.target.value)} style={inputStyle} />
-          {items.length > 1 && (
-            <div
-              onClick={() => removeItem(i)}
-              style={{
-                width: 20, height: 20, borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: '#FEE2E2', color: '#DC2626',
-                fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                lineHeight: 1, flexShrink: 0,
-              }}
-              title="移除"
-            >
-              ×
-            </div>
-          )}
-        </div>
-      ))}
-      <div
-        onClick={addItem}
-        style={{
-          width: 32, height: 32, borderRadius: 6,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: '1.5px dashed #CBD5E1', color: '#64748B',
-          fontSize: 20, fontWeight: 400, cursor: 'pointer',
-          transition: 'all .15s', userSelect: 'none', flexShrink: 0,
-          alignSelf: compact ? 'center' : 'flex-start',
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = '#155A8A'; (e.currentTarget as HTMLDivElement).style.color = '#155A8A'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = '#CBD5E1'; (e.currentTarget as HTMLDivElement).style.color = '#64748B'; }}
-        title="添加一项"
-      >
-        +
-      </div>
-    </div>
-  );
-}
-
-function MultiPersonField({ field }: { field: FieldDefinition }) {
-  const rules = field.required
-    ? [{ required: true, message: `请填写${field.label}` }]
-    : undefined;
-  return (
-    <Form.Item name={field.id} label={field.label} rules={rules}>
-      <MultiPersonInput compact={NAME_FIELDS.includes(field.id)} />
-    </Form.Item>
-  );
-}
-
-/* ===================== 案件编号 / 案件名称 - 匹配中队案件管理 ===================== */
-
-function CaseNoMatchSquad({ field, subName }: { field: FieldDefinition; subName?: number }) {
-  const [open, setOpen] = useState(false);
-  const caseNos = useMemo(() => getCases().map((c) => c.caseNo).filter(Boolean) as string[], []);
-  const options = useMemo(() =>
-    caseNos.map((no) => ({ value: no, label: no })),
-    [caseNos],
-  );
-  const rules = field.required
-    ? [{ required: true, message: `请填写${field.label}` }]
-    : undefined;
-  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
-
-  return (
-    <Form.Item name={fieldName} label={field.label} rules={rules}>
-      <AutoComplete
-        open={open}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        options={options}
-        placeholder="A3703231200002026******"
-        filterOption={(inputValue, option) =>
-          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-        }
-        style={{ width: '100%' }}
-      />
-    </Form.Item>
-  );
-}
-
-function CaseNameMatchSquad({ field, subName }: { field: FieldDefinition; subName?: number }) {
-  const [open, setOpen] = useState(false);
-  const caseNames = useMemo(() => getCases().map((c) => c.caseName).filter(Boolean) as string[], []);
-  const options = useMemo(() =>
-    caseNames.map((name) => ({ value: name, label: name })),
-    [caseNames],
-  );
-  const rules = field.required
-    ? [{ required: true, message: `请填写${field.label}` }]
-    : undefined;
-  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
-
-  return (
-    <Form.Item name={fieldName} label={field.label} rules={rules}>
-      <AutoComplete
-        open={open}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        options={options}
-        placeholder="请输入案件名称，可匹配中队案件"
-        filterOption={(inputValue, option) =>
-          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-        }
-        style={{ width: '100%' }}
-      />
-    </Form.Item>
-  );
-}
-
-function PersistedSelect({ field, value, onChange }: { field: FieldDefinition; value?: any; onChange?: (value: any) => void }) {
-  const multiple = field.multiple ?? false;
-  const storageKey = field.customOptionKey ? `jingzong.selectOptions.${field.customOptionKey}` : '';
-  const [newOption, setNewOption] = useState('');
-  const [customOptions, setCustomOptions] = useState<string[]>(() => {
-    if (!storageKey) return [];
-    try {
-      const raw = localStorage.getItem(storageKey);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
-  const options = Array.from(new Set([...(field.options || []), ...customOptions]));
-
-  const saveCustomValue = (value: string) => {
-    if (!storageKey) return;
-    const normalized = value.trim();
-    if (!normalized || options.includes(normalized)) return;
-    setCustomOptions((prev) => {
-      const next = Array.from(new Set([...prev, normalized]));
-      localStorage.setItem(storageKey, JSON.stringify(next));
-      return next;
-    });
-    setNewOption('');
-  };
-
-  if (field.customOptionKey) {
-    return (
-      <Select
-        value={value}
-        onChange={onChange}
-        mode={multiple ? 'multiple' : undefined}
-        showSearch
-        placeholder={`请选择${field.label}`}
-        options={options.map((o) => ({ label: o, value: o }))}
-        dropdownRender={(menu) => (
-          <>
-            {menu}
-            <Divider style={{ margin: '8px 0' }} />
-            <Space style={{ padding: '0 8px 8px', width: '100%' }}>
-              <Input
-                value={newOption}
-                placeholder={`新增${field.label}`}
-                onChange={(e) => setNewOption(e.target.value)}
-                onKeyDown={(e) => e.stopPropagation()}
-              />
-              <Button type="primary" onClick={() => saveCustomValue(newOption)}>
-                添加
-              </Button>
-            </Space>
-          </>
-        )}
-      />
-    );
-  }
-
-  return (
-    <Select value={value} onChange={onChange} mode={multiple ? 'multiple' : undefined} placeholder={`请选择${field.label}`} options={options.map((o) => ({ label: o, value: o }))} />
-  );
-}
+/* ===================== 字段组件已迁移至 SharedFormFields.tsx ===================== */

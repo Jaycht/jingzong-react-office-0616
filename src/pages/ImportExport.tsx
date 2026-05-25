@@ -65,7 +65,7 @@ export default function ImportExport() {
             '身份证号': r.reporterIdNo || '',
             '联系电话': r.reporterPhone || '',
             '投资金额': r.reporterAmount || '',
-            '登记日期': rec.createdAt?.slice(0, 10) || '',
+            '登记日期': rec.createdAt ? localDate(rec.createdAt) : '',
           });
         }
       }

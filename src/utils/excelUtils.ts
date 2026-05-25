@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 导入导出 + 备份恢复共享工具函数
  *
  * Excel 为主（用户日常操作），JSON 为辅（完整备份/恢复）
@@ -16,6 +16,7 @@ import { getMassRecords, saveMassRecord } from '../store/massStore';
 import { getCases } from '../store/caseStore';
 import { getOperationLogs } from '../store/operationLogStore';
 import type { FieldDefinition } from '../moduleConfig';
+import { localStorageAdapter } from "../store/adapter";
 import type { MassRecord } from '../store/massStore';
 
 // ─── 类型 ─────────────────────────────────────────────
@@ -553,9 +554,9 @@ export function generateBackup(): void {
     const key = localStorage.key(i);
     if (key && key.startsWith('jingzong.')) {
       try {
-        data[key] = JSON.parse(localStorage.getItem(key) || '');
+        data[key] = localStorageAdapter.getItem(key, '');
       } catch {
-        data[key] = localStorage.getItem(key);
+        data[key] = localStorageAdapter.getItem<string>(key, "");
       }
     }
   }
@@ -588,13 +589,13 @@ function saveBackupMeta(timestamp: string): void {
   metas.unshift(meta);
   // 保留最近 30 条
   while (metas.length > 30) metas.pop();
-  localStorage.setItem(BACKUP_META_KEY, JSON.stringify(metas));
+  localStorageAdapter.setItem(BACKUP_META_KEY, metas);
 }
 
 /** 获取备份元信息列表 */
 export function getBackupMetas(): BackupMeta[] {
   try {
-    const raw = localStorage.getItem(BACKUP_META_KEY);
+    const raw = localStorageAdapter.getItem<string>(BACKUP_META_KEY, "[]");
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -604,7 +605,7 @@ export function getBackupMetas(): BackupMeta[] {
 /** 删除一条备份元信息 */
 export function deleteBackupMeta(id: string): void {
   const metas = getBackupMetas().filter((m) => m.id !== id);
-  localStorage.setItem(BACKUP_META_KEY, JSON.stringify(metas));
+  localStorageAdapter.setItem(BACKUP_META_KEY, metas);
 }
 
 /**
@@ -622,7 +623,7 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
     let count = 0;
     for (const [key, value] of Object.entries(backup.data)) {
       if (key.startsWith('jingzong.')) {
-        localStorage.setItem(key, JSON.stringify(value));
+        localStorageAdapter.setItem(key, value);
         count++;
       }
     }
@@ -659,6 +660,7 @@ export function exportCsv(headers: string[], rows: Record<string, any>[], filena
     csvRows.push(vals.join(','));
   }
   const bom = '\uFEFF'; // UTF-8 BOM for Excel
-  const blob = new Blob([bom + csvRows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const blob = new Blob([bom + csvRows.join('')], { type: 'text/csv;charset=utf-8' });
   saveAs(blob, `${filename}_${new Date().toISOString().slice(0, 10)}.csv`);
 }
+

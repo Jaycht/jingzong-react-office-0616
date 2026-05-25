@@ -6,6 +6,7 @@ import { saveAs } from 'file-saver';
 import { getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import type { WorkModule, WorkTab } from '../moduleConfig';
+import { escapeHtml } from './htmlUtils';
 
 type ReportType = 'daily' | 'weekly' | 'monthly';
 
@@ -51,11 +52,6 @@ function fmtDate(d: Date): string {
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-function safe(val: any, fallback = '—'): string {
-  if (val === null || val === undefined) return fallback;
-  return String(val).trim() || fallback;
-}
-
 /**
  * 生成并导出 Word 报表
  */
@@ -82,14 +78,15 @@ export function exportModuleReport(
 }
 
 
-function getFieldValue(val: any): string {
+function getFieldValue(val: unknown): string {
   if (val === null || val === undefined) return '—';
-  if (Array.isArray(val)) return val.join('、');
-  if (typeof val === 'object') return JSON.stringify(val).slice(0, 50);
-  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val)) {
-    return val.slice(0, 16).replace('T', ' ');
+  if (Array.isArray(val)) return val.map((v) => escapeHtml(v)).join('、');
+  if (typeof val === 'object') return escapeHtml(JSON.stringify(val).slice(0, 50));
+  const s = String(val);
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+    return escapeHtml(s.slice(0, 16).replace('T', ' '));
   }
-  return String(val);
+  return escapeHtml(s);
 }
 
 function buildReportHtml(

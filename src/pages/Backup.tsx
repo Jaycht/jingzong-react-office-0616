@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
+import { localStorageAdapter } from "../store/adapter"
 import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson } from '../utils/excelUtils';
 
 interface BackupMeta {
@@ -336,3 +337,4 @@ export default function Backup() {
     </div>
   );
 }
+

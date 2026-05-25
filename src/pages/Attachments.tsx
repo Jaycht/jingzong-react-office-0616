@@ -56,7 +56,7 @@ export default function Attachments() {
                 recordId: rec.id,
                 fieldLabel: key,
                 fileName: file.name || '未命名文件',
-                recordDate: rec.createdAt?.slice(0, 10) || '—',
+                recordDate: rec.createdAt ? (()=>{const d=new Date(rec.createdAt);const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());})() : '—',
               });
             }
           }

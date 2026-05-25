@@ -68,6 +68,3 @@ export const POSITIONS = [
   '分管控领导', '各中队长', '办案民警', '中队内勤',
 ];
 
-export const STAT_COLORS = [
-  '#1B5E9B', '#38A169', '#E67E22', '#9C27B0', '#00ACC1', '#D32F2F',
-];

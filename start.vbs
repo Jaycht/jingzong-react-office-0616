@@ -96,5 +96,7 @@ If Not found Then
     WScript.Quit
 End If
 
-' Launch in kiosk mode (full screen, no title bar, no address bar, no tabs)
-shell.Run """" & browser & """ --kiosk=" & url & " --no-default-browser-check --no-first-run", 1, False
+' Launch in app mode (frameless window, no address bar, no tabs)
+shell.Run """" & browser & """ --app=" & url & " --no-default-browser-check --no-first-run", 1, False
+
+

@@ -1,5 +1,6 @@
-﻿import { lazy, Suspense, useState } from "react";
+﻿import { lazy, Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
 import Sidebar from "./Sidebar";
 import ProfileModal from "./ProfileModal";
@@ -40,7 +41,14 @@ export default function AppLayout() {
   const drawerOpen = useAppStore((s) => s.drawerOpen);
   const closeDrawer = useAppStore((s) => s.closeDrawer);
   const darkMode = useAppStore((s) => s.darkMode);
+  const location = useLocation();
   const currentPage = useAppStore((s) => s.currentPage);
+  const setCurrentPage = useAppStore((s) => s.setCurrentPage);
+
+  useEffect(() => {
+    const path = location.pathname.replace("/app/", "") || "dashboard";
+    setCurrentPage(path);
+  }, [location.pathname, setCurrentPage]);
   const editRecord = useAppStore((s) => s.editRecord);
   const setEditRecord = useAppStore((s) => s.setEditRecord);
 

@@ -1,11 +1,12 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+﻿import { useMemo, useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronLeft, Database, Settings, ShieldCheck, User, KeyRound, LogOut, Search, Moon, Sun } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut, Search, Moon, Sun } from 'lucide-react';
 import { Modal } from "antd";
 import { useAppStore } from "../store/appStore"
 import { DEPARTMENTS, PLATFORM_NAV } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
+import { APP_VERSION } from '../version';
 
 interface Props {
   onOpenProfile: () => void;
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
-    const currentPage = useAppStore((s) => s.currentPage);
+  const currentPage = useAppStore((s) => s.currentPage);
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
   const userName = useAppStore((s) => s.userName);
   const userRole = useAppStore((s) => s.userRole);
@@ -21,6 +22,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
   const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
   const toggleLowPerfMode = useAppStore((s) => s.toggleLowPerfMode);
+  const customAvatar = (() => { try { return localStorage.getItem("jingzong.avatar"); } catch { return null; } })();
   const searchQuery = useAppStore((s) => s.searchQuery);
   const setSearchQuery = useAppStore((s) => s.setSearchQuery);
   const { customModules } = useCustomModules();
@@ -82,8 +84,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       cancelText: '取消',
       onOk: () => {
         try {
-          const raw = localStorage.getItem("jingzong.login.v1");
-          if (raw) { const saved = JSON.parse(raw); saved.autoLogin = false; localStorage.setItem("jingzong.login.v1", JSON.stringify(saved)); }
+          localStorage.removeItem("jingzong.login.v1");
         } catch {}
         useAppStore.getState().setView("login");
         useAppStore.getState().showToast("已退出登录", "info");
@@ -166,38 +167,59 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         </div>
       )}
 
-      {/* 用户工具栏 — 紧凑图标行 */}
+      {/* 用户信息区域 */}
       {!collapsed && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 2,
-          padding: '6px 10px 2px', borderBottom: '1px solid rgba(255,255,255,0.06)',
-          marginBottom: 2,
-        }}>
-          <div style={{
-            width: 22, height: 22, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.12)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0,
-          }}>
-            {(userName || '用')[0]}
+        <div style={{ padding: "14px 14px 8px" }}>
+          {/* 第1行：头像 + 名称 + 退出 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            {customAvatar ? (
+              <img src={customAvatar} alt="avatar" style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0, boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }} />
+            ) : (
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,#4B9EFF,#2563EB)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", flexShrink: 0, boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}>
+                {(userName || "用")[0]}
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {userName || "用户"}
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
+                {userRole || "普通用户"}
+              </div>
+            </div>
+            <ActionBtn icon={LogOut} label="退出" onClick={handleLogout} />
           </div>
-          <span style={{
-            fontSize: 11, color: 'rgba(255,255,255,0.6)', marginLeft: 4,
-            flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
-            {userName || '用户'}
-          </span>
-          <ToolbarIcon icon={User} title="个人信息" onClick={onOpenProfile} />
-          <ToolbarIcon icon={KeyRound} title="修改密码" onClick={onOpenPassword} />
-          <ToolbarIcon icon={darkMode ? Sun : Moon} title={darkMode ? '浅色模式' : '深色模式'} onClick={toggleDarkMode} />
-          <ToolbarIcon
-            icon={() => <span style={{fontSize:11}}>{lowPerfMode ? '⚡' : '🐢'}</span>}
-            title={lowPerfMode ? '高性能模式' : '低性能模式'}
-            onClick={toggleLowPerfMode}
-          />
-          <ToolbarIcon icon={LogOut} title="退出登录" onClick={handleLogout} />
+          {/* 第2行：个人信息 + 修改密码 */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+            <ActionBtn icon={User} label="个人信息" onClick={onOpenProfile} />
+            <ActionBtn icon={KeyRound} label="修改密码" onClick={onOpenPassword} />
+          </div>
+          {/* 第3行：深色模式 + 性能模式 */}
+          <div style={{ display: "flex", gap: 4 }}>
+            <ActionBtn icon={darkMode ? Sun : Moon} label={darkMode ? "浅色模式" : "深色模式"} onClick={toggleDarkMode} />
+            <ActionBtn icon={() => <span style={{fontSize:13}}>{lowPerfMode ? "⚡" : "🐢"}</span>} label={lowPerfMode ? "高性能" : "低性能"} onClick={toggleLowPerfMode} />
+          </div>
         </div>
       )}
+      {/* 折叠状态用户工具栏 */}
+      {collapsed && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0 8px", gap: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          {customAvatar ? (
+              <img src={customAvatar} alt="avatar" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+            ) : (
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#4B9EFF,#2563EB)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff" }}>
+                {(userName || "用")[0]}
+              </div>
+            )}
+          <ToolbarIcon icon={User} title="个人信息" onClick={onOpenProfile} />
+          <ToolbarIcon icon={KeyRound} title="修改密码" onClick={onOpenPassword} />
+          <ToolbarIcon icon={darkMode ? Sun : Moon} title={darkMode ? "浅色" : "深色"} onClick={toggleDarkMode} />
+          <ToolbarIcon icon={() => <span style={{fontSize:11}}>{lowPerfMode ? "⚡" : "🐢"}</span>} title={lowPerfMode ? "高性能" : "低性能"} onClick={toggleLowPerfMode} />
+          <ToolbarIcon icon={LogOut} title="退出" onClick={handleLogout} />
+        </div>
+      )}
+      {/* 分隔线 */}
+      <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "0 14px" }} />
 
       {/* 侧边栏主导航区域 */}
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 2 }}>
@@ -285,21 +307,12 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           onToggle={toggleExpand}
           onNavigate={setCurrentPage}
         />
-        <NavGroup
-          id="system"
-          label="系统管理"
-          icon={Settings}
-          expanded={expanded}
-          collapsed={collapsed}
-          currentPage={currentPage}
-          items={PLATFORM_NAV.system}
-          onToggle={toggleExpand}
-          onNavigate={setCurrentPage}
-        />
+        
+        {/* 版权信息入口 */}
         {renderPlatformItem({ id: 'version', label: '版权信息', icon: ShieldCheck })}
       </div>
 
-      {/* 底部：仅保留版权年份小字 */}
+      {/* 底部版权 */}
       {!collapsed && (
         <div style={{
           padding: '4px 14px 8px', flexShrink: 0,
@@ -307,10 +320,30 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)',
           fontFamily: "'JetBrains Mono',monospace",
         }}>
-          © 2026
+          {APP_VERSION} &copy; 2026
         </div>
       )}
     </motion.div>
+  );
+}
+
+/** 带文字标签的操作按钮 */
+function ActionBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      title={label}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        padding: '5px 8px', borderRadius: 6, cursor: 'pointer',
+        color: 'rgba(255,255,255,0.55)', fontSize: 11,
+        whiteSpace: 'nowrap', transition: 'all .15s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#fff'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
+    >
+      <Icon size={14} /><span>{label}</span>
+    </div>
   );
 }
 
@@ -321,15 +354,15 @@ function ToolbarIcon({ icon: Icon, title, onClick }: { icon: any; title: string;
       onClick={onClick}
       title={title}
       style={{
-        width: 24, height: 24, borderRadius: 4,
+        width: 32, height: 32, borderRadius: 6,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', color: 'rgba(255,255,255,0.45)', flexShrink: 0,
         fontSize: 12,
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLDivElement).style.color = '#fff'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; (e.currentTarget as HTMLDivElement).style.color = 'rgba(255,255,255,0.45)'; }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; }}
     >
-      {typeof Icon === 'function' ? <Icon size={13} /> : Icon}
+      <Icon size={15} />
     </div>
   );
 }

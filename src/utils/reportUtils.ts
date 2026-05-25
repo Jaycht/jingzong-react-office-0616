@@ -5,6 +5,7 @@
 
 import { saveAs } from 'file-saver';
 import { getMassRecords } from '../store/massStore';
+import { safeHtml } from './htmlUtils';
 
 const MODULE_ID = 'evidence-report';
 
@@ -39,19 +40,19 @@ export function generateFundReport(recordId?: string): void {
 }
 
 function buildReportHtml(data: Record<string, any>): string {
-  // 基础信息
-  const caseName = safe(data.caseName, '—');
-  const caseNo = safe(data.caseNo, '—');
-  const filingDocNo = safe(data.filingDocNo, '—');
-  const caseSource = safe(data.caseSource, '—');
-  const caseType = safe(data.caseType, '—');
-  const totalAmount = safe(data.totalAmount, '—');
-  const victimCount = safe(data.victimCount, '—');
-  const receiveDate = safe(data.receiveDate, '—');
-  const filingDate = safe(data.filingDate, '—');
-  const caseSummary = safe(data.caseSummary, '—');
-  const leadOfficer = safe(data.leadOfficer, '—');
-  const assistOfficer = safe(data.assistOfficer, '—');
+  // 基础信息（使用 safeHtml 防止 XSS）
+  const caseName = safeHtml(data.caseName, '—');
+  const caseNo = safeHtml(data.caseNo, '—');
+  const filingDocNo = safeHtml(data.filingDocNo, '—');
+  const caseSource = safeHtml(data.caseSource, '—');
+  const caseType = safeHtml(data.caseType, '—');
+  const totalAmount = safeHtml(data.totalAmount, '—');
+  const victimCount = safeHtml(data.victimCount, '—');
+  const receiveDate = safeHtml(data.receiveDate, '—');
+  const filingDate = safeHtml(data.filingDate, '—');
+  const caseSummary = safeHtml(data.caseSummary, '—');
+  const leadOfficer = safeHtml(data.leadOfficer, '—');
+  const assistOfficer = safeHtml(data.assistOfficer, '—');
 
   // 涉案企业
   const enterpriseSubjects = formatArray(data.enterpriseSubjects, [
@@ -105,22 +106,22 @@ function buildReportHtml(data: Record<string, any>): string {
 
   // 流出统计
   const outflowStats = [
-    { label: '个人挥霍', value: safe(data.personalWaste, '0') },
-    { label: '购置固定资产', value: safe(data.fixedAssets, '0') },
-    { label: '虚假项目投资', value: safe(data.fakeInvestment, '0') },
-    { label: '运营成本', value: safe(data.operatingCosts, '0') },
-    { label: '日常开销', value: safe(data.dailyExpenses, '0') },
-    { label: '跑分账户转移', value: safe(data.moneyTransfer, '0') },
-    { label: '跨境转移', value: safe(data.crossBorderTransfer, '0') },
-    { label: '提现', value: safe(data.withdraw, '0') },
-    { label: '其他', value: safe(data.otherOutflow, '0') },
+    { label: '个人挥霍', value: safeHtml(data.personalWaste, '0') },
+    { label: '购置固定资产', value: safeHtml(data.fixedAssets, '0') },
+    { label: '虚假项目投资', value: safeHtml(data.fakeInvestment, '0') },
+    { label: '运营成本', value: safeHtml(data.operatingCosts, '0') },
+    { label: '日常开销', value: safeHtml(data.dailyExpenses, '0') },
+    { label: '跑分账户转移', value: safeHtml(data.moneyTransfer, '0') },
+    { label: '跨境转移', value: safeHtml(data.crossBorderTransfer, '0') },
+    { label: '提现', value: safeHtml(data.withdraw, '0') },
+    { label: '其他', value: safeHtml(data.otherOutflow, '0') },
   ].filter((item) => parseFloat(String(item.value).replace(/[^0-9.-]/g, '')) > 0);
 
   // 结论
-  const conclusionFlow = safe(data.conclusionFlow, '');
-  const conclusionCaseSupport = safe(data.conclusionCaseSupport, '');
-  const conclusionDeepClue = safe(data.conclusionDeepClue, '');
-  const conclusionNextStep = safe(data.conclusionNextStep, '');
+  const conclusionFlow = safeHtml(data.conclusionFlow, '');
+  const conclusionCaseSupport = safeHtml(data.conclusionCaseSupport, '');
+  const conclusionDeepClue = safeHtml(data.conclusionDeepClue, '');
+  const conclusionNextStep = safeHtml(data.conclusionNextStep, '');
 
   const now = new Date();
   const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
@@ -268,28 +269,13 @@ ${conclusionNextStep ? `
 </html>`;
 }
 
-/** 安全取值 */
-function safe(val: any, fallback = ''): string {
-  if (val === null || val === undefined) return fallback;
-  return String(val).trim() || fallback;
-}
-
-/** 格式化日期 */
-function formatDate(val: any): string {
-  if (!val) return '—';
-  const s = String(val).trim();
-  // dayjs 对象或 ISO 字符串
-  if (s.includes('T')) return s.slice(0, 10);
-  return s;
-}
-
-/** 格式化为 HTML 表格（数组 → table） */
+/** 格式化为 HTML 表格（数组 → table），所有数据 safeHtml 转义 */
 function formatArray(arr: any, fields: Array<{ key: string; label: string }>): string {
   if (!Array.isArray(arr) || arr.length === 0) return '';
 
   const thead = fields.map((f) => `<th>${f.label}</th>`).join('');
   const tbody = arr.map((item: any) => {
-    const cells = fields.map((f) => `<td>${safe(item[f.key], '—')}</td>`).join('');
+    const cells = fields.map((f) => `<td>${safeHtml(item[f.key], '—')}</td>`).join('');
     return `<tr>${cells}</tr>`;
   }).join('');
 

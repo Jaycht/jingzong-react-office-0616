@@ -64,7 +64,7 @@ function displayValue(val: unknown): string {
   if (typeof val === 'object') return JSON.stringify(val).slice(0, 30);
   // 检测 ISO 日期字符串 (如 2026-05-23T10:29:07.100Z) 并格式化
   if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) {
-    return val.slice(0, 16).replace('T', ' ');
+    const d = new Date(val); const pad = (n) => String(n).padStart(2,'0'); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
   }
   return String(val);
 }
@@ -72,7 +72,9 @@ function displayValue(val: unknown): string {
 /** 时间戳截取到分钟：2026-05-23 09:41 */
 function fmtTime(iso: string): string {
   if (!iso) return '—';
-  return iso.slice(0, 16).replace('T', ' ');
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
 export default function ModulePage() {
@@ -403,7 +405,7 @@ export default function ModulePage() {
       {/* 统计卡片 */}
       {(() => {
         const total = realRecords.length;
-        const thisMonth = realRecords.filter((r) => r.createdAt?.startsWith(new Date().toISOString().slice(0, 7))).length;
+        const thisMonth = realRecords.filter((r) => r.createdAt && (()=>{const d=new Date();const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})() === (()=>{const d=new Date(r.createdAt);const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})()).length;
         const ongoing = realRecords.filter((r) => r.data?.status !== '已完成' && r.data?.status !== '待补充').length;
         const pending = realRecords.filter((r) => r.data?.status === '待补充').length;
         return (

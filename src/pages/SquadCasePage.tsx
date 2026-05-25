@@ -255,7 +255,7 @@ export default function SquadCasePage() {
           ['案件总数', String(cases.length), '#155A8A'],
           ['侦查中', String(cases.filter(c => !c.caseCloseDate).length), '#D97706'],
           ['已结案', String(cases.filter(c => c.caseCloseDate).length), '#0F766E'],
-          ['本月新增', String(cases.filter(c => c.createdAt?.startsWith(new Date().toISOString().slice(0, 7))).length), '#DC2626'],
+          ['本月新增', String(cases.filter(c => c.createdAt && (()=>{const d=new Date();const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})() === (()=>{const d=new Date(c.createdAt);const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})()).length), '#DC2626'],
         ].map(([label, value, color]) => (
           <div key={label} style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, padding: 16 }}>
             <div style={{ fontSize: 12, color: '#64748B', marginBottom: 6 }}>{label}</div>
@@ -474,8 +474,8 @@ export default function SquadCasePage() {
               <Descriptions.Item label="立案日期" span={1}>{viewCase.filingDate || '-'}</Descriptions.Item>
               <Descriptions.Item label="不予立案日期" span={1}>{viewCase.noFilingDate || '-'}</Descriptions.Item>
               <Descriptions.Item label="案件移交记录" span={1}>{viewCase.transferRecord || '-'}</Descriptions.Item>
-              <Descriptions.Item label="创建时间" span={1}>{viewCase.createdAt?.slice(0, 16).replace('T', ' ') || '-'}</Descriptions.Item>
-              <Descriptions.Item label="更新时间" span={1}>{viewCase.updatedAt?.slice(0, 16).replace('T', ' ') || '-'}</Descriptions.Item>
+              <Descriptions.Item label="创建时间" span={1}>{(viewCase.createdAt ? (()=>{const d=new Date(viewCase.createdAt);const pad=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());})() : '-')}</Descriptions.Item>
+              <Descriptions.Item label="更新时间" span={1}>{(viewCase.updatedAt ? (()=>{const d=new Date(viewCase.updatedAt);const pad=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());})() : '-')}</Descriptions.Item>
             </Descriptions>
           </div>
         )}
