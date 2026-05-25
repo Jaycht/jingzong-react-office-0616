@@ -47,10 +47,8 @@
       "shortcutName": "经侦大队工作记录管理系统",
       "installerIcon": "app.ico",
       "uninstallerIcon": "app.ico",
-      "installerHeaderIcon": "app.ico"
-    },
-    "portable": {
-      "artifactName": "${productName}-便携版-${version}.exe"
+      "installerHeaderIcon": "app.ico",
+      "include": "build/installer.nsh"
     }
   },
   "dependencies": {
