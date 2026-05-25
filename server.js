@@ -95,9 +95,9 @@ server.listen(PORT, () => {
 
   // --app= 模式：无地址栏、无标签栏
   const app = spawn(browser, [
-    '--app=http://localhost:' + PORT + '/',
+    '--kiosk=http://localhost:' + PORT + '/',
     '--no-default-browser-check',
-    '--disable-extensions',
+    '--no-first-run',
   ], { stdio: 'ignore' });
 
   app.on('exit', () => {

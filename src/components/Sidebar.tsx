@@ -1,14 +1,28 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronLeft, Database, Settings, ShieldCheck, Menu } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Database, Settings, ShieldCheck, Menu, User, KeyRound, LogOut, Search, Moon, Sun } from 'lucide-react';
+import { Modal, Switch } from "antd";
 import { useAppStore } from "../store/appStore"
 import { DEPARTMENTS, PLATFORM_NAV } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 
-export default function Sidebar() {
+interface Props {
+  onOpenProfile: () => void;
+  onOpenPassword: () => void;
+}
+
+export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
     const currentPage = useAppStore((s) => s.currentPage);
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
+  const userName = useAppStore((s) => s.userName);
+  const userRole = useAppStore((s) => s.userRole);
+  const darkMode = useAppStore((s) => s.darkMode);
+  const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
+  const lowPerfMode = useAppStore((s) => s.lowPerfMode);
+  const toggleLowPerfMode = useAppStore((s) => s.toggleLowPerfMode);
+  const searchQuery = useAppStore((s) => s.searchQuery);
+  const setSearchQuery = useAppStore((s) => s.setSearchQuery);
   const { customModules } = useCustomModules();
   const [expanded, setExpanded] = useState<string | null>('office');
 
@@ -131,7 +145,25 @@ export default function Sidebar() {
         </motion.div>
       </motion.button>
 
-      <div className="sb" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 0 40px' }}>
+      {/* Search bar */}
+      {!collapsed && (
+        <div style={{ padding: '10px 10px 4px', position: 'relative' }}>
+          <Search size={13} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: 18, top: 18, zIndex: 1 }} />
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="搜索..."
+            style={{
+              width: '100%', height: 30, paddingLeft: 28, paddingRight: 8,
+              borderRadius: 4, border: 'none', outline: 'none',
+              background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12,
+              fontFamily: 'inherit', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+      )}
+
+      <div className="sb" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 0' }}>
         {PLATFORM_NAV.top.map(renderPlatformItem)}
 
         {departments.map((dept) => {
@@ -236,7 +268,77 @@ export default function Sidebar() {
         />
         {renderPlatformItem({ id: 'version', label: '版权信息', icon: ShieldCheck })}
       </div>
+
+      {/* User section at bottom */}
+      <div style={{
+        borderTop: '1px solid rgba(255,255,255,0.08)', padding: collapsed ? '8px 0' : '8px 10px',
+        flexShrink: 0,
+      }}>
+        {!collapsed && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 4px 8px', color: '#fff' }}>
+            <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600 }}>{(userName || '用')[0]}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName || '用户'}</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{userRole}</div>
+            </div>
+          </div>
+        )}
+        <div style={{ display: 'flex', flexDirection: collapsed ? 'column' : 'row', gap: 2, justifyContent: collapsed ? 'center' : 'flex-start' }}>
+          <UserAction icon={User} label="个人" collapsed={collapsed} onClick={onOpenProfile} />
+          <UserAction icon={KeyRound} label="密码" collapsed={collapsed} onClick={onOpenPassword} />
+          {!collapsed && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 4, cursor: 'pointer', fontSize: 11, color: 'rgba(255,255,255,0.5)' }} onClick={toggleDarkMode}>
+                {darkMode ? <Sun size={12} /> : <Moon size={12} />}
+                <span>{darkMode ? '浅色' : '深色'}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 4, cursor: 'pointer', fontSize: 11, color: 'rgba(255,255,255,0.5)' }} onClick={toggleLowPerfMode}>
+                <span>{lowPerfMode ? '⚡' : '🐢'}</span>
+                <span>{lowPerfMode ? '高性能' : '低性能'}</span>
+              </div>
+            </>
+          )}
+        </div>
+        <div style={{ padding: collapsed ? '4px 0' : '2px 4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: 6, color: 'rgba(255,255,255,0.4)', fontSize: 11 }}
+          onClick={() => {
+            Modal.confirm({
+              title: '确认退出登录？',
+              content: '退出后需要重新登录。',
+              okText: '退出',
+              cancelText: '取消',
+              onOk: () => {
+                try {
+                  const raw = localStorage.getItem("jingzong.login.v1");
+                  if (raw) { const saved = JSON.parse(raw); saved.autoLogin = false; localStorage.setItem("jingzong.login.v1", JSON.stringify(saved)); }
+                } catch {}
+                useAppStore.getState().setView("login");
+                useAppStore.getState().showToast("已退出登录", "info");
+              },
+            });
+          }}
+        >
+          <LogOut size={12} />
+          {!collapsed && <span>退出登录</span>}
+        </div>
+      </div>
     </motion.div>
+  );
+}
+
+function UserAction({ icon: Icon, label, collapsed, onClick }: { icon: any; label: string; collapsed: boolean; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
+        gap: 4, padding: collapsed ? '6px 0' : '4px 6px', borderRadius: 4,
+        cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 11,
+        flex: collapsed ? 0 : 1,
+      }}
+    >
+      <Icon size={12} />
+      {!collapsed && <span>{label}</span>}
+    </div>
   );
 }
 
