@@ -145,7 +145,6 @@ body {
 }
 
 /* ---- Theme-dark overrides with Stitch ---- */
-.theme-dark body,
 .theme-dark {
   background: var(--stitch-background);
   color: var(--stitch-on-surface);

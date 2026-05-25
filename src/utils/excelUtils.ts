@@ -14,6 +14,7 @@ import { saveAs } from 'file-saver';
 import { findModule, getBaseModules } from '../moduleConfig';
 import { getMassRecords, saveMassRecord } from '../store/massStore';
 import { getCases } from '../store/caseStore';
+import { getOperationLogs } from '../store/operationLogStore';
 import type { FieldDefinition } from '../moduleConfig';
 import type { MassRecord } from '../store/massStore';
 
@@ -634,15 +635,10 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
 
 // ─── CSV / JSON 导出辅助 ────────────────────────────
 
-/** 导出操作日志为 JSON */
+/** 导出操作日志为 JSON（读取 operationLogStore 中的真实数据） */
 export function exportOperationLog(): void {
-  // 操作日志目前无实际存储，生成示例
-  const logs = [
-    { time: '2026-05-19 08:00', user: '张明', action: '登录系统', detail: '' },
-    { time: '2026-05-19 08:15', user: '张明', action: '新建案件', detail: '李某涉嫌非法吸存案' },
-    { time: '2026-05-19 09:30', user: '李华', action: '导入数据', detail: '涉众线索登记' },
-  ];
-  const json = JSON.stringify(logs, null, 2);
+  const logs = getOperationLogs();
+  const json = logs.length > 0 ? JSON.stringify(logs, null, 2) : JSON.stringify([]);
   const blob = new Blob([json], { type: 'application/json' });
   saveAs(blob, `操作日志_${new Date().toISOString().slice(0, 10)}.json`);
 }

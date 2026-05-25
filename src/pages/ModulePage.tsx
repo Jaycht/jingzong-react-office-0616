@@ -16,10 +16,7 @@ import { generateFundReport } from '../utils/reportUtils';
 
 /** 获取第一个 repeatable section 的字段列表 */
 function getRepeatableSectionFields(fields: FieldDefinition[]): FieldDefinition[] {
-  for (const f of fields) {
-    if (f.type === 'section' && f.repeatable) return [];
-  }
-  // 遍历找 section 之后直到下一个 section 的字段
+  // 遍历找第一个 repeatable section 之后直到下一个 section 的字段
   const result: FieldDefinition[] = [];
   let inSection = false;
   for (const f of fields) {

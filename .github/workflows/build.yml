@@ -15,36 +15,11 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - name: Build Electron
+      - name: Build Electron Installer
         run: npm run electron:build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
-          name: Electron-installer
+          name: Electron-Installer
           path: dist/*.exe
-
-  build-web:
-    name: Web Portable
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm ci
-      - run: npx vite build
-      - name: Package web version
-        run: |
-          mkdir -p release/jingzong-web
-          cp -r dist release/jingzong-web/
-          cp server.js release/jingzong-web/
-          cp start.vbs release/jingzong-web/
-          cp app.ico release/jingzong-web/
-          echo '{"name":"jingzong-web","private":true,"type":"module"}' > release/jingzong-web/package.json
-          cd release
-          zip -r jingzong-web.zip jingzong-web/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Web-Portable
-          path: release/jingzong-web.zip

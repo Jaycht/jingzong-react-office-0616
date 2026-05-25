@@ -5,7 +5,7 @@ import { Button, Modal, Form, Input, InputNumber, Select, DatePicker, Dropdown, 
 import { Plus, Search, BriefcaseBusiness, FileText, Download, Upload, Eye, Pencil, Trash2 } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { exportModuleReport } from "../utils/reportGenerator";
-import { exportModuleToExcel, importExcelToModule } from "../utils/excelUtils";
+import { exportCasesToExcel, importExcelToModule } from "../utils/excelUtils";
 import { findModule } from "../moduleConfig";
 import { getCases, saveCase, deleteCase, updateCase, type SquadCase } from '../store/caseStore';
 
@@ -124,12 +124,12 @@ export default function SquadCasePage() {
 
   const handleImport = async (file: File) => {
     try {
-      const result = await importExcelToModule({ id: 'squad-case', label: '中队案件管理', departmentId: 'squadron', departmentLabel: '案件中队', description: '', tabs: [{ id: 'default', label: '中队案件管理' }] }, 'default', file);
-      if (result > 0) {
-        showToast(`成功导入 ${result} 条记录`, 'success');
+      const result = await importExcelToModule(file, 'squad-case');
+      if (result.success > 0) {
+        showToast(`成功导入 ${result.success} 条记录${result.failed > 0 ? `，${result.failed} 条失败` : ''}`, result.failed > 0 ? 'warning' : 'success');
         refresh();
       } else {
-        showToast('未能导入有效数据', 'warning');
+        showToast(result.errors[0] || '未能导入有效数据', 'warning');
       }
     } catch (e: any) {
       showToast(e.message || '导入失败', 'error');
@@ -225,7 +225,8 @@ export default function SquadCasePage() {
           <Button
             icon={<Download size={16} />}
             onClick={() => {
-              showToast('正在生成 Excel...', 'info');
+              exportCasesToExcel();
+              showToast('正在导出案件台账...', 'info');
             }}
             style={{ height: 42, paddingInline: 18, flexShrink: 0 }}
           >
