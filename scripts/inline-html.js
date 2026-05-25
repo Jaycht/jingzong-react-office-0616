@@ -53,21 +53,25 @@ console.log(`✅ 已生成自包含 HTML：${outPath}`);
 const batPath = resolve(distDir, '启动.bat');
 const batContent = `@echo off
 title 经侦大队工作记录管理系统
+set "HTML=file:///%~dp0standalone.html"
 
-REM 尝试方式1：Edge App 模式（无边框窗口）
-start "" msedge --app="file:///%~dp0standalone.html" --no-first-run
-if not errorlevel 1 goto :eof
+REM 方式1：Edge App 模式（无边框窗口）
+where msedge >nul 2>&1
+if %errorlevel%==0 (
+    start "" msedge --app="%HTML%" --no-first-run
+    exit
+)
 
-REM 尝试方式2：Edge 协议处理（有边框但有独立窗口）
-start microsoft-edge:"file:///%~dp0standalone.html"
-if not errorlevel 1 goto :eof
+REM 方式2：Chrome App 模式（无边框窗口）
+where chrome >nul 2>&1
+if %errorlevel%==0 (
+    start "" chrome --app="%HTML%" --no-first-run
+    exit
+)
 
-REM 尝试方式3：Chrome App 模式
-start "" chrome --app="file:///%~dp0standalone.html" --no-first-run
-if not errorlevel 1 goto :eof
-
-REM 最后尝试：默认浏览器直接打开
-start "" "%~dp0standalone.html"
+REM 方式3：Edge 协议处理（有边框窗口）
+start microsoft-edge:"%HTML%"
+exit
 `;
 writeFileSync(batPath, batContent, 'utf-8');
 console.log(`✅ 已生成启动脚本：${batPath}`);
