@@ -21,9 +21,6 @@
   "build": {
     "appId": "com.jingzong.worklog",
     "productName": "经侦大队工作记录管理系统",
-    "electronDownload": {
-      "mirror": "https://npmmirror.com/mirrors/electron/"
-    },
     "files": [
       "dist/**/*",
       "electron/**/*",
