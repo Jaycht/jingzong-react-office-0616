@@ -55,22 +55,24 @@ const batContent = `@echo off
 title 经侦大队工作记录管理系统
 set "HTML=file:///%~dp0standalone.html"
 
-REM 方式1：Edge App 模式（无边框窗口）
-where msedge >nul 2>&1
-if %errorlevel%==0 (
-    start "" msedge --app="%HTML%" --no-first-run
-    exit
-)
-
-REM 方式2：Chrome App 模式（无边框窗口）
+REM 方式1：Chrome App 模式（无边框窗口）
 where chrome >nul 2>&1
-if %errorlevel%==0 (
-    start "" chrome --app="%HTML%" --no-first-run
+if %errorlevel%==0 goto :launch_chrome
+
+REM Chrome 不在 PATH 中，检查常见安装位置
+for %%p in (
+  "%LocalAppData%\\Google\\Chrome\\Application\\chrome.exe"
+  "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe"
+  "%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe"
+) do (
+  if exist %%p (
+    start "" %%p --app="%HTML%" --no-first-run
     exit
+  )
 )
 
-REM 方式3：Edge 协议处理（有边框窗口）
-start microsoft-edge:"%HTML%"
+:launch_chrome
+start "" chrome --app="%HTML%" --no-first-run
 exit
 `;
 writeFileSync(batPath, batContent, 'utf-8');
