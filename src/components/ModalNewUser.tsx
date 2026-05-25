@@ -38,7 +38,7 @@ export default function ModalNewUser({ onClose }: Props) {
         exit={{ scale: 0.88, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 400, damping: 32 }}
         onClick={e => e.stopPropagation()}
-        style={{ background: '#fff', borderRadius: 14, width: 480, maxWidth: '95vw', overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,.2)' }}
+        style={{ background: '#fff', borderRadius: 14, width: 'min(480px, 95vw)', overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,.2)' }}
       >
         {!done ? (
           <>

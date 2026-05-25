@@ -1,73 +1,53 @@
-# React + TypeScript + Vite
+# 经侦大队工作记录管理系统
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+县级经侦大队全岗位工作记录系统，支持 Electron 桌面端和网页版。
 
-Currently, two official plugins are available:
+## 技术栈
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+React 19 + TypeScript + Vite 8 + Ant Design 6 + Zustand + ECharts + Electron
 
-## React Compiler
+## 快速开始
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev          # 开发模式
+npm run build:web    # 构建网页版（产出 dist/ + standalone.html）
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 两种运行方式
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 1. 网页版（依赖 Node.js + 浏览器）
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build:web
+# 然后双击 start.vbs
 ```
+
+或直接打开 `dist/index.html`（注意：部分浏览器需通过 HTTP 服务打开）。
+
+### 2. Electron 桌面版（独立 .exe，无需任何依赖）
+
+由 GitHub Actions 自动构建，在 Releases 页面下载：
+- `经侦大队工作记录管理系统 Setup x.x.x.exe` — 安装包
+- `经侦大队工作记录管理系统-便携版-x.x.x.exe` — 免安装版
+
+## 构建自动递增版本号
+
+每次 `npm run build` 自动补丁位 +1，同步更新软件内的版本号和更新日志。
+
+## 项目结构
+
+```
+src/
+├── components/    # UI 组件
+├── pages/         # 页面
+├── store/         # Zustand 状态管理
+├── moduleConfig.ts # 部门/模块定义
+└── version.ts     # 版本号 + 变更日志
+electron/          # Electron 主进程
+.github/workflows/ # GitHub Actions 自动构建
+```
+
+## License
+
+MIT

@@ -77,17 +77,17 @@ export default function AppLayout() {
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         style={{
           height: 54, background: darkMode ? 'var(--stitch-primary-container)' : '#0F3A5F',
-          display: 'flex', alignItems: 'center', padding: '0 20px',
+          display: 'flex', alignItems: 'center', padding: '0 16px',
           boxShadow: '0 2px 12px rgba(0,0,0,.2)', flexShrink: 0, zIndex: 200,
-          position: 'relative', gap: 16,
+          position: 'relative', gap: 8,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fff', flexShrink: 0 }}>
-          <Landmark size={22} />
-          <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: 1, whiteSpace: 'nowrap' }}>经侦大队工作记录管理系统</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fff', flexShrink: 0, minWidth: 0 }}>
+          <Landmark size={20} />
+          <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>经侦大队工作记录管理系统</span>
         </div>
 
-        <div style={{ flex: 1, maxWidth: 480, position: 'relative', margin: '0 24px' }}>
+        <div style={{ flex: '1 1 auto', maxWidth: 'min(360px, 30vw)', position: 'relative', margin: '0 8px' }}>
           <Search size={14} color="rgba(255,255,255,0.6)" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)' }} />
           <input
             value={searchQuery}
@@ -150,7 +150,7 @@ export default function AppLayout() {
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <Sidebar />
         <div className="content-area" style={{
-          flex: 1, overflow: 'auto', padding: 20,
+          flex: 1, overflow: 'auto', padding: '16px 20px',
           background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5',
         }}>
             <motion.div

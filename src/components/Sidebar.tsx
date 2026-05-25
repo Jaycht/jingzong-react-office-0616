@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronLeft, Database, Settings, ShieldCheck } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Database, Settings, ShieldCheck, Menu } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { DEPARTMENTS, PLATFORM_NAV } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
@@ -11,11 +11,51 @@ export default function Sidebar() {
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
   const { customModules } = useCustomModules();
   const [expanded, setExpanded] = useState<string | null>('office');
+
+  // 自动折叠逻辑：窗口 < 900px 时自动折叠
+  const autoCollapse = useCallback(() => {
+    return window.innerWidth < 900;
+  }, []);
+
   const [collapsed, setCollapsed] = useState(() => {
     try {
-      return localStorage.getItem("jingzong.sidebar.collapsed") === "true";
-    } catch { return false; }
+      const saved = localStorage.getItem("jingzong.sidebar.collapsed");
+      if (saved !== null) return saved === "true";
+    } catch { /* ignore */ }
+    return autoCollapse();
   });
+
+  // 窗口变化时自动切换
+  useEffect(() => {
+    const onResize = () => {
+      const shouldCollapse = autoCollapse();
+      setCollapsed((prev) => {
+        // 只有跨越阈值时才自动切换，不覆盖用户手动设置
+        if (shouldCollapse && !prev) return true;
+        if (!shouldCollapse && prev) {
+          // 恢复用户上次的手动设置
+          try {
+            const saved = localStorage.getItem("jingzong.sidebar.collapsed");
+            return saved === "true";
+          } catch { return false; }
+        }
+        return prev;
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [autoCollapse]);
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((value) => {
+      const next = !value;
+      localStorage.setItem("jingzong.sidebar.collapsed", String(next));
+      return next;
+    });
+  }, []);
+
+  const SIDEBAR_WIDTH_EXPANDED = 226;
+  const SIDEBAR_WIDTH_COLLAPSED = 60;
 
   const departments = useMemo(() => {
     return DEPARTMENTS.map((dept) => ({
@@ -67,7 +107,7 @@ export default function Sidebar() {
 
   return (
     <motion.div
-      animate={{ width: collapsed ? 60 : 226 }}
+      animate={{ width: collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       style={{
         background: '#0F3A5F', display: 'flex', flexDirection: 'column',
@@ -77,7 +117,7 @@ export default function Sidebar() {
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => setCollapsed((value) => { const next = !value; localStorage.setItem("jingzong.sidebar.collapsed", String(next)); return next; })}
+        onClick={toggleCollapsed}
         style={{
           position: 'absolute', top: 14, right: -12, zIndex: 10,
           width: 24, height: 24, borderRadius: '50%', background: '#fff',

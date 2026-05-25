@@ -75,7 +75,7 @@ export default function RegisterPage({ onBack }: Props) {
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         className="glass-panel corner-accent"
         style={{
-          width: 500, maxWidth: "95vw", maxHeight: "90vh", overflow: "auto",
+          width: "min(500px, 95vw)", maxHeight: "90vh", overflow: "auto",
           padding: "32px 36px 28px", borderRadius: 16,
           position: "relative",
         }}

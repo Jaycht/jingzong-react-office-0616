@@ -108,14 +108,14 @@ export default function Version() {
         style={{ background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB", boxShadow: "0 1px 4px rgba(0,0,0,.06)", padding: "40px 24px 32px", marginBottom: 22, textAlign: "center" }}
       >
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }} style={{ marginBottom: 20 }}>
-          <img src="/logo.png" alt="" style={{ width: 280, height: 280, objectFit: "contain" }} />
+          <img src="./logo.png" alt="" style={{ width: 180, height: 180, objectFit: "contain" }} />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} style={{ fontSize: 22, fontWeight: 700, color: "#1F2937", marginBottom: 6, letterSpacing: 1 }}>{"经侦大队工作记录管理系统"}</motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} style={{ fontSize: 32, fontWeight: 900, color: "#155A8A", marginBottom: 8, letterSpacing: 2, fontFamily: "'Courier New', monospace" }}>{versionInfo.version}</motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} style={{ fontSize: 13, color: "#6B7280", marginBottom: 22, letterSpacing: 0.5 }}>Economic Investigation Work Log Registration System</motion.div>
         <div style={{ width: 60, height: 2, background: "linear-gradient(90deg, transparent, #1B5E9B, transparent)", margin: "0 auto 22px" }} />
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} style={{ fontSize: 14, color: "#374151", marginBottom: 18, fontWeight: 500 }}>{"制作人：陈洪涛 © 版权所有"}</motion.div>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} style={{ fontSize: 12.5, color: "#4B5563", lineHeight: 1.8, maxWidth: 720, margin: "0 auto 14px" }}>{"版权声明：..."}</motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} style={{ fontSize: 12.5, color: "#4B5563", lineHeight: 1.8, maxWidth: 720, margin: "0 auto 14px" }}>{"版权声明：本系统为县级经侦大队内部工作记录管理专用，未经授权不得复制、传播或用于商业用途。"}</motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ fontSize: 12, color: "#9CA3AF", marginTop: 6 }}>Copyright © 2026</motion.div>
       </motion.div>
 

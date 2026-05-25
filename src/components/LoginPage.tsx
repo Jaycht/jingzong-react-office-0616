@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { APP_VERSION } from "../version";
+import { useAppStore } from "../store/appStore";
 import RegisterPage from "./RegisterPage";
 
 interface Props {
@@ -53,6 +54,8 @@ function DateTimeDisplay() {
 /*  Component                                                          */
 /* ================================================================== */
 export default function LoginPage({ onLogin, onRegister }: Props) {
+  const lowPerfMode = useAppStore((s) => s.lowPerfMode);
+  const toggleLowPerfMode = useAppStore((s) => s.toggleLowPerfMode);
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -158,6 +161,24 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               System Online &middot; v{APP_VERSION.replace("V","")}
             </motion.div>
 
+            {/* Performance toggle */}
+            <motion.div
+              initial={{ opacity:0, y:-10 }}
+              animate={{ opacity:1, y:0 }}
+              transition={{ delay:0.15, duration:0.6 }}
+              style={{ marginBottom:16 }}
+            >
+              <label style={{ display:"inline-flex", alignItems:"center", gap:8, cursor:"pointer", fontSize:12, color:"rgba(194,198,208,0.6)" }}>
+                <input
+                  type="checkbox"
+                  checked={!lowPerfMode}
+                  onChange={toggleLowPerfMode}
+                  style={{ accentColor:"#00dbe7", width:14, height:14, cursor:"pointer" }}
+                />
+                开启特效（动画/毛玻璃/扫描线）
+              </label>
+            </motion.div>
+
             {/* Title */}
             <motion.h2
               initial={{ opacity:0, y:20 }}
@@ -166,7 +187,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               style={{
                 fontFamily:"'Hanken Grotesk','Noto Sans SC',sans-serif",
                 fontSize:40, fontWeight:700, lineHeight:1.2,
-                letterSpacing:"-0.02em", whiteSpace:"nowrap",
+                letterSpacing:"-0.02em",
               }}
             >
               <span style={{ color:"#a3c9ff" }}>经侦大队工作记录管理系统</span>
@@ -329,8 +350,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
             <div style={{ position:"relative", zIndex:10, textAlign:"center" }}>
               <img
                 alt="System Logo"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCD7giNZgPNRriHQbRUywupsZnEQ5iplcizEkCe1zScsriPFITdX_VYiOkA0qJMGk1IhA1QqVYT8lGNw5A8fZbraZ7M-OU3MXFU-9608WToRI0iDMaKaOvu07u2SJqhRoQPKfGinQ_RpLfa1C9NSHnjoI__uj-5bBo1_W_km1RApKKqn15ZAOuY1eW-4582BpAZ9eXQAUuheUchG29XDLb7aL1UmS3JAfTDW_rJuWtumIy5LrK6iPgdHt037ZFpwaJONXiuOOBfLK5I"
-                style={{ width:"80%", maxWidth:350, filter:"drop-shadow(0 0 50px rgba(0,59,109,0.6))", display:"block", margin:"0 auto" }}
+                src="./logo.png"
+                style={{ width:"80%", maxWidth:"min(350px, 60vw)", filter:"drop-shadow(0 0 50px rgba(0,59,109,0.6))", display:"block", margin:"0 auto" }}
               />
             </div>
 

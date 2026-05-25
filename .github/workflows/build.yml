@@ -2,12 +2,12 @@
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
   build-electron:
-    name: Electron 桌面版
+    name: Electron Desktop
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,16 +16,17 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npx vite build
-      - run: npx electron-builder --config.extraMetadata.main=electron/main.cjs
+      - name: Build Electron
+        run: npx electron-builder --config.extraMetadata.main=electron/main.cjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
-          name: 安装包
+          name: Electron-installer
           path: release/*.exe
 
   build-web:
-    name: 纯网页便携版
+    name: Web Portable
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,17 +35,18 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npx vite build
-      - name: 打包网页版
+      - name: Package web version
         run: |
-          mkdir -p release/web-portable
-          cp -r dist release/web-portable/
-          cp app.ico release/web-portable/
-          # 复制启动脚本（已存放在仓库根目录）
-          cp 启动网页版.bat release/web-portable/启动.bat
-          # 打包为 zip
+          mkdir -p release/jingzong-web
+          cp -r dist release/jingzong-web/
+          cp server.js release/jingzong-web/
+          cp start.vbs release/jingzong-web/
+          cp app.ico release/jingzong-web/
+          # package.json only for "type": "module"
+          echo '{"name":"jingzong-web","private":true,"type":"module"}' > release/jingzong-web/package.json
           cd release
-          zip -r web-portable.zip web-portable/
+          zip -r jingzong-web.zip jingzong-web/
       - uses: actions/upload-artifact@v4
         with:
-          name: web-portable
-          path: release/web-portable.zip
+          name: Web-Portable
+          path: release/jingzong-web.zip

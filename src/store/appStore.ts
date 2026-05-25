@@ -90,7 +90,7 @@ export const useAppStore = create<AppState>((set) => ({
       return { darkMode: next };
     }),
 
-  lowPerfMode: localStorage.getItem("jingzong.lowPerfMode") === "true",
+  lowPerfMode: localStorage.getItem("jingzong.lowPerfMode") !== "false",
   toggleLowPerfMode: () =>
     set((s) => {
       const next = !s.lowPerfMode;

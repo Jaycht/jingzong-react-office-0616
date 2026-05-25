@@ -26,7 +26,7 @@ export default function Drawer({ onClose }: Props) {
         transition={{ type: 'spring', stiffness: 350, damping: 38 }}
         style={{
           position: 'fixed', top: 0, right: 0, bottom: 0,
-          width: 480, maxWidth: '95vw',
+          width: 'min(480px, 95vw)',
           background: '#fff', boxShadow: '-4px 0 24px rgba(0,0,0,.12)',
           zIndex: 501, display: 'flex', flexDirection: 'column',
         }}
