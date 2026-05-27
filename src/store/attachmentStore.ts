@@ -1,10 +1,11 @@
 /**
- * 附件存储 - 基于 IndexedDB
- * 离线存储文件二进制，支持文件上传/下载/删除/备份恢复
+ * 附件存储 — 双模式适配
+ * - Electron 模式：文件存硬盘（userData/attachments/），IndexedDB 只存元数据
+ * - 浏览器模式：完整文件二进制存 IndexedDB
  */
 
 const DB_NAME = 'jingzong-attachments';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'files';
 
 export interface AttachmentRecord {
@@ -17,6 +18,8 @@ export interface AttachmentRecord {
   fileSize: number;
   data: ArrayBuffer;
   uploadedAt: string;
+  /** Electron 模式下存文件路径，浏览器模式下为空 */
+  filePath?: string;
 }
 
 export interface AttachmentReference {
@@ -39,6 +42,11 @@ export interface AttachmentBackupItem {
   fileSize: number;
   uploadedAt: string;
   dataBase64: string;
+}
+
+/** 判断是否运行在 Electron 环境 */
+function isElectron(): boolean {
+  return typeof window !== 'undefined' && !!(window as any).electronAPI?.isElectron;
 }
 
 function openDB(): Promise<IDBDatabase> {
@@ -104,39 +112,94 @@ export async function saveAttachment(
   fieldId: string,
   file: File,
 ): Promise<AttachmentRecord> {
-  const db = await openDB();
+  const id = `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const fileName = file.name;
+  const fileType = file.type;
+  const fileSize = file.size;
+  const uploadedAt = new Date().toISOString();
+
+  // Electron 模式：文件存硬盘，IDB 只存元数据
+  if (isElectron()) {
+    const buffer = await file.arrayBuffer();
+    const result = await (window as any).electronAPI.saveAttachmentFile(
+      Array.from(new Uint8Array(buffer)),
+      fileName,
+      moduleId,
+    );
+    if (!result.success) {
+      throw new Error(`保存附件到硬盘失败: ${result.error}`);
+    }
+    const record: AttachmentRecord = {
+      id,
+      recordId,
+      moduleId,
+      fieldId,
+      fileName,
+      fileType,
+      fileSize,
+      uploadedAt,
+      data: new ArrayBuffer(0), // 不存二进制
+      filePath: result.filePath,
+    };
+
+    const db = await openDB();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.add(record);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+    return record;
+  }
+
+  // 浏览器模式：完整二进制存 IDB（原逻辑）
   const buffer = await file.arrayBuffer();
   const record: AttachmentRecord = {
-    id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id,
     recordId,
     moduleId,
     fieldId,
-    fileName: file.name,
-    fileType: file.type,
-    fileSize: file.size,
+    fileName,
+    fileType,
+    fileSize,
     data: buffer,
-    uploadedAt: new Date().toISOString(),
+    uploadedAt,
   };
 
-  return new Promise((resolve, reject) => {
+  const db = await openDB();
+  await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
     const req = store.add(record);
-    req.onsuccess = () => resolve(record);
+    req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
+  return record;
 }
 
 /** 读取文件数据 */
 export async function getAttachment(id: string): Promise<AttachmentRecord | null> {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  const record = await new Promise<AttachmentRecord | null>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
     const req = store.get(id);
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
   });
+
+  if (!record) return null;
+
+  // Electron 模式：从硬盘读取文件数据
+  if (isElectron() && record.filePath) {
+    const result = await (window as any).electronAPI.readAttachmentFile(record.filePath);
+    if (result.success) {
+      record.data = new Uint8Array(result.buffer).buffer;
+    }
+  }
+
+  return record;
 }
 
 /** 获取全部附件 */
@@ -194,18 +257,28 @@ export async function relinkAttachment(id: string, recordId: string): Promise<vo
 
 /** 删除附件 */
 export async function deleteAttachment(id: string): Promise<void> {
+  const record = await getAttachment(id);
+  if (!record) return;
+
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
     const req = store.delete(id);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
+
+  // Electron 模式：同时删除硬盘文件
+  if (isElectron() && record.filePath) {
+    (window as any).electronAPI.deleteAttachmentFile(record.filePath).catch(() => {});
+  }
 }
 
 /** 清空全部附件 */
 export async function clearAttachments(): Promise<void> {
+  const all = await getAllAttachments();
+
   const db = await openDB();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -214,12 +287,24 @@ export async function clearAttachments(): Promise<void> {
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
+
+  // Electron 模式：同时删除所有硬盘文件
+  if (isElectron()) {
+    for (const att of all) {
+      if (att.filePath) {
+        (window as any).electronAPI.deleteAttachmentFile(att.filePath).catch(() => {});
+      }
+    }
+  }
 }
 
 /** 下载附件 */
 export async function downloadAttachment(id: string): Promise<void> {
   const att = await getAttachment(id);
   if (!att) throw new Error('附件不存在');
+
+  // Electron 模式：从硬盘已读取到 att.data
+  // 浏览器模式：att.data 已包含二进制
   const blob = new Blob([att.data], { type: att.fileType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -249,17 +334,32 @@ export async function getAttachmentCount(): Promise<number> {
 /** 导出附件快照，用于完整备份 */
 export async function exportAttachmentSnapshot(): Promise<AttachmentBackupItem[]> {
   const attachments = await getAllAttachments();
-  return attachments.map((item) => ({
-    id: item.id,
-    recordId: item.recordId,
-    moduleId: item.moduleId,
-    fieldId: item.fieldId,
-    fileName: item.fileName,
-    fileType: item.fileType,
-    fileSize: item.fileSize,
-    uploadedAt: item.uploadedAt,
-    dataBase64: arrayBufferToBase64(item.data),
-  }));
+
+  const items: AttachmentBackupItem[] = [];
+  for (const item of attachments) {
+    let dataBase64 = '';
+    // Electron 模式：从硬盘读取文件数据
+    if (isElectron() && item.filePath) {
+      const result = await (window as any).electronAPI.readAttachmentFile(item.filePath);
+      if (result.success) {
+        dataBase64 = arrayBufferToBase64(new Uint8Array(result.buffer).buffer);
+      }
+    } else {
+      dataBase64 = arrayBufferToBase64(item.data);
+    }
+    items.push({
+      id: item.id,
+      recordId: item.recordId,
+      moduleId: item.moduleId,
+      fieldId: item.fieldId,
+      fileName: item.fileName,
+      fileType: item.fileType,
+      fileSize: item.fileSize,
+      uploadedAt: item.uploadedAt,
+      dataBase64,
+    });
+  }
+  return items;
 }
 
 /** 从备份快照恢复附件 */
@@ -269,26 +369,52 @@ export async function importAttachmentSnapshot(items: AttachmentBackupItem[]): P
     return 0;
   }
 
-  const db = await openDB();
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const store = tx.objectStore(STORE_NAME);
-  store.clear();
-
   for (const item of items) {
-    const record: AttachmentRecord = {
-      id: item.id,
-      recordId: item.recordId,
-      moduleId: item.moduleId,
-      fieldId: item.fieldId,
-      fileName: item.fileName,
-      fileType: item.fileType,
-      fileSize: item.fileSize,
-      uploadedAt: item.uploadedAt,
-      data: base64ToArrayBuffer(item.dataBase64),
-    };
-    store.put(record);
+    const buffer = base64ToArrayBuffer(item.dataBase64);
+
+    // Electron 模式：先写硬盘再存元数据
+    if (isElectron()) {
+      const result = await (window as any).electronAPI.saveAttachmentFile(
+        Array.from(new Uint8Array(buffer)),
+        item.fileName,
+        item.moduleId,
+      );
+      if (result.success) {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put({
+          id: item.id,
+          recordId: item.recordId,
+          moduleId: item.moduleId,
+          fieldId: item.fieldId,
+          fileName: item.fileName,
+          fileType: item.fileType,
+          fileSize: item.fileSize,
+          uploadedAt: item.uploadedAt,
+          data: new ArrayBuffer(0),
+          filePath: result.filePath,
+        });
+        await transactionDone(tx);
+      }
+    } else {
+      const db = await openDB();
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.put({
+        id: item.id,
+        recordId: item.recordId,
+        moduleId: item.moduleId,
+        fieldId: item.fieldId,
+        fileName: item.fileName,
+        fileType: item.fileType,
+        fileSize: item.fileSize,
+        uploadedAt: item.uploadedAt,
+        data: buffer,
+      });
+      await transactionDone(tx);
+    }
   }
 
-  await transactionDone(tx);
   return items.length;
 }

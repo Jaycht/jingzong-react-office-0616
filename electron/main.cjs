@@ -1,9 +1,14 @@
 ﻿const { app, BrowserWindow, ipcMain, Menu } = require("electron");
 const path = require("path");
+const fs = require("fs");
+const fsp = require("fs/promises");
 
 const isDev = !app.isPackaged;
 let loginWindow = null;
 let mainWindow = null;
+
+// 附件存储目录
+const ATTACHMENTS_DIR = path.join(app.getPath("userData"), "attachments");
 
 // 移除默认菜单栏（全局生效）
 Menu.setApplicationMenu(null);
@@ -79,6 +84,8 @@ function createMainWindow() {
   });
 }
 
+// ======================== IPC 处理器 ========================
+
 // 登录成功后：关闭登录窗口，打开主窗口
 ipcMain.on("switch-to-main", () => {
   if (loginWindow) {
@@ -117,7 +124,50 @@ ipcMain.on("window-close", (event) => {
   if (win) win.close();
 });
 
+// 附件文件操作 — 保存文件到硬盘
+ipcMain.handle("save-attachment-file", async (_event, { buffer, fileName, moduleId }) => {
+  try {
+    const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${fileName.replace(/[<>:"/\\|?*]/g, "_")}`;
+    const filePath = path.join(ATTACHMENTS_DIR, safeName);
+    await fsp.writeFile(filePath, Buffer.from(buffer));
+    return { success: true, filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// 附件文件操作 — 从硬盘读取文件
+ipcMain.handle("read-attachment-file", async (_event, filePath) => {
+  try {
+    const buffer = await fsp.readFile(filePath);
+    // Buffer → Uint8Array → ArrayBuffer（确保 IPC 序列化正确）
+    const uint8 = new Uint8Array(buffer);
+    return { success: true, buffer: uint8.buffer };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// 附件文件操作 — 从硬盘删除文件
+ipcMain.handle("delete-attachment-file", async (_event, filePath) => {
+  try {
+    await fsp.unlink(filePath);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// 获取附件目录路径
+ipcMain.handle("get-attachments-dir", () => {
+  return ATTACHMENTS_DIR;
+});
+
 app.whenReady().then(() => {
+  // 确保附件目录存在
+  if (!fs.existsSync(ATTACHMENTS_DIR)) {
+    fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
+  }
   createLoginWindow();
 });
 

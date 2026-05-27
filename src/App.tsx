@@ -15,6 +15,13 @@ declare global {
       switchToMain: () => void;
       closeLogin: () => void;
       isElectron: boolean;
+      minimize: () => void;
+      maximize: () => void;
+      close: () => void;
+      saveAttachmentFile: (buffer: number[], fileName: string, moduleId: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
+      readAttachmentFile: (filePath: string) => Promise<{ success: boolean; buffer?: ArrayBuffer; error?: string }>;
+      deleteAttachmentFile: (filePath: string) => Promise<{ success: boolean; error?: string }>;
+      getAttachmentsDir: () => Promise<string>;
     };
   }
 }

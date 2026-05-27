@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.22";
+export const APP_VERSION = "V2.6.23";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 22;
+export const VERSION_PATCH = 23;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.23 =====
+  "V2.6.23 新增 - 附件存储双模式：Electron 存硬盘文件夹+浏览器存IndexedDB",
   // ===== V2.6.22 =====
   "V2.6.22 修复 - 记住登录凭据对注册用户也生效+Electron窗口控制改用event.sender",
   // ===== V2.6.21 =====
