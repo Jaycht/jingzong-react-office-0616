@@ -2,7 +2,6 @@
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut, Search, Moon, Sun } from 'lucide-react';
-import { Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
 import { DEPARTMENTS, PLATFORM_NAV } from '../moduleConfig';
@@ -21,7 +20,6 @@ type IconComponent = React.ComponentType<{
 }>;
 
 export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
-  const [modal, contextHolder] = Modal.useModal();
   const navigate = useNavigate();
   const currentPage = useAppStore((s) => s.currentPage);
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
@@ -86,21 +84,14 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
   const toggleExpand = (id: string) => setExpanded((prev) => (prev === id ? null : id));
 
   const handleLogout = () => {
-    modal.confirm({
-      title: '确认退出登录？',
-      content: '退出后需要重新登录。',
-      okText: '退出',
-      cancelText: '取消',
-      onOk: () => {
-        try {
-          localStorage.removeItem("jingzong.login.v1");
-        } catch {
-          // Ignore storage cleanup failures and continue logout flow.
-        }
-        navigate("/login");
-        useAppStore.getState().showToast("已退出登录", "info");
-      },
-    });
+    try {
+      localStorage.removeItem("jingzong.login.v1");
+    } catch {
+      // Continue even if storage cleanup fails.
+    }
+    useAppStore.getState().setUser("", "");
+    navigate("/login");
+    useAppStore.getState().showToast("已退出登录", "info");
   };
 
   const renderPlatformItem = (item: typeof PLATFORM_NAV.top[number]) => {
@@ -138,7 +129,6 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         background: '#0F3A5F', display: 'flex', flexDirection: 'column',
         overflow: 'hidden', flexShrink: 0, position: 'relative',
       }}>
-      {contextHolder}
       {/* Electron 无边框窗口拖拽区域 */}
       {/* @ts-expect-error WebkitAppRegion is Electron-only CSS property */}
       <div style={{ WebkitAppRegion: 'drag' as any, height: 30, flexShrink: 0 }} />

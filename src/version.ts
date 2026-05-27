@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.15";
+export const APP_VERSION = "V2.6.16";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 15;
+export const VERSION_PATCH = 16;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.16 =====
+  "V2.6.16 修复 - 退出登录去掉 Modal.useModal() 确认弹窗，改为直接退出 + 清除 Store 用户状态",
   // ===== V2.6.15 =====
   "V2.6.15 修复 - 退出登录改用 Modal.useModal() + React Router navigate，修复退出无反应",
   "V2.6.15 修复 - Electron 主窗口统一无边框（frame:false），登录页和主页均无标题栏/菜单栏",
