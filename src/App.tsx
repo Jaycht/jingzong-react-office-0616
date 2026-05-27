@@ -64,40 +64,7 @@ function AppContent() {
                       transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
                     })}
               >
-                {isElectron && (
-                  <div
-                    onClick={handleCloseLogin}
-                    title="Close"
-                    style={{
-                      position: "fixed",
-                      top: 12,
-                      right: 16,
-                      zIndex: 9999,
-                      width: 28,
-                      height: 28,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      color: "#64748B",
-                      fontSize: 16,
-                      fontWeight: 700,
-                      transition: "all .15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                      e.currentTarget.style.color = "#EF4444";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color = "#64748B";
-                    }}
-                  >
-                    x
-                  </div>
-                )}
-                <LoginPage onLogin={handleLogin} onRegister={() => navigate("/register")} />
+                  <LoginPage onLogin={handleLogin} onRegister={() => navigate("/register")} />
               </motion.div>
             }
           />

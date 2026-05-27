@@ -2,6 +2,7 @@
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut, Search, Moon, Sun } from 'lucide-react';
+import { Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
 import { DEPARTMENTS, PLATFORM_NAV } from '../moduleConfig';
@@ -84,14 +85,22 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
   const toggleExpand = (id: string) => setExpanded((prev) => (prev === id ? null : id));
 
   const handleLogout = () => {
-    try {
-      localStorage.removeItem("jingzong.login.v1");
-    } catch {
-      // Continue even if storage cleanup fails.
-    }
-    useAppStore.getState().setUser("", "");
-    navigate("/login");
-    useAppStore.getState().showToast("已退出登录", "info");
+    Modal.confirm({
+      title: '确认退出登录？',
+      content: '退出后需要重新登录。',
+      okText: '退出',
+      cancelText: '取消',
+      onOk: () => {
+        try {
+          localStorage.removeItem("jingzong.login.v1");
+        } catch {
+          // Continue even if storage cleanup fails.
+        }
+        useAppStore.getState().setUser("", "");
+        navigate("/login");
+        useAppStore.getState().showToast("已退出登录", "info");
+      },
+    });
   };
 
   const renderPlatformItem = (item: typeof PLATFORM_NAV.top[number]) => {

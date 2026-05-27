@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.19";
+export const APP_VERSION = "V2.6.20";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 19;
+export const VERSION_PATCH = 20;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.20 =====
+  "V2.6.20 修复 - 退出登录改用Modal.confirm静态方法+登录页拖拽条+关闭按钮",
   // ===== V2.6.19 =====
   "V2.6.19 修复 - 附件上传getValueFromEvent+响应式登录页+更新日志排序+Electron窗口控制+版本号同步",
   // ===== V2.6.18 =====

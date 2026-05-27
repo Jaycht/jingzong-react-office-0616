@@ -216,6 +216,16 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         backgroundSize: "32px 32px, 128px 128px, 128px 128px",
       };
 
+  const isElectron = typeof window !== "undefined" && (window as any).electronAPI?.isElectron;
+
+  const handleCloseLoginPage = () => {
+    if ((window as any).electronAPI?.closeLogin) {
+      (window as any).electronAPI.closeLogin();
+    } else {
+      try { window.close(); } catch { /* not supported */ }
+    }
+  };
+
   return (
     <div
       style={{
@@ -223,11 +233,33 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         display: "flex",
         flexDirection: "column",
         position: "relative",
-        overflow: "auto",
         fontFamily: "'Noto Sans SC','Microsoft YaHei','PingFang SC',sans-serif",
         ...bgStyle,
       }}
     >
+      {/* Electron 无边框窗口拖拽条 + 关闭按钮 */}
+      {isElectron && (
+        <div
+          style={{
+            height: 28, flexShrink: 0, display: 'flex', alignItems: 'center',
+            WebkitAppRegion: 'drag' as any,
+            background: '#0a1420',
+            paddingLeft: 12,
+          }}
+        >
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
+            经侦大队工作记录管理系统
+          </span>
+          <div style={{ WebkitAppRegion: 'no-drag' as any, display: 'flex', paddingRight: 4 }}>
+            <div onClick={handleCloseLoginPage} title="关闭"
+              style={{ width: 36, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 13 }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#E81123'; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
+            >×</div>
+          </div>
+        </div>
+      )}
+
       {!lowPerfMode && <div className="scanline-overlay" />}
 
       <main
