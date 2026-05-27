@@ -248,16 +248,15 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         <section
           style={{
             width: "100%",
-            display: "grid",
-            gridTemplateColumns: lowPerfMode
-              ? "minmax(380px, 440px) minmax(200px, 1fr)"
-              : "minmax(380px, 440px) minmax(160px, 1fr) minmax(300px, 1fr)",
-            gap: lowPerfMode ? "clamp(12px, 2vw, 24px)" : "clamp(16px, 3vw, 40px)",
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
             alignItems: "center",
+            gap: lowPerfMode ? "clamp(12px, 2vw, 24px)" : "clamp(16px, 3vw, 40px)",
             marginBottom: "clamp(24px, 5vw, 48px)",
           }}
         >
-          <div style={{ minWidth: 0 }}>
+          <div style={{ flex: "1 1 400px", minWidth: 280, maxWidth: 480 }}>
             {!lowPerfMode && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -508,7 +507,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6, duration: 1.5 }}
-              style={{ textAlign: "center" }}
+              style={{ flex: "1 1 160px", minWidth: 140, textAlign: "center" }}
             >
               <motion.div
                 animate={{ opacity: [0.3, 0.5, 0.3] }}
@@ -529,12 +528,12 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
             </motion.div>
           )}
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+          <div style={{ flex: "1 1 280px", minWidth: 240, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
             <img
               src="./logo.png"
               alt="System Logo"
               style={{
-                width: "min(80%, 300px)",
+                width: "min(80%, 220px)",
                 height: "auto",
                 filter: "drop-shadow(0 0 40px rgba(0,59,109,0.5))",
               }}
@@ -593,7 +592,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
             style={{
               width: "100%",
               display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
               gap: "clamp(10px, 2vw, 16px)",
             }}
           >
@@ -634,8 +633,10 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           style={{
             width: "100%",
             display: "flex",
+            flexWrap: "wrap",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: "8px",
             padding: "clamp(8px, 1.5vw, 16px) 0 0",
             marginTop: "clamp(12px, 2vw, 24px)",
           }}

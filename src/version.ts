@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.18";
+export const APP_VERSION = "V2.6.19";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 18;
+export const VERSION_PATCH = 19;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.19 =====
+  "V2.6.19 修复 - 附件上传getValueFromEvent+响应式登录页+更新日志排序+Electron窗口控制+版本号同步",
   // ===== V2.6.18 =====
   "V2.6.18 修复 - build/installer.nsh StrCpy 缺少 $INSTDIR 导致 electron-builder 构建失败",
   // ===== V2.6.17 =====

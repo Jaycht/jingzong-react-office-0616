@@ -61,7 +61,7 @@ function buildVersionGroups(changelog: string[]): VersionGroup[] {
   }
 
   const result: VersionGroup[] = [];
-  for (let i = versionOrder.length - 1; i >= 0; i--) {
+  for (let i = 0; i < versionOrder.length; i++) {
     const v = versionOrder[i];
     const g = groups.get(v)!;
     result.push({ version: v, items: g.items, fixes: g.fixes });

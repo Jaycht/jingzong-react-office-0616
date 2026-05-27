@@ -99,6 +99,17 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+
+      // 清理附件字段：删除 originFileObj（File/Blob 无法 JSON 序列化到 localStorage）
+      for (const key of Object.keys(values)) {
+        if (Array.isArray(values[key]) && values[key].length > 0 && values[key][0]?.originFileObj) {
+          values[key] = (values[key] as Record<string, unknown>[]).map((f) => {
+            const { originFileObj, ...rest } = f;
+            return rest;
+          });
+        }
+      }
+
       setSaving(true);
       if (isEditing && editRecord) {
         updateMassRecord(editRecord.id, values);
@@ -530,7 +541,14 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
 
   if (field.type === 'attachment') {
     return (
-      <Form.Item name={name} label={field.label} valuePropName="fileList">
+      // valuePropName="fileList" 配合 getValueFromEvent 确保存储的始终是 fileList 数组
+      // 防止 antd v6 Upload 的 onChange 返回 { file, fileList, event } 整个对象
+      <Form.Item
+        name={name}
+        label={field.label}
+        valuePropName="fileList"
+        getValueFromEvent={(info) => info?.fileList || []}
+      >
         <Upload.Dragger
           beforeUpload={async (file) => {
             // 保存到 IndexedDB

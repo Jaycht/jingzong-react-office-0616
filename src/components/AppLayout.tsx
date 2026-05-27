@@ -35,6 +35,14 @@ const PAGES: Record<string, React.FC> = {
   'squad-case': SquadCasePage,
 };
 
+const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
+
+const winControls = {
+  min: () => (window as any).electronAPI?.minimize(),
+  max: () => (window as any).electronAPI?.maximize(),
+  close: () => (window as any).electronAPI?.close(),
+};
+
 export default function AppLayout() {
     const modalId = useAppStore((s) => s.modalId);
   const closeModal = useAppStore((s) => s.closeModal);
@@ -58,7 +66,29 @@ export default function AppLayout() {
   const Page = PAGES[currentPage] || ModulePage;
 
   return (
-    <div style={{ height: '100vh', display: 'flex', overflow: 'hidden', background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5' }}>
+      {/* Electron 无边框窗口拖拽条 + 窗口控制 */}
+      {isElectron && (
+        <div
+          style={{
+            height: 28, flexShrink: 0, display: 'flex', alignItems: 'center',
+            WebkitAppRegion: 'drag' as any,
+            background: darkMode ? '#0a1a2e' : '#0F3A5F',
+            paddingLeft: 12,
+          }}
+        >
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
+            经侦大队工作记录管理系统
+          </span>
+          {/* 窗口控制按钮（不可拖拽） */}
+          <div style={{ WebkitAppRegion: 'no-drag' as any, display: 'flex', gap: 2, paddingRight: 4 }}>
+            <div onClick={winControls.min} title="最小化" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 12 }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>─</div>
+            <div onClick={winControls.max} title="最大化" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 11 }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>□</div>
+            <div onClick={winControls.close} title="关闭" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: 13 }} onMouseEnter={e => { e.currentTarget.style.background = '#E81123'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}>×</div>
+          </div>
+        </div>
+      )}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
       <Sidebar
         onOpenProfile={() => setProfileOpen(true)}
         onOpenPassword={() => setPasswordOpen(true)}
@@ -78,6 +108,7 @@ export default function AppLayout() {
               <Page />
             </Suspense>
           </motion.div>
+      </div>
       </div>
 
       <AnimatePresence>
