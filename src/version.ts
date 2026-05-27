@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.21";
+export const APP_VERSION = "V2.6.22";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 21;
+export const VERSION_PATCH = 22;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.22 =====
+  "V2.6.22 修复 - 记住登录凭据对注册用户也生效+Electron窗口控制改用event.sender",
   // ===== V2.6.21 =====
   "V2.6.21 修复 - 登录页宽度修正+更新日志完全替换+重置数据按钮+附件档案直接从IndexedDB读取+附件下载功能",
   // ===== V2.6.20 =====

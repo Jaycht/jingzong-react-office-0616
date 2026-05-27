@@ -92,21 +92,29 @@ ipcMain.on("close-login", () => {
   if (loginWindow) loginWindow.close();
 });
 
-// 窗口控制（主窗口）
-ipcMain.on("window-minimize", () => {
-  if (mainWindow) mainWindow.minimize();
+// 窗口控制 — 使用 event.sender 获取准确的窗口引用（比跟踪变量更可靠）
+function getWin(event) {
+  return BrowserWindow.fromWebContents(event.sender);
+}
+
+ipcMain.on("window-minimize", (event) => {
+  const win = getWin(event);
+  if (win) win.minimize();
 });
-ipcMain.on("window-maximize", () => {
-  if (mainWindow) {
-    if (mainWindow.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow.maximize();
-    }
+
+ipcMain.on("window-maximize", (event) => {
+  const win = getWin(event);
+  if (!win) return;
+  if (win.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win.maximize();
   }
 });
-ipcMain.on("window-close", () => {
-  if (mainWindow) mainWindow.close();
+
+ipcMain.on("window-close", (event) => {
+  const win = getWin(event);
+  if (win) win.close();
 });
 
 app.whenReady().then(() => {

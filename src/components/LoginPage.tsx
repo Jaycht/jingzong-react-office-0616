@@ -165,11 +165,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
     window.setTimeout(() => {
       setSubmitting(false);
 
-      if (found) {
-        onLogin(found.name, found.roleName || found.role || "普通用户");
-        return;
-      }
-
+      // 无论是否在已注册用户中找到，都保存登录凭据
+      // 否则记住账号/记住密码/自动登录功能对注册用户无效
       saveCredentials({
         account,
         password,
@@ -177,6 +174,11 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         remember,
         autoLogin,
       });
+
+      if (found) {
+        onLogin(found.name, found.roleName || found.role || "普通用户");
+        return;
+      }
 
       onLogin(account, DEFAULT_ROLE_BY_ACCOUNT[account] || "普通用户");
     }, 600);
