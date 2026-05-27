@@ -303,8 +303,19 @@ export async function downloadAttachment(id: string): Promise<void> {
   const att = await getAttachment(id);
   if (!att) throw new Error('附件不存在');
 
-  // Electron 模式：从硬盘已读取到 att.data
-  // 浏览器模式：att.data 已包含二进制
+  // Electron 模式：弹出原生保存对话框，默认指向下载文件夹
+  if (isElectron()) {
+    const buf = Array.from(new Uint8Array(att.data));
+    const result = await (window as any).electronAPI.showSaveDialog(att.fileName, buf);
+    if (result.success) {
+      console.log(`[download] 附件已保存到: ${result.filePath}`);
+    } else if (!result.canceled) {
+      console.warn('[download] 保存失败:', result.error);
+    }
+    return;
+  }
+
+  // 浏览器模式：通过 Blob URL 下载
   const blob = new Blob([att.data], { type: att.fileType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

@@ -282,15 +282,16 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         <section
           style={{
             width: "100%",
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            alignItems: "center",
+            display: "grid",
+            gridTemplateColumns: lowPerfMode
+              ? "minmax(340px, 440px) minmax(240px, 1fr)"
+              : "minmax(380px, 440px) minmax(140px, 1fr) minmax(260px, 1fr)",
             gap: lowPerfMode ? "clamp(12px, 2vw, 24px)" : "clamp(16px, 3vw, 40px)",
+            alignItems: "center",
             marginBottom: "clamp(24px, 5vw, 48px)",
           }}
         >
-          <div style={{ flex: "0 1 440px", minWidth: 380 }}>
+          <div style={{ minWidth: 0 }}>
             {!lowPerfMode && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -541,7 +542,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6, duration: 1.5 }}
-              style={{ flex: "0 1 200px", minWidth: 160, textAlign: "center" }}
+              style={{ textAlign: "center" }}
             >
               <motion.div
                 animate={{ opacity: [0.3, 0.5, 0.3] }}
@@ -562,12 +563,12 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
             </motion.div>
           )}
 
-          <div style={{ flex: "0 1 320px", minWidth: 260, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
             <img
               src="./logo.png"
               alt="System Logo"
               style={{
-                width: "min(80%, 260px)",
+                width: "min(80%, 280px)",
                 height: "auto",
                 filter: "drop-shadow(0 0 40px rgba(0,59,109,0.5))",
               }}

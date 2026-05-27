@@ -1,8 +1,7 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FileArchive, FileText, Image, File, Download, Search } from 'lucide-react';
-import { getAllAttachments, downloadAttachment } from '../store/attachmentStore';
-import { getMassRecords } from '../store/massStore';
+import { FileArchive, FileText, Image, File, Download, Search, Trash2 } from 'lucide-react';
+import { getAllAttachments, downloadAttachment, deleteAttachment } from '../store/attachmentStore';
 import { getBaseModules } from '../moduleConfig';
 import type { AttachmentRecord } from '../store/attachmentStore';
 
@@ -39,10 +38,11 @@ export default function Attachments() {
   const [dbAttachments, setDbAttachments] = useState<AttachmentRecord[]>([]);
   const modules = useMemo(() => getBaseModules(), []);
 
-  // 从 IndexedDB 加载所有附件
-  useEffect(() => {
+  const loadAttachments = useCallback(() => {
     getAllAttachments().then((list) => setDbAttachments(list)).catch(() => {});
   }, []);
+
+  useEffect(() => { loadAttachments(); }, [loadAttachments]);
 
   const attachmentItems: AttachmentDisplayItem[] = useMemo(() => {
     return dbAttachments.map((att) => {
@@ -71,6 +71,16 @@ export default function Attachments() {
       await downloadAttachment(id);
     } catch (err) {
       console.warn('[Attachments] 下载失败:', err);
+    }
+  };
+
+  const handleDelete = async (id: string, fileName: string) => {
+    if (!window.confirm(`确认删除附件「${fileName}」？`)) return;
+    try {
+      await deleteAttachment(id);
+      loadAttachments();
+    } catch (err) {
+      console.warn('[Attachments] 删除失败:', err);
     }
   };
 
@@ -151,6 +161,7 @@ export default function Attachments() {
                       {att.moduleLabel} · {att.recordDate}
                     </div>
                   </div>
+                  {/* 下载按钮 */}
                   <div
                     onClick={() => handleDownload(att.id)}
                     style={{
@@ -164,6 +175,21 @@ export default function Attachments() {
                     title="下载附件"
                   >
                     <Download size={14} />
+                  </div>
+                  {/* 删除按钮 */}
+                  <div
+                    onClick={() => handleDelete(att.id, att.fileName)}
+                    style={{
+                      width: 30, height: 30, borderRadius: 6,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', color: '#9CA3AF',
+                      transition: 'all .15s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#FEE2E2'; e.currentTarget.style.color = '#DC2626'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF'; }}
+                    title="删除附件"
+                  >
+                    <Trash2 size={14} />
                   </div>
                 </motion.div>
               ))}

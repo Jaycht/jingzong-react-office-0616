@@ -20,4 +20,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('delete-attachment-file', filePath),
   getAttachmentsDir: () =>
     ipcRenderer.invoke('get-attachments-dir'),
+  showSaveDialog: (defaultName, buffer) =>
+    ipcRenderer.invoke('show-save-dialog', { defaultName, buffer }),
 });

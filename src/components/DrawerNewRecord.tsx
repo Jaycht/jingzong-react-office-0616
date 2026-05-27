@@ -209,13 +209,16 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             }
           }
 
-          // 2. 处理所有普通字段
-          //    repeatable section 数据已通过 listName 存入 formData
-          //    普通字段按 ID 直接填充，互不冲突
+          // 2. 处理所有普通字段（含 attachment，加载 fileList 让 Upload 显示已上传的文件）
           for (const f of allFields) {
-            if (f.type === 'section' || f.type === 'attachment') continue;
+            if (f.type === 'section') continue;
             const raw = editRecord.data?.[f.id];
             if (raw === undefined || raw === null) continue;
+            if (f.type === 'attachment') {
+              // attachment 字段的原始数据就是 fileList 数组
+              formData[f.id] = Array.isArray(raw) ? raw : raw;
+              continue;
+            }
             if (f.type === 'date' && typeof raw === 'string') {
               const d = dayjs(raw);
               formData[f.id] = d.isValid() ? d : undefined;
@@ -564,15 +567,33 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
       >
         <Upload.Dragger
           beforeUpload={async (file) => {
-            // 保存到 IndexedDB
+            // 保存到 IndexedDB / 硬盘
             try {
               const record = await saveAttachment('pending', moduleId, field.id, file);
               pendingAttachments.current.add(record.id);
+              // 将新文件加入表单 fileList，使用户能看到上传的文件
+              const currentList: any[] = form.getFieldValue(name) || [];
+              const newFile = {
+                uid: record.id,
+                name: file.name,
+                status: 'done' as const,
+                size: file.size,
+                type: file.type,
+                attachmentId: record.id,
+              };
+              form.setFieldsValue({ [typeof name === 'string' ? name : name[1]]: [...currentList, newFile] });
               console.log(`[attachment] 已保存: ${file.name} (id=${record.id})`);
             } catch (err) {
               console.warn('[attachment] 保存失败:', err);
             }
             return false; // 阻止实际 HTTP 上传
+          }}
+          onRemove={(file) => {
+            // 从表单 fileList 中移除
+            const currentList: any[] = form.getFieldValue(name) || [];
+            form.setFieldsValue({
+              [typeof name === 'string' ? name : name[1]]: currentList.filter((f: any) => f.uid !== file.uid),
+            });
           }}
           multiple
         >

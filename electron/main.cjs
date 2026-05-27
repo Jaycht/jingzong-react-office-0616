@@ -1,4 +1,4 @@
-﻿const { app, BrowserWindow, ipcMain, Menu } = require("electron");
+﻿const { app, BrowserWindow, ipcMain, Menu, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const fsp = require("fs/promises");
@@ -15,8 +15,8 @@ Menu.setApplicationMenu(null);
 
 function createLoginWindow() {
   loginWindow = new BrowserWindow({
-    width: 660,
-    height: 720,
+    width: 974,
+    height: 711,
     resizable: true,
     frame: false,           // 登录页：完全无边框
     backgroundColor: "#0B0F1A",
@@ -161,6 +161,22 @@ ipcMain.handle("delete-attachment-file", async (_event, filePath) => {
 // 获取附件目录路径
 ipcMain.handle("get-attachments-dir", () => {
   return ATTACHMENTS_DIR;
+});
+
+// 弹出保存文件对话框（下载附件时使用）
+ipcMain.handle("show-save-dialog", async (_event, { defaultName, buffer }) => {
+  try {
+    const result = await dialog.showSaveDialog({
+      title: "保存附件",
+      defaultPath: path.join(app.getPath("downloads"), defaultName),
+      filters: [{ name: "所有文件", extensions: ["*"] }],
+    });
+    if (result.canceled) return { success: false, canceled: true };
+    await fsp.writeFile(result.filePath, Buffer.from(buffer));
+    return { success: true, filePath: result.filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 });
 
 app.whenReady().then(() => {

@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.23";
+export const APP_VERSION = "V2.6.24";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 23;
+export const VERSION_PATCH = 24;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.24 =====
+  "V2.6.24 修复 - 登录页Grid恢复+窗口974px+附件表单内展示/删除+档案页删除按钮+Electron下载弹窗+卸载清理",
   // ===== V2.6.23 =====
   "V2.6.23 新增 - 附件存储双模式：Electron 存硬盘文件夹+浏览器存IndexedDB",
   // ===== V2.6.22 =====

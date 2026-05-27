@@ -22,6 +22,7 @@ declare global {
       readAttachmentFile: (filePath: string) => Promise<{ success: boolean; buffer?: ArrayBuffer; error?: string }>;
       deleteAttachmentFile: (filePath: string) => Promise<{ success: boolean; error?: string }>;
       getAttachmentsDir: () => Promise<string>;
+      showSaveDialog: (defaultName: string, buffer: number[]) => Promise<{ success: boolean; canceled?: boolean; filePath?: string; error?: string }>;
     };
   }
 }
