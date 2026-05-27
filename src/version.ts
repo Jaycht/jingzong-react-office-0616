@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.16";
+export const APP_VERSION = "V2.6.17";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 16;
+export const VERSION_PATCH = 17;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.17 =====
+  "V2.6.17 修复 - Vite resolve.dedupe 防止 React 实例重复加载",
   // ===== V2.6.16 =====
   "V2.6.16 修复 - 退出登录去掉 Modal.useModal() 确认弹窗，改为直接退出 + 清除 Store 用户状态",
   // ===== V2.6.15 =====
