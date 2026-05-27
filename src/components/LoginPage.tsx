@@ -288,7 +288,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
             marginBottom: "clamp(24px, 5vw, 48px)",
           }}
         >
-          <div style={{ flex: "1 1 400px", minWidth: 280, maxWidth: 480 }}>
+          <div style={{ flex: "0 1 440px", minWidth: 380 }}>
             {!lowPerfMode && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -539,7 +539,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6, duration: 1.5 }}
-              style={{ flex: "1 1 160px", minWidth: 140, textAlign: "center" }}
+              style={{ flex: "0 1 200px", minWidth: 160, textAlign: "center" }}
             >
               <motion.div
                 animate={{ opacity: [0.3, 0.5, 0.3] }}
@@ -560,12 +560,12 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
             </motion.div>
           )}
 
-          <div style={{ flex: "1 1 280px", minWidth: 240, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+          <div style={{ flex: "0 1 320px", minWidth: 260, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
             <img
               src="./logo.png"
               alt="System Logo"
               style={{
-                width: "min(80%, 220px)",
+                width: "min(80%, 260px)",
                 height: "auto",
                 filter: "drop-shadow(0 0 40px rgba(0,59,109,0.5))",
               }}

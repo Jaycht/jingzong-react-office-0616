@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Button, DatePicker, Form, Input, InputNumber,
@@ -18,7 +18,7 @@ import {
   CaseNameMatchSquad, CaseNoMatchSquad,
   MultiPersonField, PersistedSelect,
 } from './SharedFormFields';
-import { saveAttachment } from '../store/attachmentStore';
+import { saveAttachment, relinkAttachment } from '../store/attachmentStore';
 
 interface Props { onClose: () => void; editRecord?: import('../store/massStore').MassRecord | null; }
 
@@ -87,6 +87,9 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     }
   };
 
+  // 收集待关联的附件 ID（beforeUpload 中存入，handleSubmit 后关联到真实记录）
+  const pendingAttachments = useRef<Set<string>>(new Set());
+
   const handleModuleChange = (value: string) => {
     const nextModule = findModule(value, allModules);
     setSelectedModuleId(value);
@@ -113,6 +116,11 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       setSaving(true);
       if (isEditing && editRecord) {
         updateMassRecord(editRecord.id, values);
+        // 关联附件到真实记录 ID
+        for (const attId of pendingAttachments.current) {
+          relinkAttachment(attId, editRecord.id).catch(() => {});
+        }
+        pendingAttachments.current.clear();
         setTimeout(() => {
           setSaving(false);
           setIsDirty(false);
@@ -120,7 +128,12 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           onClose();
         }, 300);
       } else {
-        saveMassRecord(selectedModuleId, selectedTabId, values);
+        const newRecord = saveMassRecord(selectedModuleId, selectedTabId, values);
+        // 关联附件到真实记录 ID
+        for (const attId of pendingAttachments.current) {
+          relinkAttachment(attId, newRecord.id).catch(() => {});
+        }
+        pendingAttachments.current.clear();
         setTimeout(() => {
           setSaving(false);
           setIsDirty(false);
@@ -553,9 +566,9 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
           beforeUpload={async (file) => {
             // 保存到 IndexedDB
             try {
-              const recordId = `pending-${Date.now()}`;
-              await saveAttachment(recordId, moduleId, field.id, file);
-              console.log(`[attachment] 已保存: ${file.name}`);
+              const record = await saveAttachment('pending', moduleId, field.id, file);
+              pendingAttachments.current.add(record.id);
+              console.log(`[attachment] 已保存: ${file.name} (id=${record.id})`);
             } catch (err) {
               console.warn('[attachment] 保存失败:', err);
             }

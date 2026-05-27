@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Button, Empty, Form, Input, Popconfirm, Select, Space, Switch, Table, Tag } from 'antd';
+import { Button, Empty, Form, Input, Modal, Popconfirm, Select, Space, Switch, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { Plus, Save, Settings, Trash2 } from 'lucide-react';
+import { Plus, Save, Settings, Trash2, AlertTriangle } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { createCustomModule, useCustomModules } from '../customModules';
 import { DEPARTMENTS, type FieldDefinition, type FieldType, type WorkModule } from '../moduleConfig';
@@ -99,6 +99,36 @@ export default function SettingsPage() {
     },
   ];
 
+  const handleResetAllData = () => {
+    Modal.confirm({
+      title: '确认重置所有数据？',
+      content: '此操作将清除所有工作记录、附件、设置和用户数据，不可恢复！',
+      okText: '确认重置',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        // 清除所有 localStorage 数据
+        const keysToKeep = ['jingzong.login.v1']; // 保留登录凭据
+        const allKeys: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key) allKeys.push(key);
+        }
+        for (const key of allKeys) {
+          if (!keysToKeep.includes(key)) {
+            localStorage.removeItem(key);
+          }
+        }
+
+        // 清除 IndexedDB（附件数据库）
+        try { indexedDB.deleteDatabase('jingzong-attachments'); } catch { /* ignore */ }
+
+        showToast('所有数据已重置，页面即将刷新', 'info');
+        setTimeout(() => window.location.reload(), 1500);
+      },
+    });
+  };
+
   return (
     <div>
       <motion.div
@@ -184,6 +214,20 @@ export default function SettingsPage() {
             <Empty description="暂无自定义模块" style={{ padding: 50 }} />
           )}
         </div>
+      </div>
+
+      {/* 数据重置区域 */}
+      <div style={{ marginTop: 24, background: '#fff', border: '1px solid #FECACA', borderRadius: 8, padding: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <AlertTriangle size={18} color="#DC2626" />
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#DC2626' }}>危险操作</span>
+        </div>
+        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 12 }}>
+          重置将清除所有工作记录、附件和设置数据，此操作不可撤销。
+        </p>
+        <Button danger icon={<Trash2 size={14} />} onClick={handleResetAllData}>
+          重置所有数据
+        </Button>
       </div>
     </div>
   );

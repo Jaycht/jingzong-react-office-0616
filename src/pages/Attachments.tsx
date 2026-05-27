@@ -1,20 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileArchive, FileText, Image, File, Download, Search } from 'lucide-react';
+import { getAllAttachments, downloadAttachment } from '../store/attachmentStore';
 import { getMassRecords } from '../store/massStore';
 import { getBaseModules } from '../moduleConfig';
-
-interface AttachmentFileLike {
-  name?: string;
-}
-
-interface AttachmentValue {
-  fileList: AttachmentFileLike[];
-}
-
-function isAttachmentValue(value: unknown): value is AttachmentValue {
-  return typeof value === 'object' && value !== null && Array.isArray((value as AttachmentValue).fileList);
-}
+import type { AttachmentRecord } from '../store/attachmentStore';
 
 const FILE_ICONS: Record<string, React.FC<{ size?: number; color?: string }>> = {
   pdf: FileText,
@@ -37,55 +27,52 @@ function getFileIcon(filename: string) {
   return <Icon size={16} color="#6B7280" />;
 }
 
+interface AttachmentDisplayItem {
+  id: string;
+  moduleLabel: string;
+  fileName: string;
+  recordDate: string;
+}
+
 export default function Attachments() {
   const [searchVal, setSearchVal] = useState('');
-
-  // 从所有记录中查找有 attachment 数据的记录
-  const allRecords = useMemo(() => getMassRecords(), []);
+  const [dbAttachments, setDbAttachments] = useState<AttachmentRecord[]>([]);
   const modules = useMemo(() => getBaseModules(), []);
 
-  const attachments = useMemo(() => {
-    const result: Array<{
-      moduleLabel: string;
-      recordId: string;
-      fieldLabel: string;
-      fileName: string;
-      recordDate: string;
-    }> = [];
+  // 从 IndexedDB 加载所有附件
+  useEffect(() => {
+    getAllAttachments().then((list) => setDbAttachments(list)).catch(() => {});
+  }, []);
 
-    for (const rec of allRecords) {
-      const mod = modules.find((m) => m.id === rec.moduleId);
-      const data = rec.data || {};
-
-      // 查找 attachment 类型字段
-      for (const [key, value] of Object.entries(data)) {
-        if (isAttachmentValue(value)) {
-          const fileList = value.fileList;
-          if (Array.isArray(fileList)) {
-            for (const file of fileList) {
-              result.push({
-                moduleLabel: mod?.label || rec.moduleId,
-                recordId: rec.id,
-                fieldLabel: key,
-                fileName: file.name || '未命名文件',
-                recordDate: rec.createdAt ? (()=>{const d=new Date(rec.createdAt);const pad=(n:number)=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());})() : '—',
-              });
-            }
-          }
-        }
-      }
-    }
-
-    return result;
-  }, [allRecords, modules]);
+  const attachmentItems: AttachmentDisplayItem[] = useMemo(() => {
+    return dbAttachments.map((att) => {
+      const mod = modules.find((m) => m.id === att.moduleId);
+      const d = new Date(att.uploadedAt);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return {
+        id: att.id,
+        moduleLabel: mod?.label || att.moduleId || '未知模块',
+        fileName: att.fileName || '未命名文件',
+        recordDate: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      };
+    });
+  }, [dbAttachments, modules]);
 
   const filtered = useMemo(() => {
-    if (!searchVal) return attachments;
-    return attachments.filter((a) =>
-      a.fileName.toLowerCase().includes(searchVal.toLowerCase()) ||
-      a.moduleLabel.includes(searchVal)
+    if (!searchVal) return attachmentItems;
+    const q = searchVal.toLowerCase();
+    return attachmentItems.filter((a) =>
+      a.fileName.toLowerCase().includes(q) || a.moduleLabel.includes(q)
     );
-  }, [attachments, searchVal]);
+  }, [attachmentItems, searchVal]);
+
+  const handleDownload = async (id: string) => {
+    try {
+      await downloadAttachment(id);
+    } catch (err) {
+      console.warn('[Attachments] 下载失败:', err);
+    }
+  };
 
   return (
     <div>
@@ -106,7 +93,6 @@ export default function Attachments() {
       </motion.div>
 
       <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, padding: 16 }}>
-        {/* Search */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ position: 'relative', maxWidth: 400 }}>
             <Search size={14} color="#94A3B8" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
@@ -127,10 +113,10 @@ export default function Attachments() {
           <div style={{ textAlign: 'center', padding: 60 }}>
             <FileArchive size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
             <div style={{ fontSize: 15, fontWeight: 600, color: '#6B7280', marginBottom: 8 }}>
-              {attachments.length === 0 ? '暂无附件材料' : '未找到匹配的附件'}
+              {attachmentItems.length === 0 ? '暂无附件材料' : '未找到匹配的附件'}
             </div>
             <div style={{ fontSize: 13, color: '#9CA3AF' }}>
-              {attachments.length === 0
+              {attachmentItems.length === 0
                 ? '在各个工作模块中新建记录时上传附件，附件将自动归档到此处。'
                 : '请尝试其他搜索关键词'}
             </div>
@@ -143,7 +129,7 @@ export default function Attachments() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {filtered.map((att, i) => (
                 <motion.div
-                  key={`${att.recordId}-${att.fileName}-${i}`}
+                  key={att.id}
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.02 }}
@@ -166,15 +152,15 @@ export default function Attachments() {
                     </div>
                   </div>
                   <div
-                    onClick={() => {
-                      // 前端预览模式，实际附件存储在 IndexedDB 中
-                    }}
+                    onClick={() => handleDownload(att.id)}
                     style={{
                       width: 30, height: 30, borderRadius: 6,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       cursor: 'pointer', color: '#9CA3AF',
                       transition: 'all .15s',
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6'; e.currentTarget.style.color = '#1B5E9B'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF'; }}
                     title="下载附件"
                   >
                     <Download size={14} />

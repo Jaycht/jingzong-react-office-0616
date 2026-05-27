@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.20";
+export const APP_VERSION = "V2.6.21";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 20;
+export const VERSION_PATCH = 21;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.21 =====
+  "V2.6.21 修复 - 登录页宽度修正+更新日志完全替换+重置数据按钮+附件档案直接从IndexedDB读取+附件下载功能",
   // ===== V2.6.20 =====
   "V2.6.20 修复 - 退出登录改用Modal.confirm静态方法+登录页拖拽条+关闭按钮",
   // ===== V2.6.19 =====
