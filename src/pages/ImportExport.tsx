@@ -13,6 +13,14 @@ import {
 import { getMassRecords } from '../store/massStore';
 import { getBaseModules } from '../moduleConfig';
 
+interface VictimRow {
+  [key: string]: string;
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '未知错误';
+}
+
 export default function ImportExport() {
     const showToast = useAppStore((s) => s.showToast);
   const [importResult, setImportResult] = useState<{
@@ -44,8 +52,8 @@ export default function ImportExport() {
       if (result.success > 0) {
         showToast(`成功导入 ${result.success} 条记录`, 'success');
       }
-    } catch (err: any) {
-      showToast(`导入失败: ${err.message}`, 'error');
+    } catch (err) {
+      showToast(`导入失败: ${getErrorMessage(err)}`, 'error');
     }
     setImportModuleId('');
   };
@@ -53,19 +61,19 @@ export default function ImportExport() {
   // 导出受害人信息 CSV
   const handleExportVictimCsv = () => {
     const allRecords = getMassRecords();
-    const victimData: Record<string, any>[] = [];
+    const victimData: VictimRow[] = [];
     for (const rec of allRecords) {
       const reporters = rec.data?.reporters;
       if (Array.isArray(reporters)) {
         for (const r of reporters) {
           victimData.push({
-            '项目名称': rec.data?.projectName || rec.data?.caseName || '',
+            '项目名称': String(rec.data?.projectName || rec.data?.caseName || ''),
             '受害人姓名': r.reporterName || '',
             '性别': r.reporterGender || '',
             '身份证号': r.reporterIdNo || '',
             '联系电话': r.reporterPhone || '',
             '投资金额': r.reporterAmount || '',
-            '登记日期': rec.createdAt ? localDate(rec.createdAt) : '',
+            '登记日期': rec.createdAt ? rec.createdAt.slice(0, 10).replace(/-/g, '/') : '',
           });
         }
       }

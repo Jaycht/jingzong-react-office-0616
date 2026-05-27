@@ -3,6 +3,7 @@ import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut, Search, Moon, Sun } from 'lucide-react';
 import { Modal } from "antd";
+import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
 import { DEPARTMENTS, PLATFORM_NAV } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
@@ -13,7 +14,15 @@ interface Props {
   onOpenPassword: () => void;
 }
 
+type IconComponent = React.ComponentType<{
+  size?: number;
+  color?: string;
+  style?: React.CSSProperties;
+}>;
+
 export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
+  const [modal, contextHolder] = Modal.useModal();
+  const navigate = useNavigate();
   const currentPage = useAppStore((s) => s.currentPage);
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
   const userName = useAppStore((s) => s.userName);
@@ -77,7 +86,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
   const toggleExpand = (id: string) => setExpanded((prev) => (prev === id ? null : id));
 
   const handleLogout = () => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认退出登录？',
       content: '退出后需要重新登录。',
       okText: '退出',
@@ -85,8 +94,10 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       onOk: () => {
         try {
           localStorage.removeItem("jingzong.login.v1");
-        } catch {}
-        useAppStore.getState().setView("login");
+        } catch {
+          // Ignore storage cleanup failures and continue logout flow.
+        }
+        navigate("/login");
         useAppStore.getState().showToast("已退出登录", "info");
       },
     });
@@ -126,10 +137,11 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       style={{
         background: '#0F3A5F', display: 'flex', flexDirection: 'column',
         overflow: 'hidden', flexShrink: 0, position: 'relative',
-      }}
-    >
+      }}>
+      {contextHolder}
       {/* Electron 无边框窗口拖拽区域 */}
-      <div style={{ WebkitAppRegion: 'drag', height: 30, flexShrink: 0 }} />
+      {/* @ts-expect-error WebkitAppRegion is Electron-only CSS property */}
+      <div style={{ WebkitAppRegion: 'drag' as any, height: 30, flexShrink: 0 }} />
 
       {/* 折叠按钮 */}
       <motion.button
@@ -328,7 +340,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
 }
 
 /** 带文字标签的操作按钮 */
-function ActionBtn({ icon: Icon, label, onClick }: { icon: any; label: string; onClick: () => void }) {
+function ActionBtn({ icon: Icon, label, onClick }: { icon: IconComponent; label: string; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
@@ -348,7 +360,7 @@ function ActionBtn({ icon: Icon, label, onClick }: { icon: any; label: string; o
 }
 
 /** 紧凑工具栏图标按钮 */
-function ToolbarIcon({ icon: Icon, title, onClick }: { icon: any; title: string; onClick: () => void }) {
+function ToolbarIcon({ icon: Icon, title, onClick }: { icon: IconComponent; title: string; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
@@ -370,11 +382,11 @@ function ToolbarIcon({ icon: Icon, title, onClick }: { icon: any; title: string;
 interface NavGroupProps {
   id: string;
   label: string;
-  icon: React.ComponentType<{ size?: number; color?: string; style?: React.CSSProperties }>;
+  icon: IconComponent;
   expanded: string | null;
   collapsed: boolean;
   currentPage: string;
-  items: Array<{ id: string; label: string; icon: React.ComponentType<{ size?: number; color?: string }> }>;
+  items: Array<{ id: string; label: string; icon: IconComponent }>;
   onToggle: (id: string) => void;
   onNavigate: (id: string) => void;
 }

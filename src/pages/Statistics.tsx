@@ -10,17 +10,19 @@ const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } 
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 26 } } };
 
 export default function Statistics() {
-    const showToast = useAppStore((s) => s.showToast);
+  const showToast = useAppStore((s) => s.showToast);
 
   // 从 localStorage 读取真实数据（每次进入页面刷新）
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [records, setRecords] = useState(() => getMassRecords());
+  const [cases, setCases] = useState(() => getCases());
   useEffect(() => {
-    const onFocus = () => setRefreshKey((k) => k + 1);
+    const onFocus = () => {
+      setRecords(getMassRecords());
+      setCases(getCases());
+    };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, []);
-  const records = useMemo(() => getMassRecords(), [refreshKey]);
-  const cases = useMemo(() => getCases(), [refreshKey]);
   const modules = useMemo(() => getBaseModules(), []);
 
   // 按 moduleId 分组统计
@@ -42,7 +44,7 @@ export default function Statistics() {
   // 带附件的记录数（粗略估计——有 attachment 字段的）
   const attachmentCount = records.filter((r) => {
     const data = r.data || {};
-    return Object.values(data).some((v) => typeof v === 'object' && v !== null && 'fileList' in (v as any));
+    return Object.values(data).some((v) => typeof v === 'object' && v !== null && 'fileList' in v);
   }).length;
 
   // 统计数据卡片

@@ -5,9 +5,11 @@
 
 import { saveAs } from 'file-saver';
 import { getMassRecords } from '../store/massStore';
-import { safeHtml } from './htmlUtils';
+import { formatDateValue, safeHtml } from './htmlUtils';
 
 const MODULE_ID = 'evidence-report';
+type ReportData = Record<string, unknown>;
+type ReportRow = Record<string, unknown>;
 
 /**
  * 生成资金分析 Word 报告
@@ -35,11 +37,11 @@ export function generateFundReport(recordId?: string): void {
   // 保存为 .doc（Word 可打开）
   const bom = '\uFEFF';
   const blob = new Blob([bom + html], { type: 'application/msword;charset=utf-8' });
-  const caseName = (data.caseName || '资金分析报告').replace(/[/\\?*\[\]]/g, '_');
+  const caseName = String(data.caseName || '资金分析报告').replace(/[/\\?*[\]]/g, '_');
   saveAs(blob, `${caseName}_资金分析报告.doc`);
 }
 
-function buildReportHtml(data: Record<string, any>): string {
+function buildReportHtml(data: ReportData): string {
   // 基础信息（使用 safeHtml 防止 XSS）
   const caseName = safeHtml(data.caseName, '—');
   const caseNo = safeHtml(data.caseNo, '—');
@@ -48,8 +50,8 @@ function buildReportHtml(data: Record<string, any>): string {
   const caseType = safeHtml(data.caseType, '—');
   const totalAmount = safeHtml(data.totalAmount, '—');
   const victimCount = safeHtml(data.victimCount, '—');
-  const receiveDate = safeHtml(data.receiveDate, '—');
-  const filingDate = safeHtml(data.filingDate, '—');
+  const receiveDate = safeHtml(formatDateValue(data.receiveDate), '—');
+  const filingDate = safeHtml(formatDateValue(data.filingDate), '—');
   const caseSummary = safeHtml(data.caseSummary, '—');
   const leadOfficer = safeHtml(data.leadOfficer, '—');
   const assistOfficer = safeHtml(data.assistOfficer, '—');
@@ -171,8 +173,8 @@ function buildReportHtml(data: Record<string, any>): string {
   <tr><td>案件类型</td><td>${caseType}</td></tr>
   <tr><td>涉案总金额（万元）</td><td>${totalAmount}</td></tr>
   <tr><td>受害人数</td><td>${victimCount}</td></tr>
-  <tr><td>受案日期</td><td>${formatDate(receiveDate)}</td></tr>
-  <tr><td>立案日期</td><td>${formatDate(filingDate)}</td></tr>
+  <tr><td>受案日期</td><td>${receiveDate}</td></tr>
+  <tr><td>立案日期</td><td>${filingDate}</td></tr>
   <tr><td>简要案情</td><td>${caseSummary}</td></tr>
   <tr><td>主办民警</td><td>${leadOfficer}</td></tr>
   <tr><td>协办民警</td><td>${assistOfficer}</td></tr>
@@ -270,12 +272,13 @@ ${conclusionNextStep ? `
 }
 
 /** 格式化为 HTML 表格（数组 → table），所有数据 safeHtml 转义 */
-function formatArray(arr: any, fields: Array<{ key: string; label: string }>): string {
+function formatArray(arr: unknown, fields: Array<{ key: string; label: string }>): string {
   if (!Array.isArray(arr) || arr.length === 0) return '';
 
   const thead = fields.map((f) => `<th>${f.label}</th>`).join('');
-  const tbody = arr.map((item: any) => {
-    const cells = fields.map((f) => `<td>${safeHtml(item[f.key], '—')}</td>`).join('');
+  const tbody = arr.map((item) => {
+    const row: ReportRow = typeof item === 'object' && item !== null ? item as ReportRow : {};
+    const cells = fields.map((f) => `<td>${safeHtml(row[f.key], '—')}</td>`).join('');
     return `<tr>${cells}</tr>`;
   }).join('');
 

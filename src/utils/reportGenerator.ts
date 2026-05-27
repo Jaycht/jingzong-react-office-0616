@@ -5,7 +5,7 @@
 import { saveAs } from 'file-saver';
 import { getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
-import type { WorkModule, WorkTab } from '../moduleConfig';
+import type { WorkModule } from '../moduleConfig';
 import { escapeHtml } from './htmlUtils';
 
 type ReportType = 'daily' | 'weekly' | 'monthly';
@@ -27,7 +27,7 @@ function getPeriodRange(type: ReportType): { start: Date; end: Date; label: stri
       end = new Date(start);
       end.setHours(23, 59, 59, 999);
       break;
-    case 'weekly':
+    case 'weekly': {
       const dayOfWeek = now.getDay();
       const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       start = new Date(now);
@@ -38,6 +38,7 @@ function getPeriodRange(type: ReportType): { start: Date; end: Date; label: stri
       end.setDate(start.getDate() + 6);
       end.setHours(23, 59, 59, 999);
       break;
+    }
     case 'monthly':
       start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
       end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -73,7 +74,7 @@ export function exportModuleReport(
   const html = buildReportHtml(module, type, period, filtered);
   const bom = '﻿';
   const blob = new Blob([bom + html], { type: 'application/msword;charset=utf-8' });
-  const fileName = `${module.departmentLabel}_${module.label}_${REPORT_LABELS[type]}_${period.label.replace(/[/\\?*\[\]]/g, '_')}.doc`;
+  const fileName = `${module.departmentLabel}_${module.label}_${REPORT_LABELS[type]}_${period.label.replace(/[/\\?*[\]]/g, '_')}.doc`;
   saveAs(blob, fileName);
 }
 

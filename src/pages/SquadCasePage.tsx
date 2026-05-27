@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import dayjs from 'dayjs';
 import { motion } from 'framer-motion';
 import { Button, Modal, Form, Input, InputNumber, Select, DatePicker, Dropdown, Descriptions } from 'antd';
@@ -8,6 +8,16 @@ import { exportModuleReport } from "../utils/reportGenerator";
 import { exportCasesToExcel, importExcelToModule } from "../utils/excelUtils";
 import { findModule } from "../moduleConfig";
 import { getCases, saveCase, deleteCase, updateCase, type SquadCase } from '../store/caseStore';
+
+type ReportRange = 'daily' | 'weekly' | 'monthly';
+
+
+
+
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '未知错误';
+}
 
 const CASE_TYPES = [
   '帮助恐怖活动案', '走私假币案', '虚报注册资本案',
@@ -58,8 +68,8 @@ const stageStyle = (active: boolean) => ({
 });
 
 export default function SquadCasePage() {
-    const showToast = useAppStore((s) => s.showToast);
-  const [cases, setCases] = useState<SquadCase[]>([]);
+  const showToast = useAppStore((s) => s.showToast);
+  const [cases, setCases] = useState<SquadCase[]>(() => getCases());
   const [searchVal, setSearchVal] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [form] = Form.useForm();
@@ -67,10 +77,6 @@ export default function SquadCasePage() {
   const [editingCase, setEditingCase] = useState<SquadCase | null>(null);
   const [viewCase, setViewCase] = useState<SquadCase | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setCases(getCases());
-  }, []);
 
   const refresh = () => setCases(getCases());
 
@@ -108,8 +114,8 @@ export default function SquadCasePage() {
       leadOfficer: c.leadOfficer,
       assistOfficer: c.assistOfficer,
       transferRecord: c.transferRecord,
-      transferUnit: (c as any).transferUnit,
-      briefCase: (c as any).briefCase,
+      transferUnit: '',
+      briefCase: '',
     });
     setModalOpen(true);
   };
@@ -131,8 +137,8 @@ export default function SquadCasePage() {
       } else {
         showToast(result.errors[0] || '未能导入有效数据', 'warning');
       }
-    } catch (e: any) {
-      showToast(e.message || '导入失败', 'error');
+    } catch (e) {
+      showToast(getErrorMessage(e), 'error');
     }
   };
 
@@ -195,10 +201,10 @@ export default function SquadCasePage() {
                 if (!mod) return;
                 setReporting(true);
                 try {
-                  exportModuleReport(mod, key as any);
+                  exportModuleReport(mod, key as ReportRange);
                   showToast('正在导出' + mod.label + '的' + (key === 'daily' ? '日报' : key === 'weekly' ? '周报' : '月报'));
-                } catch (err: any) {
-                  showToast(err.message || '导出失败', 'error');
+                } catch (err) {
+                  showToast(getErrorMessage(err), 'error');
                 } finally {
                   setReporting(false);
                 }
@@ -255,7 +261,7 @@ export default function SquadCasePage() {
           ['案件总数', String(cases.length), '#155A8A'],
           ['侦查中', String(cases.filter(c => !c.caseCloseDate).length), '#D97706'],
           ['已结案', String(cases.filter(c => c.caseCloseDate).length), '#0F766E'],
-          ['本月新增', String(cases.filter(c => c.createdAt && (()=>{const d=new Date();const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})() === (()=>{const d=new Date(c.createdAt);const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})()).length), '#DC2626'],
+          ['本月新增', String(cases.filter(c => c.createdAt && (()=>{const d=new Date();const pad=(n:number)=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})() === (()=>{const d=new Date(c.createdAt);const pad=(n:number)=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})()).length), '#DC2626'],
         ].map(([label, value, color]) => (
           <div key={label} style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, padding: 16 }}>
             <div style={{ fontSize: 12, color: '#64748B', marginBottom: 6 }}>{label}</div>
@@ -474,8 +480,8 @@ export default function SquadCasePage() {
               <Descriptions.Item label="立案日期" span={1}>{viewCase.filingDate || '-'}</Descriptions.Item>
               <Descriptions.Item label="不予立案日期" span={1}>{viewCase.noFilingDate || '-'}</Descriptions.Item>
               <Descriptions.Item label="案件移交记录" span={1}>{viewCase.transferRecord || '-'}</Descriptions.Item>
-              <Descriptions.Item label="创建时间" span={1}>{(viewCase.createdAt ? (()=>{const d=new Date(viewCase.createdAt);const pad=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());})() : '-')}</Descriptions.Item>
-              <Descriptions.Item label="更新时间" span={1}>{(viewCase.updatedAt ? (()=>{const d=new Date(viewCase.updatedAt);const pad=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());})() : '-')}</Descriptions.Item>
+              <Descriptions.Item label="创建时间" span={1}>{(viewCase.createdAt ? (()=>{const d=new Date(viewCase.createdAt);const pad=(n:number)=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());})() : '-')}</Descriptions.Item>
+              <Descriptions.Item label="更新时间" span={1}>{(viewCase.updatedAt ? (()=>{const d=new Date(viewCase.updatedAt);const pad=(n:number)=>String(n).padStart(2,'0');return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());})() : '-')}</Descriptions.Item>
             </Descriptions>
           </div>
         )}

@@ -18,6 +18,7 @@ import { getOperationLogs } from '../store/operationLogStore';
 import type { FieldDefinition } from '../moduleConfig';
 import { localStorageAdapter } from "../store/adapter";
 import type { MassRecord } from '../store/massStore';
+import { exportAttachmentSnapshot, importAttachmentSnapshot } from '../store/attachmentStore';
 
 // ─── 类型 ─────────────────────────────────────────────
 
@@ -36,24 +37,28 @@ interface ParsedFields {
   }>;
 }
 
+type RowData = Record<string, unknown>;
+type RepeatableItem = Record<string, unknown>;
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '未知错误';
+}
+
 // ─── 字段结构解析 ────────────────────────────────────
 
 /** 解析字段定义，分离出顶层字段和各 repeatable section 的子字段 */
 function parseFieldDefs(fields: FieldDefinition[]): ParsedFields {
   const result: ParsedFields = { topLevel: [], sections: [], groups: [] };
   let currentRepeatable: { section: FieldDefinition; fields: FieldDefinition[] } | null = null;
-  let currentGroup: { section: FieldDefinition; fields: FieldDefinition[] } | null = null;
 
   for (const f of fields) {
     if (f.type === 'section') {
       currentRepeatable = null;
-      currentGroup = null;
       if (f.repeatable) {
         currentRepeatable = { section: f, fields: [] };
         result.sections.push(currentRepeatable);
       } else {
-        currentGroup = { section: f, fields: [] };
-        result.groups.push(currentGroup);
+        result.groups.push({ section: f, fields: [] });
       }
     } else if (f.type === 'attachment') {
       // 附件在导出中忽略（仅输出文件名计数）
@@ -112,12 +117,12 @@ function getModuleTabs(moduleId: string): Array<{ tabId: string; label: string; 
 function flattenRecord(
   record: MassRecord,
   fields: FieldDefinition[],
-): Record<string, any>[] {
+): RowData[] {
   const parsed = parseFieldDefs(fields);
   const data = record.data || {};
 
   // 提取顶层值
-  const topValues: Record<string, any> = {};
+  const topValues: RowData = {};
   for (const f of parsed.topLevel) {
     topValues[f.label] = data[f.id] ?? '';
   }
@@ -130,7 +135,10 @@ function flattenRecord(
   // 展开第一个 repeatable section
   const firstSection = parsed.sections[0];
   const listName = firstSection.section.listName || 'items';
-  const items: any[] = data[listName] || [];
+  const rawItems = data[listName];
+  const items: RepeatableItem[] = Array.isArray(rawItems)
+    ? rawItems.filter((item): item is RepeatableItem => typeof item === 'object' && item !== null)
+    : [];
 
   if (items.length === 0) {
     // 有 section 但无数据 → 返回一行空 section 字段
@@ -141,7 +149,7 @@ function flattenRecord(
     return [row];
   }
 
-  return items.map((item: any) => {
+  return items.map((item) => {
     const row = { ...topValues };
     for (const f of firstSection.fields) {
       row[f.label] = item[f.id] ?? '';
@@ -161,9 +169,9 @@ function downloadWorkbook(wb: XLSX.WorkBook, filename: string) {
 
 /** 安全的下载辅助：优先 saveAs，回退创建临时 <a> 标签 */
 function safeDownload(wb: XLSX.WorkBook, filename: string) {
-  let wbout: any;
+  let wbout: ArrayBuffer;
   try {
-    wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;
   } catch (writeErr) {
     console.error('[excelUtils] XLSX.write 失败:', writeErr);
     return;
@@ -216,7 +224,7 @@ export function exportModuleToExcel(moduleId: string, tabId?: string): void {
     if (headers.length === 0) continue;
 
     // 展平所有记录
-    const allRows: Record<string, any>[] = [];
+    const allRows: RowData[] = [];
     for (const rec of tabRecords) {
       const rows = flattenRecord(rec, tab.fields);
       allRows.push(...rows);
@@ -224,7 +232,7 @@ export function exportModuleToExcel(moduleId: string, tabId?: string): void {
 
     // 如果没有数据，建一个空模板
     if (allRows.length === 0) {
-      const emptyRow: Record<string, any> = {};
+      const emptyRow: RowData = {};
       for (const h of headers) emptyRow[h] = '';
       allRows.push(emptyRow);
     }
@@ -281,7 +289,7 @@ export function exportAllModulesToExcel(): void {
           const tabRecords = records.filter((r) => r.tabId === tab.id);
           if (tabRecords.length === 0) continue;
 
-          const allRows: Record<string, any>[] = [];
+          const allRows: RowData[] = [];
           for (const rec of tabRecords) {
             const rows = flattenRecord(rec, fields);
             allRows.push(...rows);
@@ -294,14 +302,14 @@ export function exportAllModulesToExcel(): void {
 
           const sheetName = `${mod?.label || moduleId}_${tab.label}`.slice(0, 31);
           XLSX.utils.book_append_sheet(wb, ws, sheetName);
-        } catch (tabErr: any) {
+        } catch (tabErr) {
           console.warn(`[excelUtils] 导出模块 ${moduleId} 标签 ${tab.label} 时跳过:`, tabErr);
         }
       }
     }
 
     safeDownload(wb, `全部工作记录_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  } catch (err: any) {
+  } catch (err) {
     console.error('[excelUtils] exportAllModulesToExcel error:', err);
   }
 }
@@ -325,7 +333,7 @@ export function exportSelectedRecords(recordIds: string[], moduleId: string, tab
   const headers = getHeadersFromFields(tab.fields);
   if (headers.length === 0) return;
 
-  const allRows: Record<string, any>[] = [];
+  const allRows: RowData[] = [];
   for (const rec of selected) {
     const rows = flattenRecord(rec, tab.fields);
     allRows.push(...rows);
@@ -371,9 +379,9 @@ export function exportCasesToExcel(): void {
 
   const headers = Object.values(fieldLabels);
   const rows = cases.map((c) => {
-    const row: Record<string, any> = {};
+    const row: RowData = {};
     for (const [key, label] of Object.entries(fieldLabels)) {
-      row[label] = (c as any)[key] ?? '';
+      row[label] = c[key as keyof typeof c] ?? '';
     }
     return row;
   });
@@ -399,7 +407,7 @@ export function downloadModuleTemplate(moduleId: string, tabId?: string): void {
     const headers = getHeadersFromFields(tab.fields);
     if (headers.length === 0) continue;
 
-    const emptyRow: Record<string, any> = {};
+    const emptyRow: RowData = {};
     for (const h of headers) emptyRow[h] = '';
 
     const ws = XLSX.utils.json_to_sheet([emptyRow], { header: headers });
@@ -449,7 +457,7 @@ export async function importExcelToModule(
       if (!sheetName) continue;
 
       const ws = wb.Sheets[sheetName];
-      const jsonRows = XLSX.utils.sheet_to_json<Record<string, any>>(ws, { defval: '' });
+      const jsonRows = XLSX.utils.sheet_to_json<RowData>(ws, { defval: '' });
       if (jsonRows.length === 0) continue;
 
       // 构建 label → fieldId 映射
@@ -459,7 +467,7 @@ export async function importExcelToModule(
 
       for (const row of jsonRows) {
         try {
-          const data: Record<string, any> = {};
+          const data: RowData = {};
 
           if (isSimple) {
             // 简单模块：直接映射
@@ -469,7 +477,7 @@ export async function importExcelToModule(
             }
           } else {
             // 复杂模块：顶层字段直接映射，section 字段需要收集
-            const topData: Record<string, any> = {};
+            const topData: RowData = {};
 
             // 分离顶层和 section 字段
             const topFieldIds = new Set(parsed.topLevel.map((f) => f.id));
@@ -480,7 +488,7 @@ export async function importExcelToModule(
               }
             }
 
-            let currentItem: Record<string, any> | null = null;
+            let currentItem: RepeatableItem | null = null;
 
             // 对于 repeatable 场景，每行就是一个 section 元素
             // 顶层字段取当前行的值，section 字段也取当前行的值
@@ -508,14 +516,14 @@ export async function importExcelToModule(
 
           saveMassRecord(moduleId, tab.tabId, data);
           result.success++;
-        } catch (err: any) {
+        } catch (err) {
           result.failed++;
-          result.errors.push(`行 ${result.success + result.failed}: ${err.message}`);
+          result.errors.push(`行 ${result.success + result.failed}: ${getErrorMessage(err)}`);
         }
       }
     }
-  } catch (err: any) {
-    result.errors.push(`文件解析失败: ${err.message}`);
+  } catch (err) {
+    result.errors.push(`文件解析失败: ${getErrorMessage(err)}`);
   }
 
   return result;
@@ -548,8 +556,8 @@ interface BackupMeta {
  * 生成全量 JSON 备份
  * 读取所有 jingzong.* 开头的 localStorage key
  */
-export function generateBackup(): void {
-  const data: Record<string, any> = {};
+export async function generateBackup(): Promise<void> {
+  const data: RowData = {};
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith('jingzong.')) {
@@ -561,10 +569,13 @@ export function generateBackup(): void {
     }
   }
 
+  const attachments = await exportAttachmentSnapshot();
+
   const backup = {
-    version: '1.0',
+    version: '2.0',
     createdAt: new Date().toISOString(),
     data,
+    attachments,
   };
 
   const json = JSON.stringify(backup, null, 2);
@@ -620,6 +631,8 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
       return { success: false, message: '无效的备份文件格式' };
     }
 
+    localStorageAdapter.clear('jingzong.');
+
     let count = 0;
     for (const [key, value] of Object.entries(backup.data)) {
       if (key.startsWith('jingzong.')) {
@@ -628,9 +641,17 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
       }
     }
 
-    return { success: true, message: `成功恢复 ${count} 项数据` };
-  } catch (err: any) {
-    return { success: false, message: `恢复失败: ${err.message}` };
+    const attachmentCount = Array.isArray(backup.attachments)
+      ? await importAttachmentSnapshot(backup.attachments)
+      : 0;
+
+    const attachmentMessage = Array.isArray(backup.attachments)
+      ? `，${attachmentCount} 个附件`
+      : '';
+
+    return { success: true, message: `成功恢复 ${count} 项数据${attachmentMessage}` };
+  } catch (err) {
+    return { success: false, message: `恢复失败: ${getErrorMessage(err)}` };
   }
 }
 
@@ -645,7 +666,7 @@ export function exportOperationLog(): void {
 }
 
 /** 导出 CSV 文件（用于"受害人信息CSV"等场景） */
-export function exportCsv(headers: string[], rows: Record<string, any>[], filename: string): void {
+export function exportCsv(headers: string[], rows: RowData[], filename: string): void {
   const csvRows = [headers.join(',')];
   for (const row of rows) {
     const vals = headers.map((h) => {

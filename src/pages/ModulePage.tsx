@@ -12,6 +12,12 @@ import { exportModuleToExcel, exportSelectedRecords, importExcelToModule } from 
 import { exportModuleReport } from '../utils/reportGenerator';
 import { generateFundReport } from '../utils/reportUtils';
 
+type FieldValue = string | number | boolean | null | undefined | string[] | Record<string, unknown>;
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '操作失败';
+}
+
 /** 判断模块是否有 repeatable section */
 
 /** 获取第一个 repeatable section 的字段列表 */
@@ -39,9 +45,9 @@ function getDataFields(fields: FieldDefinition[], n = 6): FieldDefinition[] {
 }
 
 /** 从记录中获取值，支持 repeatable section 嵌套取值 */
-function getFieldValue(rec: MassRecord, fieldId: string, fields: FieldDefinition[]): any {
+function getFieldValue(rec: MassRecord, fieldId: string, fields: FieldDefinition[]): FieldValue {
   const val = rec.data?.[fieldId];
-  if (val !== undefined && val !== null) return val;
+  if (val !== undefined && val !== null) return val as FieldValue;
 
   // 尝试从 repeatable section 数组中取值
   for (const f of fields) {
@@ -64,7 +70,7 @@ function displayValue(val: unknown): string {
   if (typeof val === 'object') return JSON.stringify(val).slice(0, 30);
   // 检测 ISO 日期字符串 (如 2026-05-23T10:29:07.100Z) 并格式化
   if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) {
-    const d = new Date(val); const pad = (n) => String(n).padStart(2,'0'); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+    const d = new Date(val); const pad = (n: number) => String(n).padStart(2,'0'); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
   }
   return String(val);
 }
@@ -73,12 +79,12 @@ function displayValue(val: unknown): string {
 function fmtTime(iso: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  const pad = (n) => String(n).padStart(2, '0');
+  const pad = (n: number) => String(n).padStart(2, '0');
   return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
 export default function ModulePage() {
-    const currentPage = useAppStore((s) => s.currentPage);
+  const currentPage = useAppStore((s) => s.currentPage);
   const openModal = useAppStore((s) => s.openModal);
   const showToast = useAppStore((s) => s.showToast);
   const modalId = useAppStore((s) => s.modalId);
@@ -86,7 +92,7 @@ export default function ModulePage() {
   const setEditRecord = useAppStore((s) => s.setEditRecord);
   const { allModules } = useCustomModules();
   const module = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
-  const [activeTab, setActiveTab] = useState(module?.tabs[0]?.id || '');
+  const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchQuery = useAppStore((s) => s.searchQuery);
   const setSearchQuery = useAppStore((s) => s.setSearchQuery);
@@ -97,14 +103,17 @@ export default function ModulePage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [reporting, setReporting] = useState(false);
 
-  useEffect(() => {
-    setActiveTab(module?.tabs[0]?.id || '');
-  }, [module?.id]);
+  const activeTab = module
+    ? activeTabs[module.id] && module.tabs.some((tab) => tab.id === activeTabs[module.id])
+      ? activeTabs[module.id]
+      : module.tabs[0]?.id || ''
+    : '';
 
   // 从 localStorage 读取真实数据
   const [refreshKey, setRefreshKey] = useState(0);
   const realRecords = useMemo(() => {
     if (!module) return [];
+    void refreshKey;
     let records = getMassRecords(module.id);
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
@@ -114,7 +123,7 @@ export default function ModulePage() {
       });
     }
     return records;
-  }, [module?.id, refreshKey, searchQuery]);
+  }, [module, refreshKey, searchQuery]);
 
   // 编辑/新建保存后刷新列表
   const prevEditRef = useRef(editRecord);
@@ -153,7 +162,7 @@ export default function ModulePage() {
   interface DynamicRow {
     key: string;
     code: string;
-    [fieldId: string]: any;
+    [fieldId: string]: unknown;
     _handler: string;
     _status: string;
     _updatedAt: string;
@@ -164,7 +173,7 @@ export default function ModulePage() {
     const row: DynamicRow = {
       key: rec.id,
       code: String(index + 1).padStart(4, '0'),
-      _handler: rec.data?.handler || rec.data?.handlerName || '—',
+      _handler: String(rec.data?.handler || rec.data?.handlerName || '—'),
       _status: rec.data?.status === '已完成' ? '已完成' : rec.data?.status === '待补充' ? '待补充' : '办理中',
       _updatedAt: fmtTime(rec.updatedAt),
       _record: rec,
@@ -190,7 +199,7 @@ export default function ModulePage() {
       dataIndex: '_action',
       width: 180,
       fixed: 'right' as const,
-      render: (_: any, record: DynamicRow) => (
+      render: (_: unknown, record: DynamicRow) => (
         <Space size={4}>
           <Button
             type="link" size="small"
@@ -232,8 +241,8 @@ export default function ModulePage() {
       } else {
         showToast(result.errors[0] || '导入失败', 'error');
       }
-    } catch (err: any) {
-      showToast(`导入出错: ${err.message}`, 'error');
+      } catch (err) {
+        showToast(`导入出错: ${getErrorMessage(err)}`, 'error');
     }
   };
 
@@ -355,8 +364,8 @@ export default function ModulePage() {
                 try {
                   generateFundReport();
                   showToast('正在生成资金分析报告...', 'info');
-                } catch (err: any) {
-                  showToast(err.message || '生成报告失败', 'error');
+                } catch (err) {
+                  showToast(getErrorMessage(err), 'error');
                 }
               }}
               style={{ height: 42, paddingInline: 18, background: '#7C3AED', borderColor: '#7C3AED', flexShrink: 0 }}
@@ -375,10 +384,10 @@ export default function ModulePage() {
                   if (!module) return;
                   setReporting(true);
                   try {
-                    exportModuleReport(module, key);
+                    exportModuleReport(module, key as 'daily' | 'weekly' | 'monthly');
                     showToast('正在导出' + module.label + '的' + (key === 'daily' ? '日报' : key === 'weekly' ? '周报' : '月报'));
-                  } catch (err) {
-                    showToast(err.message || '导出失败', 'error');
+                   } catch (err) {
+                     showToast(getErrorMessage(err), 'error');
                   } finally {
                     setReporting(false);
                   }
@@ -405,7 +414,7 @@ export default function ModulePage() {
       {/* 统计卡片 */}
       {(() => {
         const total = realRecords.length;
-        const thisMonth = realRecords.filter((r) => r.createdAt && (()=>{const d=new Date();const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})() === (()=>{const d=new Date(r.createdAt);const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})()).length;
+        const thisMonth = realRecords.filter((r) => r.createdAt && (()=>{const d=new Date();const pad=(n:number)=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})() === (()=>{const d=new Date(r.createdAt);const pad=(n:number)=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1);})()).length;
         const ongoing = realRecords.filter((r) => r.data?.status !== '已完成' && r.data?.status !== '待补充').length;
         const pending = realRecords.filter((r) => r.data?.status === '待补充').length;
         return (
@@ -449,7 +458,9 @@ export default function ModulePage() {
               className="work-template-tabs"
               type="card"
               activeKey={active?.id}
-              onChange={setActiveTab}
+               onChange={(tabId) => {
+                 setActiveTabs((prev) => (module ? { ...prev, [module.id]: tabId } : prev));
+               }}
               items={module.tabs.map((tab) => ({ key: tab.id, label: tab.label }))}
             />
           </div>

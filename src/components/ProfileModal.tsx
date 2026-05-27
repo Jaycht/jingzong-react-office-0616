@@ -26,7 +26,11 @@ export default function ProfileModal({ open, onClose }: Props) {
     reader.onload = () => {
       const dataUrl = reader.result as string;
       setAvatar(dataUrl);
-      try { localStorage.setItem("jingzong.avatar", dataUrl); } catch {}
+      try {
+        localStorage.setItem("jingzong.avatar", dataUrl);
+      } catch {
+        // Ignore storage write failures and keep the preview visible.
+      }
       showToast("头像已更新", "success");
     };
     reader.readAsDataURL(file);

@@ -21,7 +21,7 @@ function findPageName(id: string): string {
       if (mod.id === id) return mod.label;
     }
   }
-  for (const group of [PLATFORM_NAV.data, PLATFORM_NAV.system]) {
+  for (const group of [PLATFORM_NAV.data]) {
     for (const item of group) {
       if (item.id === id) return item.label;
     }

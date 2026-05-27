@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
-import { localStorageAdapter } from "../store/adapter"
 import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson } from '../utils/excelUtils';
 
 interface BackupMeta {
@@ -52,21 +51,17 @@ function getRecordStats(): Record<string, number> {
 }
 
 export default function Backup() {
-    const showToast = useAppStore((s) => s.showToast);
-  const [backups, setBackups] = useState<BackupMeta[]>([]);
+  const showToast = useAppStore((s) => s.showToast);
+  const [backups, setBackups] = useState<BackupMeta[]>(() => getBackupMetas());
   const [restoring, setRestoring] = useState(false);
   const [restoreResult, setRestoreResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [stats, setStats] = useState<Record<string, number>>({});
+  const [stats, setStats] = useState<Record<string, number>>(() => getRecordStats());
 
   // 加载备份列表和数据统计
   const loadData = () => {
     setBackups(getBackupMetas());
     setStats(getRecordStats());
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const handleBackup = () => {
     generateBackup();
@@ -94,9 +89,10 @@ export default function Backup() {
         } else {
           showToast(result.message, 'error');
         }
-      } catch (err: any) {
-        setRestoreResult({ success: false, message: err.message });
-        showToast(`恢复失败: ${err.message}`, 'error');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : '恢复失败';
+        setRestoreResult({ success: false, message });
+        showToast(`恢复失败: ${message}`, 'error');
       } finally {
         setRestoring(false);
       }

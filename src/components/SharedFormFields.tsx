@@ -9,6 +9,8 @@ import type { FieldDefinition } from '../moduleConfig';
 import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames } from '../store/massStore';
 import { getCases } from '../store/caseStore';
 
+type SelectValue = string | string[] | undefined;
+
 /* ===================== 通用 AutoComplete 字段 ===================== */
 
 interface AutoCompleteFieldProps {
@@ -211,16 +213,23 @@ export function MultiPersonField({ field }: { field: FieldDefinition }) {
 
 /* ===================== 持久化 Select（支持自定义选项） ===================== */
 
-export function PersistedSelect({ field, value, onChange }: { field: FieldDefinition; value?: any; onChange?: (value: any) => void }) {
+export function PersistedSelect({
+  field,
+  value,
+  onChange,
+}: {
+  field: FieldDefinition;
+  value?: SelectValue;
+  onChange?: (value: SelectValue) => void;
+}) {
   const multiple = field.multiple ?? false;
   const storageKey = field.customOptionKey ? `jingzong.selectOptions.${field.customOptionKey}` : '';
   const [newOption, setNewOption] = useState('');
   const [customOptions, setCustomOptions] = useState<string[]>(() => {
     if (!storageKey) return [];
     try {
-      const raw = localStorageAdapter.getItem<Array<any>>(storageKey, null);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      const stored = localStorageAdapter.getItem<string[]>(storageKey, []);
+      return Array.isArray(stored) ? stored.filter((item): item is string => typeof item === 'string') : [];
     } catch {
       return [];
     }

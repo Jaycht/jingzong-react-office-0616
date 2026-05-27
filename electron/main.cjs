@@ -50,7 +50,7 @@ function createMainWindow() {
     minWidth: 1100,
     minHeight: 700,
     resizable: true,
-    frame: true,                // 登录后窗口：有标题栏
+    frame: false,               // 保持无边框，侧边栏已含拖拽区
     backgroundColor: "#0B0F1A",
     icon: path.join(__dirname, "..", "app.ico"),
     show: false,

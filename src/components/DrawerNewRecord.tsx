@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  AutoComplete, Button, DatePicker, Divider, Form, Input, InputNumber,
+  Button, DatePicker, Form, Input, InputNumber,
   Modal, Select, Space, Upload,
 } from 'antd';
 import dayjs from 'dayjs';
@@ -42,7 +42,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
   const selectedModule = findModule(selectedModuleId, allModules) || allModules[0];
   const selectedTab = selectedModule?.tabs.find((tab) => tab.id === selectedTabId) || selectedModule?.tabs[0];
-  const allFields = selectedTab?.fields || [];
+  const allFields = useMemo(() => selectedTab?.fields ?? [], [selectedTab]);
 
   // Build steps from section fields
   const steps = useMemo(() => {
@@ -131,7 +131,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       const timer = setTimeout(() => {
         try {
           // 将存储数据转换为表单兼容格式
-          const formData: Record<string, any> = {};
+          const formData: Record<string, unknown> = {};
 
           // 1. 处理 repeatable section 数据（嵌套结构）
           //    兼容旧版扁平数据结构 → 自动转换为嵌套格式
@@ -140,11 +140,11 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               const listData = editRecord.data?.[f.listName];
               if (Array.isArray(listData) && listData.length > 0) {
                 // 将嵌套数据中的日期字符串 → dayjs 对象，防止 Ant Design DatePicker 报错
-                const converted = listData.map((item: Record<string, any>) => {
-                  const copy = { ...item };
+                const converted = listData.map((item: Record<string, unknown>) => {
+                  const copy: Record<string, unknown> = { ...item };
                   for (const df of allFields) {
                     if (df.type === 'date' && typeof copy[df.id] === 'string') {
-                      const d = dayjs(copy[df.id]);
+                      const d = dayjs(copy[df.id] as string);
                       copy[df.id] = d.isValid() ? d : undefined;
                     }
                   }
@@ -153,7 +153,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                 formData[f.listName] = converted;
               } else {
                 // 旧版扁平数据：收集该 section 下的所有字段值组装为一个数组元素
-                const collected: Record<string, any> = {};
+                  const collected: Record<string, unknown> = {};
                 let hasFlatData = false;
                 for (const innerF of allFields) {
                   if (innerF.type === 'section' || innerF.type === 'attachment') continue;
@@ -208,7 +208,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [editRecord, allFields.length]);
+  }, [allFields, editRecord, form]);
 
   const showTemplateSelector = Boolean(selectedModule && !selectedModule.hideTemplateSelector && selectedModule.tabs.length > 1);
   const scopedModules = currentModule

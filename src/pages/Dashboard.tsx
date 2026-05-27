@@ -6,6 +6,7 @@ import {
   Gavel, FileText, Users, Shield, Database, ClipboardList, Search
 } from "lucide-react";
 import { getMassRecords } from "../store/massStore";
+import type { MassRecord } from "../store/massStore";
 import { useAppStore } from "../store/appStore";
 import EmptyState from "../components/EmptyState";
 import ReactECharts from "echarts-for-react";
@@ -37,20 +38,6 @@ const KPI_COLORS = [
   { bg: "linear-gradient(135deg,#6D28D9,#8B5CF6)" },
 ];
 
-const CHART_COLORS = ["#2E7DCA", "#38A169", "#E67E22", "#9C27B0", "#00ACC1", "#D32F2F", "#F59E0B", "#6366F1"];
-
-/* ---- KPI-style quick entry gradients (like top 总记录数 buttons) ---- */
-const KPI_ENTRY_GRADIENTS = [
-  "linear-gradient(135deg,#1B5E9B,#2E7DCA)",
-  "linear-gradient(135deg,#0E7C4B,#38A169)",
-  "linear-gradient(135deg,#C2410C,#E67E22)",
-  "linear-gradient(135deg,#6D28D9,#8B5CF6)",
-  "linear-gradient(135deg,#0369A1,#0EA5E9)",
-  "linear-gradient(135deg,#86198F,#D946EF)",
-  "linear-gradient(135deg,#166534,#22C55E)",
-  "linear-gradient(135deg,#9A3412,#F97316)",
-];
-
 const TOP_MODULES = [
   { id: "mass-clue",      label: "涉众线索",    icon: Search,      color: "#2563EB" },
   { id: "squad-case",     label: "中队案件",    icon: Gavel,       color: "#7C3AED" },
@@ -66,7 +53,7 @@ const TOP_MODULES = [
 /*  Data helpers                                                       */
 /* ------------------------------------------------------------------ */
 
-function calcKpi(records: any[]) {
+function calcKpi(records: MassRecord[]) {
   const total = records.length;
   const completed = records.filter((r) => r.data?.status === "已完成" || r.data?.status === "已办结").length;
   const ongoing = records.filter((r) => {
@@ -83,7 +70,7 @@ function calcKpi(records: any[]) {
 
 // 从 6 个指定模块中统计案件类型分布
 // 从 6 个模块的 caseType 字段中统计案件类型（拉下菜单中的值）
-function caseTypeStats(records: any[]) {
+function caseTypeStats(records: MassRecord[]) {
   const targets = new Set([
     'mass-statistics', 'legal-report-case', 'legal-case-ledger',
     'squad-case', 'squad-daily', 'evidence-request'
@@ -99,7 +86,7 @@ function caseTypeStats(records: any[]) {
   return Object.entries(map).sort((a, b) => b[1] - a[1]);
 }
 
-function moduleRanking(records: any[]) {
+function moduleRanking(records: MassRecord[]) {
   const map: Record<string, number> = {};
   for (const r of records) {
     if (r.moduleId) map[r.moduleId] = (map[r.moduleId] || 0) + 1;
@@ -110,7 +97,7 @@ function moduleRanking(records: any[]) {
     .slice(0, 8);
 }
 
-function extractNextSteps(records: any[]) {
+function extractNextSteps(records: MassRecord[]) {
   const steps: { module: string; title: string; time: string }[] = [];
   for (const r of records) {
     const data = r.data;
@@ -127,12 +114,110 @@ function extractNextSteps(records: any[]) {
   return steps.slice(0, 6);
 }
 
-function recentActivity(records: any[]) {
+function recentActivity(records: MassRecord[]) {
   return records.slice(0, 10).map((r) => ({
     moduleName: MODULE_NAMES[r.moduleId] || r.moduleId,
     date: r.createdAt?.slice(0, 10) || "",
     title: r.data?.title || r.data?.name || r.data?.caseName || r.data?.summary || MODULE_NAMES[r.moduleId] || r.moduleId,
   }));
+}
+
+function KpiCard({ item, index }: { item: ReturnType<typeof calcKpi>[number]; index: number }) {
+  const rising = item.trend >= 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.08 }}
+      style={{
+        flex: 1,
+        color: "#fff",
+        background: KPI_COLORS[index].bg,
+        borderRadius: 12,
+        padding: "16px 18px",
+        boxShadow: "0 2px 8px rgba(0,0,0,.08)",
+      }}
+    >
+      <div style={{ fontSize: 11.5, opacity: 0.85, fontWeight: 500, marginBottom: 4 }}>{item.label}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+        <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>{item.value}</span>
+        <span style={{ fontSize: 13, opacity: 0.75, fontWeight: 500 }}>{item.unit}</span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, fontSize: 11.5, opacity: 0.9 }}>
+        {rising ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+        <span>{Math.abs(item.trend)}%</span>
+        <span style={{ opacity: 0.7, marginLeft: 4 }}>较上月</span>
+      </div>
+    </motion.div>
+  );
+}
+
+function PanelShell({
+  icon,
+  title,
+  badge,
+  children,
+  darkMode,
+  delay = 0,
+  style,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  badge?: string;
+  children: React.ReactNode;
+  darkMode: boolean;
+  delay?: number;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      style={{
+        background: darkMode ? "rgba(28, 31, 38, 0.75)" : "#fff",
+        borderRadius: 12,
+        border: darkMode ? "1px solid rgba(163, 201, 255, 0.12)" : "1px solid #E5E7EB",
+        boxShadow: darkMode ? "0 2px 12px rgba(0,0,0,.25)" : "0 1px 4px rgba(0,0,0,.04)",
+        backdropFilter: darkMode ? "blur(14px)" : "none",
+        WebkitBackdropFilter: darkMode ? "blur(14px)" : "none",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        ...style,
+      }}
+    >
+      <div
+        style={{
+          padding: "14px 18px",
+          borderBottom: darkMode ? "1px solid rgba(66, 71, 79, 0.4)" : "1px solid #F3F4F6",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
+        {icon}
+        <span style={{ fontSize: 13, fontWeight: 600, color: darkMode ? "#e2e2e6" : "#1F2937" }}>{title}</span>
+        {badge && (
+          <span
+            style={{
+              marginLeft: "auto",
+              fontSize: 10.5,
+              fontWeight: 600,
+              padding: "2px 10px",
+              borderRadius: 10,
+              background: darkMode ? "rgba(0, 219, 231, 0.12)" : "#F3F4F6",
+              color: darkMode ? "#00dbe7" : "#6B7280",
+            }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+      {children}
+    </motion.div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -190,85 +275,10 @@ export default function Dashboard() {
       },
       barWidth: 10,
     }],
-  }), [ranking, darkMode]);
+  }), [ranking, darkMode, lowPerfMode]);
 
   const activities = useMemo(() => recentActivity(records), [records]);
   const nextSteps = useMemo(() => extractNextSteps(records), [records]);
-
-  /* ---------- KPI card ---------- */
-
-  const KpiCard = ({ k, i }: { k: typeof kpiData[0]; i: number }) => {
-    const rising = k.trend >= 0;
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: i * 0.08 }}
-        style={{
-          flex: 1, color: "#fff",
-          background: KPI_COLORS[i].bg, borderRadius: 12, padding: "16px 18px",
-          boxShadow: "0 2px 8px rgba(0,0,0,.08)",
-        }}
-      >
-        <div style={{ fontSize: 11.5, opacity: 0.85, fontWeight: 500, marginBottom: 4 }}>{k.label}</div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>{k.value}</span>
-          <span style={{ fontSize: 13, opacity: 0.75, fontWeight: 500 }}>{k.unit}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, fontSize: 11.5, opacity: 0.9 }}>
-          {rising ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-          <span>{Math.abs(k.trend)}%</span>
-          <span style={{ opacity: 0.7, marginLeft: 4 }}>较上月</span>
-        </div>
-      </motion.div>
-    );
-  };
-
-  /* ---------- Panel shell (supports dark mode via glass-panel) ---------- */
-
-  function PanelShell({ icon, title, badge, children, delay = 0, style }: {
-    icon: React.ReactNode; title: string; badge?: string;
-    children: React.ReactNode; delay?: number; style?: React.CSSProperties;
-  }) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay }}
-        style={{
-          background: darkMode ? "rgba(28, 31, 38, 0.75)" : "#fff",
-          borderRadius: 12,
-          border: darkMode ? "1px solid rgba(163, 201, 255, 0.12)" : "1px solid #E5E7EB",
-          boxShadow: darkMode ? "0 2px 12px rgba(0,0,0,.25)" : "0 1px 4px rgba(0,0,0,.04)",
-          backdropFilter: darkMode ? "blur(14px)" : "none",
-          WebkitBackdropFilter: darkMode ? "blur(14px)" : "none",
-          overflow: "hidden",
-          display: "flex", flexDirection: "column",
-          ...style,
-        }}
-      >
-        <div style={{
-          padding: "14px 18px",
-          borderBottom: darkMode ? "1px solid rgba(66, 71, 79, 0.4)" : "1px solid #F3F4F6",
-          display: "flex", alignItems: "center", gap: 8,
-        }}>
-          {icon}
-          <span style={{ fontSize: 13, fontWeight: 600, color: darkMode ? "#e2e2e6" : "#1F2937" }}>{title}</span>
-          {badge && (
-            <span style={{
-              marginLeft: "auto", fontSize: 10.5, fontWeight: 600,
-              padding: "2px 10px", borderRadius: 10,
-              background: darkMode ? "rgba(0, 219, 231, 0.12)" : "#F3F4F6",
-              color: darkMode ? "#00dbe7" : "#6B7280",
-            }}>
-              {badge}
-            </span>
-          )}
-        </div>
-        {children}
-      </motion.div>
-    );
-  }
 
   /* ---------- Empty state when no data ---------- */
 
@@ -296,20 +306,18 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         style={{ display: "flex", gap: 14 }}
       >
-        {kpiData.map((k, i) => <KpiCard key={k.label} k={k} i={i} />)}
+        {kpiData.map((item, index) => <KpiCard key={item.label} item={item} index={index} />)}
       </motion.div>
 
       {/* ============= Charts Row (1:1 grid) ============= */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <PanelShell icon={<TrendingUp size={15} color={darkMode ? "#a3c9ff" : "#2E7DCA"}/>} title="案件类型分布" delay={0.1}>
+        <PanelShell darkMode={darkMode} icon={<TrendingUp size={15} color={darkMode ? "#a3c9ff" : "#2E7DCA"}/>} title="案件类型分布" delay={0.1}>
           <div style={{ padding: "4px 0" }}>
-    <div style={{ padding: '4px 0' }}>
             {caseTypes.length > 0 ? (
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 160, padding: '10px 4px', overflowX: 'auto' }}>
                 {caseTypes.slice(0, 5).map(([type, count], i) => {
                   const maxCount = Math.max(...caseTypes.map(([, c]) => c), 1);
                   const pct = (count / maxCount) * 100;
-                  const color = '#3B82F6';
                   return (
                     <div key={type} style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 48 }}>
                       <motion.div
@@ -335,9 +343,8 @@ export default function Dashboard() {
               <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无案件类型数据</div>
             )}
           </div>
-          </div>
         </PanelShell>
-        <PanelShell icon={<Activity size={15} color={darkMode ? "#00dbe7" : "#38A169"}/>} title="模块活跃排行" delay={0.14}>
+        <PanelShell darkMode={darkMode} icon={<Activity size={15} color={darkMode ? "#00dbe7" : "#38A169"}/>} title="模块活跃排行" delay={0.14}>
           <div style={{ padding: "4px 0" }}>
             <ReactECharts option={rankOpt} style={{ height: 220 }} />
           </div>
@@ -347,6 +354,7 @@ export default function Dashboard() {
       {/* ============= Activity Row (1:1 grid) ============= */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <PanelShell
+          darkMode={darkMode}
           icon={<ListTodo size={15} color={darkMode ? "#a3c9ff" : "#2E7DCA"}/>}
           title="最近动态"
           badge={activities.length > 0 ? `${activities.length} 条` : undefined}
@@ -384,7 +392,7 @@ export default function Dashboard() {
                         display: "-webkit-box", WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical", overflow: "hidden",
                       }}>
-                        {a.title}
+                        {String(a.title)}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
                         <span style={{
@@ -407,6 +415,7 @@ export default function Dashboard() {
         </PanelShell>
 
         <PanelShell
+          darkMode={darkMode}
           icon={<CheckCircle2 size={15} color={darkMode ? "#e9c349" : "#E67E22"} />}
           title="待办工作"
           badge={nextSteps.length > 0 ? `${nextSteps.length} 项` : undefined}
@@ -502,7 +511,7 @@ export default function Dashboard() {
             gap: 14,
             padding: "18px 18px 20px",
           }}>
-            {TOP_MODULES.map((m, i) => {
+            {TOP_MODULES.map((m) => {
               const IconComp = m.icon;
               return (
                 <motion.div

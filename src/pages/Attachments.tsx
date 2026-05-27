@@ -4,6 +4,18 @@ import { FileArchive, FileText, Image, File, Download, Search } from 'lucide-rea
 import { getMassRecords } from '../store/massStore';
 import { getBaseModules } from '../moduleConfig';
 
+interface AttachmentFileLike {
+  name?: string;
+}
+
+interface AttachmentValue {
+  fileList: AttachmentFileLike[];
+}
+
+function isAttachmentValue(value: unknown): value is AttachmentValue {
+  return typeof value === 'object' && value !== null && Array.isArray((value as AttachmentValue).fileList);
+}
+
 const FILE_ICONS: Record<string, React.FC<{ size?: number; color?: string }>> = {
   pdf: FileText,
   doc: FileText,
@@ -47,8 +59,8 @@ export default function Attachments() {
 
       // 查找 attachment 类型字段
       for (const [key, value] of Object.entries(data)) {
-        if (value && typeof value === 'object' && 'fileList' in (value as any)) {
-          const fileList = (value as any).fileList;
+        if (isAttachmentValue(value)) {
+          const fileList = value.fileList;
           if (Array.isArray(fileList)) {
             for (const file of fileList) {
               result.push({
@@ -56,7 +68,7 @@ export default function Attachments() {
                 recordId: rec.id,
                 fieldLabel: key,
                 fileName: file.name || '未命名文件',
-                recordDate: rec.createdAt ? (()=>{const d=new Date(rec.createdAt);const pad=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());})() : '—',
+                recordDate: rec.createdAt ? (()=>{const d=new Date(rec.createdAt);const pad=(n:number)=>String(n).padStart(2,"0");return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());})() : '—',
               });
             }
           }
@@ -65,7 +77,7 @@ export default function Attachments() {
     }
 
     return result;
-  }, [allRecords]);
+  }, [allRecords, modules]);
 
   const filtered = useMemo(() => {
     if (!searchVal) return attachments;

@@ -1,53 +1,43 @@
 # 经侦大队工作记录管理系统
 
-县级经侦大队全岗位工作记录系统，支持 Electron 桌面端和网页版。
+面向 Windows 桌面安装包交付的 Electron 应用，前端采用 React + TypeScript + Vite，负责经侦业务记录、统计分析、附件管理、备份恢复与报表生成。
 
 ## 技术栈
 
-React 19 + TypeScript + Vite 8 + Ant Design 6 + Zustand + ECharts + Electron
+React 19、TypeScript、Vite 8、Ant Design 6、Zustand、ECharts、Electron
 
-## 快速开始
+## 本地开发
 
 ```bash
 npm install
-npm run dev          # 开发模式
-npm run build:web    # 构建网页版（产出 dist/ + standalone.html）
+npm run dev
+npm run electron:dev
 ```
 
-## 两种运行方式
-
-### 1. 网页版（依赖 Node.js + 浏览器）
+## 构建
 
 ```bash
-npm run build:web
-# 然后双击 start.vbs
+npm run build
+npm run electron:build
 ```
 
-或直接打开 `dist/index.html`（注意：部分浏览器需通过 HTTP 服务打开）。
+说明：
 
-### 2. Electron 桌面版（独立 .exe，无需任何依赖）
+- `npm run build` 只构建前端资源。
+- `npm run electron:build` 生成桌面安装包，并在构建前自动递增版本号。
+- `npm run electron:build:dir` 生成未打包目录，便于本地验包。
 
-由 GitHub Actions 自动构建，在 Releases 页面下载：
-- `经侦大队工作记录管理系统 Setup x.x.x.exe` — 安装包
-- `经侦大队工作记录管理系统-便携版-x.x.x.exe` — 免安装版
+## 目录结构
 
-## 构建自动递增版本号
-
-每次 `npm run build` 自动补丁位 +1，同步更新软件内的版本号和更新日志。
-
-## 项目结构
-
-```
-src/
-├── components/    # UI 组件
-├── pages/         # 页面
-├── store/         # Zustand 状态管理
-├── moduleConfig.ts # 部门/模块定义
-└── version.ts     # 版本号 + 变更日志
-electron/          # Electron 主进程
-.github/workflows/ # GitHub Actions 自动构建
+```text
+src/                 React 页面、组件、状态与工具函数
+electron/            Electron 主进程与 preload
+public/              静态资源
+scripts/             构建辅助脚本
+build/               安装器自定义配置
+.github/workflows/   CI 构建流程
 ```
 
-## License
+## 交付方向
 
-MIT
+项目当前以 Windows 桌面安装程序为唯一交付形态，不再维护浏览器单文件分发方案。

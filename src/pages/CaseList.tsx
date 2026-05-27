@@ -5,6 +5,10 @@ import { useAppStore } from "../store/appStore"
 import { CASE_STATS, KANBAN_COLUMNS } from '../data';
 import { exportCasesToExcel, importExcelToModule } from '../utils/excelUtils';
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '未知错误';
+}
+
 const CASES = [
   { id: 'JZ-2026-0089', name: '李某涉嫌非法吸收公众存款案', type: '非法吸存', amount: 2800, person: '王警官', status: 'ongoing', date: '05-18', tag: '侦办中' },
   { id: 'JZ-2026-0088', name: '刘某涉嫌组织领导传销活动案', type: '传销', amount: 960, person: '李警官', status: 'ongoing', date: '05-17', tag: '侦办中' },
@@ -46,8 +50,8 @@ export default function CaseList() {
       } else {
         showToast(result.errors[0] || '导入失败', 'error');
       }
-    } catch (err: any) {
-      showToast(`导入出错: ${err.message}`, 'error');
+    } catch (err) {
+      showToast(`导入出错: ${getErrorMessage(err)}`, 'error');
     }
   };
 

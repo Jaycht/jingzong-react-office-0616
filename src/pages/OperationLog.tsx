@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { History, User, FileText, Download } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
@@ -19,29 +19,26 @@ const TYPE_COLORS: Record<string, { bg: string; color: string; label: string }> 
 
 export default function OperationLog() {
     const showToast = useAppStore((s) => s.showToast);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [, setRefreshKey] = useState(0);
   const [filterType, setFilterType] = useState<string>('全部');
   const [searchText, setSearchText] = useState('');
 
-  const logs = useMemo(() => {
-    const allLogs = getOperationLogs();
-    let filtered = allLogs;
-    if (filterType !== '全部') {
-      const typeMap: Record<string, OpLog['type']> = {
-        '登录': 'login', '创建': 'create', '编辑': 'edit',
-        '删除': 'delete', '导出': 'export', '系统': 'system',
-      };
-      const t = typeMap[filterType];
-      if (t) filtered = filtered.filter((l) => l.type === t);
-    }
-    if (searchText.trim()) {
-      const q = searchText.toLowerCase();
-      filtered = filtered.filter((l) =>
-        l.user.toLowerCase().includes(q) || l.action.toLowerCase().includes(q) || l.detail.toLowerCase().includes(q)
-      );
-    }
-    return filtered;
-  }, [filterType, searchText, refreshKey]);
+  const allLogs = getOperationLogs();
+  let logs = allLogs;
+  if (filterType !== '全部') {
+    const typeMap: Record<string, OpLog['type']> = {
+      '登录': 'login', '创建': 'create', '编辑': 'edit',
+      '删除': 'delete', '导出': 'export', '系统': 'system',
+    };
+    const t = typeMap[filterType];
+    if (t) logs = logs.filter((l) => l.type === t);
+  }
+  if (searchText.trim()) {
+    const q = searchText.toLowerCase();
+    logs = logs.filter((l) =>
+      l.user.toLowerCase().includes(q) || l.action.toLowerCase().includes(q) || l.detail.toLowerCase().includes(q)
+    );
+  }
 
   return (
     <div>
