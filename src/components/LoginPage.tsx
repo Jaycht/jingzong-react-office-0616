@@ -39,6 +39,23 @@ const DEFAULT_CREDENTIALS: SavedCredentials = {
 
 // 已登录过的账号历史，用于输入框自动补全
 const ACCOUNT_HISTORY_KEY = 'jingzong.accountHistory.v1';
+const ACCOUNT_PASSWORDS_KEY = 'jingzong.accountPasswords.v1';
+
+/** 按账号保存密码（记住密码时用，便于切换历史账号时回填） */
+function loadAccountPasswords(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(ACCOUNT_PASSWORDS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+function saveAccountPassword(account: string, password: string): void {
+  if (!account) return;
+  try {
+    const all = loadAccountPasswords();
+    all[account] = password;
+    localStorage.setItem(ACCOUNT_PASSWORDS_KEY, JSON.stringify(all));
+  } catch { /* ignore */ }
+}
 
 function loadAccountHistory(): string[] {
   try {
@@ -151,10 +168,15 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
   const [password, setPassword] = useState(
     savedCredentials.remember ? savedCredentials.password : ""
   );
-  // 当用户手动修改账号时，清除密码（避免切换用户时遗留旧密码）
+  // 当用户切换账号时，从已保存的密码映射中回填密码
   const handleAccountChange = (val: string) => {
     setAccount(val);
-    if (val !== (savedCredentials.rememberAccount ? savedCredentials.account : "")) {
+    const savedPwds = loadAccountPasswords();
+    if (savedPwds[val]) {
+      setPassword(savedPwds[val]);
+      setRemember(true);
+      setRememberAccount(true);
+    } else {
       setPassword("");
     }
   };
@@ -216,6 +238,10 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
       remember,
       autoLogin,
     });
+    // 同时按账号保存密码，供历史账号切换时回填
+    if (remember || rememberAccount) {
+      saveAccountPassword(account, password);
+    }
 
     (async () => {
       const users = loadUsers();
