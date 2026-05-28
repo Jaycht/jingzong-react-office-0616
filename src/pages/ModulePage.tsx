@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button, Descriptions, Dropdown, Empty, Input, Modal, Space, Table, Tabs, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -96,6 +96,19 @@ export default function ModulePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchQuery = useAppStore((s) => s.searchQuery);
   const setSearchQuery = useAppStore((s) => s.setSearchQuery);
+
+  // 搜索防抖：本地存储输入值，300ms 后同步到全局 store
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalSearch(val);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => setSearchQuery(val), 300);
+  }, [setSearchQuery]);
+  useEffect(() => {
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, []);
 
   // 详情弹窗
   const [viewRecord, setViewRecord] = useState<MassRecord | null>(null);
@@ -472,8 +485,8 @@ export default function ModulePage() {
               placeholder={`搜索${active?.label || module.label}记录`}
               style={{ width: 300 }}
             
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}/>
+            value={localSearch}
+            onChange={handleSearchChange}/>
             <Tag color="blue">{dataFields.length} 个字段</Tag>
           </div>
           {/* 批量操作栏 */}

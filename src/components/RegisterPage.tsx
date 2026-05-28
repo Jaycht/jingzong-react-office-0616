@@ -1,4 +1,5 @@
 ﻿import { useState } from "react";
+import { hashPassword } from "../utils/crypto";
 import type { FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserPlus, ArrowLeft, CheckCircle, X } from "lucide-react";
@@ -62,26 +63,29 @@ export default function RegisterPage({ onBack }: Props) {
       return;
     }
 
-    const newUser = {
-      id: `user-${Date.now()}`,
-      name,
-      account,
-      password: pwd,
-      badge,
-      position,
-      phone,
-      roleName: "普通用户",
-      role: "user",
-      status: "active",
-      createdAt: new Date().toISOString(),
-    };
-    existingUsers.push(newUser);
-    localStorage.setItem("jingzong.users.v1", JSON.stringify(existingUsers));
+    // 异步哈希密码，保证用户密码不以明文存储
+    hashPassword(pwd).then((hashedPwd) => {
+      const newUser = {
+        id: `user-${Date.now()}`,
+        name,
+        account,
+        password: hashedPwd,
+        badge,
+        position,
+        phone,
+        roleName: "普通用户",
+        role: "user",
+        status: "active",
+        createdAt: new Date().toISOString(),
+      };
+      existingUsers.push(newUser);
+      localStorage.setItem("jingzong.users.v1", JSON.stringify(existingUsers));
 
-    setTimeout(() => {
-      setLoading(false);
-      setStep(1);
-    }, 1000);
+      setTimeout(() => {
+        setLoading(false);
+        setStep(1);
+      }, 1000);
+    });
   };
 
   return (

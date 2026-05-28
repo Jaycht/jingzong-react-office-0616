@@ -1,11 +1,11 @@
-﻿const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // 窗口切换
-  switchToMain: () => ipcRenderer.send('switch-to-main'),
-  closeLogin: () => ipcRenderer.send('close-login'),
-  logoutToLogin: () => ipcRenderer.send('logout-to-login'),
   isElectron: true,
+
+  // 窗口大小切换
+  resizeToMain: () => ipcRenderer.send('resize-to-main'),
+  resizeToLogin: () => ipcRenderer.send('resize-to-login'),
 
   // 窗口控制
   minimize: () => ipcRenderer.send('window-minimize'),

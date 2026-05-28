@@ -84,6 +84,8 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
 
   const toggleExpand = (id: string) => setExpanded((prev) => (prev === id ? null : id));
 
+  const isElectron = typeof window !== "undefined" && (window as any).electronAPI?.isElectron;
+
   const handleLogout = () => {
     Modal.confirm({
       title: '确认退出登录？',
@@ -102,10 +104,9 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           // Continue even if storage cleanup fails.
         }
         useAppStore.getState().setUser("", "");
-        // Electron 模式：关闭主窗口，重新打开登录窗口（974x711）
-        if (typeof window !== "undefined" && (window as any).electronAPI?.isElectron) {
-          (window as any).electronAPI.logoutToLogin();
-          return;
+        // 单窗口模式：窗口缩回登录尺寸
+        if (isElectron) {
+          (window as any).electronAPI?.resizeToLogin();
         }
         navigate("/login");
         useAppStore.getState().showToast("已退出登录", "info");

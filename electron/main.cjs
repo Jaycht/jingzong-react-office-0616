@@ -1,11 +1,15 @@
-﻿const { app, BrowserWindow, ipcMain, Menu, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const fsp = require("fs/promises");
 
 const isDev = !app.isPackaged;
-let loginWindow = null;
 let mainWindow = null;
+
+// 窗口尺寸常量
+const LOGIN_SIZE = { width: 974, height: 711 };
+const MAIN_SIZE = { width: 1400, height: 900 };
+const MAIN_MIN = { minWidth: 1100, minHeight: 700 };
 
 // 附件存储目录
 const ATTACHMENTS_DIR = path.join(app.getPath("userData"), "attachments");
@@ -13,49 +17,11 @@ const ATTACHMENTS_DIR = path.join(app.getPath("userData"), "attachments");
 // 移除默认菜单栏（全局生效）
 Menu.setApplicationMenu(null);
 
-function createLoginWindow() {
-  loginWindow = new BrowserWindow({
-    width: 974,
-    height: 711,
-    resizable: true,
-    frame: false,           // 登录页：完全无边框
-    backgroundColor: "#0B0F1A",
-    icon: path.join(__dirname, "..", "app.ico"),
-    show: false,
-    title: "经侦大队工作记录管理系统",
-    webPreferences: {
-      preload: path.join(__dirname, "preload.cjs"),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
-
-  loginWindow.center();
-
-  if (isDev) {
-    loginWindow.loadURL("http://localhost:5173/");
-  } else {
-    loginWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
-  }
-
-  loginWindow.once("ready-to-show", () => {
-    loginWindow.show();
-  });
-
-  loginWindow.on("closed", () => {
-    loginWindow = null;
-  });
-}
-
-function createMainWindow() {
-  const hash = "#/app/dashboard";
+function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 1100,
-    minHeight: 700,
+    ...LOGIN_SIZE,
     resizable: true,
-    frame: false,               // 保持无边框，侧边栏已含拖拽区
+    frame: false,
     backgroundColor: "#0B0F1A",
     icon: path.join(__dirname, "..", "app.ico"),
     show: false,
@@ -70,9 +36,9 @@ function createMainWindow() {
   mainWindow.center();
 
   if (isDev) {
-    mainWindow.loadURL("http://localhost:5173/#/app/dashboard");
+    mainWindow.loadURL("http://localhost:5173/");
   } else {
-    mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"), { hash: "/app/dashboard" });
+    mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
 
   mainWindow.once("ready-to-show", () => {
@@ -86,29 +52,25 @@ function createMainWindow() {
 
 // ======================== IPC 处理器 ========================
 
-// 登录成功后：关闭登录窗口，打开主窗口
-ipcMain.on("switch-to-main", () => {
-  if (loginWindow) {
-    loginWindow.close();
-    loginWindow = null;
-  }
-  createMainWindow();
-});
-
-ipcMain.on("close-login", () => {
-  if (loginWindow) loginWindow.close();
-});
-
-// 退出登录：关闭主窗口，重新打开登录窗口
-ipcMain.on("logout-to-login", () => {
+// 单窗口大小调整：登录态 → 主页态
+ipcMain.on("resize-to-main", () => {
   if (mainWindow) {
-    mainWindow.close();
-    mainWindow = null;
+    mainWindow.setMinimumSize(MAIN_MIN.minWidth, MAIN_MIN.minHeight);
+    mainWindow.setSize(MAIN_SIZE.width, MAIN_SIZE.height);
+    mainWindow.center();
   }
-  createLoginWindow();
 });
 
-// 窗口控制 — 使用 event.sender 获取准确的窗口引用（比跟踪变量更可靠）
+// 单窗口大小调整：主页态 → 登录态
+ipcMain.on("resize-to-login", () => {
+  if (mainWindow) {
+    mainWindow.setMinimumSize(LOGIN_SIZE.width, LOGIN_SIZE.height);
+    mainWindow.setSize(LOGIN_SIZE.width, LOGIN_SIZE.height);
+    mainWindow.center();
+  }
+});
+
+// 窗口控制 — 使用 event.sender 获取准确的窗口引用
 function getWin(event) {
   return BrowserWindow.fromWebContents(event.sender);
 }
@@ -149,7 +111,6 @@ ipcMain.handle("save-attachment-file", async (_event, { buffer, fileName, module
 ipcMain.handle("read-attachment-file", async (_event, filePath) => {
   try {
     const buffer = await fsp.readFile(filePath);
-    // Buffer → Uint8Array → ArrayBuffer（确保 IPC 序列化正确）
     const uint8 = new Uint8Array(buffer);
     return { success: true, buffer: uint8.buffer };
   } catch (err) {
@@ -193,7 +154,7 @@ app.whenReady().then(() => {
   if (!fs.existsSync(ATTACHMENTS_DIR)) {
     fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
   }
-  createLoginWindow();
+  createWindow();
 });
 
 app.on("window-all-closed", () => {
@@ -201,5 +162,5 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) createLoginWindow();
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });

@@ -51,13 +51,46 @@ interface AppState {
   setEditRecord: (r: MassRecord | null) => void;
 }
 
+// 用户信息持久化
+const USER_STORAGE_KEY = 'jingzong.currentUser.v1';
+
+export function saveUserToStorage(name: string, role: string): void {
+  try {
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ name, role }));
+  } catch { /* ignore */ }
+}
+
+export function loadUserFromStorage(): { name: string; role: string } | null {
+  try {
+    const raw = localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function clearUserFromStorage(): void {
+  try {
+    localStorage.removeItem(USER_STORAGE_KEY);
+  } catch { /* ignore */ }
+}
+
 export const useAppStore = create<AppState>((set) => ({
   view: "login",
   setView: (view) => set({ view }),
 
   userName: "",
   userRole: "",
-  setUser: (userName, userRole) => set({ userName, userRole }),
+  setUser: (userName, userRole) => {
+    if (userName) {
+      // 有有效用户名时才持久化，避免空值覆盖
+      saveUserToStorage(userName, userRole);
+    } else {
+      clearUserFromStorage();
+    }
+    set({ userName, userRole });
+  },
 
   currentPage: "dashboard",
   setCurrentPage: (currentPage) => set({ currentPage }),

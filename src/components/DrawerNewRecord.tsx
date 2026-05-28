@@ -39,6 +39,14 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   const [isDirty, setIsDirty] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [form] = Form.useForm();
+  // 组件挂载跟踪，防止卸载后 setState
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+  const safeSetSaving = (v: boolean) => { if (mountedRef.current) setSaving(v); };
+  const safeSetDirty = (v: boolean) => { if (mountedRef.current) setIsDirty(v); };
 
   const selectedModule = findModule(selectedModuleId, allModules) || allModules[0];
   const selectedTab = selectedModule?.tabs.find((tab) => tab.id === selectedTabId) || selectedModule?.tabs[0];
@@ -80,7 +88,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
         content: '您填写的记录信息尚未保存，确定要退出吗？',
         okText: '确定退出',
         cancelText: '继续填写',
-        onOk: () => { setIsDirty(false); onClose(); },
+        onOk: () => { safeSetDirty(false); onClose(); },
       });
     } else {
       onClose();
@@ -95,7 +103,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     setSelectedModuleId(value);
     setSelectedTabId(nextModule?.tabs[0]?.id || '');
     form.resetFields();
-    setIsDirty(false);
+    safeSetDirty(false);
     setCurrentStep(0);
   };
 
@@ -114,32 +122,37 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       }
 
       setSaving(true);
-      if (isEditing && editRecord) {
-        updateMassRecord(editRecord.id, values);
-        // 关联附件到真实记录 ID
-        for (const attId of pendingAttachments.current) {
-          relinkAttachment(attId, editRecord.id).catch(() => {});
+      try {
+        if (isEditing && editRecord) {
+          updateMassRecord(editRecord.id, values);
+          // 关联附件到真实记录 ID
+          for (const attId of pendingAttachments.current) {
+            relinkAttachment(attId, editRecord.id).catch(() => {});
+          }
+          pendingAttachments.current.clear();
+          setTimeout(() => {
+            safeSetSaving(false);
+            safeSetDirty(false);
+            showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已更新`, 'success');
+            onClose();
+          }, 300);
+        } else {
+          const newRecord = saveMassRecord(selectedModuleId, selectedTabId, values);
+          // 关联附件到真实记录 ID
+          for (const attId of pendingAttachments.current) {
+            relinkAttachment(attId, newRecord.id).catch(() => {});
+          }
+          pendingAttachments.current.clear();
+          setTimeout(() => {
+            safeSetSaving(false);
+            safeSetDirty(false);
+            showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已创建`, 'success');
+            onClose();
+          }, 300);
         }
-        pendingAttachments.current.clear();
-        setTimeout(() => {
-          setSaving(false);
-          setIsDirty(false);
-          showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已更新`, 'success');
-          onClose();
-        }, 300);
-      } else {
-        const newRecord = saveMassRecord(selectedModuleId, selectedTabId, values);
-        // 关联附件到真实记录 ID
-        for (const attId of pendingAttachments.current) {
-          relinkAttachment(attId, newRecord.id).catch(() => {});
-        }
-        pendingAttachments.current.clear();
-        setTimeout(() => {
-          setSaving(false);
-          setIsDirty(false);
-          showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已创建`, 'success');
-          onClose();
-        }, 300);
+      } catch (err) {
+        safeSetSaving(false);
+        showToast('提交失败: ' + (err instanceof Error ? err.message : '未知错误'), 'error');
       }
     } catch {
       showToast('请补充必填字段', 'warning');
@@ -150,101 +163,72 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   // 编辑模式：预填表单
   const isEditing = !!editRecord;
   useEffect(() => {
-    if (editRecord && allFields.length > 0) {
-      // 延迟一帧确保表单字段已挂载
-      const timer = setTimeout(() => {
-        try {
-          // 将存储数据转换为表单兼容格式
-          const formData: Record<string, unknown> = {};
+    if (!editRecord || allFields.length === 0) return;
+    const timer = setTimeout(() => {
+      try {
+        const formData: Record<string, unknown> = {};
 
-          // 1. 处理 repeatable section 数据（嵌套结构）
-          //    兼容旧版扁平数据结构 → 自动转换为嵌套格式
-          for (const f of allFields) {
-            if (f.type === 'section' && f.repeatable && f.listName) {
-              const listData = editRecord.data?.[f.listName];
-              if (Array.isArray(listData) && listData.length > 0) {
-                // 将嵌套数据中的日期字符串 → dayjs 对象，防止 Ant Design DatePicker 报错
-                const converted = listData.map((item: Record<string, unknown>) => {
-                  const copy: Record<string, unknown> = { ...item };
-                  for (const df of allFields) {
-                    if (df.type === 'date' && typeof copy[df.id] === 'string') {
-                      const d = dayjs(copy[df.id] as string);
-                      copy[df.id] = d.isValid() ? d : undefined;
-                    }
-                  }
-                  return copy;
-                });
-                formData[f.listName] = converted;
-              } else {
-                // 旧版扁平数据：收集该 section 下的所有字段值组装为一个数组元素
-                  const collected: Record<string, unknown> = {};
-                let hasFlatData = false;
-                for (const innerF of allFields) {
-                  if (innerF.type === 'section' || innerF.type === 'attachment') continue;
-                  const val = editRecord.data?.[innerF.id];
-                  if (val !== undefined && val !== null) {
-                    try {
-                      if (innerF.type === 'date') {
-                        if (typeof val === 'string') {
-                          const d = dayjs(val);
-                          collected[innerF.id] = d.isValid() ? d : undefined;
-                          if (d.isValid()) hasFlatData = true;
-                        } else if (dayjs.isDayjs(val)) {
-                          collected[innerF.id] = val;
-                          hasFlatData = true;
-                        }
-                      } else {
-                        collected[innerF.id] = val;
-                        hasFlatData = true;
-                      }
-                    } catch {
-                      // 跳过单个字段转换异常
-                    }
-                  }
-                }
-                if (hasFlatData) {
-                  formData[f.listName] = [collected];
+        // 1. 处理 repeatable section 数据
+        for (const f of allFields) {
+          if (f.type !== 'section' || !f.repeatable || !f.listName) continue;
+          const listData = editRecord.data?.[f.listName];
+          if (Array.isArray(listData) && listData.length > 0) {
+            const converted = listData.map((item: Record<string, unknown>) => {
+              const copy: Record<string, unknown> = { ...item };
+              for (const df of allFields) {
+                if (df.type === 'date' && typeof copy[df.id] === 'string') {
+                  const d = dayjs(copy[df.id] as string);
+                  if (d.isValid()) copy[df.id] = d;
                 }
               }
-            }
+              return copy;
+            });
+            formData[f.listName] = converted;
           }
-
-          // 2. 处理所有普通字段（含 attachment，加载 fileList 让 Upload 显示已上传的文件）
-          for (const f of allFields) {
-            if (f.type === 'section') continue;
-            const raw = editRecord.data?.[f.id];
-            if (raw === undefined || raw === null) continue;
-            if (f.type === 'attachment') {
-              // attachment 字段的原始数据就是 fileList 数组
-              formData[f.id] = Array.isArray(raw) ? raw : raw;
-              continue;
-            }
-            if (f.type === 'date' && typeof raw === 'string') {
-              const d = dayjs(raw);
-              formData[f.id] = d.isValid() ? d : undefined;
-            } else if (f.multiple && typeof raw === 'string') {
-              formData[f.id] = [raw];
-            } else {
-              formData[f.id] = raw;
-            }
-          }
-          // 只设置与当前字段定义匹配的值，跳过不存在的字段
-          const validFieldIds = new Set(allFields.filter(f => f.type !== 'section' && f.type !== 'attachment').map(f => f.id));
-          const sectionListNames = new Set(allFields.filter(f => f.type === 'section' && f.repeatable && f.listName).map(f => f.listName!));
-          const safeData: Record<string, any> = {};
-          for (const key of Object.keys(formData)) {
-            if (validFieldIds.has(key) || sectionListNames.has(key)) {
-              safeData[key] = formData[key];
-            }
-          }
-          form.setFieldsValue(safeData);
-        } catch (err) {
-          console.warn('[DrawerNewRecord] setFieldsValue error:', err);
         }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [allFields, editRecord, form]);
+
+        // 2. 处理普通字段
+        for (const f of allFields) {
+          if (f.type === 'section') continue;
+          const raw = editRecord.data?.[f.id];
+          if (raw === undefined || raw === null) continue;
+          if (f.type === 'attachment') {
+            formData[f.id] = Array.isArray(raw) ? raw : [];
+            continue;
+          }
+          if (f.type === 'date' && typeof raw === 'string') {
+            const d = dayjs(raw);
+            if (d.isValid()) formData[f.id] = d;
+            continue;
+          }
+          if (f.multiple && typeof raw === 'string') {
+            formData[f.id] = [raw];
+            continue;
+          }
+          formData[f.id] = raw;
+        }
+
+        // 过滤：只设置表单识别的字段
+        const validFieldIds = new Set(
+          allFields.filter(f => f.type !== 'section' && f.type !== 'attachment').map(f => f.id)
+        );
+        const sectionListNames = new Set(
+          allFields.filter(f => f.type === 'section' && f.repeatable && f.listName).map(f => f.listName!)
+        );
+        const safeData: Record<string, unknown> = {};
+        for (const key of Object.keys(formData)) {
+          if (validFieldIds.has(key) || sectionListNames.has(key)) {
+            safeData[key] = formData[key];
+          }
+        }
+        form.setFieldsValue(safeData);
+      } catch (err) {
+        console.warn('[DrawerNewRecord] setFieldsValue error:', err);
+        showToast('加载记录数据失败', 'warning');
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [allFields, editRecord, form, showToast]);
 
   const showTemplateSelector = Boolean(selectedModule && !selectedModule.hideTemplateSelector && selectedModule.tabs.length > 1);
   const scopedModules = currentModule
@@ -258,35 +242,15 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     <Modal
       open
       width={960}
-      closable={false}
-      title={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingRight: 8 }}>
-          <span style={{ fontWeight: 700, fontSize: 16 }}>
-            {isEditing ? '编辑工作记录' : '新建工作记录'} · {selectedModule?.label}
-          </span>
-          <div
-            onClick={handleClose}
-            style={{
-              width: 32, height: 32,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              borderRadius: 6,
-              background: '#F3F4F6',
-              color: '#6B7280',
-              fontSize: 18,
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all .15s',
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#E5E7EB'; (e.currentTarget as HTMLDivElement).style.color = '#374151'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#F3F4F6'; (e.currentTarget as HTMLDivElement).style.color = '#6B7280'; }}
-          >
-            ✕
-          </div>
-        </div>
-      }
+      closable
       maskClosable={false}
       onCancel={handleClose}
       centered
+      title={
+        <span style={{ fontWeight: 700, fontSize: 16 }}>
+          {isEditing ? '编辑工作记录' : '新建工作记录'} · {selectedModule?.label}
+        </span>
+      }
       styles={{ body: { height: '72vh', overflow: 'auto', padding: 0 } }}
       footer={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -396,7 +360,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               form={form}
               layout="vertical"
               requiredMark="optional"
-              onValuesChange={() => setIsDirty(true)}
+              onValuesChange={() => { if (mountedRef.current) setIsDirty(true); }}
             >
               {/* 所有步骤字段同时渲染、用 display 切换可见性，保证 antd Form.Item / Form.List 永不卸载 */}
               {steps.map((step, si) => {
@@ -435,7 +399,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                                           : { gridColumn: 'span 3' }
                                       }
                                     >
-                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} form={form} />
+                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} form={form} pendingAttachments={pendingAttachments} />
                                     </div>
                                   ))}
                                 </div>
@@ -467,7 +431,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                                 : { gridColumn: 'span 3' })
                           }
                         >
-                          <DynamicField field={field} moduleId={selectedModuleId} form={form} />
+                          <DynamicField field={field} moduleId={selectedModuleId} form={form} pendingAttachments={pendingAttachments} />
                         </div>
                       ))}
                     </div>
@@ -485,7 +449,13 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
 /* ===================== Field components ===================== */
 
-function DynamicField({ field, moduleId, subName, form }: { field: FieldDefinition; moduleId: string; subName?: number; form: any }) {
+function DynamicField({ field, moduleId, subName, form, pendingAttachments }: { 
+  field: FieldDefinition; 
+  moduleId: string; 
+  subName?: number; 
+  form: any;
+  pendingAttachments: React.MutableRefObject<Set<string>>;
+}) {
   const name = subName !== undefined ? [subName, field.id] : field.id;
   // 涉众数据统计 → 案件名称自动匹配涉众线索项目名称
   if (moduleId === 'mass-statistics' && field.id === 'caseName') {

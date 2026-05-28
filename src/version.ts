@@ -1,9 +1,21 @@
-export const APP_VERSION = "V2.6.29";
+export const APP_VERSION = "V2.7.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 29;
+export const VERSION_MINOR = 7;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.7.0 =====
+  "V2.7.0 架构 - 双窗口改为单窗口（登录态 974x711 ↹ 主页态 1400x900 平滑切换）",
+  "V2.7.0 修复 - 登录后用户名始终显示默认'用户'（跨窗口 store 隔离，改为 localStorage 持久化）",
+  "V2.7.0 修复 - 点击列表中'编辑'软件崩溃且无法退出（DynamicField 缺少 pendingAttachments 参数 → ReferenceError -> 已补齐 props 传参）",
+  "V2.7.0 修复 - 点击列表中'新建'同样崩溃（同上根因：几乎所有模块含附件字段）",
+  "V2.7.0 修复 - 记住账号/密码后重启软件账号框为空（saveCredentials 登录时错误删除了凭据）",
+  "V2.7.0 修复 - useUnsavedChanges beforeunload 在 Electron 下阻止窗口关闭",
+  "V2.7.0 安全 - 注册密码由明文改为 SHA-256 哈希存储",
+  "V2.7.0 优化 - 搜索框加入 300ms 防抖",
+  "V2.7.0 优化 - 表单提交 loading 保护（mountedRef 防止卸载后 setState）",
+  "V2.7.0 优化 - DrawerNewRecord Modal 恢复 Ant Design 原生 closable 关闭按钮",
+  "V2.7.0 优化 - ErrorBoundary 新增 onError 回调，方便上层清理状态",
   // ===== V2.6.29 =====
   "V2.6.29 修复 - 关闭按钮 window.close() 兜底（非 Electron 环境可用）",
   "V2.6.29 修复 - DrawerNewRecord/ModalNewUser 外层 ErrorBoundary 包裹，崩溃不影响主界面",

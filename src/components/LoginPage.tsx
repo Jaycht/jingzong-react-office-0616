@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { APP_VERSION } from "../version";
 import { useAppStore } from "../store/appStore";
+import { hashPassword, verifyPassword } from "../utils/crypto";
 
 interface Props {
   onLogin: (name: string, role: string) => void;
@@ -56,11 +57,14 @@ function loadCredentials(): SavedCredentials {
 
 function saveCredentials(data: SavedCredentials): void {
   // 记住账号 或 记住密码任一勾选则保存
+  // 注：仅当用户显式取消所有勾选时才删除凭据，登录时不删除
   if (data.rememberAccount || data.remember) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } else {
-    localStorage.removeItem(STORAGE_KEY);
   }
+}
+
+function clearCredentials(): void {
+  localStorage.removeItem(STORAGE_KEY);
 }
 
 function loadUsers(): StoredUser[] {
@@ -141,14 +145,20 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
   useEffect(() => {
     if (!autoLoginPending) return;
 
-    const timer = window.setTimeout(() => {
+    const timer = window.setTimeout(async () => {
       setAutoLoginPending(false);
       // 自动登录也验证用户是否存在
       const users = loadUsers();
-      const u = users.find((user) => user.account === savedCredentials.account && user.password === savedCredentials.password && user.status !== "pending");
-      if (u) {
-        onLogin(u.name, u.roleName || u.role || "普通用户");
-      } else if (DEFAULT_ROLE_BY_ACCOUNT[savedCredentials.account]) {
+      const userByAccount = users.find((user) => user.account === savedCredentials.account);
+      if (userByAccount && userByAccount.status !== "pending") {
+        const pwdMatch = await verifyPassword(savedCredentials.password, userByAccount.password);
+        if (pwdMatch) {
+          onLogin(userByAccount.name, userByAccount.roleName || userByAccount.role || "普通用户");
+          return;
+        }
+      }
+      // 内置默认账号（admin/manager/user）
+      if (DEFAULT_ROLE_BY_ACCOUNT[savedCredentials.account]) {
         onLogin(savedCredentials.account, DEFAULT_ROLE_BY_ACCOUNT[savedCredentials.account]);
       }
       // 不匹配任何用户则静默失败，等待手动登录
@@ -168,41 +178,54 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
     setSubmitting(true);
     setError("");
 
-    const users = loadUsers();
-    const found = users.find((user) => user.account === account && user.password === password);
+    (async () => {
+      const users = loadUsers();
 
-    window.setTimeout(() => {
-      setSubmitting(false);
+      // 先用账号查找用户
+      const userByAccount = users.find((user) => user.account === account);
+      let found = null;
 
-      // 已注册但待审核的用户不能登录
-      if (found && found.status === "pending") {
-        setError("账号正在等待管理员审核");
-        return;
+      if (userByAccount) {
+        // 验证密码哈希
+        const pwdMatch = await verifyPassword(password, userByAccount.password);
+        if (pwdMatch) {
+          found = userByAccount;
+        }
       }
 
-      // 一律先验证用户是否存在，不存在则拒绝登录
-      if (!found && !DEFAULT_ROLE_BY_ACCOUNT[account]) {
-        setError("账号或密码错误");
-        return;
-      }
+      window.setTimeout(() => {
+        setSubmitting(false);
 
-      // 验证通过后保存登录凭据（记住账号/密码才存）
-      saveCredentials({
-        account,
-        password,
-        rememberAccount: rememberAccount || remember,
-        remember,
-        autoLogin,
-      });
+        // 已注册但待审核的用户不能登录
+        if (found && found.status === "pending") {
+          setError("账号正在等待管理员审核");
+          return;
+        }
 
-      if (found) {
-        // 已注册用户：使用注册时的真实姓名
-        onLogin(found.name, found.roleName || found.role || "普通用户");
-      } else {
-        // 内置默认账号（admin/manager/user）
-        onLogin(account, DEFAULT_ROLE_BY_ACCOUNT[account]);
-      }
-    }, 600);
+        // 验证用户是否存在
+        if (!found && !DEFAULT_ROLE_BY_ACCOUNT[account]) {
+          setError("账号或密码错误");
+          return;
+        }
+
+        // 验证通过后保存登录凭据（记住账号/密码才存）
+        saveCredentials({
+          account,
+          password,
+          rememberAccount: rememberAccount || remember,
+          remember,
+          autoLogin,
+        });
+
+        if (found) {
+          // 已注册用户：使用注册时的真实姓名
+          onLogin(found.name, found.roleName || found.role || "普通用户");
+        } else {
+          // 内置默认账号（admin/manager/user）
+          onLogin(account, DEFAULT_ROLE_BY_ACCOUNT[account]);
+        }
+      }, 600);
+    })();
   };
 
   const handleRememberChange = (checked: boolean) => {
@@ -242,8 +265,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
   const isElectron = typeof window !== "undefined" && (window as any).electronAPI?.isElectron;
 
   const handleCloseLoginPage = () => {
-    if ((window as any).electronAPI?.closeLogin) {
-      (window as any).electronAPI.closeLogin();
+    if ((window as any).electronAPI?.close) {
+      (window as any).electronAPI.close();
     } else {
       try { window.close(); } catch { /* not supported */ }
     }
@@ -472,7 +495,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                     onChange={(e) => {
                       setRememberAccount(e.target.checked);
                       if (!e.target.checked && !remember) {
-                        localStorage.removeItem(STORAGE_KEY);
+                        clearCredentials();
                       }
                     }}
                     style={{ accentColor: "#a3c9ff", width: 12, height: 12 }}

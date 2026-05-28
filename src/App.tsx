@@ -8,14 +8,14 @@ import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import { Toaster } from "./components/Toaster";
 import { DARK_THEME, LIGHT_THEME } from "./constants/theme";
-import { useAppStore } from "./store/appStore";
+import { useAppStore, loadUserFromStorage } from "./store/appStore";
 import { migrateOldCasesToMassStore } from "./store/massStore";
 
 declare global {
   interface Window {
     electronAPI?: {
-      switchToMain: () => void;
-      closeLogin: () => void;
+      resizeToMain: () => void;
+      resizeToLogin: () => void;
       isElectron: boolean;
       minimize: () => void;
       maximize: () => void;
@@ -25,7 +25,6 @@ declare global {
       deleteAttachmentFile: (filePath: string) => Promise<{ success: boolean; error?: string }>;
       getAttachmentsDir: () => Promise<string>;
       showSaveDialog: (defaultName: string, buffer: number[]) => Promise<{ success: boolean; canceled?: boolean; filePath?: string; error?: string }>;
-      _hasLoggedIn?: boolean;
     };
   }
 }
@@ -33,6 +32,16 @@ declare global {
 function AppContent() {
   // 数据迁移：旧 caseStore → massStore（一次性）
   useEffect(() => { migrateOldCasesToMassStore(); }, []);
+
+  // 恢复持久化的用户登录状态（跨窗口/跨应用重启）
+  useEffect(() => {
+    const saved = loadUserFromStorage();
+    if (saved && saved.name) {
+      useAppStore.getState().setUser(saved.name, saved.role);
+      // 有持久化的用户 → 直接进入主界面
+      navigate("/app/dashboard", { replace: true });
+    }
+  }, []);
 
   const navigate = useNavigate();
   const setUser = useAppStore((s) => s.setUser);
@@ -43,25 +52,12 @@ function AppContent() {
 
   const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
 
-  // 防止 StrictMode 或重复点击导致重复登录
-  const loginGuardRef = useRef(false);
-
   const handleLogin = (name: string, role: string) => {
-    if (loginGuardRef.current) return;
-    loginGuardRef.current = true;
-    setTimeout(() => { loginGuardRef.current = false; }, 500);
     setUser(name, role);
-    if (isElectron && !window.electronAPI?._hasLoggedIn) {
-      window.electronAPI!.switchToMain();
-      window.electronAPI!._hasLoggedIn = true;
+    if (isElectron) {
+      window.electronAPI?.resizeToMain();
     }
     navigate("/app/dashboard", { replace: true });
-  };
-
-  const handleCloseLogin = () => {
-    if (isElectron) {
-      window.electronAPI!.closeLogin();
-    }
   };
 
   return (
