@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.7.3";
+export const APP_VERSION = "V2.7.4";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 7;
-export const VERSION_PATCH = 3;
+export const VERSION_PATCH = 4;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.7.4 =====
+  "V2.7.4 修复 - 下载不走 Electron 原生保存对话框（精简下载函数，移除多余 toast 和浏览器兜底干扰，确保弹出另存为弹窗）",
+  "V2.7.4 新增 - 账号输入框历史下拉（datalist，保存最近的登录账号）",
+  "V2.7.4 修复 - 切换账号时自动清除密码框",
   // ===== V2.7.3 =====
   "V2.7.3 修复 - 编辑时附件仍不显示（AttachmentField 初始值依赖 form.setFieldsValue 时序，改为直接从 editRecord 读取）",
   "V2.7.3 修复 - 注册用户丢失（hashPassword Promise 无 catch，Web Crypto 失败时静默不写入 localStorage；新增降级为明文存储）",

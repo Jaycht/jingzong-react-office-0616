@@ -303,16 +303,17 @@ export async function downloadAttachment(id: string): Promise<void> {
   const att = await getAttachment(id);
   if (!att) throw new Error('附件不存在');
 
-  // Electron 模式：弹出原生保存对话框，默认指向下载文件夹
-  if (isElectron()) {
-    const buf = Array.from(new Uint8Array(att.data));
+  const buf = Array.from(new Uint8Array(att.data));
+
+  // Electron 模式：弹出原生保存对话框，由用户选择位置
+  if (isElectron() && (window as any).electronAPI?.showSaveDialog) {
     const result = await (window as any).electronAPI.showSaveDialog(att.fileName, buf);
     if (result.success) {
-      console.log(`[download] 附件已保存到: ${result.filePath}`);
+      return; // 保存成功，无需额外提示
     } else if (!result.canceled) {
-      console.warn('[download] 保存失败:', result.error);
+      throw new Error(result.error || '保存失败');
     }
-    return;
+    return; // 用户取消，不抛异常
   }
 
   // 浏览器模式：通过 Blob URL 下载
@@ -324,7 +325,7 @@ export async function downloadAttachment(id: string): Promise<void> {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 /** 获取附件统计 */

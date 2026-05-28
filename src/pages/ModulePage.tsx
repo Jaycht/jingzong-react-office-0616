@@ -588,12 +588,11 @@ export default function ModulePage() {
                       <span>📎 {ref.name}</span>
                       <span
                         onClick={async () => {
-                          showToast('正在下载...', 'info');
                           try {
                             await downloadAttachment(ref.uid);
-                            showToast('附件已保存', 'success');
                           } catch (err) {
-                            showToast('下载失败: ' + (err instanceof Error ? err.message : '未知错误'), 'error');
+                            const msg = err instanceof Error ? err.message : '未知错误';
+                            showToast('下载失败: ' + msg, 'error');
                           }
                         }}
                         style={{ cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}
