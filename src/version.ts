@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.7.4";
+export const APP_VERSION = "V2.7.5";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 7;
-export const VERSION_PATCH = 4;
+export const VERSION_PATCH = 5;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.7.5 =====
+  "V2.7.5 重构 - 首页面板重新设计（案件类型分布改为横向进度条 + 模块活跃排行改为排名列表式进度条）",
+  "V2.7.5 重构 - 数据统计图表重新设计（各模块记录对比改为横向进度条 + 记录类型分布改为甜甜圈+网格图例）",
+  "V2.7.5 新增 - 附件档案多选 + 批量打包下载（JSZip） + 批量删除",
+  "V2.7.5 修复 - 附件档案单附件下载按钮引用已删除函数（ReferenceError: handleDownload）",
   // ===== V2.7.4 =====
   "V2.7.4 修复 - 下载不走 Electron 原生保存对话框（精简下载函数，移除多余 toast 和浏览器兜底干扰，确保弹出另存为弹窗）",
   "V2.7.4 新增 - 账号输入框历史下拉（datalist，保存最近的登录账号）",

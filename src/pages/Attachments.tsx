@@ -312,7 +312,7 @@ export default function Attachments() {
                     </div>
                     {/* 下载按钮 */}
                     <div
-                      onClick={() => handleDownload(att.id)}
+                      onClick={async () => { try { await downloadAttachment(att.id); } catch (err) { const msg = err instanceof Error ? err.message : '未知错误'; showToast('下载失败: ' + msg, 'error'); } }}
                       style={{
                         width: 30, height: 30, borderRadius: 6,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
