@@ -9,8 +9,6 @@ import { getMassRecords } from "../store/massStore";
 import type { MassRecord } from "../store/massStore";
 import { useAppStore } from "../store/appStore";
 import EmptyState from "../components/EmptyState";
-import ReactECharts from "echarts-for-react";
-
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
@@ -241,42 +239,6 @@ export default function Dashboard() {
 
   const ranking = useMemo(() => moduleRanking(records), [records]);
 
-  const rankOpt = useMemo(() => ({
-    animation: !lowPerfMode,
-    tooltip: {
-      trigger: "axis" as const, axisPointer: { type: "shadow" as const },
-      backgroundColor: darkMode ? "rgba(28,31,38,0.9)" : "#fff",
-      borderColor: darkMode ? "rgba(163,201,255,0.15)" : "#E5E7EB",
-      textStyle: { fontSize: 11, color: darkMode ? "#e2e2e6" : "#333" },
-    },
-    grid: { top: 12, bottom: 12, left: 8, right: 36 },
-    xAxis: {
-      type: "value" as const,
-      splitLine: { lineStyle: { color: darkMode ? "rgba(66,71,79,0.3)" : "#F3F4F6" } },
-      axisLabel: { fontSize: 10, color: darkMode ? "#8c919a" : "#9CA3AF" },
-      axisTick: { show: false },
-    },
-    yAxis: {
-      type: "category" as const, data: ranking.map((r) => r.name).reverse(),
-      axisLabel: { fontSize: 10, color: darkMode ? "#e2e2e6" : "#374151" },
-      axisLine: { show: false }, axisTick: { show: false },
-    },
-    series: [{
-      type: "bar", data: ranking.map((r) => r.value).reverse(),
-      itemStyle: {
-        color: {
-          type: "linear", x: 0, y: 0, x2: 1, y2: 0,
-          colorStops: [
-            { offset: 0, color: darkMode ? "#2E7DCA" : "#38A169" },
-            { offset: 1, color: darkMode ? "#a3c9ff" : "#4ADE80" },
-          ],
-        },
-        borderRadius: [0, 3, 3, 0],
-      },
-      barWidth: 10,
-    }],
-  }), [ranking, darkMode, lowPerfMode]);
-
   const activities = useMemo(() => recentActivity(records), [records]);
   const nextSteps = useMemo(() => extractNextSteps(records), [records]);
 
@@ -312,29 +274,35 @@ export default function Dashboard() {
       {/* ============= Charts Row (1:1 grid) ============= */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <PanelShell darkMode={darkMode} icon={<TrendingUp size={15} color={darkMode ? "#a3c9ff" : "#2E7DCA"}/>} title="案件类型分布" delay={0.1}>
-          <div style={{ padding: "4px 0" }}>
+          <div style={{ padding: "8px 14px 12px" }}>
             {caseTypes.length > 0 ? (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 160, padding: '10px 4px', overflowX: 'auto' }}>
-                {caseTypes.slice(0, 5).map(([type, count], i) => {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {caseTypes.slice(0, 8).map(([type, count], i) => {
                   const maxCount = Math.max(...caseTypes.map(([, c]) => c), 1);
                   const pct = (count / maxCount) * 100;
+                  const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48'];
                   return (
-                    <div key={type} style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 48 }}>
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: pct + '%', opacity: 1 }}
-                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: i * 0.05 }}
-                        style={{
-                          width: 32, minHeight: 6, borderRadius: '4px 4px 2px 2px',
-                          background: 'linear-gradient(180deg, rgba(59,130,246,0.7), rgba(59,130,246,0.15))',
-                          boxShadow: '0 0 8px rgba(59,130,246,0.3)',
-                          border: '1px solid rgba(59,130,246,0.2)',
-                          position: 'relative',
-                        }}
-                      >
-                        <span style={{ position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)', fontSize: 10, fontWeight: 600, color: '#3B82F6', whiteSpace: 'nowrap', textShadow: 'none' }}>{count}</span>
-                      </motion.div>
-                      <span style={{ fontSize: 9, color: '#9CA3AF', textAlign: 'center', lineHeight: 1.2, maxWidth: 48, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{type.length > 6 ? type.slice(0, 6) + '..' : type}</span>
+                    <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{
+                        width: 90, fontSize: 11, color: darkMode ? '#c2c6d0' : '#374151',
+                        textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap',
+                        overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>{type}</span>
+                      <div style={{ flex: 1, height: 16, background: darkMode ? 'rgba(66,71,79,0.4)' : '#F3F4F6', borderRadius: 8, position: 'relative', overflow: 'hidden' }}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: pct + '%' }}
+                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 + i * 0.04 }}
+                          style={{
+                            height: '100%', borderRadius: 8,
+                            background: `linear-gradient(90deg, ${colors[i % colors.length]}, ${colors[i % colors.length]}66)`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+                            paddingRight: 6, minWidth: 30,
+                          }}
+                        >
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>{count}</span>
+                        </motion.div>
+                      </div>
                     </div>
                   );
                 })}
@@ -345,8 +313,52 @@ export default function Dashboard() {
           </div>
         </PanelShell>
         <PanelShell darkMode={darkMode} icon={<Activity size={15} color={darkMode ? "#00dbe7" : "#38A169"}/>} title="模块活跃排行" delay={0.14}>
-          <div style={{ padding: "4px 0" }}>
-            <ReactECharts option={rankOpt} style={{ height: 220 }} />
+          <div style={{ padding: "8px 14px 12px" }}>
+            {ranking.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {ranking.map((mod, i) => {
+                  const maxVal = Math.max(...ranking.map(r => r.value), 1);
+                  const pct = (mod.value / maxVal) * 100;
+                  const rankColors = ['#2563EB','#3B82F6','#60A5FA','#93C5FD','#BFDBFE','#DBEAFE','#EFF6FF','#F8FAFC'];
+                  return (
+                    <div key={mod.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        width: 20, height: 20, borderRadius: 6,
+                        background: i < 3 ? rankColors[i] : (darkMode ? 'rgba(66,71,79,0.4)' : '#F3F4F6'),
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 10, fontWeight: 700,
+                        color: i < 3 ? '#fff' : (darkMode ? '#8c919a' : '#6B7280'),
+                        flexShrink: 0,
+                      }}>{i + 1}</div>
+                      <span style={{
+                        width: 56, fontSize: 11, fontWeight: 500,
+                        color: darkMode ? '#e2e2e6' : '#374151',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0,
+                      }}>{mod.name}</span>
+                      <div style={{ flex: 1, height: 14, background: darkMode ? 'rgba(66,71,79,0.3)' : '#F3F4F6', borderRadius: 7, position: 'relative', overflow: 'hidden' }}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: pct + '%' }}
+                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 + i * 0.05 }}
+                          style={{
+                            height: '100%', borderRadius: 7,
+                            background: i === 0
+                              ? 'linear-gradient(90deg, #2563EB, #60A5FA)'
+                              : 'linear-gradient(90deg, #38A169, #6EE7B7)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+                            paddingRight: 5, minWidth: 24,
+                          }}
+                        >
+                          <span style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>{mod.value}</span>
+                        </motion.div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无模块数据</div>
+            )}
           </div>
         </PanelShell>
       </div>
