@@ -598,8 +598,9 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
               [typeof name === 'string' ? name : name[1]]: currentList.filter((f: any) => f.uid !== file.uid),
             });
           }}
+          // 使用 file.uid 作为附件 ID（beforeUpload 中 uid 已设为 record.id）
           itemRender={(originNode, file) => {
-            const attId = (file as any).attachmentId;
+            const attId = file.uid;
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>{originNode}</div>
