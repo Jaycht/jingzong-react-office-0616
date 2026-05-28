@@ -140,7 +140,7 @@ export default function Statistics() {
         <>
           {/* Charts */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18 }}>
-            {/* Bar Chart - 模块记录分布 */}
+            {/* 各模块记录对比 - 横向进度条 */}
             <motion.div
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
               style={{ background: '#fff', borderRadius: 10, padding: 18, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
@@ -148,19 +148,39 @@ export default function Statistics() {
                 各模块记录对比 <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>单位：条记录</span>
               </div>
               {barData.length > 0 ? (
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {barData.map((d, i) => {
-                    const colors = ['#1B5E9B', '#38A169', '#E67E22', '#9C27B0', '#00ACC1', '#D32F2F', '#7C3AED', '#059669'];
+                    const pct = (d.count / maxVal) * 100;
+                    const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48'];
                     return (
-                      <div key={d.type} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: `${(d.count / maxVal) * 100}%` }}
-                          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.4 + i * 0.08 }}
-                          style={{ width: '100%', background: colors[i % colors.length], borderRadius: '4px 4px 0 0', minHeight: 4 }}
-                        />
-                        <div style={{ fontSize: 9.5, color: '#9CA3AF', textAlign: 'center', lineHeight: 1.2 }}>{d.type.slice(0, 3)}</div>
-                      </div>
+                      <motion.div
+                        key={d.type}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.35 + i * 0.05 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+                      >
+                        <span style={{
+                          width: 64, fontSize: 11, fontWeight: 500,
+                          color: '#374151', textAlign: 'right', flexShrink: 0,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>{d.type}</span>
+                        <div style={{ flex: 1, height: 18, background: '#F3F4F6', borderRadius: 9, position: 'relative', overflow: 'hidden' }}>
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.4 + i * 0.06 }}
+                            style={{
+                              height: '100%', borderRadius: 9,
+                              background: `linear-gradient(90deg, ${colors[i % colors.length]}, ${colors[i % colors.length]}88)`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+                              paddingRight: 6, minWidth: 28,
+                            }}
+                          >
+                            <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{d.count}</span>
+                          </motion.div>
+                        </div>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -169,57 +189,80 @@ export default function Statistics() {
               )}
             </motion.div>
 
-            {/* 记录类型分布 - 饼图 */}
+            {/* 记录类型分布 - 甜甜圈+横向图例 */}
             <motion.div
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
               style={{ background: '#fff', borderRadius: 10, padding: 18, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 记录类型分布 <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>按数量占比</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-                {barData.length > 0 ? (
-                  <>
-                    <motion.div
-                      initial={{ rotate: -90 }}
-                      animate={{ rotate: 0 }}
-                      transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
-                      style={{ width: 120, height: 120, borderRadius: '50%', flexShrink: 0, position: 'relative' }}>
-                      {/* 用 conic-gradient 模拟饼图 */}
-                      <div style={{
-                        width: '100%', height: '100%', borderRadius: '50%',
-                        background: (() => {
-                          const total = barData.reduce((s, d) => s + d.count, 0) || 1;
-                          let degrees = 0;
-                          const colors = ['#2E7DCA', '#38A169', '#E67E22', '#9C27B0', '#00ACC1', '#D32F2F', '#7C3AED', '#059669'];
-                          const stops = barData.map((d, i) => {
-                            const pct = (d.count / total) * 360;
-                            const start = degrees;
-                            degrees += pct;
-                            return `${colors[i % colors.length]} ${start}deg ${degrees}deg`;
-                          });
-                          return `conic-gradient(${stops.join(', ')})`;
-                        })(),
-                      }} />
-                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 70, height: 70, borderRadius: '50%', background: '#fff' }} />
-                    </motion.div>
-                    <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {barData.slice(0, 8).map((d, i) => {
-                        const colors = ['#2E7DCA', '#38A169', '#E67E22', '#9C27B0', '#00ACC1', '#D32F2F', '#7C3AED', '#059669'];
+              {barData.length > 0 ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                  {/* 左侧甜甜圈 */}
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
+                    style={{
+                      width: 112, height: 112, borderRadius: '50%',
+                      flexShrink: 0, position: 'relative',
+                      background: (() => {
                         const total = barData.reduce((s, d) => s + d.count, 0) || 1;
-                        return (
-                          <motion.div key={d.type} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 + i * 0.06 }}
-                            style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i] }} />
-                            <span style={{ color: '#6B7280' }}>{d.type} {Math.round(d.count / total * 100)}%</span>
-                          </motion.div>
-                        );
-                      })}
+                        let deg = 0;
+                        const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48'];
+                        const stops = barData.map((d, i) => {
+                          const pct = (d.count / total) * 360;
+                          const start = deg;
+                          deg += pct;
+                          return `${colors[i % colors.length]} ${start}deg ${deg}deg`;
+                        });
+                        return `conic-gradient(${stops.join(', ')})`;
+                      })(),
+                    }}
+                  >
+                    {/* 中心空心 */}
+                    <div style={{
+                      position: 'absolute', top: '50%', left: '50%',
+                      transform: 'translate(-50%,-50%)',
+                      width: 60, height: 60, borderRadius: '50%',
+                      background: '#fff',
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span style={{ fontSize: 16, fontWeight: 800, color: '#1F2937' }}>{barData.length}</span>
+                      <span style={{ fontSize: 8.5, color: '#9CA3AF', marginTop: -1 }}>类</span>
                     </div>
-                  </>
-                ) : (
-                  <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12, width: '100%' }}>暂无数据</div>
-                )}
-              </div>
+                  </motion.div>
+                  {/* 右侧图例：两层网格排列 */}
+                  <div style={{
+                    flex: 1,
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '4px 12px',
+                  }}>
+                    {barData.slice(0, 8).map((d, i) => {
+                      const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48'];
+                      const total = barData.reduce((s, d) => s + d.count, 0) || 1;
+                      const pct = Math.round((d.count / total) * 100);
+                      return (
+                        <motion.div
+                          key={d.type}
+                          initial={{ opacity: 0, x: 12 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.55 + i * 0.05 }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                        >
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i % colors.length], flexShrink: 0 }} />
+                          <span style={{ fontSize: 11, color: '#6B7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{d.type}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#374151', flexShrink: 0 }}>{pct}%</span>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无数据</div>
+              )}
             </motion.div>
           </div>
 
