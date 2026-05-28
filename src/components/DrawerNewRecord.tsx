@@ -18,7 +18,7 @@ import {
   CaseNameMatchSquad, CaseNoMatchSquad,
   MultiPersonField, PersistedSelect,
 } from './SharedFormFields';
-import { saveAttachment, relinkAttachment } from '../store/attachmentStore';
+import { saveAttachment, relinkAttachment, getAttachment } from '../store/attachmentStore';
 
 interface Props { onClose: () => void; editRecord?: import('../store/massStore').MassRecord | null; }
 
@@ -597,6 +597,71 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
             form.setFieldsValue({
               [typeof name === 'string' ? name : name[1]]: currentList.filter((f: any) => f.uid !== file.uid),
             });
+          }}
+          itemRender={(originNode, file) => {
+            const attId = (file as any).attachmentId;
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>{originNode}</div>
+                {attId && (
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                    {/* 预览/打开按钮 */}
+                    <span
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const att = await getAttachment(attId);
+                          if (!att) return;
+                          const blob = new Blob([att.data], { type: att.fileType });
+                          const url = URL.createObjectURL(blob);
+                          window.open(url, '_blank');
+                          setTimeout(() => URL.revokeObjectURL(url), 60000);
+                        } catch (err) {
+                          console.warn('[attachment] 预览失败:', err);
+                        }
+                      }}
+                      style={{ fontSize: 12, color: '#155A8A', cursor: 'pointer', textDecoration: 'underline' }}
+                      title="预览"
+                    >预览</span>
+                    {/* 下载按钮 */}
+                    <span
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const att = await getAttachment(attId);
+                          if (!att) return;
+                          const blob = new Blob([att.data], { type: att.fileType });
+                          // Electron 模式下弹出另存为对话框
+                          if ((window as any).electronAPI?.showSaveDialog) {
+                            const result = await (window as any).electronAPI.showSaveDialog(
+                              file.name,
+                              Array.from(new Uint8Array(att.data))
+                            );
+                            if (!result.success && !result.canceled) {
+                              console.warn('[attachment] 保存失败:', result.error);
+                            }
+                          } else {
+                            // 浏览器模式：直接下载
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = file.name;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            setTimeout(() => URL.revokeObjectURL(url), 60000);
+                          }
+                        } catch (err) {
+                          console.warn('[attachment] 下载失败:', err);
+                        }
+                      }}
+                      style={{ fontSize: 12, color: '#155A8A', cursor: 'pointer', textDecoration: 'underline' }}
+                      title="下载"
+                    >下载</span>
+                  </div>
+                )}
+              </div>
+            );
           }}
           multiple
         >
