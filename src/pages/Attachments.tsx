@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FileArchive, FileText, Image, File, Download, Search, Trash2, CheckSquare, Square } from 'lucide-react';
-import { getAllAttachments, downloadAttachment, deleteAttachment } from '../store/attachmentStore';
+import JSZip from 'jszip';
+import { getAllAttachments, getAttachment, downloadAttachment, deleteAttachment } from '../store/attachmentStore';
 import { getBaseModules } from '../moduleConfig';
 import type { AttachmentRecord } from '../store/attachmentStore';
 import { useAppStore } from '../store/appStore';
@@ -90,18 +91,48 @@ export default function Attachments() {
     }
   };
 
-  // 批量下载
+  // 批量打包下载
   const handleBatchDownload = async () => {
     if (selectedIds.size === 0) return;
-    for (const id of selectedIds) {
-      try {
-        await downloadAttachment(id);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : '未知错误';
-        showToast('下载失败: ' + msg, 'error');
+    showToast('正在打包 ' + selectedIds.size + ' 个附件...', 'info');
+    try {
+      const zip = new JSZip();
+      for (const id of selectedIds) {
+        const att = await getAttachment(id);
+        if (!att || att.data.byteLength === 0) {
+          console.warn('[Attachments] 跳过空附件:', id);
+          continue;
+        }
+        zip.file(att.fileName, att.data, { binary: true });
       }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const zipBuffer = await zipBlob.arrayBuffer();
+
+      if ((window as any).electronAPI?.showSaveDialog) {
+        const result = await (window as any).electronAPI.showSaveDialog(
+          '附件打包_' + new Date().toISOString().slice(0, 10) + '.zip',
+          Array.from(new Uint8Array(zipBuffer))
+        );
+        if (!result.success && !result.canceled) {
+          showToast('保存失败: ' + (result.error || '未知错误'), 'error');
+          return;
+        }
+      } else {
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '附件打包_' + new Date().toISOString().slice(0, 10) + '.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }
+      showToast('打包完成，共 ' + selectedIds.size + ' 个附件', 'success');
+      setSelectedIds(new Set());
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '未知错误';
+      showToast('打包失败: ' + msg, 'error');
     }
-    showToast('批量下载完成', 'success');
   };
 
   // 批量删除
