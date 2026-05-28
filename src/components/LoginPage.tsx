@@ -143,7 +143,15 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
 
     const timer = window.setTimeout(() => {
       setAutoLoginPending(false);
-      onLogin(savedCredentials.account, "用户");
+      // 自动登录也验证用户是否存在
+      const users = loadUsers();
+      const u = users.find((user) => user.account === savedCredentials.account && user.password === savedCredentials.password && user.status !== "pending");
+      if (u) {
+        onLogin(u.name, u.roleName || u.role || "普通用户");
+      } else if (DEFAULT_ROLE_BY_ACCOUNT[savedCredentials.account]) {
+        onLogin(savedCredentials.account, DEFAULT_ROLE_BY_ACCOUNT[savedCredentials.account]);
+      }
+      // 不匹配任何用户则静默失败，等待手动登录
     }, 400);
 
     return () => window.clearTimeout(timer);
@@ -166,8 +174,19 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
     window.setTimeout(() => {
       setSubmitting(false);
 
-      // 无论是否在已注册用户中找到，都保存登录凭据
-      // 否则记住账号/记住密码/自动登录功能对注册用户无效
+      // 已注册但待审核的用户不能登录
+      if (found && found.status === "pending") {
+        setError("账号正在等待管理员审核");
+        return;
+      }
+
+      // 一律先验证用户是否存在，不存在则拒绝登录
+      if (!found && !DEFAULT_ROLE_BY_ACCOUNT[account]) {
+        setError("账号或密码错误");
+        return;
+      }
+
+      // 验证通过后保存登录凭据（记住账号/密码才存）
       saveCredentials({
         account,
         password,
@@ -177,11 +196,12 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
       });
 
       if (found) {
+        // 已注册用户：使用注册时的真实姓名
         onLogin(found.name, found.roleName || found.role || "普通用户");
-        return;
+      } else {
+        // 内置默认账号（admin/manager/user）
+        onLogin(account, DEFAULT_ROLE_BY_ACCOUNT[account]);
       }
-
-      onLogin(account, DEFAULT_ROLE_BY_ACCOUNT[account] || "普通用户");
     }, 600);
   };
 

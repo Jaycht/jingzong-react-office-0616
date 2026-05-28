@@ -72,7 +72,7 @@ export default function RegisterPage({ onBack }: Props) {
       phone,
       roleName: "普通用户",
       role: "user",
-      status: "pending",
+      status: "active",
       createdAt: new Date().toISOString(),
     };
     existingUsers.push(newUser);
