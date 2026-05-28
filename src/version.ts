@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.7.1";
+export const APP_VERSION = "V2.7.2";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 7;
-export const VERSION_PATCH = 1;
+export const VERSION_PATCH = 2;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.7.2 =====
+  "V2.7.2 修复 - 编辑/查看时不显示已上传附件（validFieldIds 排除 attachment 类型，safeData 过滤时丢弃了附件字段数据）",
+  "V2.7.2 修复 - 查看弹窗不显示附件信息（Descriptions 同样过滤了 attachment 字段）",
+  "V2.7.2 优化 - 去掉附件列表中的预览按钮，仅保留下载",
   // ===== V2.7.1 =====
   "V2.7.1 修复 - 附件预览/下载无反应（window.open 在 await 后被浏览器拦截，改为先开窗口再加载数据）",
   "V2.7.1 修复 - 编辑/查看时不显示已上传附件（Form.useWatch 初始值未同步，改为本地 state + 显式同步）",
