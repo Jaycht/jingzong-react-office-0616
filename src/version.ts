@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.7.0";
+export const APP_VERSION = "V2.7.1";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 7;
-export const VERSION_PATCH = 0;
+export const VERSION_PATCH = 1;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.7.1 =====
+  "V2.7.1 修复 - 附件预览/下载无反应（window.open 在 await 后被浏览器拦截，改为先开窗口再加载数据）",
+  "V2.7.1 修复 - 编辑/查看时不显示已上传附件（Form.useWatch 初始值未同步，改为本地 state + 显式同步）",
+  "V2.7.1 修复 - 注册用户登录提示账号或密码错误（SHA-256 哈希后，旧存储的明文密码无法匹配；新增格式检测自动兼容新旧格式）",
+  "V2.7.1 修复 - 统计页面各模块记录对比不更新（首次挂载后添加强制刷新 + refreshKey 机制）",
   // ===== V2.7.0 =====
   "V2.7.0 架构 - 双窗口改为单窗口（登录态 974x711 ↹ 主页态 1400x900 平滑切换）",
   "V2.7.0 修复 - 登录后用户名始终显示默认'用户'（跨窗口 store 隔离，改为 localStorage 持久化）",
