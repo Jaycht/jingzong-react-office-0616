@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FileArchive, FileText, Image, File, Download, Search, Trash2 } from 'lucide-react';
+import { FileArchive, FileText, Image, File, Download, Search, Trash2, CheckSquare, Square } from 'lucide-react';
 import { getAllAttachments, downloadAttachment, deleteAttachment } from '../store/attachmentStore';
 import { getBaseModules } from '../moduleConfig';
 import type { AttachmentRecord } from '../store/attachmentStore';
+import { useAppStore } from '../store/appStore';
 
 const FILE_ICONS: Record<string, React.FC<{ size?: number; color?: string }>> = {
   pdf: FileText,
@@ -34,8 +35,11 @@ interface AttachmentDisplayItem {
 }
 
 export default function Attachments() {
+  const showToast = useAppStore((s) => s.showToast);
   const [searchVal, setSearchVal] = useState('');
   const [dbAttachments, setDbAttachments] = useState<AttachmentRecord[]>([]);
+  // 多选：存储选中项的 id 集合
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const modules = useMemo(() => getBaseModules(), []);
 
   const loadAttachments = useCallback(() => {
@@ -66,18 +70,61 @@ export default function Attachments() {
     );
   }, [attachmentItems, searchVal]);
 
-  const handleDownload = async (id: string) => {
-    try {
-      await downloadAttachment(id);
-    } catch (err) {
-      console.warn('[Attachments] 下载失败:', err);
+  // 全选/取消全选
+  const allFilteredIds = useMemo(() => new Set(filtered.map(a => a.id)), [filtered]);
+  const allSelected = filtered.length > 0 && filtered.every(a => selectedIds.has(a.id));
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(allFilteredIds);
     }
+  };
+
+  // 批量下载
+  const handleBatchDownload = async () => {
+    if (selectedIds.size === 0) return;
+    for (const id of selectedIds) {
+      try {
+        await downloadAttachment(id);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '未知错误';
+        showToast('下载失败: ' + msg, 'error');
+      }
+    }
+    showToast('批量下载完成', 'success');
+  };
+
+  // 批量删除
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`确认删除选中的 ${selectedIds.size} 个附件？删除后不可恢复。`)) return;
+    for (const id of selectedIds) {
+      try {
+        await deleteAttachment(id);
+      } catch (err) {
+        console.warn('[Attachments] 删除失败:', err);
+      }
+    }
+    setSelectedIds(new Set());
+    loadAttachments();
+    showToast(`已删除 ${selectedIds.size} 个附件`, 'success');
   };
 
   const handleDelete = async (id: string, fileName: string) => {
     if (!window.confirm(`确认删除附件「${fileName}」？`)) return;
     try {
       await deleteAttachment(id);
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
       loadAttachments();
     } catch (err) {
       console.warn('[Attachments] 删除失败:', err);
@@ -103,8 +150,9 @@ export default function Attachments() {
       </motion.div>
 
       <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, padding: 16 }}>
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ position: 'relative', maxWidth: 400 }}>
+        {/* 搜索栏 */}
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ position: 'relative', maxWidth: 400, flex: 1 }}>
             <Search size={14} color="#94A3B8" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
             <input
               value={searchVal}
@@ -118,6 +166,51 @@ export default function Attachments() {
             />
           </div>
         </div>
+
+        {/* 批量操作栏 */}
+        {selectedIds.size > 0 && (
+          <div style={{
+            background: '#F0F7FF', border: '1px solid #B9D4E6', borderRadius: 8,
+            padding: '8px 14px', marginBottom: 12,
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <span style={{ fontSize: 13, color: '#155A8A', fontWeight: 600 }}>
+              已选 {selectedIds.size} 项
+            </span>
+            <div
+              onClick={handleBatchDownload}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                fontSize: 12, color: '#155A8A', background: 'rgba(21,90,138,0.08)',
+                transition: 'all .15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(21,90,138,0.15)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(21,90,138,0.08)'; }}
+            >
+              <Download size={13} /> 批量下载
+            </div>
+            <div
+              onClick={handleBatchDelete}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                fontSize: 12, color: '#DC2626', background: 'rgba(220,38,38,0.08)',
+                transition: 'all .15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.15)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.08)'; }}
+            >
+              <Trash2 size={13} /> 批量删除
+            </div>
+            <div
+              onClick={() => setSelectedIds(new Set())}
+              style={{ marginLeft: 'auto', fontSize: 12, color: '#64748B', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              取消选择
+            </div>
+          </div>
+        )}
 
         {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60 }}>
@@ -137,62 +230,88 @@ export default function Attachments() {
               共 {filtered.length} 个附件文件
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {filtered.map((att, i) => (
-                <motion.div
-                  key={att.id}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.02 }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '10px 14px', borderRadius: 6,
-                    border: '1px solid #EDF2F7',
-                    background: i % 2 === 0 ? '#FAFBFC' : '#fff',
-                  }}
-                >
-                  <div style={{ width: 32, height: 32, borderRadius: 6, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {getFileIcon(att.fileName)}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {att.fileName}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: '#9CA3AF', marginTop: 1 }}>
-                      {att.moduleLabel} · {att.recordDate}
-                    </div>
-                  </div>
-                  {/* 下载按钮 */}
-                  <div
-                    onClick={() => handleDownload(att.id)}
+              {/* 表头：全选 */}
+              <div
+                onClick={toggleSelectAll}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '6px 14px', cursor: 'pointer', userSelect: 'none',
+                  fontSize: 12, color: '#64748B',
+                }}
+              >
+                {allSelected ? <CheckSquare size={14} color="#155A8A" /> : <Square size={14} color="#94A3B8" />}
+                <span>全选</span>
+              </div>
+              {filtered.map((att, i) => {
+                const checked = selectedIds.has(att.id);
+                return (
+                  <motion.div
+                    key={att.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.02 }}
                     style={{
-                      width: 30, height: 30, borderRadius: 6,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', color: '#9CA3AF',
-                      transition: 'all .15s',
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '10px 14px', borderRadius: 6,
+                      border: '1px solid #EDF2F7',
+                      background: checked ? '#F0F7FF' : (i % 2 === 0 ? '#FAFBFC' : '#fff'),
+                      transition: 'background .15s',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6'; e.currentTarget.style.color = '#1B5E9B'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF'; }}
-                    title="下载附件"
                   >
-                    <Download size={14} />
-                  </div>
-                  {/* 删除按钮 */}
-                  <div
-                    onClick={() => handleDelete(att.id, att.fileName)}
-                    style={{
-                      width: 30, height: 30, borderRadius: 6,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', color: '#9CA3AF',
-                      transition: 'all .15s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#FEE2E2'; e.currentTarget.style.color = '#DC2626'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF'; }}
-                    title="删除附件"
-                  >
-                    <Trash2 size={14} />
-                  </div>
-                </motion.div>
-              ))}
+                    {/* 多选框 */}
+                    <div
+                      onClick={() => toggleSelect(att.id)}
+                      style={{ cursor: 'pointer', display: 'flex', flexShrink: 0 }}
+                    >
+                      {checked
+                        ? <CheckSquare size={16} color="#155A8A" />
+                        : <Square size={16} color="#CBD5E1" />
+                      }
+                    </div>
+                    <div style={{ width: 32, height: 32, borderRadius: 6, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {getFileIcon(att.fileName)}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {att.fileName}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: '#9CA3AF', marginTop: 1 }}>
+                        {att.moduleLabel} · {att.recordDate}
+                      </div>
+                    </div>
+                    {/* 下载按钮 */}
+                    <div
+                      onClick={() => handleDownload(att.id)}
+                      style={{
+                        width: 30, height: 30, borderRadius: 6,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', color: '#9CA3AF',
+                        transition: 'all .15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6'; e.currentTarget.style.color = '#1B5E9B'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF'; }}
+                      title="下载附件"
+                    >
+                      <Download size={14} />
+                    </div>
+                    {/* 删除按钮 */}
+                    <div
+                      onClick={() => handleDelete(att.id, att.fileName)}
+                      style={{
+                        width: 30, height: 30, borderRadius: 6,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', color: '#9CA3AF',
+                        transition: 'all .15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#FEE2E2'; e.currentTarget.style.color = '#DC2626'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF'; }}
+                      title="删除附件"
+                    >
+                      <Trash2 size={14} />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </>
         )}
