@@ -437,6 +437,55 @@ export async function importExcelToModule(
 ): Promise<{ success: number; failed: number; errors: string[] }> {
   const result = { success: 0, failed: 0, errors: [] as string[] };
 
+  // ── squad-case 特殊处理：使用 caseStore 而非 massStore ──
+  if (moduleId === 'squad-case') {
+    try {
+      const { saveCase } = await import('../store/caseStore');
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
+      const sheetName = wb.SheetNames[0];
+      if (!sheetName) { result.errors.push('Excel 文件中没有工作表'); return result; }
+      const ws = wb.Sheets[sheetName];
+      const jsonRows = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '' });
+      if (jsonRows.length === 0) { result.errors.push('Excel 文件中没有有效数据'); return result; }
+
+      // Excel 列名 → SquadCase 字段映射（与 exportCasesToExcel 保持一致）
+      const LABEL_TO_FIELD: Record<string, string> = {
+        '案件编号': 'caseNo', '案件名称': 'caseName', '案件类型': 'caseType',
+        '涉案金额(万元)': 'totalAmount', '受害人数': 'victimCount',
+        '案件来源': 'caseSource', '受案日期': 'receiveDate', '立案日期': 'filingDate',
+        '承办人': 'leadOfficer', '协办人': 'assistOfficer',
+        '结案日期': 'caseCloseDate', '办理状态': 'progressStatus',
+        '受/立案文书号': 'filingDocNo', '不予立案日期': 'noFilingDate',
+        '主办民警': 'leadOfficer', '协办民警': 'assistOfficer',
+        '涉案总金额(万)': 'totalAmount', '涉案总金额（万元）': 'totalAmount',
+      };
+
+      for (const row of jsonRows) {
+        try {
+          const data: Record<string, any> = {};
+          for (const [label, value] of Object.entries(row)) {
+            const field = LABEL_TO_FIELD[label];
+            if (field) data[field] = value;
+          }
+          if (!data.caseName && !data.caseNo) {
+            result.failed++;
+            result.errors.push('缺少案件名称或案件编号');
+            continue;
+          }
+          saveCase(data as any);
+          result.success++;
+        } catch {
+          result.failed++;
+        }
+      }
+    } catch (err: any) {
+      result.errors.push(err.message || '导入 squad-case 失败');
+    }
+    return result;
+  }
+
+  // ── 通用导入流程 ──
   const tabs = getModuleTabs(moduleId);
   if (tabs.length === 0) {
     result.errors.push(`未找到模块: ${moduleId}`);
