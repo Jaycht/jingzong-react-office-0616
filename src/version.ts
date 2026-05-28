@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.25";
+export const APP_VERSION = "V2.6.26";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 25;
+export const VERSION_PATCH = 26;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.26 =====
+  "V2.6.26 修复 - 附件用 useState 替代 Form.useWatch，修复 fileList is not defined + 恢复预览/下载/删除",
   // ===== V2.6.25 =====
   "V2.6.25 修复 - DynamicField 缺少 form 参数导致编辑时 ReferenceError(form is not defined)",
   // ===== V2.6.24 =====
