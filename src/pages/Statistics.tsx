@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, FileText, Check, Users, Paperclip, TrendingUp, TrendingDown } from 'lucide-react';
+import { BarChart3, FileText, Check, Users, Paperclip, TrendingUp, TrendingDown, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import { useAppStore } from "../store/appStore"
 import { getMassRecords } from '../store/massStore';
 import { getCases } from '../store/caseStore';
@@ -91,9 +93,13 @@ export default function Statistics() {
           </div>
         </div>
         <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-          onClick={() => showToast('正在生成统计报告...', 'info')}
+          onClick={() => {
+            const report = { 生成时间: new Date().toISOString(), 统计数据: [{ 指标: '总记录数', 数值: totalRecords }, { 指标: '案件总数', 数值: totalCases }, { 指标: '本月新增', 数值: thisMonth }], 模块明细: moduleStats.map(m => ({ 部门: m.dept, 模块: m.type, 记录数: m.count })) };
+            saveAs(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }), `统计报告_${new Date().toISOString().slice(0,10)}.json`);
+            showToast('统计报告已导出', 'success');
+          }}
           style={{ height: 34, padding: '0 16px', background: '#fff', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
-          <FileText size={14} />导出报告
+          <Download size={14} />导出报告
         </motion.button>
       </motion.div>
 
@@ -214,9 +220,15 @@ export default function Statistics() {
             style={{ background: '#fff', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ fontSize: 13, color: '#6B7280' }}>各模块记录统计明细</div>
-              <motion.button whileTap={{ scale: 0.97 }} onClick={() => showToast('已导出 Excel', 'success')}
+              <motion.button whileTap={{ scale: 0.97 }} onClick={() => {
+                const wb = XLSX.utils.book_new();
+                const rows = moduleStats.map(m => ({ 部门: m.dept, 模块: m.type, 记录数: m.count }));
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '模块统计');
+                saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `模块统计明细_${new Date().toISOString().slice(0,10)}.xlsx`);
+                showToast('已导出 Excel', 'success');
+              }}
                 style={{ height: 30, padding: '0 12px', background: '#fff', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 7, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit' }}>
-                导出
+                <Download size={13} />导出
               </motion.button>
             </div>
             <div style={{ overflowX: 'auto' }}>

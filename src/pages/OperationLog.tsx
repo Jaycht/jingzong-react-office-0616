@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { History, User, FileText, Download } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { getOperationLogs, clearOperationLogs } from '../store/operationLogStore';
+import { exportOperationLog } from '../utils/excelUtils';
 import type { OperationLog as OpLog } from '../store/operationLogStore';
 
 const TYPE_COLORS: Record<string, { bg: string; color: string; label: string }> = {
@@ -67,7 +68,7 @@ export default function OperationLog() {
             清空日志
           </motion.button>
           <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-            onClick={() => showToast('正在导出日志...', 'info')}
+            onClick={() => { showToast('正在导出日志...', 'info'); exportOperationLog(); }}
             style={{ height: 34, padding: '0 14px', background: '#fff', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
             <Download size={14} />导出日志
           </motion.button>

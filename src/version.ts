@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.26";
+export const APP_VERSION = "V2.6.27";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 26;
+export const VERSION_PATCH = 27;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.27 =====
+  "V2.6.27 修复 - Statistics 导出报告/明细改为真实 JSON/XLSX 下载 + OperationLog 导出真实调用 exportOperationLog",
   // ===== V2.6.26 =====
   "V2.6.26 修复 - 附件用 useState 替代 Form.useWatch，修复 fileList is not defined + 恢复预览/下载/删除",
   // ===== V2.6.25 =====
