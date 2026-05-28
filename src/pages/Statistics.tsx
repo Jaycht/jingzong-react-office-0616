@@ -13,9 +13,19 @@ const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transiti
 export default function Statistics() {
   const showToast = useAppStore((s) => s.showToast);
 
-  // 从 localStorage 读取真实数据（每次进入页面刷新）
+  // 强制刷新 key：每次挂载时 +1，保证数据从 localStorage 重新读取
+  const [refreshKey, setRefreshKey] = useState(0);
+  useEffect(() => { setRefreshKey(k => k + 1); }, []);
+
+  // 从 localStorage 读取真实数据（每次 refreshKey 变化时重新读取）
   const [records, setRecords] = useState(() => getMassRecords());
   const [cases, setCases] = useState(() => getMassRecords('squad-case'));
+  useEffect(() => {
+    // 组件挂载后强制刷新一次（即使 React 复用组件实例）
+    setRecords(getMassRecords());
+    setCases(getMassRecords('squad-case'));
+  }, [refreshKey]);
+  // 窗口聚焦时也刷新
   useEffect(() => {
     const onFocus = () => {
       setRecords(getMassRecords());

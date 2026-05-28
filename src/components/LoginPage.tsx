@@ -178,6 +178,15 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
     setSubmitting(true);
     setError("");
 
+    // 立即保存凭据（在异步操作之前），确保关闭/刷新前已落盘
+    saveCredentials({
+      account,
+      password,
+      rememberAccount: rememberAccount || remember,
+      remember,
+      autoLogin,
+    });
+
     (async () => {
       const users = loadUsers();
 
@@ -186,7 +195,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
       let found = null;
 
       if (userByAccount) {
-        // 验证密码哈希
+        // 兼容新旧密码格式：明文 or SHA-256 哈希
         const pwdMatch = await verifyPassword(password, userByAccount.password);
         if (pwdMatch) {
           found = userByAccount;
@@ -207,15 +216,6 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           setError("账号或密码错误");
           return;
         }
-
-        // 验证通过后保存登录凭据（记住账号/密码才存）
-        saveCredentials({
-          account,
-          password,
-          rememberAccount: rememberAccount || remember,
-          remember,
-          autoLogin,
-        });
 
         if (found) {
           // 已注册用户：使用注册时的真实姓名

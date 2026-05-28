@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Button, DatePicker, Form, Input, InputNumber,
@@ -597,22 +597,57 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments }: {
   pendingAttachments: React.MutableRefObject<Set<string>>;
 }) {
   const fieldName = typeof name === 'string' ? name : name[1];
-  const fileList: any[] = Form.useWatch(fieldName, form) || [];
+  // 用本地 state 替代 Form.useWatch，防止初始值不触发 watched value 更新
+  const [fileList, setFileListState] = useState<any[]>(() => {
+    // 从 form 已有值中初始化（编辑模式 populate 之后生效）
+    const existing = form.getFieldValue(fieldName);
+    return Array.isArray(existing) ? existing : [];
+  });
+  // 同步本地 state ← form 值变化
+  const syncFileList = useCallback(() => {
+    const v = form.getFieldValue(fieldName);
+    setFileListState(Array.isArray(v) ? v : []);
+  }, [form, fieldName]);
+  // 初次装载后以及每次 form 值变化时同步
+  useEffect(() => {
+    // 延迟一帧，确保 form 已接收到初始值
+    const id = setTimeout(syncFileList, 0);
+    // 通过监听 form 的 valuesChange 同步
+    const unsubscribe = form.getInternalHooks?.('RC_FORM_INTERNAL_HOOKS')?.registerWatch?.((changedFields: any[]) => {
+      if (changedFields.some((f: any) => f.name === fieldName || (Array.isArray(f.name) && f.name[f.name.length - 1] === fieldName))) {
+        syncFileList();
+      }
+    });
+    return () => {
+      clearTimeout(id);
+      unsubscribe?.();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRemove = (uid: string) => {
     const next = fileList.filter((f: any) => f.uid !== uid);
     form.setFieldsValue({ [fieldName]: next });
+    syncFileList();
   };
 
   const handlePreview = async (uid: string, fileName: string) => {
+    // 在 await 之前打开窗口，防止浏览器阻止弹窗
+    const newWin = window.open('', '_blank');
+    if (!newWin) {
+      // 弹窗被拦截，降级为下载
+      return handleDownload(uid, fileName);
+    }
+    newWin.document.write('<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#999;font-family:sans-serif">加载中...</div>');
     try {
       const att = await getAttachment(uid);
-      if (!att) return;
+      if (!att) { newWin.close(); return; }
       const blob = new Blob([att.data], { type: att.fileType });
       const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
+      newWin.location.href = url;
+      // URL.revokeObjectURL 延后回收，防止预览窗口打开后立刻断链
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (err) {
+      newWin.close();
       console.warn('[attachment] 预览失败:', err);
     }
   };
@@ -658,7 +693,9 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments }: {
                 size: file.size,
                 type: file.type,
               };
-              form.setFieldsValue({ [fieldName]: [...prev, newFile] });
+              const next = [...prev, newFile];
+              form.setFieldsValue({ [fieldName]: next });
+              setFileListState(next);
             } catch (err) {
               console.warn('[attachment] 保存失败:', err);
             }
