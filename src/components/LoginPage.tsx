@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
@@ -189,6 +189,23 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
   const [autoLoginPending, setAutoLoginPending] = useState(
     savedCredentials.autoLogin && !!savedCredentials.account && !!savedCredentials.password
   );
+
+  const historyRef = useRef<HTMLDivElement>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const filteredHistory = useMemo(
+    () => accountHistory.filter(a => a.toLowerCase().includes(account.toLowerCase())),
+    [accountHistory, account]
+  );
+  // 点击外部关闭下拉
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (historyRef.current && !historyRef.current.contains(e.target as Node)) {
+        setHistoryOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const loading = submitting || autoLoginPending;
 
@@ -483,7 +500,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 )}
               </AnimatePresence>
 
-              <div style={{ position: "relative" }}>
+              <div style={{ position: "relative" }} ref={historyRef}>
                 <User
                   size={15}
                   color="#8c919a"
@@ -492,26 +509,69 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 <input
                   value={account}
                   onChange={(e) => handleAccountChange(e.target.value)}
+                  onFocus={() => setHistoryOpen(true)}
                   placeholder="账号"
-                  list="account-history"
-                  style={inputBase}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#a3c9ff";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#42474f";
-                    e.target.style.boxShadow = "none";
+                  autoComplete="off"
+                  style={{
+                    ...inputBase,
+                    borderColor: historyOpen ? "#a3c9ff" : inputBase.borderColor,
+                    boxShadow: historyOpen ? "0 0 0 3px rgba(163,201,255,0.1)" : "none",
                   }}
                 />
-              </div>
 
-              {/* 账号历史补全下拉 */}
-              <datalist id="account-history">
-                {accountHistory.map((a) => (
-                  <option key={a} value={a} />
-                ))}
-              </datalist>
+                {/* 自定义历史账号下拉菜单 */}
+                <AnimatePresence>
+                  {historyOpen && filteredHistory.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6, scaleY: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                      exit={{ opacity: 0, y: -4, scaleY: 0.95 }}
+                      transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                      style={{
+                        position: "absolute", top: '100%', left: 0, right: 0, zIndex: 50,
+                        marginTop: 4,
+                        background: "#1a1d23",
+                        border: "1.5px solid #42474f",
+                        borderRadius: 8,
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                        overflow: "hidden",
+                        maxHeight: 240,
+                        overflowY: "auto",
+                      }}
+                    >
+                      {filteredHistory.map((a, i) => {
+                        const active = account === a;
+                        return (
+                          <motion.div
+                            key={a}
+                            initial={{ opacity: 0, x: -6 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.02 }}
+                            onClick={() => { handleAccountChange(a); setHistoryOpen(false); }}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 10,
+                              padding: "10px 14px",
+                              cursor: "pointer",
+                              background: active ? "rgba(163,201,255,0.08)" : "transparent",
+                              borderLeft: "3px solid",
+                              borderLeftColor: active ? "#a3c9ff" : "transparent",
+                              transition: "all .12s",
+                              fontSize: 13,
+                              color: active ? "#e2e2e6" : "#c2c6d0",
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "rgba(163,201,255,0.06)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = active ? "rgba(163,201,255,0.08)" : "transparent"; }}
+                          >
+                            <User size={13} color={active ? "#a3c9ff" : "#8c919a"} />
+                            <span style={{ flex: 1 }}>{a}</span>
+                            <span style={{ fontSize: 10, color: "#8c919a" }}>登录</span>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               <div style={{ position: "relative" }}>
                 <Lock
