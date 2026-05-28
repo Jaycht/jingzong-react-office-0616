@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.7.2";
+export const APP_VERSION = "V2.7.3";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 7;
-export const VERSION_PATCH = 2;
+export const VERSION_PATCH = 3;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.7.3 =====
+  "V2.7.3 修复 - 编辑时附件仍不显示（AttachmentField 初始值依赖 form.setFieldsValue 时序，改为直接从 editRecord 读取）",
+  "V2.7.3 修复 - 注册用户丢失（hashPassword Promise 无 catch，Web Crypto 失败时静默不写入 localStorage；新增降级为明文存储）",
+  "V2.7.3 新增 - 查看弹窗附件支持下载",
   // ===== V2.7.2 =====
   "V2.7.2 修复 - 编辑/查看时不显示已上传附件（validFieldIds 排除 attachment 类型，safeData 过滤时丢弃了附件字段数据）",
   "V2.7.2 修复 - 查看弹窗不显示附件信息（Descriptions 同样过滤了 attachment 字段）",

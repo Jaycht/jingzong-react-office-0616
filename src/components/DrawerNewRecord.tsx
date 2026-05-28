@@ -399,7 +399,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                                           : { gridColumn: 'span 3' }
                                       }
                                     >
-                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} form={form} pendingAttachments={pendingAttachments} />
+                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} form={form} pendingAttachments={pendingAttachments} editRecord={editRecord} />
                                     </div>
                                   ))}
                                 </div>
@@ -431,7 +431,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                                 : { gridColumn: 'span 3' })
                           }
                         >
-                          <DynamicField field={field} moduleId={selectedModuleId} form={form} pendingAttachments={pendingAttachments} />
+                          <DynamicField field={field} moduleId={selectedModuleId} form={form} pendingAttachments={pendingAttachments} editRecord={editRecord} />
                         </div>
                       ))}
                     </div>
@@ -449,12 +449,13 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
 /* ===================== Field components ===================== */
 
-function DynamicField({ field, moduleId, subName, form, pendingAttachments }: { 
+function DynamicField({ field, moduleId, subName, form, pendingAttachments, editRecord }: { 
   field: FieldDefinition; 
   moduleId: string; 
   subName?: number; 
   form: any;
   pendingAttachments: React.MutableRefObject<Set<string>>;
+  editRecord?: import('../store/massStore').MassRecord | null;
 }) {
   const name = subName !== undefined ? [subName, field.id] : field.id;
   // 涉众数据统计 → 案件名称自动匹配涉众线索项目名称
@@ -545,6 +546,7 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments }: {
         moduleId={moduleId}
         form={form}
         pendingAttachments={pendingAttachments}
+        editRecord={editRecord}
       />
     );
   }
@@ -589,39 +591,33 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments }: {
 /* ===================== 独立附件字段组件 ===================== */
 
 /** 附件上传字段 — 独立组件以合法使用 Form.useWatch Hook */
-function AttachmentField({ field, name, moduleId, form, pendingAttachments }: {
+function AttachmentField({ field, name, moduleId, form, pendingAttachments, editRecord }: {
   field: FieldDefinition;
   name: string | (string | number)[];
   moduleId: string;
   form: any;
   pendingAttachments: React.MutableRefObject<Set<string>>;
+  editRecord?: import('../store/massStore').MassRecord | null;
 }) {
   const fieldName = typeof name === 'string' ? name : name[1];
-  // 用本地 state 替代 Form.useWatch，防止初始值不触发 watched value 更新
+  // 优先从 editRecord 原始数据初始化（不受 form.setFieldsValue 时序影响）
   const [fileList, setFileListState] = useState<any[]>(() => {
-    // 从 form 已有值中初始化（编辑模式 populate 之后生效）
-    const existing = form.getFieldValue(fieldName);
-    return Array.isArray(existing) ? existing : [];
+    if (editRecord) {
+      // 从原始记录数据中直接读取附件列表
+      const raw = editRecord.data?.[field.id];
+      if (Array.isArray(raw)) return raw;
+    }
+    return [];
   });
   // 同步本地 state ← form 值变化
   const syncFileList = useCallback(() => {
     const v = form.getFieldValue(fieldName);
     setFileListState(Array.isArray(v) ? v : []);
   }, [form, fieldName]);
-  // 初次装载后以及每次 form 值变化时同步
+  // 初次装载后同步一次，兼顾 form.setFieldsValue（150ms 略长于 populate 的 100ms）
   useEffect(() => {
-    // 延迟一帧，确保 form 已接收到初始值
-    const id = setTimeout(syncFileList, 0);
-    // 通过监听 form 的 valuesChange 同步
-    const unsubscribe = form.getInternalHooks?.('RC_FORM_INTERNAL_HOOKS')?.registerWatch?.((changedFields: any[]) => {
-      if (changedFields.some((f: any) => f.name === fieldName || (Array.isArray(f.name) && f.name[f.name.length - 1] === fieldName))) {
-        syncFileList();
-      }
-    });
-    return () => {
-      clearTimeout(id);
-      unsubscribe?.();
-    };
+    const id = setTimeout(syncFileList, 150);
+    return () => clearTimeout(id);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRemove = (uid: string) => {

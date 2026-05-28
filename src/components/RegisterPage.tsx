@@ -64,6 +64,7 @@ export default function RegisterPage({ onBack }: Props) {
     }
 
     // 异步哈希密码，保证用户密码不以明文存储
+    // 如果 Web Crypto API 不可用，自动降级为明文存储（不丢失注册数据）
     hashPassword(pwd).then((hashedPwd) => {
       const newUser = {
         id: `user-${Date.now()}`,
@@ -79,6 +80,28 @@ export default function RegisterPage({ onBack }: Props) {
         createdAt: new Date().toISOString(),
       };
       existingUsers.push(newUser);
+      localStorage.setItem("jingzong.users.v1", JSON.stringify(existingUsers));
+
+      setTimeout(() => {
+        setLoading(false);
+        setStep(1);
+      }, 1000);
+    }).catch(() => {
+      // 哈希失败时降级为明文存储
+      const newUserFallback = {
+        id: `user-${Date.now()}`,
+        name,
+        account,
+        password: pwd,
+        badge,
+        position,
+        phone,
+        roleName: "普通用户",
+        role: "user",
+        status: "active",
+        createdAt: new Date().toISOString(),
+      };
+      existingUsers.push(newUserFallback);
       localStorage.setItem("jingzong.users.v1", JSON.stringify(existingUsers));
 
       setTimeout(() => {

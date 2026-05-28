@@ -7,6 +7,7 @@ import { useAppStore } from "../store/appStore"
 import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { deleteMassRecord, deleteMassRecords, getMassRecords } from '../store/massStore';
+import { getAttachment, downloadAttachment } from '../store/attachmentStore';
 import type { MassRecord } from '../store/massStore';
 import { exportModuleToExcel, exportSelectedRecords, importExcelToModule } from '../utils/excelUtils';
 import { exportModuleReport } from '../utils/reportGenerator';
@@ -574,18 +575,26 @@ export default function ModulePage() {
             {/* 附件字段：从扁平 data 的 fileList 数组中读取文件名 */}
             {fields.filter((f) => f.type === 'attachment').map((f) => {
               const fileData = viewRecord.data?.[f.id];
-              // 兼容两种存储格式：fileList 嵌套 或 平铺数组
               const fileList = Array.isArray(fileData)
                 ? fileData
                 : (fileData?.fileList as any[]) || [];
-              const fileNames = fileList
-                .map((fl: any) => fl.name || fl.fileName)
-                .filter(Boolean);
-              return fileNames.length > 0 ? (
+              const fileRefs: { uid: string; name: string }[] = fileList
+                .map((fl: any) => ({ uid: fl.uid || fl.id, name: fl.name || fl.fileName }))
+                .filter((x: any) => x.uid && x.name);
+              return fileRefs.length > 0 ? (
                 <Descriptions.Item key={f.id} label={f.label} span={2}>
-                  {fileNames.map((name: string, i: number) => (
-                    <div key={i} style={{ fontSize: 12, color: '#155A8A' }}>
-                      📎 {name}
+                  {fileRefs.map((ref: { uid: string; name: string }) => (
+                    <div key={ref.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#155A8A', marginBottom: 4 }}>
+                      <span>📎 {ref.name}</span>
+                      <span
+                        onClick={() => {
+                          downloadAttachment(ref.uid).catch(() => {});
+                          showToast('正在下载...', 'info');
+                        }}
+                        style={{ cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}
+                      >
+                        下载
+                      </span>
                     </div>
                   ))}
                 </Descriptions.Item>
