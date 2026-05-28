@@ -208,9 +208,9 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           formData[f.id] = raw;
         }
 
-        // 过滤：只设置表单识别的字段
+        // 过滤：只设置表单识别的字段（含 attachment，编辑时需要回填 fileList）
         const validFieldIds = new Set(
-          allFields.filter(f => f.type !== 'section' && f.type !== 'attachment').map(f => f.id)
+          allFields.filter(f => f.type !== 'section').map(f => f.id)
         );
         const sectionListNames = new Set(
           allFields.filter(f => f.type === 'section' && f.repeatable && f.listName).map(f => f.listName!)
@@ -720,10 +720,6 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments }: {
             }}>
               <span style={{ flex: 1, fontSize: 13, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 📎 {file.name}
-              </span>
-              <span onClick={() => handlePreview(file.uid, file.name)}
-                style={{ fontSize: 12, color: '#155A8A', cursor: 'pointer', flexShrink: 0 }}>
-                预览
               </span>
               <span onClick={() => handleDownload(file.uid, file.name)}
                 style={{ fontSize: 12, color: '#155A8A', cursor: 'pointer', flexShrink: 0 }}>

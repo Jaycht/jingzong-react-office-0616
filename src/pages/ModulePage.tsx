@@ -548,7 +548,7 @@ export default function ModulePage() {
       >
         {viewRecord && (
           <Descriptions column={2} size="small" bordered style={{ marginTop: 16 }}>
-            {fields.filter((f) => f.type !== 'section' && f.type !== 'attachment').map((f) => {
+            {fields.filter((f) => f.type !== 'section').map((f) => {
               // 优先从扁平 data 取值，取不到则从 repeatable section 数据中取
               let val = viewRecord.data?.[f.id];
               if (val === undefined || val === null) {
@@ -571,14 +571,22 @@ export default function ModulePage() {
                 </Descriptions.Item>
               );
             })}
-            {/* 附件字段 */}
+            {/* 附件字段：从扁平 data 的 fileList 数组中读取文件名 */}
             {fields.filter((f) => f.type === 'attachment').map((f) => {
-              const fileList = viewRecord.data?.[f.id]?.fileList;
-              const fileNames = Array.isArray(fileList) ? fileList.map((fl: any) => fl.name).filter(Boolean) : [];
+              const fileData = viewRecord.data?.[f.id];
+              // 兼容两种存储格式：fileList 嵌套 或 平铺数组
+              const fileList = Array.isArray(fileData)
+                ? fileData
+                : (fileData?.fileList as any[]) || [];
+              const fileNames = fileList
+                .map((fl: any) => fl.name || fl.fileName)
+                .filter(Boolean);
               return fileNames.length > 0 ? (
                 <Descriptions.Item key={f.id} label={f.label} span={2}>
                   {fileNames.map((name: string, i: number) => (
-                    <div key={i} style={{ fontSize: 12, color: '#155A8A' }}>📎 {name}</div>
+                    <div key={i} style={{ fontSize: 12, color: '#155A8A' }}>
+                      📎 {name}
+                    </div>
                   ))}
                 </Descriptions.Item>
               ) : null;
