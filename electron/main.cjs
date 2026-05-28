@@ -99,6 +99,15 @@ ipcMain.on("close-login", () => {
   if (loginWindow) loginWindow.close();
 });
 
+// 退出登录：关闭主窗口，重新打开登录窗口
+ipcMain.on("logout-to-login", () => {
+  if (mainWindow) {
+    mainWindow.close();
+    mainWindow = null;
+  }
+  createLoginWindow();
+});
+
 // 窗口控制 — 使用 event.sender 获取准确的窗口引用（比跟踪变量更可靠）
 function getWin(event) {
   return BrowserWindow.fromWebContents(event.sender);

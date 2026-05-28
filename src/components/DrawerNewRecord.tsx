@@ -389,62 +389,63 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               requiredMark="optional"
               onValuesChange={() => setIsDirty(true)}
             >
-              {stepRepeatable ? (
-                <Form.List name={stepListName}>
-                  {(subFields, { add, remove }) => (
-                    <>
-                      {subFields.length === 0 && (
-                        <Button type="dashed" onClick={() => add({})} block icon={<PlusOutlined />} style={{ height: 40, marginBottom: 16 }}>
-                          添加{steps[currentStep]?.label}
-                        </Button>
-                      )}
-                      {subFields.map(({ key, name: idx }) => (
-                        <div key={key} style={{
-                          border: '1px solid #E2E8F0', borderRadius: 8, padding: 16,
-                          marginBottom: 16, background: '#FAFBFC',
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: '#155A8A' }}>
-                              {steps[currentStep]?.label} #{idx + 1}
-                            </span>
-                            {subFields.length > 1 && (
-                              <Button type="text" danger size="small" onClick={() => remove(idx)}>删除</Button>
+              {/* 所有步骤字段同时渲染、用 display 切换可见性，保证 antd Form.Item / Form.List 永不卸载 */}
+              {steps.map((step, si) => {
+                const isVisible = si === currentStep;
+                return (
+                  <div key={si} style={{ display: isVisible ? '' : 'none' }}>
+                    {step.repeatable ? (
+                      <Form.List name={step.listName || 'items'}>
+                        {(subFields, { add, remove }) => (
+                          <>
+                            {subFields.length === 0 && (
+                              <Button type="dashed" onClick={() => add({})} block icon={<PlusOutlined />} style={{ height: 40, marginBottom: 16 }}>
+                                添加{step.label}
+                              </Button>
                             )}
-                          </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14 }}>
-                            {stepFields.map((field) => (
-                              <div
-                                key={field.id}
-                                style={
-                                  field.type === 'textarea' || field.type === 'attachment'
-                                    ? { gridColumn: '1 / -1' }
-                                    : { gridColumn: 'span 3' }
-                                }
-                              >
-                                <DynamicField field={field} moduleId={selectedModuleId} subName={idx} />
+                            {subFields.map(({ key, name: idx }) => (
+                              <div key={key} style={{
+                                border: '1px solid #E2E8F0', borderRadius: 8, padding: 16,
+                                marginBottom: 16, background: '#FAFBFC',
+                              }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                  <span style={{ fontSize: 14, fontWeight: 700, color: '#155A8A' }}>
+                                    {step.label} #{idx + 1}
+                                  </span>
+                                  {subFields.length > 1 && (
+                                    <Button type="text" danger size="small" onClick={() => remove(idx)}>删除</Button>
+                                  )}
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14 }}>
+                                  {step.fields.map((field) => (
+                                    <div
+                                      key={field.id}
+                                      style={
+                                        field.type === 'textarea' || field.type === 'attachment'
+                                          ? { gridColumn: '1 / -1' }
+                                          : { gridColumn: 'span 3' }
+                                      }
+                                    >
+                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} />
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             ))}
-                          </div>
-                        </div>
-                      ))}
-                      {subFields.length > 0 && (
-                        <Button type="dashed" onClick={() => add({})} block icon={<PlusOutlined />} style={{ height: 40, marginBottom: 16 }}>
-                          添加{steps[currentStep]?.label}
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </Form.List>
-              ) : (
-                // 所有步骤字段同时渲染、用 display 切换可见性，保证 antd Form.Item 永不卸载
-                steps.map((step, si) => (
-                  <motion.div
-                    key={si}
-                    initial={false}
-                    animate={{ opacity: si === currentStep ? 1 : 0 }}
-                    transition={{ duration: 0.15 }}
-                    style={{ display: si === currentStep ? '' : 'none' }}
-                  >
+                            {subFields.length > 0 && (
+                              <Button type="dashed" onClick={() => add({})} block icon={<PlusOutlined />} style={{ height: 40, marginBottom: 16 }}>
+                                添加{step.label}
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </Form.List>
+                    ) : (
+                      <motion.div
+                        initial={false}
+                        animate={{ opacity: isVisible ? 1 : 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14 }}>
                       {step.fields.map((field) => (
                         <div
@@ -462,8 +463,10 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                       ))}
                     </div>
                   </motion.div>
-                ))
-              )}
+                )}
+              </div>
+            );
+          })}
             </Form>
           </div>
       </Modal>

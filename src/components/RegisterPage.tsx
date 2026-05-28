@@ -48,6 +48,36 @@ export default function RegisterPage({ onBack }: Props) {
     if (pwd !== pwd2) { setError("两次密码不一致"); return; }
     setLoading(true);
     setError("");
+
+    // 检查账号/警号是否已被注册
+    const existingUsers = JSON.parse(localStorage.getItem("jingzong.users.v1") || "[]");
+    if (existingUsers.find((u: any) => u.account === account)) {
+      setLoading(false);
+      setError("该账号已被注册");
+      return;
+    }
+    if (existingUsers.find((u: any) => u.badge === badge)) {
+      setLoading(false);
+      setError("该警号已被注册");
+      return;
+    }
+
+    const newUser = {
+      id: `user-${Date.now()}`,
+      name,
+      account,
+      password: pwd,
+      badge,
+      position,
+      phone,
+      roleName: "普通用户",
+      role: "user",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    existingUsers.push(newUser);
+    localStorage.setItem("jingzong.users.v1", JSON.stringify(existingUsers));
+
     setTimeout(() => {
       setLoading(false);
       setStep(1);

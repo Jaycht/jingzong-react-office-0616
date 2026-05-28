@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 窗口切换
   switchToMain: () => ipcRenderer.send('switch-to-main'),
   closeLogin: () => ipcRenderer.send('close-login'),
+  logoutToLogin: () => ipcRenderer.send('logout-to-login'),
   isElectron: true,
 
   // 窗口控制

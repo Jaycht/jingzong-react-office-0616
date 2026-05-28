@@ -286,7 +286,7 @@ export default function SquadCasePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
             <thead>
               <tr style={{ background: '#F8FAFC' }}>
-                {['案件编号', '受/立案文书号', '案件名称', '案件来源', '案件类型', '涉案总金额(万)', '主办民警', '受案日期', '立案日期', '侦查终结', '移送起诉', '结案', '操作'].map((h) => (
+                {['案件编号', '受/立案文书号', '案件名称', '案件来源', '案件类型', '涉案总金额(万)', '操作'].map((h) => (
                   <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#64748B', borderBottom: '1px solid #E2E8F0', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -294,7 +294,7 @@ export default function SquadCasePage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={13} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>暂无案件，点击右上角"新建案件"创建</td>
+                  <td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>暂无案件，点击右上角"新建案件"创建</td>
                 </tr>
               ) : (
                 filtered.map((c, i) => (
@@ -312,32 +312,6 @@ export default function SquadCasePage() {
                     <td style={{ padding: '10px 12px', minWidth: 140, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.caseType || '-'}</td>
                     <td style={{ padding: '10px 12px', minWidth: 80 }}>
                       {c.totalAmount ? `${c.totalAmount}万` : '-'}
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>{c.leadOfficer || '-'}</td>
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
-                      <span style={stageStyle(Boolean(c.receiveDateShow))}>
-                        {c.receiveDateShow || '待填'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
-                      <span style={stageStyle(Boolean(c.filingDateShow))}>
-                        {c.filingDateShow || '待填'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
-                      <span style={stageStyle(Boolean(c.investEndDate))}>
-                        {c.investEndDate || '待填'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
-                      <span style={stageStyle(Boolean(c.prosecutionDate))}>
-                        {c.prosecutionDate || '待填'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
-                      <span style={stageStyle(Boolean(c.caseCloseDate))}>
-                        {c.caseCloseDate ? '已结案' : '进行中'}
-                      </span>
                     </td>
                     <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

@@ -92,11 +92,21 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       cancelText: '取消',
       onOk: () => {
         try {
-          localStorage.removeItem("jingzong.login.v1");
+          const raw = localStorage.getItem("jingzong.login.v1");
+          if (raw) {
+            const saved = JSON.parse(raw);
+            saved.autoLogin = false; // 只禁用自动登录，保留已保存的账号密码
+            localStorage.setItem("jingzong.login.v1", JSON.stringify(saved));
+          }
         } catch {
           // Continue even if storage cleanup fails.
         }
         useAppStore.getState().setUser("", "");
+        // Electron 模式：关闭主窗口，重新打开登录窗口（974x711）
+        if (typeof window !== "undefined" && (window as any).electronAPI?.isElectron) {
+          (window as any).electronAPI.logoutToLogin();
+          return;
+        }
         navigate("/login");
         useAppStore.getState().showToast("已退出登录", "info");
       },

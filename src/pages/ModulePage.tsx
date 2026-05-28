@@ -535,11 +535,41 @@ export default function ModulePage() {
       >
         {viewRecord && (
           <Descriptions column={2} size="small" bordered style={{ marginTop: 16 }}>
-            {fields.filter((f) => f.type !== 'section' && f.type !== 'attachment').map((f) => (
-              <Descriptions.Item key={f.id} label={f.label} span={f.type === 'textarea' ? 2 : 1}>
-                {displayValue(viewRecord.data?.[f.id])}
-              </Descriptions.Item>
-            ))}
+            {fields.filter((f) => f.type !== 'section' && f.type !== 'attachment').map((f) => {
+              // 优先从扁平 data 取值，取不到则从 repeatable section 数据中取
+              let val = viewRecord.data?.[f.id];
+              if (val === undefined || val === null) {
+                for (const sf of fields) {
+                  if (sf.type === 'section' && sf.repeatable && sf.listName) {
+                    const listData = viewRecord.data?.[sf.listName];
+                    if (Array.isArray(listData) && listData.length > 0) {
+                      const itemVal = listData[0][f.id];
+                      if (itemVal !== undefined && itemVal !== null) {
+                        val = itemVal;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+              return (
+                <Descriptions.Item key={f.id} label={f.label} span={f.type === 'textarea' ? 2 : 1}>
+                  {displayValue(val)}
+                </Descriptions.Item>
+              );
+            })}
+            {/* 附件字段 */}
+            {fields.filter((f) => f.type === 'attachment').map((f) => {
+              const fileList = viewRecord.data?.[f.id]?.fileList;
+              const fileNames = Array.isArray(fileList) ? fileList.map((fl: any) => fl.name).filter(Boolean) : [];
+              return fileNames.length > 0 ? (
+                <Descriptions.Item key={f.id} label={f.label} span={2}>
+                  {fileNames.map((name: string, i: number) => (
+                    <div key={i} style={{ fontSize: 12, color: '#155A8A' }}>📎 {name}</div>
+                  ))}
+                </Descriptions.Item>
+              ) : null;
+            })}
             <Descriptions.Item label="创建时间">{fmtTime(viewRecord.createdAt)}</Descriptions.Item>
             <Descriptions.Item label="更新时间">{fmtTime(viewRecord.updatedAt)}</Descriptions.Item>
           </Descriptions>
