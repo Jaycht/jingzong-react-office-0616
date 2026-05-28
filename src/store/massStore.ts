@@ -107,35 +107,66 @@ export function deleteMassRecords(ids: string[]): void {
 }
 
 /**
- * 从所有记录中移除指定附件 ID 的引用
- * 用于附件档案删除后，同步清理编辑/查看窗口中的残留引用
+ * 递归遍历对象，移除所有匹配 attachmentIds 的附件引用
  */
-export function removeAttachmentRefsFromAllRecords(attachmentIds: Set<string>): number {
-  const records = getMassRecords();
-  let cleanedCount = 0;
+function removeAttachmentRefsDeep(obj: unknown, ids: Set<string>): boolean {
+  if (!obj || typeof obj !== 'object') return false;
+  let changed = false;
 
-  const updated = records.map((record) => {
-    const data = record.data || {};
-    let changed = false;
-
-    for (const key of Object.keys(data)) {
-      const val = data[key];
-      // 附件字段格式：[{ uid: 'att-xxx', name: '...', status: 'done', ... }]
-      if (Array.isArray(val) && val.length > 0 && val[0]?.uid) {
-        const filtered = val.filter((item: any) => !attachmentIds.has(item.uid));
-        if (filtered.length !== val.length) {
-          data[key] = filtered;
-          changed = true;
+  if (Array.isArray(obj)) {
+    // 情况 A：数组元素是附件对象 { uid: 'att-xxx', name: '...', ... }
+    if (obj.length > 0 && typeof obj[0] === 'object' && obj[0] !== null && 'uid' in obj[0]) {
+      const filtered = obj.filter((item: any) => !ids.has(item.uid));
+      if (filtered.length !== obj.length) {
+        obj.length = 0;
+        obj.push(...filtered);
+        changed = true;
+      }
+    }
+    // 情况 B：数组元素是普通对象（如 repeatable section 的行），递归其所有属性
+    for (const item of obj) {
+      if (typeof item === 'object' && item !== null) {
+        for (const key of Object.keys(item)) {
+          if (removeAttachmentRefsDeep((item as Record<string, unknown>)[key], ids)) {
+            changed = true;
+          }
         }
       }
     }
+  } else {
+    // 普通对象：遍历所有属性
+    for (const key of Object.keys(obj as Record<string, unknown>)) {
+      if (removeAttachmentRefsDeep((obj as Record<string, unknown>)[key], ids)) {
+        changed = true;
+      }
+    }
+  }
 
-    if (changed) cleanedCount++;
-    return { ...record, data: { ...data } };
-  });
+  return changed;
+}
+
+/**
+ * 从所有记录中移除指定附件 ID 的引用
+ * 递归遍历所有层级，支持普通字段和 repeatable section 嵌套
+ */
+export function removeAttachmentRefsFromAllRecords(attachmentIds: Set<string>): number {
+  if (attachmentIds.size === 0) return 0;
+
+  const records = getMassRecords();
+  let cleanedCount = 0;
+
+  for (const record of records) {
+    if (!record.data) continue;
+    // 深拷贝一份 data，避免直接修改原始对象
+    const dataCopy = JSON.parse(JSON.stringify(record.data));
+    if (removeAttachmentRefsDeep(dataCopy, attachmentIds)) {
+      record.data = dataCopy;
+      cleanedCount++;
+    }
+  }
 
   if (cleanedCount > 0) {
-    localStorageAdapter.setItem(STORAGE_KEY, updated);
+    localStorageAdapter.setItem(STORAGE_KEY, records);
   }
   return cleanedCount;
 }

@@ -1,9 +1,16 @@
-export const APP_VERSION = "V2.7.6";
+export const APP_VERSION = "V2.7.9";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 7;
-export const VERSION_PATCH = 6;
+export const VERSION_PATCH = 9;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.7.9 =====
+  "V2.7.9 修复 - 附件删除不同步（重写清理逻辑：直接 JSON 序列化查找替换，避免深度引用问题）",
+  "V2.7.9 修复 - 补充缺失的 V2.7.7/V2.7.8 版本号迭代",
+  // ===== V2.7.8 =====
+  "V2.7.8 重构 - 账号历史下拉改为自定义组件（始终显示全部账号 + 过滤 + Framer Motion 动画 + 深色卡片样式）",
+  // ===== V2.7.7 =====
+  "V2.7.7 修复 - 切换历史账号时记住密码无效（改为按账号独立保存密码映射，切换时自动回填）",
   // ===== V2.7.6 =====
   "V2.7.6 重构 - 首页案件类型分布改为泡泡图（径向渐变+光晕高光+弹簧动画）",
   "V2.7.6 重构 - 首页模块活跃排行改为奖牌榜样式（🥇🥈🥉+不同颜色进度条）",
