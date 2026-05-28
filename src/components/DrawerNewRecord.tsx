@@ -648,17 +648,31 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
     }
   };
 
+  const showToast = useAppStore.getState().showToast.bind(useAppStore.getState());
+
   const handleDownload = async (uid: string, fileName: string) => {
     try {
       const att = await getAttachment(uid);
-      if (!att) return;
+      if (!att) {
+        showToast('附件数据不存在，可能已被清理', 'warning');
+        return;
+      }
       if ((window as any).electronAPI?.showSaveDialog) {
-        await (window as any).electronAPI.showSaveDialog(
+        const result = await (window as any).electronAPI.showSaveDialog(
           fileName,
           Array.from(new Uint8Array(att.data))
         );
+        if (result.success) {
+          showToast('附件已保存: ' + result.filePath, 'success');
+        } else if (!result.canceled) {
+          showToast('保存失败: ' + (result.error || '未知错误'), 'error');
+        }
       } else {
         const blob = new Blob([att.data], { type: att.fileType });
+        if (blob.size === 0) {
+          showToast('附件文件数据为空', 'error');
+          return;
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -667,9 +681,12 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 60000);
+        showToast('文件已开始下载', 'success');
       }
     } catch (err) {
+      const msg = err instanceof Error ? err.message : '未知错误';
       console.warn('[attachment] 下载失败:', err);
+      showToast('下载失败: ' + msg, 'error');
     }
   };
 

@@ -587,9 +587,14 @@ export default function ModulePage() {
                     <div key={ref.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#155A8A', marginBottom: 4 }}>
                       <span>📎 {ref.name}</span>
                       <span
-                        onClick={() => {
-                          downloadAttachment(ref.uid).catch(() => {});
+                        onClick={async () => {
                           showToast('正在下载...', 'info');
+                          try {
+                            await downloadAttachment(ref.uid);
+                            showToast('附件已保存', 'success');
+                          } catch (err) {
+                            showToast('下载失败: ' + (err instanceof Error ? err.message : '未知错误'), 'error');
+                          }
                         }}
                         style={{ cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}
                       >

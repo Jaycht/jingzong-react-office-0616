@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
@@ -36,6 +36,25 @@ const DEFAULT_CREDENTIALS: SavedCredentials = {
   remember: false,
   autoLogin: false,
 };
+
+// 已登录过的账号历史，用于输入框自动补全
+const ACCOUNT_HISTORY_KEY = 'jingzong.accountHistory.v1';
+
+function loadAccountHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(ACCOUNT_HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveAccountToHistory(account: string): void {
+  if (!account) return;
+  try {
+    const history = loadAccountHistory();
+    const next = [account, ...history.filter(a => a !== account)].slice(0, 20);
+    localStorage.setItem(ACCOUNT_HISTORY_KEY, JSON.stringify(next));
+  } catch { /* ignore */ }
+}
 
 const DEFAULT_ROLE_BY_ACCOUNT: Record<string, string> = {
   admin: "管理员",
@@ -124,12 +143,21 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
   const savedCredentials = loadCredentials();
   const now = useCurrentTime();
 
+  const accountHistory = useMemo(() => loadAccountHistory(), []);
+
   const [account, setAccount] = useState(
     savedCredentials.rememberAccount ? savedCredentials.account : ""
   );
   const [password, setPassword] = useState(
     savedCredentials.remember ? savedCredentials.password : ""
   );
+  // 当用户手动修改账号时，清除密码（避免切换用户时遗留旧密码）
+  const handleAccountChange = (val: string) => {
+    setAccount(val);
+    if (val !== (savedCredentials.rememberAccount ? savedCredentials.account : "")) {
+      setPassword("");
+    }
+  };
   const [showPwd, setShowPwd] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -153,12 +181,14 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
       if (userByAccount && userByAccount.status !== "pending") {
         const pwdMatch = await verifyPassword(savedCredentials.password, userByAccount.password);
         if (pwdMatch) {
+          saveAccountToHistory(savedCredentials.account);
           onLogin(userByAccount.name, userByAccount.roleName || userByAccount.role || "普通用户");
           return;
         }
       }
       // 内置默认账号（admin/manager/user）
       if (DEFAULT_ROLE_BY_ACCOUNT[savedCredentials.account]) {
+        saveAccountToHistory(savedCredentials.account);
         onLogin(savedCredentials.account, DEFAULT_ROLE_BY_ACCOUNT[savedCredentials.account]);
       }
       // 不匹配任何用户则静默失败，等待手动登录
@@ -219,9 +249,11 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
 
         if (found) {
           // 已注册用户：使用注册时的真实姓名
+          saveAccountToHistory(account);
           onLogin(found.name, found.roleName || found.role || "普通用户");
         } else {
           // 内置默认账号（admin/manager/user）
+          saveAccountToHistory(account);
           onLogin(account, DEFAULT_ROLE_BY_ACCOUNT[account]);
         }
       }, 600);
@@ -433,8 +465,9 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 />
                 <input
                   value={account}
-                  onChange={(e) => setAccount(e.target.value)}
+                  onChange={(e) => handleAccountChange(e.target.value)}
                   placeholder="账号"
+                  list="account-history"
                   style={inputBase}
                   onFocus={(e) => {
                     e.target.style.borderColor = "#a3c9ff";
@@ -446,6 +479,13 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                   }}
                 />
               </div>
+
+              {/* 账号历史补全下拉 */}
+              <datalist id="account-history">
+                {accountHistory.map((a) => (
+                  <option key={a} value={a} />
+                ))}
+              </datalist>
 
               <div style={{ position: "relative" }}>
                 <Lock
