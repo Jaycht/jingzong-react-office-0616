@@ -1,11 +1,13 @@
-export const APP_VERSION = "V2.7.9";
+export const APP_VERSION = "V2.7.10";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 7;
-export const VERSION_PATCH = 9;
+export const VERSION_PATCH = 10;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.7.10 =====
+  "V2.7.10 修复 - 附件删除不同步仍未解决（第三次重写：直接序列化 JSON 字符串后用正则逐条匹配替换，绕开深拷贝/递归/引用问题）",
   // ===== V2.7.9 =====
-  "V2.7.9 修复 - 附件删除不同步（重写清理逻辑：直接 JSON 序列化查找替换，避免深度引用问题）",
+  "V2.7.9 修复 - 附件删除不同步（重写清理逻辑：JSON 序列化后解析遍历深拷贝）",
   "V2.7.9 修复 - 补充缺失的 V2.7.7/V2.7.8 版本号迭代",
   // ===== V2.7.8 =====
   "V2.7.8 重构 - 账号历史下拉改为自定义组件（始终显示全部账号 + 过滤 + Framer Motion 动画 + 深色卡片样式）",
