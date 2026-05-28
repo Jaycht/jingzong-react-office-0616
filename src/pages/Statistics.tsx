@@ -140,52 +140,56 @@ export default function Statistics() {
         <>
           {/* Charts */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18 }}>
-            {/* 各模块记录对比 - 横向进度条 */}
+            {/* 各模块记录对比 - 垂直柱状图 + 圆顶 */}
             <motion.div
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
               style={{ background: '#fff', borderRadius: 10, padding: 18, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 各模块记录对比 <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>单位：条记录</span>
               </div>
               {barData.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 180, padding: '16px 2px 0', position: 'relative' }}>
+                  {/* 基线 */}
+                  <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, height: 1, background: '#E5E7EB' }} />
                   {barData.map((d, i) => {
-                    const pct = (d.count / maxVal) * 100;
+                    const pct = Math.max((d.count / maxVal) * 100, 4);
                     const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48'];
                     return (
-                      <motion.div
-                        key={d.type}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: 0.35 + i * 0.05 }}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10 }}
-                      >
+                      <div key={d.type} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, height: '100%', justifyContent: 'flex-end' }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: colors[i % colors.length] }}>{d.count}</span>
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: `${pct}%`, opacity: 1 }}
+                          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.35 + i * 0.06 }}
+                          style={{
+                            width: '100%', maxWidth: 40,
+                            borderRadius: '6px 6px 2px 2px',
+                            background: `linear-gradient(180deg, ${colors[i % colors.length]}, ${colors[i % colors.length]}99)`,
+                            boxShadow: `0 2px 8px ${colors[i % colors.length]}44`,
+                            position: 'relative',
+                            display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+                          }}
+                        >
+                          {/* 圆顶光晕 */}
+                          <div style={{
+                            width: '70%', height: 8,
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.25)',
+                            marginTop: 2,
+                            flexShrink: 0,
+                          }} />
+                        </motion.div>
                         <span style={{
-                          width: 64, fontSize: 11, fontWeight: 500,
-                          color: '#374151', textAlign: 'right', flexShrink: 0,
+                          fontSize: 9, color: '#6B7280', textAlign: 'center',
                           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                          maxWidth: 56, lineHeight: 1.2,
                         }}>{d.type}</span>
-                        <div style={{ flex: 1, height: 18, background: '#F3F4F6', borderRadius: 9, position: 'relative', overflow: 'hidden' }}>
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${pct}%` }}
-                            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.4 + i * 0.06 }}
-                            style={{
-                              height: '100%', borderRadius: 9,
-                              background: `linear-gradient(90deg, ${colors[i % colors.length]}, ${colors[i % colors.length]}88)`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-                              paddingRight: 6, minWidth: 28,
-                            }}
-                          >
-                            <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{d.count}</span>
-                          </motion.div>
-                        </div>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>
               ) : (
-                <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无数据</div>
+                <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无数据</div>
               )}
             </motion.div>
 

@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.7.5";
+export const APP_VERSION = "V2.7.6";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 7;
-export const VERSION_PATCH = 5;
+export const VERSION_PATCH = 6;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.7.6 =====
+  "V2.7.6 重构 - 首页案件类型分布改为泡泡图（径向渐变+光晕高光+弹簧动画）",
+  "V2.7.6 重构 - 首页模块活跃排行改为奖牌榜样式（🥇🥈🥉+不同颜色进度条）",
+  "V2.7.6 重构 - 统计页各模块记录对比改为圆顶柱状图（渐变+光影效果）",
+  "V2.7.6 修复 - 附件档案删除后不同步清理记录中的引用，导致编辑/查看仍显示已删除附件",
   // ===== V2.7.5 =====
   "V2.7.5 重构 - 首页面板重新设计（案件类型分布改为横向进度条 + 模块活跃排行改为排名列表式进度条）",
   "V2.7.5 重构 - 数据统计图表重新设计（各模块记录对比改为横向进度条 + 记录类型分布改为甜甜圈+网格图例）",

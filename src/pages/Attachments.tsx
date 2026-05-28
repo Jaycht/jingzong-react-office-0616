@@ -6,6 +6,7 @@ import { getAllAttachments, getAttachment, downloadAttachment, deleteAttachment 
 import { getBaseModules } from '../moduleConfig';
 import type { AttachmentRecord } from '../store/attachmentStore';
 import { useAppStore } from '../store/appStore';
+import { removeAttachmentRefsFromAllRecords } from '../store/massStore';
 
 const FILE_ICONS: Record<string, React.FC<{ size?: number; color?: string }>> = {
   pdf: FileText,
@@ -139,22 +140,26 @@ export default function Attachments() {
   const handleBatchDelete = async () => {
     if (selectedIds.size === 0) return;
     if (!window.confirm(`确认删除选中的 ${selectedIds.size} 个附件？删除后不可恢复。`)) return;
-    for (const id of selectedIds) {
+    const idsToDelete = new Set(selectedIds);
+    for (const id of idsToDelete) {
       try {
         await deleteAttachment(id);
       } catch (err) {
         console.warn('[Attachments] 删除失败:', err);
       }
     }
+    // 同步清理所有记录中的引用，使编辑/查看不再显示已删除的附件
+    const cleaned = removeAttachmentRefsFromAllRecords(idsToDelete);
     setSelectedIds(new Set());
     loadAttachments();
-    showToast(`已删除 ${selectedIds.size} 个附件`, 'success');
+    showToast(`已删除 ${idsToDelete.size} 个附件` + (cleaned > 0 ? `，已清理 ${cleaned} 条记录中的引用` : ''), 'success');
   };
 
   const handleDelete = async (id: string, fileName: string) => {
     if (!window.confirm(`确认删除附件「${fileName}」？`)) return;
     try {
       await deleteAttachment(id);
+      removeAttachmentRefsFromAllRecords(new Set([id]));
       setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
       loadAttachments();
     } catch (err) {

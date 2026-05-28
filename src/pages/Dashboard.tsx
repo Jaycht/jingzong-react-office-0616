@@ -274,36 +274,56 @@ export default function Dashboard() {
       {/* ============= Charts Row (1:1 grid) ============= */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <PanelShell darkMode={darkMode} icon={<TrendingUp size={15} color={darkMode ? "#a3c9ff" : "#2E7DCA"}/>} title="案件类型分布" delay={0.1}>
-          <div style={{ padding: "8px 14px 12px" }}>
+          <div style={{ padding: "12px 14px 14px", minHeight: 180 }}>
             {caseTypes.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {caseTypes.slice(0, 8).map(([type, count], i) => {
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
+                {caseTypes.slice(0, 10).map(([type, count], i) => {
                   const maxCount = Math.max(...caseTypes.map(([, c]) => c), 1);
-                  const pct = (count / maxCount) * 100;
-                  const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48'];
+                  const size = 36 + (count / maxCount) * 56;
+                  const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48','#0284C7','#9333EA'];
                   return (
-                    <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <motion.div
+                      key={type}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      whileHover={{ scale: 1.12, boxShadow: '0 6px 20px rgba(0,0,0,0.2)' }}
+                      transition={{
+                        duration: 0.4, ease: [0.22, 1, 0.36, 1],
+                        delay: 0.15 + i * 0.04,
+                        scale: { type: 'spring', stiffness: 300, damping: 18 },
+                      }}
+                      style={{
+                        width: size, height: size, borderRadius: '50%',
+                        background: `radial-gradient(circle at 35% 30%, ${colors[i % colors.length]}cc, ${colors[i % colors.length]})`,
+                        boxShadow: `0 4px 14px ${colors[i % colors.length]}55`,
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center',
+                        cursor: 'default', position: 'relative',
+                      }}
+                    >
                       <span style={{
-                        width: 90, fontSize: 11, color: darkMode ? '#c2c6d0' : '#374151',
-                        textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap',
+                        fontSize: Math.max(9, Math.min(13, size * 0.22)),
+                        fontWeight: 800, color: '#fff',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                        lineHeight: 1.1, textAlign: 'center',
+                        padding: '0 2px',
+                      }}>{count}</span>
+                      <span style={{
+                        fontSize: Math.max(7, Math.min(10, size * 0.16)),
+                        color: 'rgba(255,255,255,0.9)',
+                        textAlign: 'center', lineHeight: 1.15,
+                        marginTop: 1, padding: '0 3px',
                         overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>{type}</span>
-                      <div style={{ flex: 1, height: 16, background: darkMode ? 'rgba(66,71,79,0.4)' : '#F3F4F6', borderRadius: 8, position: 'relative', overflow: 'hidden' }}>
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: pct + '%' }}
-                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 + i * 0.04 }}
-                          style={{
-                            height: '100%', borderRadius: 8,
-                            background: `linear-gradient(90deg, ${colors[i % colors.length]}, ${colors[i % colors.length]}66)`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-                            paddingRight: 6, minWidth: 30,
-                          }}
-                        >
-                          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>{count}</span>
-                        </motion.div>
-                      </div>
-                    </div>
+                        whiteSpace: 'nowrap', maxWidth: size - 4,
+                      }}>{type.length > 4 ? type.slice(0, 4) : type}</span>
+                      {/* 光晕高光 */}
+                      <div style={{
+                        position: 'absolute', top: '8%', left: '22%',
+                        width: '30%', height: '20%', borderRadius: '50%',
+                        background: 'radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 100%)',
+                        pointerEvents: 'none',
+                      }} />
+                    </motion.div>
                   );
                 })}
               </div>
@@ -312,44 +332,45 @@ export default function Dashboard() {
             )}
           </div>
         </PanelShell>
-        <PanelShell darkMode={darkMode} icon={<Activity size={15} color={darkMode ? "#00dbe7" : "#38A169"}/>} title="模块活跃排行" delay={0.14}>
-          <div style={{ padding: "8px 14px 12px" }}>
+        <PanelShell darkMode={darkMode} icon={<Activity size={15} color={darkMode ? "#00dbe7" : "#E67E22"}/>} title="模块活跃排行" delay={0.14}>
+          <div style={{ padding: "10px 14px 12px", minHeight: 180 }}>
             {ranking.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {ranking.map((mod, i) => {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center', height: '100%' }}>
+                {ranking.slice(0, 6).map((mod, i) => {
                   const maxVal = Math.max(...ranking.map(r => r.value), 1);
                   const pct = (mod.value / maxVal) * 100;
-                  const rankColors = ['#2563EB','#3B82F6','#60A5FA','#93C5FD','#BFDBFE','#DBEAFE','#EFF6FF','#F8FAFC'];
+                  const medals = ['🥇', '🥈', '🥉'];
                   return (
                     <div key={mod.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{
-                        width: 20, height: 20, borderRadius: 6,
-                        background: i < 3 ? rankColors[i] : (darkMode ? 'rgba(66,71,79,0.4)' : '#F3F4F6'),
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, fontWeight: 700,
-                        color: i < 3 ? '#fff' : (darkMode ? '#8c919a' : '#6B7280'),
-                        flexShrink: 0,
-                      }}>{i + 1}</div>
+                      <span style={{ fontSize: 14, width: 20, textAlign: 'center', flexShrink: 0 }}>{medals[i] || `#${i + 1}`}</span>
                       <span style={{
-                        width: 56, fontSize: 11, fontWeight: 500,
+                        width: 64, fontSize: 11, fontWeight: 500,
                         color: darkMode ? '#e2e2e6' : '#374151',
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0,
                       }}>{mod.name}</span>
-                      <div style={{ flex: 1, height: 14, background: darkMode ? 'rgba(66,71,79,0.3)' : '#F3F4F6', borderRadius: 7, position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ flex: 1, height: 16, background: darkMode ? 'rgba(66,71,79,0.3)' : '#F3F4F6', borderRadius: 8, overflow: 'hidden' }}>
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: pct + '%' }}
-                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.1 + i * 0.05 }}
+                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.15 + i * 0.06 }}
                           style={{
-                            height: '100%', borderRadius: 7,
+                            height: '100%', borderRadius: 8,
                             background: i === 0
-                              ? 'linear-gradient(90deg, #2563EB, #60A5FA)'
-                              : 'linear-gradient(90deg, #38A169, #6EE7B7)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-                            paddingRight: 5, minWidth: 24,
+                              ? 'linear-gradient(90deg, #F59E0B, #FBBF24)'
+                              : i === 1
+                                ? 'linear-gradient(90deg, #6B7280, #9CA3AF)'
+                                : i === 2
+                                  ? 'linear-gradient(90deg, #B45309, #D97706)'
+                                  : 'linear-gradient(90deg, #2563EB, #60A5FA)',
+                            position: 'relative',
                           }}
                         >
-                          <span style={{ fontSize: 9, fontWeight: 700, color: '#fff' }}>{mod.value}</span>
+                          <span style={{
+                            position: 'absolute', right: 4, top: '50%',
+                            transform: 'translateY(-50%)',
+                            fontSize: 9, fontWeight: 700, color: '#fff',
+                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                          }}>{mod.value}</span>
                         </motion.div>
                       </div>
                     </div>

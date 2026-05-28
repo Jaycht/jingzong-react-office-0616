@@ -106,6 +106,40 @@ export function deleteMassRecords(ids: string[]): void {
   });
 }
 
+/**
+ * 从所有记录中移除指定附件 ID 的引用
+ * 用于附件档案删除后，同步清理编辑/查看窗口中的残留引用
+ */
+export function removeAttachmentRefsFromAllRecords(attachmentIds: Set<string>): number {
+  const records = getMassRecords();
+  let cleanedCount = 0;
+
+  const updated = records.map((record) => {
+    const data = record.data || {};
+    let changed = false;
+
+    for (const key of Object.keys(data)) {
+      const val = data[key];
+      // 附件字段格式：[{ uid: 'att-xxx', name: '...', status: 'done', ... }]
+      if (Array.isArray(val) && val.length > 0 && val[0]?.uid) {
+        const filtered = val.filter((item: any) => !attachmentIds.has(item.uid));
+        if (filtered.length !== val.length) {
+          data[key] = filtered;
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) cleanedCount++;
+    return { ...record, data: { ...data } };
+  });
+
+  if (cleanedCount > 0) {
+    localStorageAdapter.setItem(STORAGE_KEY, updated);
+  }
+  return cleanedCount;
+}
+
 function collectUniqueStringValues(moduleId: string, key: string): string[] {
   const records = getMassRecords(moduleId);
   const values = new Set<string>();
