@@ -426,7 +426,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                                           : { gridColumn: 'span 3' }
                                       }
                                     >
-                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} />
+                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} form={form} />
                                     </div>
                                   ))}
                                 </div>
@@ -458,7 +458,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                                 : { gridColumn: 'span 3' })
                           }
                         >
-                          <DynamicField field={field} moduleId={selectedModuleId} />
+                          <DynamicField field={field} moduleId={selectedModuleId} form={form} />
                         </div>
                       ))}
                     </div>
@@ -476,7 +476,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
 /* ===================== Field components ===================== */
 
-function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; moduleId: string; subName?: number }) {
+function DynamicField({ field, moduleId, subName, form }: { field: FieldDefinition; moduleId: string; subName?: number; form: any }) {
   const name = subName !== undefined ? [subName, field.id] : field.id;
   // 涉众数据统计 → 案件名称自动匹配涉众线索项目名称
   if (moduleId === 'mass-statistics' && field.id === 'caseName') {
@@ -560,25 +560,10 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
 
   if (field.type === 'attachment') {
     const fieldName = typeof name === 'string' ? name : name[1];
-    // 从表单中读取当前 fileList
-    const fileList: any[] = Form.useWatch(fieldName, form) || [];
 
     const handleRemove = async (uid: string) => {
       const currentList: any[] = form.getFieldValue(fieldName) || [];
       form.setFieldsValue({ [fieldName]: currentList.filter((f: any) => f.uid !== uid) });
-    };
-
-    const handlePreview = async (uid: string, fileName: string) => {
-      try {
-        const att = await getAttachment(uid);
-        if (!att) return;
-        const blob = new Blob([att.data], { type: att.fileType });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-      } catch (err) {
-        console.warn('[attachment] 预览失败:', err);
-      }
     };
 
     const handleDownload = async (uid: string, fileName: string) => {
@@ -608,7 +593,7 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
 
     return (
       <Form.Item label={field.label}>
-        {/* 上传区域 - 不含文件列表 */}
+        {/* 上传区域 */}
         <Form.Item name={name} valuePropName="fileList" getValueFromEvent={(info: any) => info?.fileList || []} noStyle>
           <Upload.Dragger
             beforeUpload={async (file) => {

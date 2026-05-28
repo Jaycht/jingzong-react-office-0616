@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.6.24";
+export const APP_VERSION = "V2.6.25";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 24;
+export const VERSION_PATCH = 25;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.25 =====
+  "V2.6.25 修复 - DynamicField 缺少 form 参数导致编辑时 ReferenceError(form is not defined)",
   // ===== V2.6.24 =====
   "V2.6.24 修复 - 登录页Grid恢复+窗口974px+附件表单内展示/删除+档案页删除按钮+Electron下载弹窗+卸载清理",
   // ===== V2.6.23 =====
