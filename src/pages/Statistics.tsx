@@ -5,7 +5,6 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { useAppStore } from "../store/appStore"
 import { getMassRecords } from '../store/massStore';
-import { getCases } from '../store/caseStore';
 import { getBaseModules } from '../moduleConfig';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
@@ -16,11 +15,11 @@ export default function Statistics() {
 
   // 从 localStorage 读取真实数据（每次进入页面刷新）
   const [records, setRecords] = useState(() => getMassRecords());
-  const [cases, setCases] = useState(() => getCases());
+  const [cases, setCases] = useState(() => getMassRecords('squad-case'));
   useEffect(() => {
     const onFocus = () => {
       setRecords(getMassRecords());
-      setCases(getCases());
+      setCases(getMassRecords('squad-case'));
     };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);

@@ -6,8 +6,7 @@ import { useMemo, useState } from 'react';
 import { AutoComplete, Button, Divider, Form, Input, Select, Space } from 'antd';
 import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
-import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames } from '../store/massStore';
-import { getCases } from '../store/caseStore';
+import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames, getSquadCaseNames, getSquadCaseNos } from '../store/massStore';
 
 type SelectValue = string | string[] | undefined;
 
@@ -93,7 +92,7 @@ export function CaseNameMatchClue({ field, subName }: { field: FieldDefinition; 
 
 /** 每日工作记录 - 案件编号匹配中队案件 */
 export function CaseNoMatchSquad({ field, subName }: { field: FieldDefinition; subName?: number }) {
-  const getCaseNos = useMemo(() => () => getCases().map((c) => c.caseNo).filter(Boolean) as string[], []);
+  const getCaseNos = useMemo(() => () => getSquadCaseNos(), []);
   return (
     <AutoCompleteField
       field={field}
@@ -106,7 +105,7 @@ export function CaseNoMatchSquad({ field, subName }: { field: FieldDefinition; s
 
 /** 每日工作记录/强制措施 - 案件名称匹配中队案件 */
 export function CaseNameMatchSquad({ field, subName }: { field: FieldDefinition; subName?: number }) {
-  const getCaseNames = useMemo(() => () => getCases().map((c) => c.caseName).filter(Boolean) as string[], []);
+  const getCaseNames = useMemo(() => () => getSquadCaseNames(), []);
   return (
     <AutoCompleteField
       field={field}

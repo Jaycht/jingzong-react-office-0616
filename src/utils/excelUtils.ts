@@ -13,7 +13,6 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { findModule, getBaseModules } from '../moduleConfig';
 import { getMassRecords, saveMassRecord } from '../store/massStore';
-import { getCases } from '../store/caseStore';
 import { getOperationLogs } from '../store/operationLogStore';
 import type { FieldDefinition } from '../moduleConfig';
 import { localStorageAdapter } from "../store/adapter";
@@ -351,45 +350,8 @@ export function exportSelectedRecords(recordIds: string[], moduleId: string, tab
  * 导出案件台账到 Excel
  */
 export function exportCasesToExcel(): void {
-  const cases = getCases();
-  const wb = XLSX.utils.book_new();
-
-  if (cases.length === 0) {
-    const ws = XLSX.utils.aoa_to_sheet([['案件编号', '案件名称', '案件类型', '涉案金额(万)', '承办人', '立案日期', '当前状态']]);
-    XLSX.utils.book_append_sheet(wb, ws, '案件台账');
-    downloadWorkbook(wb, `案件台账_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    return;
-  }
-
-  // 展平 SquadCase 字段
-  const fieldLabels: Record<string, string> = {
-    caseNo: '案件编号',
-    caseName: '案件名称',
-    caseType: '案件类型',
-    totalAmount: '涉案金额(万元)',
-    victimCount: '受害人数',
-    caseSource: '案件来源',
-    receiveDate: '受案日期',
-    filingDate: '立案日期',
-    leadOfficer: '承办人',
-    assistOfficer: '协办人',
-    caseCloseDate: '结案日期',
-    progressStatus: '办理状态',
-  };
-
-  const headers = Object.values(fieldLabels);
-  const rows = cases.map((c) => {
-    const row: RowData = {};
-    for (const [key, label] of Object.entries(fieldLabels)) {
-      row[label] = c[key as keyof typeof c] ?? '';
-    }
-    return row;
-  });
-
-  const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
-  ws['!cols'] = headers.map(() => ({ wch: 16 }));
-  XLSX.utils.book_append_sheet(wb, ws, '案件台账');
-  downloadWorkbook(wb, `案件台账_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  // 迁移后 squad-case 使用 massStore，复用通用导出
+  exportModuleToExcel('squad-case', 'squad-case-1');
 }
 
 /**
@@ -437,10 +399,9 @@ export async function importExcelToModule(
 ): Promise<{ success: number; failed: number; errors: string[] }> {
   const result = { success: 0, failed: 0, errors: [] as string[] };
 
-  // ── squad-case 特殊处理：使用 caseStore 而非 massStore ──
+  // ── squad-case：数据已迁移到 massStore ──
   if (moduleId === 'squad-case') {
     try {
-      const { saveCase } = await import('../store/caseStore');
       const buffer = await file.arrayBuffer();
       const wb = XLSX.read(buffer, { type: 'array' });
       const sheetName = wb.SheetNames[0];
@@ -449,7 +410,7 @@ export async function importExcelToModule(
       const jsonRows = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '' });
       if (jsonRows.length === 0) { result.errors.push('Excel 文件中没有有效数据'); return result; }
 
-      // Excel 列名 → SquadCase 字段映射（与 exportCasesToExcel 保持一致）
+      // Excel 列名 → 字段映射
       const LABEL_TO_FIELD: Record<string, string> = {
         '案件编号': 'caseNo', '案件名称': 'caseName', '案件类型': 'caseType',
         '涉案金额(万元)': 'totalAmount', '受害人数': 'victimCount',
@@ -473,7 +434,7 @@ export async function importExcelToModule(
             result.errors.push('缺少案件名称或案件编号');
             continue;
           }
-          saveCase(data as any);
+          saveMassRecord('squad-case', 'squad-case-1', data as any);
           result.success++;
         } catch {
           result.failed++;

@@ -134,3 +134,56 @@ export function getLegalReportMatters(): string[] {
 export function getEvidenceClueNames(): string[] {
   return collectUniqueStringValues('evidence-clue', 'clueName');
 }
+
+// ─── 中队案件数据兼容 ────────────────────────────
+
+/** 获取 squad-case 案件名称列表（去重） */
+export function getSquadCaseNames(): string[] {
+  return collectUniqueStringValues('squad-case', 'caseName');
+}
+
+/** 获取 squad-case 案件编号列表（去重） */
+export function getSquadCaseNos(): string[] {
+  return collectUniqueStringValues('squad-case', 'caseNo');
+}
+
+const SQUAD_CASE_MIGRATED_KEY = 'jingzong.squad-cases.migrated.v1';
+
+/**
+ * 将旧 caseStore 数据迁移到 massStore
+ * 幂等：迁移完成后设置标记，不会重复迁移
+ */
+export function migrateOldCasesToMassStore(): void {
+  try {
+    if (localStorage.getItem(SQUAD_CASE_MIGRATED_KEY)) return;
+    const oldRaw = localStorage.getItem('jingzong.squad.cases');
+    if (!oldRaw) { localStorage.setItem(SQUAD_CASE_MIGRATED_KEY, '1'); return; }
+    const oldCases = JSON.parse(oldRaw);
+    if (!Array.isArray(oldCases) || oldCases.length === 0) {
+      localStorage.setItem(SQUAD_CASE_MIGRATED_KEY, '1');
+      return;
+    }
+    const records = getMassRecords();
+    const now = new Date().toISOString();
+    let count = 0;
+    for (const c of oldCases) {
+      if (!c.id || !c.caseName) continue;
+      if (records.some(r => r.data?.__oldCaseId === c.id)) continue;
+      const { id: _id, createdAt: _ca, updatedAt: _ua, ...rest } = c;
+      records.push({
+        id: `mass-squad-case-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        moduleId: 'squad-case',
+        tabId: 'squad-case-1',
+        data: { ...rest, __oldCaseId: c.id },
+        createdAt: c.createdAt || now,
+        updatedAt: now,
+      });
+      count++;
+    }
+    if (count > 0) localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    localStorage.setItem(SQUAD_CASE_MIGRATED_KEY, '1');
+    console.log(`[migration] 已迁移 ${count} 条旧案件数据到 massStore`);
+  } catch (err) {
+    console.warn('[migration] 案件数据迁移失败:', err);
+  }
+}

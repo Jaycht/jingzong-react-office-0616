@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { motion, MotionConfig } from "framer-motion";
@@ -9,6 +9,7 @@ import RegisterPage from "./components/RegisterPage";
 import { Toaster } from "./components/Toaster";
 import { DARK_THEME, LIGHT_THEME } from "./constants/theme";
 import { useAppStore } from "./store/appStore";
+import { migrateOldCasesToMassStore } from "./store/massStore";
 
 declare global {
   interface Window {
@@ -30,6 +31,9 @@ declare global {
 }
 
 function AppContent() {
+  // 数据迁移：旧 caseStore → massStore（一次性）
+  useEffect(() => { migrateOldCasesToMassStore(); }, []);
+
   const navigate = useNavigate();
   const setUser = useAppStore((s) => s.setUser);
   const toasts = useAppStore((s) => s.toasts);

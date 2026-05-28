@@ -11,7 +11,6 @@ import Drawer from "./Drawer";
 import Breadcrumb from "./Breadcrumb";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
-const CaseList = lazy(() => import("../pages/CaseList"));
 const Statistics = lazy(() => import("../pages/Statistics"));
 const SettingsPage = lazy(() => import("../pages/SettingsPage"));
 const OperationLog = lazy(() => import("../pages/OperationLog"));
@@ -20,11 +19,10 @@ const Backup = lazy(() => import("../pages/Backup"));
 const Version = lazy(() => import("../pages/Version"));
 const Attachments = lazy(() => import("../pages/Attachments"));
 const PlaceholderPage = lazy(() => import("../pages/PlaceholderPage"));
-const SquadCasePage = lazy(() => import("../pages/SquadCasePage"));
 const ModulePage = lazy(() => import("../pages/ModulePage"));
 
 const PAGES: Record<string, React.FC> = {
-  dashboard: Dashboard, caseList: CaseList, statistics: Statistics,
+  dashboard: Dashboard, statistics: Statistics,
   settings: SettingsPage, operationLog: OperationLog,
   importExport: ImportExport, backup: Backup, version: Version,
   attachments: Attachments,
@@ -32,7 +30,6 @@ const PAGES: Record<string, React.FC> = {
   clue: PlaceholderPage, fund: PlaceholderPage, daily: PlaceholderPage,
   party: PlaceholderPage, report: PlaceholderPage, userSettings: PlaceholderPage,
   'legal-assessment': PlaceholderPage,
-  'squad-case': SquadCasePage,
 };
 
 const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
@@ -114,6 +111,7 @@ export default function AppLayout() {
       <AnimatePresence>
         {modalId === 'newRecord' && (
           <DrawerNewRecord
+            key={editRecord?.id || 'new'}
             onClose={() => { closeModal(); setEditRecord(null); }}
             editRecord={editRecord}
           />

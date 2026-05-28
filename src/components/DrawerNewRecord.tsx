@@ -228,7 +228,16 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               formData[f.id] = raw;
             }
           }
-          form.setFieldsValue(formData);
+          // 只设置与当前字段定义匹配的值，跳过不存在的字段
+          const validFieldIds = new Set(allFields.filter(f => f.type !== 'section' && f.type !== 'attachment').map(f => f.id));
+          const sectionListNames = new Set(allFields.filter(f => f.type === 'section' && f.repeatable && f.listName).map(f => f.listName!));
+          const safeData: Record<string, any> = {};
+          for (const key of Object.keys(formData)) {
+            if (validFieldIds.has(key) || sectionListNames.has(key)) {
+              safeData[key] = formData[key];
+            }
+          }
+          form.setFieldsValue(safeData);
         } catch (err) {
           console.warn('[DrawerNewRecord] setFieldsValue error:', err);
         }

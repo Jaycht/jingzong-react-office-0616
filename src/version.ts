@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.6.27";
+export const APP_VERSION = "V2.6.28";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 27;
+export const VERSION_PATCH = 28;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.28 =====
+  "V2.6.28 重构 - 中队案件管理 SquadCasePage 统一为 ModulePage + massStore + DrawerNewRecord",
+  "V2.6.28 移除 - caseStore/CaseList/SquadCasePage 死代码",
+  "V2.6.28 修复 - DrawerNewRecord 编辑容错增强（key重挂载+字段匹配过滤）",
   // ===== V2.6.27 =====
   "V2.6.27 修复 - Statistics 导出报告/明细改为真实 JSON/XLSX 下载 + OperationLog 导出真实调用 exportOperationLog",
   // ===== V2.6.26 =====
