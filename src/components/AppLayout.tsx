@@ -9,6 +9,7 @@ import DrawerNewRecord from "./DrawerNewRecord";
 import ModalNewUser from "./ModalNewUser";
 import Drawer from "./Drawer";
 import Breadcrumb from "./Breadcrumb";
+import ErrorBoundary from "./ErrorBoundary";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Statistics = lazy(() => import("../pages/Statistics"));
@@ -37,7 +38,13 @@ const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectr
 const winControls = {
   min: () => (window as any).electronAPI?.minimize(),
   max: () => (window as any).electronAPI?.maximize(),
-  close: () => (window as any).electronAPI?.close(),
+  close: () => {
+    if ((window as any).electronAPI?.close) {
+      (window as any).electronAPI.close();
+    } else {
+      try { window.close(); } catch {}
+    }
+  },
 };
 
 export default function AppLayout() {
@@ -110,13 +117,15 @@ export default function AppLayout() {
 
       <AnimatePresence>
         {modalId === 'newRecord' && (
+          <ErrorBoundary>
           <DrawerNewRecord
             key={editRecord?.id || 'new'}
             onClose={() => { closeModal(); setEditRecord(null); }}
             editRecord={editRecord}
           />
+          </ErrorBoundary>
         )}
-        {modalId === 'newUser' && <ModalNewUser onClose={closeModal} />}
+        {modalId === 'newUser' && <ErrorBoundary><ModalNewUser onClose={closeModal} /></ErrorBoundary>}
       </AnimatePresence>
 
       <AnimatePresence>

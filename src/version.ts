@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.6.28";
+export const APP_VERSION = "V2.6.29";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 6;
-export const VERSION_PATCH = 28;
+export const VERSION_PATCH = 29;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.6.29 =====
+  "V2.6.29 修复 - 关闭按钮 window.close() 兜底（非 Electron 环境可用）",
+  "V2.6.29 修复 - DrawerNewRecord/ModalNewUser 外层 ErrorBoundary 包裹，崩溃不影响主界面",
+  "V2.6.29 修复 - ErrorBoundary 捕获 DrawerNewRecord 初始化阶段 React 错误",
   // ===== V2.6.28 =====
   "V2.6.28 重构 - 中队案件管理 SquadCasePage 统一为 ModulePage + massStore + DrawerNewRecord",
   "V2.6.28 移除 - caseStore/CaseList/SquadCasePage 死代码",
