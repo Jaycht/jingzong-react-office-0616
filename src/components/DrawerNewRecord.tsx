@@ -559,92 +559,116 @@ function DynamicField({ field, moduleId, subName }: { field: FieldDefinition; mo
   }
 
   if (field.type === 'attachment') {
+    const fieldName = typeof name === 'string' ? name : name[1];
+    // 从表单中读取当前 fileList
+    const fileList: any[] = Form.useWatch(fieldName, form) || [];
+
+    const handleRemove = async (uid: string) => {
+      const currentList: any[] = form.getFieldValue(fieldName) || [];
+      form.setFieldsValue({ [fieldName]: currentList.filter((f: any) => f.uid !== uid) });
+    };
+
+    const handlePreview = async (uid: string, fileName: string) => {
+      try {
+        const att = await getAttachment(uid);
+        if (!att) return;
+        const blob = new Blob([att.data], { type: att.fileType });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } catch (err) {
+        console.warn('[attachment] 预览失败:', err);
+      }
+    };
+
+    const handleDownload = async (uid: string, fileName: string) => {
+      try {
+        const att = await getAttachment(uid);
+        if (!att) return;
+        if ((window as any).electronAPI?.showSaveDialog) {
+          await (window as any).electronAPI.showSaveDialog(
+            fileName,
+            Array.from(new Uint8Array(att.data))
+          );
+        } else {
+          const blob = new Blob([att.data], { type: att.fileType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+        }
+      } catch (err) {
+        console.warn('[attachment] 下载失败:', err);
+      }
+    };
+
     return (
-      // valuePropName="fileList" 配合 getValueFromEvent 确保存储的始终是 fileList 数组
-      // 防止 antd v6 Upload 的 onChange 返回 { file, fileList, event } 整个对象
-      <Form.Item
-        name={name}
-        label={field.label}
-        valuePropName="fileList"
-        getValueFromEvent={(info) => info?.fileList || []}
-      >
-        <Upload.Dragger
-          beforeUpload={async (file) => {
-            // 保存到 IndexedDB / 硬盘
-            try {
-              const record = await saveAttachment('pending', moduleId, field.id, file);
-              pendingAttachments.current.add(record.id);
-              // 将新文件加入表单 fileList，使用户能看到上传的文件
-              const currentList: any[] = form.getFieldValue(name) || [];
-              const newFile = {
-                uid: record.id,
-                name: file.name,
-                status: 'done' as const,
-                size: file.size,
-                type: file.type,
-                attachmentId: record.id,
-              };
-              form.setFieldsValue({ [typeof name === 'string' ? name : name[1]]: [...currentList, newFile] });
-              console.log(`[attachment] 已保存: ${file.name} (id=${record.id})`);
-            } catch (err) {
-              console.warn('[attachment] 保存失败:', err);
-            }
-            return false; // 阻止实际 HTTP 上传
-          }}
-          onRemove={(file) => {
-            // 从表单 fileList 中移除
-            const currentList: any[] = form.getFieldValue(name) || [];
-            form.setFieldsValue({
-              [typeof name === 'string' ? name : name[1]]: currentList.filter((f: any) => f.uid !== file.uid),
-            });
-          }}
-          showUploadList={{
-            showPreviewIcon: true,
-            showDownloadIcon: true,
-            showRemoveIcon: true,
-          }}
-          onPreview={async (file) => {
-            try {
-              const att = await getAttachment(file.uid);
-              if (!att) return;
-              const blob = new Blob([att.data], { type: att.fileType });
-              const url = URL.createObjectURL(blob);
-              window.open(url, '_blank');
-              setTimeout(() => URL.revokeObjectURL(url), 60000);
-            } catch (err) {
-              console.warn('[attachment] 预览失败:', err);
-            }
-          }}
-          onDownload={async (file) => {
-            try {
-              const att = await getAttachment(file.uid);
-              if (!att) return;
-              if ((window as any).electronAPI?.showSaveDialog) {
-                await (window as any).electronAPI.showSaveDialog(
-                  file.name,
-                  Array.from(new Uint8Array(att.data))
-                );
-              } else {
-                const blob = new Blob([att.data], { type: att.fileType });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = file.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(url), 60000);
+      <Form.Item label={field.label}>
+        {/* 上传区域 - 不含文件列表 */}
+        <Form.Item name={name} valuePropName="fileList" getValueFromEvent={(info: any) => info?.fileList || []} noStyle>
+          <Upload.Dragger
+            beforeUpload={async (file) => {
+              try {
+                const record = await saveAttachment('pending', moduleId, field.id, file);
+                pendingAttachments.current.add(record.id);
+                const currentList: any[] = form.getFieldValue(fieldName) || [];
+                const newFile = {
+                  uid: record.id,
+                  name: file.name,
+                  status: 'done' as const,
+                  size: file.size,
+                  type: file.type,
+                };
+                form.setFieldsValue({ [fieldName]: [...currentList, newFile] });
+              } catch (err) {
+                console.warn('[attachment] 保存失败:', err);
               }
-            } catch (err) {
-              console.warn('[attachment] 下载失败:', err);
-            }
-          }}
-          multiple
-        >
-          <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-          <p className="ant-upload-text">点击或拖拽附件到此处</p>
-          <p className="ant-upload-hint">支持 PDF、Word、图片、压缩包等材料，文件存储于浏览器本地 IndexedDB。</p>
-        </Upload.Dragger>
+              return false;
+            }}
+            showUploadList={false}
+            multiple
+          >
+            <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+            <p className="ant-upload-text">点击或拖拽附件到此处</p>
+            <p className="ant-upload-hint">支持 PDF、Word、图片、压缩包等材料，文件存储于浏览器本地 IndexedDB。</p>
+          </Upload.Dragger>
+        </Form.Item>
+
+        {/* 自定义文件列表 */}
+        {fileList.length > 0 && (
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {fileList.map((file: any) => (
+              <div key={file.uid} style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '6px 10px', borderRadius: 6,
+                background: '#F9FAFB', border: '1px solid #E5E7EB',
+              }}>
+                <span style={{ flex: 1, fontSize: 13, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  📎 {file.name}
+                </span>
+                {/* 预览 */}
+                <span onClick={() => handlePreview(file.uid, file.name)}
+                  style={{ fontSize: 12, color: '#155A8A', cursor: 'pointer', flexShrink: 0 }}>
+                  预览
+                </span>
+                {/* 下载 */}
+                <span onClick={() => handleDownload(file.uid, file.name)}
+                  style={{ fontSize: 12, color: '#155A8A', cursor: 'pointer', flexShrink: 0 }}>
+                  下载
+                </span>
+                {/* 删除 */}
+                <span onClick={() => handleRemove(file.uid)}
+                  style={{ fontSize: 12, color: '#DC2626', cursor: 'pointer', flexShrink: 0 }}>
+                  删除
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </Form.Item>
     );
   }
