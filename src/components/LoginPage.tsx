@@ -55,7 +55,8 @@ function loadCredentials(): SavedCredentials {
 }
 
 function saveCredentials(data: SavedCredentials): void {
-  if (data.remember) {
+  // 记住账号 或 记住密码任一勾选则保存
+  if (data.rememberAccount || data.remember) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   } else {
     localStorage.removeItem(STORAGE_KEY);
@@ -116,13 +117,13 @@ const FEATURE_CARDS = [
 export default function LoginPage({ onLogin, onRegister }: Props) {
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
   const toggleLowPerfMode = useAppStore((s) => s.toggleLowPerfMode);
-  const savedCredentials = useState(loadCredentials)[0];
+  const savedCredentials = loadCredentials();
   const now = useCurrentTime();
 
-  const [account, setAccount] = useState(() =>
+  const [account, setAccount] = useState(
     savedCredentials.rememberAccount ? savedCredentials.account : ""
   );
-  const [password, setPassword] = useState(() =>
+  const [password, setPassword] = useState(
     savedCredentials.remember ? savedCredentials.password : ""
   );
   const [showPwd, setShowPwd] = useState(false);

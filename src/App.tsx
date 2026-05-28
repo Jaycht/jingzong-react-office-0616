@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { motion, MotionConfig } from "framer-motion";
@@ -23,6 +24,7 @@ declare global {
       deleteAttachmentFile: (filePath: string) => Promise<{ success: boolean; error?: string }>;
       getAttachmentsDir: () => Promise<string>;
       showSaveDialog: (defaultName: string, buffer: number[]) => Promise<{ success: boolean; canceled?: boolean; filePath?: string; error?: string }>;
+      _hasLoggedIn?: boolean;
     };
   }
 }
@@ -37,10 +39,17 @@ function AppContent() {
 
   const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
 
+  // 防止 StrictMode 或重复点击导致重复登录
+  const loginGuardRef = useRef(false);
+
   const handleLogin = (name: string, role: string) => {
+    if (loginGuardRef.current) return;
+    loginGuardRef.current = true;
+    setTimeout(() => { loginGuardRef.current = false; }, 500);
     setUser(name, role);
-    if (isElectron) {
+    if (isElectron && !window.electronAPI?._hasLoggedIn) {
       window.electronAPI!.switchToMain();
+      window.electronAPI!._hasLoggedIn = true;
     }
     navigate("/app/dashboard", { replace: true });
   };
