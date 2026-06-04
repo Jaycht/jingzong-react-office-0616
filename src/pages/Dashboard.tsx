@@ -1,11 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, ArrowUp, ArrowDown,
   Zap, Activity,
   Gavel, FileText, Users, Shield, Database, ClipboardList, Scale, Search
 } from "lucide-react";
-import ReactEChartsCore from 'echarts-for-react/lib/core';
 import * as echarts from 'echarts';
 import { getMassRecords } from "../store/massStore";
 import type { MassRecord } from "../store/massStore";
@@ -169,6 +168,27 @@ function PanelShell({ icon, title, badge, children, darkMode, delay = 0, style }
   );
 }
 
+/* ===================== ECharts 渲染组件 ===================== */
+
+function EChartsWrapper({ option, style }: { option: Record<string, unknown>; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const darkMode = useAppStore((s) => s.darkMode);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const chart = echarts.init(ref.current);
+    chart.setOption(option, true);
+    const handler = () => chart.resize();
+    window.addEventListener('resize', handler);
+    return () => {
+      window.removeEventListener('resize', handler);
+      chart.dispose();
+    };
+  }, [option, darkMode]);
+
+  return <div ref={ref} style={{ width: '100%', ...style }} />;
+}
+
 /* ===================== 主组件 ===================== */
 
 export default function Dashboard() {
@@ -299,12 +319,9 @@ export default function Dashboard() {
           delay={0.1}
         >
           <div style={{ padding: '6px 4px 4px' }}>
-            <ReactEChartsCore
-              echarts={echarts}
+            <EChartsWrapper
               option={pieOption}
               style={{ height: 230 }}
-              notMerge
-              lazyUpdate
             />
           </div>
         </PanelShell>
@@ -318,12 +335,9 @@ export default function Dashboard() {
           delay={0.14}
         >
           <div style={{ padding: '6px 4px 4px' }}>
-            <ReactEChartsCore
-              echarts={echarts}
+            <EChartsWrapper
               option={barOption}
               style={{ height: 230 }}
-              notMerge
-              lazyUpdate
             />
           </div>
         </PanelShell>
