@@ -23,7 +23,7 @@ const MODULE_NAMES: Record<string, string> = {
   "squad-case": "中队案件", "squad-daily": "中队日报",
   "squad-coercive": "强制措施", "squad-property": "涉案财物",
   "evidence-clue": "线索登记", "evidence-request": "调证登记",
-  "evidence-freeze": "资金查控", "evidence-phone-collection": "手机采集",
+  "evidence-freeze": "资金查控", "evidence-phone-collection": "设备采集",
   "evidence-report": "资金分析",
 };
 

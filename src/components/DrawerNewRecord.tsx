@@ -17,7 +17,7 @@ import { recordFormFields, rebuildCaseIndex, getFieldHistory } from '../store/in
 import {
   GlobalCaseNameField, GlobalCaseNoField,
   InputWithHistory,
-  MultiPersonField, PersistedSelect,
+  MultiPersonField, PersistedSelect, DeviceBrandField,
 } from './SharedFormFields';
 import { saveAttachment, relinkAttachment, getAttachment } from '../store/attachmentStore';
 
@@ -473,6 +473,11 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
   }
   if (field.id === 'caseNo') {
     return <GlobalCaseNoField field={field} subName={subName} />;
+  }
+
+  // 设备品牌字段：联动设备类型动态切换选项
+  if (field.id === 'deviceBrand') {
+    return <DeviceBrandField field={field} subName={subName} />;
   }
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;

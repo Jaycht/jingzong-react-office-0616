@@ -29,7 +29,7 @@ const MODULE_META: Record<string, { label: string; dept: string; icon: React.Com
   'evidence-clue': { label: '线索登记', dept: '调证分析', icon: SearchCheck, color: '#2563EB' },
   'evidence-request': { label: '调证登记', dept: '调证分析', icon: SearchCheck, color: '#0891B2' },
   'evidence-freeze': { label: '资金查控', dept: '调证分析', icon: Database, color: '#059669' },
-  'evidence-phone-collection': { label: '手机采集', dept: '调证分析', icon: Database, color: '#0F766E' },
+  'evidence-phone-collection': { label: '设备采集', dept: '调证分析', icon: Database, color: '#0F766E' },
   'evidence-report': { label: '资金分析', dept: '调证分析', icon: SearchCheck, color: '#2563EB' },
 };
 

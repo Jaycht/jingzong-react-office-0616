@@ -444,3 +444,62 @@ export function GlobalCaseNoField({ field, subName }: {
   );
 }
 
+/* ===================== 设备品牌字段（联动设备类型） ===================== */
+
+const HARDDRIVE_BRANDS = ['三星', '希捷', '西部数据', '铠侠', '东芝', '金士顿', '致钛', '英睿达', '闪迪', '威刚', '联想'];
+const PHONE_BRANDS = ['华为', '苹果', '小米', 'VIVO', 'OPPO', '三星', '荣耀', '中兴', '联想', '魅族', '红米', '一加', '真我', 'iQOO', '摩托罗拉'];
+
+/** 设备品牌字段：根据设备类型动态切换下拉选项 */
+export function DeviceBrandField({ field, subName }: { field: FieldDefinition; subName?: number }) {
+  const form = Form.useFormInstance();
+  const deviceType = Form.useWatch('deviceType', form);
+  const [newOption, setNewOption] = useState('');
+  const storageKey = 'jingzong.selectOptions.phone.deviceBrand';
+  const [customOptions, setCustomOptions] = useState<string[]>(() => {
+    try { const stored = localStorageAdapter.getItem<string[]>(storageKey, []); return Array.isArray(stored) ? stored : []; } catch { return []; }
+  });
+
+  const brands = deviceType === '硬盘' ? HARDDRIVE_BRANDS : deviceType === '手机' ? PHONE_BRANDS : [];
+  const allOptions = Array.from(new Set([...brands, ...customOptions]));
+
+  const saveCustom = (val: string) => {
+    const v = val.trim();
+    if (!v || allOptions.includes(v)) return;
+    setCustomOptions(prev => {
+      const next = Array.from(new Set([...prev, v]));
+      localStorageAdapter.setItem(storageKey, next);
+      return next;
+    });
+    setNewOption('');
+  };
+
+  const rules = field.required ? [{ required: true, message: `请选择${field.label}` }] : undefined;
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+
+  return (
+    <Form.Item name={fieldName} label={field.label} rules={rules}>
+      <Select
+        showSearch
+        placeholder={deviceType ? `请选择${field.label}` : '请先选择设备类型'}
+        disabled={!deviceType}
+        options={allOptions.map(o => ({ label: o, value: o }))}
+        dropdownRender={(menu) => (
+          <>
+            {menu}
+            <Divider style={{ margin: '8px 0' }} />
+            <Space style={{ padding: '0 8px 8px', width: '100%' }}>
+              <Input
+                value={newOption}
+                placeholder={`新增${field.label}`}
+                onChange={(e) => setNewOption(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
+              />
+              <Button type="primary" onClick={() => saveCustom(newOption)}>添加</Button>
+            </Space>
+          </>
+        )}
+      />
+    </Form.Item>
+  );
+}
+

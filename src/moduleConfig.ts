@@ -693,12 +693,16 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       ], 'phone.holderIdentity'),
       f('idNo', '身份证号码', 'text', false),
       f('phone', '手机号', 'text', false),
-      f('phoneModel', '手机型号', 'text', false),
+      f('deviceType', '设备类型', 'select', false, [
+        '硬盘', '手机',
+      ], 'phone.deviceType'),
+      f('deviceBrand', '设备品牌', 'select', false, [], 'phone.deviceBrand'),
+      f('deviceModel', '具体型号', 'text', false),
       f('collectDate', '采集时间', 'date', false),
       f('collectContent', '采集内容', 'select', false, [
-        '全部采集', '图像视频', '微信QQ', '其他',
-      ]),
-      f('squad', '所属中队', 'select', false, [
+        '全部采集', '图像视频', '微信QQ', '全量采集', '部分采集', '其他',
+      ], 'phone.collectContent'),
+      f('squad', '采集单位', 'select', false, [
         '涉众办', '法制室', '一中队', '二中队', '三中队', '线索登记', '外单位协助',
       ], 'phone.squad'),
     ];
@@ -1311,7 +1315,7 @@ export const DEPARTMENTS: NavDepartment[] = [
       singleModule('evidence', '调证分析', 'evidence-clue', '线索登记', '上级下发、中队移交和资金线索登记。', '线索登记'),
       singleModule('evidence', '调证分析', 'evidence-request', '调证登记', '银行、支付平台、第三方数据调取登记。', '调证登记'),
       singleModule('evidence', '调证分析', 'evidence-freeze', '资金查控', '涉案账户冻结、续冻、解冻和执行银行记录。', '资金查控'),
-      singleModule('evidence', '调证分析', 'evidence-phone-collection', '手机采集', '涉案手机信息采集与登记。', '手机采集'),
+      singleModule('evidence', '调证分析', 'evidence-phone-collection', '设备采集', '涉案电子设备信息采集与登记。', '设备采集'),
       singleModule('evidence', '调证分析', 'evidence-report', '资金分析', '资金流向、账户关联、分析结论和报告提交。', '资金分析'),
     ],
   },
