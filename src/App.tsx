@@ -38,7 +38,10 @@ function AppContent() {
     const saved = loadUserFromStorage();
     if (saved && saved.name) {
       useAppStore.getState().setUser(saved.name, saved.role);
-      // 有持久化的用户 → 直接进入主界面
+      // 有持久化的用户 → 直接进入主界面，同时调整窗口大小
+      if (isElectron) {
+        window.electronAPI?.resizeToMain();
+      }
       navigate("/app/dashboard", { replace: true });
     }
   }, []);

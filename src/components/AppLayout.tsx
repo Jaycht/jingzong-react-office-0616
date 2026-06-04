@@ -1,5 +1,6 @@
 ﻿import { lazy, Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Modal } from "antd";
 import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
 import Sidebar from "./Sidebar";
@@ -42,11 +43,20 @@ const winControls = {
   min: () => (window as any).electronAPI?.minimize(),
   max: () => (window as any).electronAPI?.maximize(),
   close: () => {
-    if ((window as any).electronAPI?.close) {
-      (window as any).electronAPI.close();
-    } else {
-      try { window.close(); } catch {}
-    }
+    Modal.confirm({
+      title: '确认退出？',
+      content: '确定要关闭程序吗？未保存的数据将会丢失。',
+      okText: '退出',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        if ((window as any).electronAPI?.close) {
+          (window as any).electronAPI.close();
+        } else {
+          try { window.close(); } catch {}
+        }
+      },
+    });
   },
 };
 
