@@ -1,9 +1,16 @@
-export const APP_VERSION = "V2.8.0";
+export const APP_VERSION = "V2.8.1";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 8;
-export const VERSION_PATCH = 0;
+export const VERSION_PATCH = 1;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.8.1 =====
+  "V2.8.1 修复 - echarts-for-react 导入导致 React error #130（改用 ref 方式直连 ECharts 渲染）",
+  "V2.8.1 修复 - 安装时 installDir 非有效配置项导致打包失败（改用 perMachine + NSIS 宏）",
+  "V2.8.1 修复 - 下拉菜单无法搜索筛选（统一添加 showSearch）",
+  "V2.8.1 重构 - 统计分析页面可视化重做（各模块对比→ECharts渐变横向柱状图，类型分布→ECharts玫瑰图）",
+  "V2.8.1 重构 - 工作台到期预警改为动态摘要面板（三列动画数字+脉冲动效，替换模块活跃排行）",
+  "V2.8.1 重构 - 移除工作台模块活跃排行（与数据概览TOP5内容重叠）",
   // ===== V2.8.0 =====
   "V2.8.0 新增 - 全局搜索（工作台醒目搜索框，搜遍所有模块，结果按模块分组，点击跳转编辑）",
   "V2.8.0 新增 - 到期预警（依据刑诉法自动计算刑拘30天/取保12月/受案7天等法定期限，过期红标/3天橙标/7天黄标）",

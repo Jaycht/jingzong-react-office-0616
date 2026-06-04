@@ -10,7 +10,6 @@ import { getMassRecords } from "../store/massStore";
 import type { MassRecord } from "../store/massStore";
 import { useAppStore } from "../store/appStore";
 import GlobalSearch from "../components/GlobalSearch";
-import DeadlineWarning from "../components/DeadlineWarning";
 import DataVolumeGauge from "../components/DataVolumeGauge";
 
 const MODULE_NAMES: Record<string, string> = {
@@ -77,17 +76,6 @@ function caseTypeStats(records: MassRecord[]) {
     }
   }
   return Object.entries(map).sort((a, b) => b[1] - a[1]);
-}
-
-function moduleRanking(records: MassRecord[]) {
-  const map: Record<string, number> = {};
-  for (const r of records) {
-    if (r.moduleId) map[r.moduleId] = (map[r.moduleId] || 0) + 1;
-  }
-  return Object.entries(map)
-    .map(([id, value]) => ({ name: MODULE_NAMES[id] || id, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8);
 }
 
 function recentActivity(records: MassRecord[]) {
@@ -189,6 +177,159 @@ function EChartsWrapper({ option, style }: { option: Record<string, unknown>; st
   return <div ref={ref} style={{ width: '100%', ...style }} />;
 }
 
+/* ===================== 到期预警摘要组件 ===================== */
+
+interface WarnItem {
+  id: string; recordId: string; moduleId: string;
+  caseName: string; type: string; deadline: string; remainingDays: number;
+  severity: 'overdue' | 'critical' | 'warning' | 'normal';
+}
+
+function addDays(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function addMonths(d: Date, n: number) { const r = new Date(d); r.setMonth(r.getMonth() + n); return r; }
+function toStr(d: Date) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function calcRemaining(deadline: Date) { const t = new Date(); t.setHours(0,0,0,0); return Math.floor((deadline.getTime()-t.getTime())/(86400000)); }
+
+function WarningSummary() {
+  const darkMode = useAppStore((s) => s.darkMode);
+  const setEditRecord = useAppStore((s) => s.setEditRecord);
+  const setCurrentPage = useAppStore((s) => s.setCurrentPage);
+  const openModal = useAppStore((s) => s.openModal);
+
+  const warnings = useMemo(() => {
+    const rules = [
+      { mids: ['legal-report-case','legal-case-ledger','squad-case'], f: 'receiveDate', t: '受案→立案（7日）', calc: (d:string)=>toStr(addDays(new Date(d),7)) },
+      { mids: ['squad-coercive','legal-case-ledger'], f: 'criminalDetentionDate', t: '刑事拘留（30日）', calc: (d:string)=>toStr(addDays(new Date(d),30)) },
+      { mids: ['squad-coercive','legal-case-ledger','squad-case'], f: 'arrestDate', t: '侦查羁押（2个月）', calc: (d:string)=>toStr(addMonths(new Date(d),2)) },
+      { mids: ['squad-coercive','legal-case-ledger'], f: 'bailDate', t: '取保候审（12个月）', calc: (d:string)=>toStr(addMonths(new Date(d),12)) },
+      { mids: ['squad-coercive','legal-case-ledger'], f: 'residentialSurveillanceDate', t: '监视居住（6个月）', calc: (d:string)=>toStr(addMonths(new Date(d),6)) },
+      { mids: ['squad-case','legal-case-ledger'], f: 'filingDate', t: '立案侦查（2个月）', calc: (d:string)=>toStr(addMonths(new Date(d),2)) },
+    ];
+    const all = getMassRecords();
+    const items: WarnItem[] = [];
+    for (const rule of rules) {
+      for (const rec of all.filter(r => rule.mids.includes(r.moduleId))) {
+        const raw = rec.data?.[rule.f];
+        if (typeof raw !== 'string') continue;
+        try {
+          const deadline = rule.calc(raw);
+          const remaining = calcRemaining(new Date(deadline));
+          if (remaining > 30) continue;
+          const severity: WarnItem['severity'] = remaining <= 0 ? 'overdue' : remaining <= 3 ? 'critical' : remaining <= 7 ? 'warning' : 'normal';
+          items.push({
+            id: rec.id+rule.f+rule.t, recordId: rec.id, moduleId: rec.moduleId,
+            caseName: String(rec.data?.caseName||rec.data?.suspect||'未命名').slice(0,14)+(String(rec.data?.caseName||'').length>14?'…':''),
+            type: rule.t, deadline, remainingDays: remaining, severity,
+          });
+        } catch {}
+      }
+    }
+    const order: Record<string,number> = {overdue:0,critical:1,warning:2,normal:3};
+    items.sort((a,b) => order[a.severity]-order[b.severity] || a.remainingDays-b.remainingDays);
+    return { items, counts: { overdue: items.filter(w=>w.severity==='overdue').length, critical: items.filter(w=>w.severity==='critical').length, warning: items.filter(w=>w.severity==='warning').length } };
+  }, []);
+
+  const total = warnings.counts.overdue + warnings.counts.critical + warnings.counts.warning;
+
+  const handleClick = (item: WarnItem) => {
+    const rec = getMassRecords().find(r => r.id === item.recordId);
+    if (!rec) return;
+    setEditRecord(rec); setCurrentPage(item.moduleId); openModal('newRecord');
+  };
+
+  if (warnings.items.length === 0) {
+    return <div style={{ padding: '28px 14px', textAlign: 'center', color: darkMode ? '#8c919a' : '#9CA3AF', fontSize: 12 }}>暂无到期预警</div>;
+  }
+
+  const txtColor = darkMode ? '#e2e2e6' : '#1F2937';
+
+  return (
+    <div style={{ padding: '8px 14px 12px' }}>
+      {/* 三列数字摘要 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+        {[
+          { label: '已过期', count: warnings.counts.overdue, color: '#DC2626', bg: darkMode ? 'rgba(220,38,38,0.12)' : '#FEF2F2' },
+          { label: '3天内', count: warnings.counts.critical, color: '#EA580C', bg: darkMode ? 'rgba(234,88,12,0.12)' : '#FFF7ED' },
+          { label: '7天内', count: warnings.counts.warning, color: '#CA8A04', bg: darkMode ? 'rgba(234,179,8,0.12)' : '#FFFBEB' },
+        ].map((item) => (
+          <motion.div
+            key={item.label}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            style={{
+              background: item.bg,
+              borderRadius: 10, padding: '10px 8px',
+              textAlign: 'center',
+              border: `1px solid ${item.color}22`,
+            }}
+          >
+            <motion.div
+              key={item.count}
+              initial={{ scale: 1.4, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4, ease: [0.22,1,0.36,1] }}
+              style={{ fontSize: 26, fontWeight: 800, color: item.color, lineHeight: 1 }}
+            >
+              {item.count}
+            </motion.div>
+            <div style={{ fontSize: 10.5, color: darkMode ? '#8c919a' : '#6B7280', marginTop: 4 }}>{item.label}</div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* 预警列表（最多6条） */}
+      <div style={{ maxHeight: 170, overflow: 'auto' }}>
+        {warnings.items.slice(0, 6).map((item, i) => {
+          const colors = {
+            overdue: { bg: darkMode ? 'rgba(220,38,38,0.08)' : '#FEF2F2', dot: '#DC2626', label: '已过期' },
+            critical: { bg: darkMode ? 'rgba(234,88,12,0.08)' : '#FFF7ED', dot: '#EA580C', label: `剩${item.remainingDays}天` },
+            warning: { bg: darkMode ? 'rgba(234,179,8,0.08)' : '#FFFBEB', dot: '#CA8A04', label: `剩${item.remainingDays}天` },
+            normal: { bg: 'transparent', dot: darkMode ? '#8c919a' : '#9CA3AF', label: `剩${item.remainingDays}天` },
+          };
+          const c = colors[item.severity];
+          return (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.04 }}
+              onClick={() => handleClick(item)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '7px 10px', marginBottom: 4,
+                borderRadius: 6, cursor: 'pointer',
+                background: c.bg,
+                transition: 'background 0.1s',
+              }}
+              onMouseEnter={e => { if (item.severity === 'normal') e.currentTarget.style.background = darkMode ? 'rgba(46,125,202,0.05)' : '#FAFBFC'; }}
+              onMouseLeave={e => { if (item.severity === 'normal') e.currentTarget.style.background = 'transparent'; }}
+            >
+              <motion.div
+                animate={item.severity === 'overdue' ? { scale: [1, 1.3, 1] } : {}}
+                transition={{ repeat: item.severity === 'overdue' ? Infinity : 0, duration: 2 }}
+                style={{ width: 6, height: 6, borderRadius: '50%', background: c.dot, flexShrink: 0 }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 500, color: txtColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {item.caseName}
+                  <span style={{ fontSize: 10, fontWeight: 400, color: darkMode ? '#8c919a' : '#6B7280', marginLeft: 4 }}>{item.type}</span>
+                </div>
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 600, color: c.dot, flexShrink: 0 }}>{c.label}</span>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* 底部提示 */}
+      <div style={{ fontSize: 10, color: darkMode ? '#8c919a' : '#9CA3AF', textAlign: 'center', marginTop: 6 }}>
+        共 {total} 项预警 · 点击查看详情
+      </div>
+    </div>
+  );
+}
+
 /* ===================== 主组件 ===================== */
 
 export default function Dashboard() {
@@ -200,7 +341,6 @@ export default function Dashboard() {
 
   const kpiData = useMemo(() => calcKpi(records), [records]);
   const caseTypes = useMemo(() => caseTypeStats(records), [records]);
-  const ranking = useMemo(() => moduleRanking(records), [records]);
   const activities = useMemo(() => recentActivity(records), [records]);
 
   const textColor = darkMode ? '#e2e2e6' : '#1F2937';
@@ -235,46 +375,6 @@ export default function Dashboard() {
     }],
   }), [caseTypes, darkMode, textColor, chartTextColor, borderColor]);
 
-  /* 模块活跃排行 — 柱状图 */
-  const barOption = useMemo(() => ({
-    tooltip: {
-      trigger: 'axis' as const,
-      axisPointer: { type: 'shadow' as const },
-      backgroundColor: darkMode ? '#1a1d25' : '#fff',
-      borderColor, textStyle: { color: textColor },
-    },
-    grid: { left: 10, right: 20, top: 10, bottom: 10, containLabel: true },
-    xAxis: { type: 'value' as const, splitLine: { lineStyle: { color: darkMode ? 'rgba(66,71,79,0.3)' : '#F3F4F6' } }, axisLabel: { color: chartTextColor, fontSize: 10 }, show: true },
-    yAxis: {
-      type: 'category' as const,
-      data: ranking.map((r) => r.name).reverse(),
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: { color: chartTextColor, fontSize: 10 },
-    },
-    series: [{
-      type: 'bar' as const,
-      data: ranking.map((r, i) => ({
-        value: r.value,
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: CHART_PALETTE[ranking.length - 1 - i] || '#2563EB' },
-            { offset: 1, color: (CHART_PALETTE[ranking.length - 1 - i] || '#2563EB') + '44' },
-          ]),
-          borderRadius: [0, 4, 4, 0],
-        },
-      })).reverse(),
-      barWidth: 18,
-      animationDuration: 600,
-      animationEasing: 'cubicOut' as const,
-      label: {
-        show: true, position: 'right' as const,
-        fontSize: 11, fontWeight: 700, color: textColor,
-        formatter: (params: { value: number }) => String(params.value),
-      },
-    }],
-  }), [ranking, darkMode, textColor, chartTextColor, borderColor]);
-
   /* ---------- 无数据状态 ---------- */
   if (!hasData) {
     return (
@@ -305,9 +405,6 @@ export default function Dashboard() {
         {kpiData.map((item, index) => <KpiCard key={item.label} item={item} index={index} />)}
       </motion.div>
 
-      {/* 到期预警 */}
-      <DeadlineWarning />
-
       {/* 图表行 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {/* 案件类型分布 - 玫瑰图 */}
@@ -326,20 +423,14 @@ export default function Dashboard() {
           </div>
         </PanelShell>
 
-        {/* 模块活跃排行 - 柱状图 */}
+        {/* 到期预警 - 动态摘要 */}
         <PanelShell
           darkMode={darkMode}
-          icon={<Activity size={15} color={darkMode ? '#00dbe7' : '#E67E22'}/>}
-          title="模块活跃排行"
-          badge={`${ranking.length} 个`}
+          icon={<Activity size={15} color={darkMode ? '#e9c349' : '#DC2626'}/>}
+          title="到期预警"
           delay={0.14}
         >
-          <div style={{ padding: '6px 4px 4px' }}>
-            <EChartsWrapper
-              option={barOption}
-              style={{ height: 230 }}
-            />
-          </div>
+          <WarningSummary />
         </PanelShell>
       </div>
 
