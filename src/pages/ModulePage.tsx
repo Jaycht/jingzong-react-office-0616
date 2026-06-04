@@ -95,21 +95,6 @@ export default function ModulePage() {
   const module = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const searchQuery = useAppStore((s) => s.searchQuery);
-  const setSearchQuery = useAppStore((s) => s.setSearchQuery);
-
-  // 搜索防抖：本地存储输入值，300ms 后同步到全局 store
-  const [localSearch, setLocalSearch] = useState(searchQuery);
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setLocalSearch(val);
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(() => setSearchQuery(val), 300);
-  }, [setSearchQuery]);
-  useEffect(() => {
-    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
-  }, []);
 
   // 详情弹窗
   const [viewRecord, setViewRecord] = useState<MassRecord | null>(null);
@@ -128,16 +113,8 @@ export default function ModulePage() {
   const realRecords = useMemo(() => {
     if (!module) return [];
     void refreshKey;
-    let records = getMassRecords(module.id);
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      records = records.filter((r) => {
-        const vals = Object.values(r.data || {}).map((v) => String(v || "").toLowerCase());
-        return vals.some((v) => v.includes(q));
-      });
-    }
-    return records;
-  }, [module, refreshKey, searchQuery]);
+    return getMassRecords(module.id);
+  }, [module, refreshKey]);
 
   // 编辑/新建保存后刷新列表
   const prevEditRef = useRef(editRecord);
@@ -480,14 +457,7 @@ export default function ModulePage() {
           </div>
         )}
         <div style={{ padding: 16, borderTop: '1px solid #EDF2F7' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-            <Input
-              prefix={<Search size={14} color="#94A3B8" />}
-              placeholder={`搜索${active?.label || module.label}记录`}
-              style={{ width: 300 }}
-            
-            value={localSearch}
-            onChange={handleSearchChange}/>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
             <Tag color="blue">{dataFields.length} 个字段</Tag>
           </div>
           {/* 批量操作栏 */}

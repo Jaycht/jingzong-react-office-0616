@@ -1,21 +1,22 @@
-﻿import { useMemo } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, CheckCircle2, ArrowUp, ArrowDown,
-  Zap, ListTodo, Activity, Scale,
-  Gavel, FileText, Users, Shield, Database, ClipboardList, Search
+  TrendingUp, ArrowUp, ArrowDown,
+  Zap, Activity,
+  Gavel, FileText, Users, Shield, Database, ClipboardList, Scale, Search
 } from "lucide-react";
+import ReactEChartsCore from 'echarts-for-react/lib/core';
+import * as echarts from 'echarts';
 import { getMassRecords } from "../store/massStore";
 import type { MassRecord } from "../store/massStore";
 import { useAppStore } from "../store/appStore";
-import EmptyState from "../components/EmptyState";
-/* ------------------------------------------------------------------ */
-/*  Constants                                                          */
-/* ------------------------------------------------------------------ */
+import GlobalSearch from "../components/GlobalSearch";
+import DeadlineWarning from "../components/DeadlineWarning";
+import DataVolumeGauge from "../components/DataVolumeGauge";
 
 const MODULE_NAMES: Record<string, string> = {
-  "office-finance-assets": "经费保障", "office-party-attendance": "党建与考勤",
-  "office-doc-report": "文件与报表", "office-cluster": "集群协查",
+  "office-finance-assets": "经费保障", "office-party-attendance": "党建考勤",
+  "office-doc-report": "文件报表", "office-cluster": "集群协查",
   "office-other": "其他事项", "mass-clue": "涉众线索",
   "mass-statistics": "涉众统计", "mass-petition": "信访反馈",
   "mass-interview": "约谈管理", "mass-publicity": "宣传工作",
@@ -24,9 +25,8 @@ const MODULE_NAMES: Record<string, string> = {
   "squad-case": "中队案件", "squad-daily": "中队日报",
   "squad-coercive": "强制措施", "squad-property": "涉案财物",
   "evidence-clue": "线索登记", "evidence-request": "调证登记",
-  "evidence-freeze": "资金查控", "evidence-report": "资金分析",
-  "legal-process": "法制流程",
-  "mass-visit": "走访管理",
+  "evidence-freeze": "资金查控", "evidence-phone-collection": "手机采集",
+  "evidence-report": "资金分析",
 };
 
 const KPI_COLORS = [
@@ -47,9 +47,7 @@ const TOP_MODULES = [
   { id: "mass-petition",  label: "信访反馈",    icon: Users,       color: "#E11D48" },
 ];
 
-/* ------------------------------------------------------------------ */
-/*  Data helpers                                                       */
-/* ------------------------------------------------------------------ */
+/* ===================== 数据计算 ===================== */
 
 function calcKpi(records: MassRecord[]) {
   const total = records.length;
@@ -66,8 +64,6 @@ function calcKpi(records: MassRecord[]) {
   ];
 }
 
-// 从 6 个指定模块中统计案件类型分布
-// 从 6 个模块的 caseType 字段中统计案件类型（拉下菜单中的值）
 function caseTypeStats(records: MassRecord[]) {
   const targets = new Set([
     'mass-statistics', 'legal-report-case', 'legal-case-ledger',
@@ -95,23 +91,6 @@ function moduleRanking(records: MassRecord[]) {
     .slice(0, 8);
 }
 
-function extractNextSteps(records: MassRecord[]) {
-  const steps: { module: string; title: string; time: string }[] = [];
-  for (const r of records) {
-    const data = r.data;
-    if (!data) continue;
-    const nextStep = data.nextStep || data.next_step || data.followUp;
-    if (nextStep && typeof nextStep === "string" && nextStep.trim()) {
-      steps.push({
-        module: MODULE_NAMES[r.moduleId] || r.moduleId,
-        title: nextStep,
-        time: r.createdAt?.slice(0, 10) || "",
-      });
-    }
-  }
-  return steps.slice(0, 6);
-}
-
 function recentActivity(records: MassRecord[]) {
   return records.slice(0, 10).map((r) => ({
     moduleName: MODULE_NAMES[r.moduleId] || r.moduleId,
@@ -120,20 +99,19 @@ function recentActivity(records: MassRecord[]) {
   }));
 }
 
+/* ===================== 子组件 ===================== */
+
 function KpiCard({ item, index }: { item: ReturnType<typeof calcKpi>[number]; index: number }) {
   const rising = item.trend >= 0;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08 }}
+      transition={{ delay: index * 0.06 }}
       style={{
-        flex: 1,
-        color: "#fff",
+        flex: 1, color: "#fff",
         background: KPI_COLORS[index].bg,
-        borderRadius: 12,
-        padding: "16px 18px",
+        borderRadius: 12, padding: "16px 18px",
         boxShadow: "0 2px 8px rgba(0,0,0,.08)",
       }}
     >
@@ -151,22 +129,9 @@ function KpiCard({ item, index }: { item: ReturnType<typeof calcKpi>[number]; in
   );
 }
 
-function PanelShell({
-  icon,
-  title,
-  badge,
-  children,
-  darkMode,
-  delay = 0,
-  style,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  badge?: string;
-  children: React.ReactNode;
-  darkMode: boolean;
-  delay?: number;
-  style?: React.CSSProperties;
+function PanelShell({ icon, title, badge, children, darkMode, delay = 0, style }: {
+  icon: React.ReactNode; title: string; badge?: string;
+  children: React.ReactNode; darkMode: boolean; delay?: number; style?: React.CSSProperties;
 }) {
   return (
     <motion.div
@@ -174,43 +139,29 @@ function PanelShell({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
       style={{
-        background: darkMode ? "rgba(28, 31, 38, 0.75)" : "#fff",
+        background: darkMode ? 'rgba(28, 31, 38, 0.75)' : '#fff',
         borderRadius: 12,
-        border: darkMode ? "1px solid rgba(163, 201, 255, 0.12)" : "1px solid #E5E7EB",
-        boxShadow: darkMode ? "0 2px 12px rgba(0,0,0,.25)" : "0 1px 4px rgba(0,0,0,.04)",
-        backdropFilter: darkMode ? "blur(14px)" : "none",
-        WebkitBackdropFilter: darkMode ? "blur(14px)" : "none",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        ...style,
+        border: darkMode ? '1px solid rgba(163, 201, 255, 0.12)' : '1px solid #E5E7EB',
+        boxShadow: darkMode ? '0 2px 12px rgba(0,0,0,.25)' : '0 1px 4px rgba(0,0,0,.04)',
+        backdropFilter: darkMode ? 'blur(14px)' : 'none',
+        WebkitBackdropFilter: darkMode ? 'blur(14px)' : 'none',
+        overflow: 'hidden', ...style,
       }}
     >
-      <div
-        style={{
-          padding: "14px 18px",
-          borderBottom: darkMode ? "1px solid rgba(66, 71, 79, 0.4)" : "1px solid #F3F4F6",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
+      <div style={{
+        padding: '14px 18px',
+        borderBottom: darkMode ? '1px solid rgba(66, 71, 79, 0.4)' : '1px solid #F3F4F6',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
         {icon}
-        <span style={{ fontSize: 13, fontWeight: 600, color: darkMode ? "#e2e2e6" : "#1F2937" }}>{title}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: darkMode ? '#e2e2e6' : '#1F2937' }}>{title}</span>
         {badge && (
-          <span
-            style={{
-              marginLeft: "auto",
-              fontSize: 10.5,
-              fontWeight: 600,
-              padding: "2px 10px",
-              borderRadius: 10,
-              background: darkMode ? "rgba(0, 219, 231, 0.12)" : "#F3F4F6",
-              color: darkMode ? "#00dbe7" : "#6B7280",
-            }}
-          >
-            {badge}
-          </span>
+          <span style={{
+            marginLeft: 'auto', fontSize: 10.5, fontWeight: 600,
+            padding: '2px 10px', borderRadius: 10,
+            background: darkMode ? 'rgba(0, 219, 231, 0.12)' : '#F3F4F6',
+            color: darkMode ? '#00dbe7' : '#6B7280',
+          }}>{badge}</span>
         )}
       </div>
       {children}
@@ -218,9 +169,7 @@ function PanelShell({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
+/* ===================== 主组件 ===================== */
 
 export default function Dashboard() {
   const { setCurrentPage } = useAppStore();
@@ -230,347 +179,278 @@ export default function Dashboard() {
   const hasData = records.length > 0;
 
   const kpiData = useMemo(() => calcKpi(records), [records]);
-
-  /* ------ ECharts options ------ */
-
   const caseTypes = useMemo(() => caseTypeStats(records), [records]);
-
-  
-
   const ranking = useMemo(() => moduleRanking(records), [records]);
-
   const activities = useMemo(() => recentActivity(records), [records]);
-  const nextSteps = useMemo(() => extractNextSteps(records), [records]);
 
-  /* ---------- Empty state when no data ---------- */
+  const textColor = darkMode ? '#e2e2e6' : '#1F2937';
+  const mutedColor = darkMode ? '#8c919a' : '#9CA3AF';
+  const borderColor = darkMode ? 'rgba(66,71,79,0.4)' : '#E5E7EB';
 
+  /* ---------- ECharts 主题色 ---------- */
+  const CHART_PALETTE = ['#2563EB', '#7C3AED', '#0891B2', '#059669', '#D97706', '#DC2626', '#6D28D9', '#E11D48', '#0284C7', '#9333EA'];
+  const chartTextColor = darkMode ? '#8c919a' : '#6B7280';
+
+  /* 案件类型分布 — 玫瑰图 */
+  const pieOption = useMemo(() => ({
+    tooltip: { trigger: 'item' as const, backgroundColor: darkMode ? '#1a1d25' : '#fff', borderColor, textStyle: { color: textColor } },
+    legend: {
+      bottom: 0, textStyle: { color: chartTextColor, fontSize: 10 },
+      type: 'scroll' as const,
+    },
+    series: [{
+      type: 'pie' as const,
+      radius: ['30%', '65%'],
+      center: ['50%', '45%'],
+      avoidLabelOverlap: true,
+      padAngle: 1,
+      itemStyle: { borderRadius: 4, borderColor: darkMode ? '#1a1d25' : '#fff', borderWidth: 2 },
+      label: { show: true, formatter: '{b}\n{c}', fontSize: 10, color: chartTextColor, lineHeight: 14 },
+      labelLine: { length: 8, length2: 10, smooth: true },
+      data: caseTypes.length > 0
+        ? caseTypes.slice(0, 8).map(([name, value], i) => ({ name: name.length > 6 ? name.slice(0, 6) + '…' : name, value, itemStyle: { color: CHART_PALETTE[i % CHART_PALETTE.length] } }))
+        : [{ name: '暂无数据', value: 1, itemStyle: { color: '#E5E7EB' } }],
+      animationDuration: 800,
+      animationEasing: 'cubicOut' as const,
+    }],
+  }), [caseTypes, darkMode, textColor, chartTextColor, borderColor]);
+
+  /* 模块活跃排行 — 柱状图 */
+  const barOption = useMemo(() => ({
+    tooltip: {
+      trigger: 'axis' as const,
+      axisPointer: { type: 'shadow' as const },
+      backgroundColor: darkMode ? '#1a1d25' : '#fff',
+      borderColor, textStyle: { color: textColor },
+    },
+    grid: { left: 10, right: 20, top: 10, bottom: 10, containLabel: true },
+    xAxis: { type: 'value' as const, splitLine: { lineStyle: { color: darkMode ? 'rgba(66,71,79,0.3)' : '#F3F4F6' } }, axisLabel: { color: chartTextColor, fontSize: 10 }, show: true },
+    yAxis: {
+      type: 'category' as const,
+      data: ranking.map((r) => r.name).reverse(),
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: chartTextColor, fontSize: 10 },
+    },
+    series: [{
+      type: 'bar' as const,
+      data: ranking.map((r, i) => ({
+        value: r.value,
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+            { offset: 0, color: CHART_PALETTE[ranking.length - 1 - i] || '#2563EB' },
+            { offset: 1, color: (CHART_PALETTE[ranking.length - 1 - i] || '#2563EB') + '44' },
+          ]),
+          borderRadius: [0, 4, 4, 0],
+        },
+      })).reverse(),
+      barWidth: 18,
+      animationDuration: 600,
+      animationEasing: 'cubicOut' as const,
+      label: {
+        show: true, position: 'right' as const,
+        fontSize: 11, fontWeight: 700, color: textColor,
+        formatter: (params: { value: number }) => String(params.value),
+      },
+    }],
+  }), [ranking, darkMode, textColor, chartTextColor, borderColor]);
+
+  /* ---------- 无数据状态 ---------- */
   if (!hasData) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
-        <EmptyState
-          icon={<TrendingUp size={40} color={darkMode ? "#8c919a" : "#D1D5DB"} />}
-          title="暂无数据"
-          description="开始录入工作记录后将在这里展示可视化统计"
-        />
+      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <GlobalSearch />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
+          <div style={{ textAlign: 'center' }}>
+            <TrendingUp size={40} color={darkMode ? '#8c919a' : '#D1D5DB'} style={{ marginBottom: 12 }} />
+            <div style={{ fontSize: 16, fontWeight: 600, color: textColor }}>暂无数据</div>
+            <div style={{ fontSize: 12, color: mutedColor, marginTop: 4 }}>开始录入工作记录后将在这里展示可视化统计</div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  /* ================================================================== */
-  /*  Main layout                                                        */
-  /* ================================================================== */
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 1200, margin: "0 auto" }}>
-      {/* ============= KPI Row ============= */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
+      {/* 全局搜索 */}
+      <GlobalSearch />
+
+      {/* KPI */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        style={{ display: "flex", gap: 14 }}
+        style={{ display: 'flex', gap: 14 }}
       >
         {kpiData.map((item, index) => <KpiCard key={item.label} item={item} index={index} />)}
       </motion.div>
 
-      {/* ============= Charts Row (1:1 grid) ============= */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <PanelShell darkMode={darkMode} icon={<TrendingUp size={15} color={darkMode ? "#a3c9ff" : "#2E7DCA"}/>} title="案件类型分布" delay={0.1}>
-          <div style={{ padding: "12px 14px 14px", minHeight: 180 }}>
-            {caseTypes.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
-                {caseTypes.slice(0, 10).map(([type, count], i) => {
-                  const maxCount = Math.max(...caseTypes.map(([, c]) => c), 1);
-                  const size = 36 + (count / maxCount) * 56;
-                  const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48','#0284C7','#9333EA'];
-                  return (
-                    <motion.div
-                      key={type}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      whileHover={{ scale: 1.12, boxShadow: '0 6px 20px rgba(0,0,0,0.2)' }}
-                      transition={{
-                        duration: 0.4, ease: [0.22, 1, 0.36, 1],
-                        delay: 0.15 + i * 0.04,
-                        scale: { type: 'spring', stiffness: 300, damping: 18 },
-                      }}
-                      style={{
-                        width: size, height: size, borderRadius: '50%',
-                        background: `radial-gradient(circle at 35% 30%, ${colors[i % colors.length]}cc, ${colors[i % colors.length]})`,
-                        boxShadow: `0 4px 14px ${colors[i % colors.length]}55`,
-                        display: 'flex', flexDirection: 'column',
-                        alignItems: 'center', justifyContent: 'center',
-                        cursor: 'default', position: 'relative',
-                      }}
-                    >
-                      <span style={{
-                        fontSize: Math.max(9, Math.min(13, size * 0.22)),
-                        fontWeight: 800, color: '#fff',
-                        textShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                        lineHeight: 1.1, textAlign: 'center',
-                        padding: '0 2px',
-                      }}>{count}</span>
-                      <span style={{
-                        fontSize: Math.max(7, Math.min(10, size * 0.16)),
-                        color: 'rgba(255,255,255,0.9)',
-                        textAlign: 'center', lineHeight: 1.15,
-                        marginTop: 1, padding: '0 3px',
-                        overflow: 'hidden', textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap', maxWidth: size - 4,
-                      }}>{type.length > 4 ? type.slice(0, 4) : type}</span>
-                      {/* 光晕高光 */}
-                      <div style={{
-                        position: 'absolute', top: '8%', left: '22%',
-                        width: '30%', height: '20%', borderRadius: '50%',
-                        background: 'radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 100%)',
-                        pointerEvents: 'none',
-                      }} />
-                    </motion.div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无案件类型数据</div>
-            )}
+      {/* 到期预警 */}
+      <DeadlineWarning />
+
+      {/* 图表行 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {/* 案件类型分布 - 玫瑰图 */}
+        <PanelShell
+          darkMode={darkMode}
+          icon={<TrendingUp size={15} color={darkMode ? '#a3c9ff' : '#2E7DCA'}/>}
+          title="案件类型分布"
+          badge={`${caseTypes.length} 类`}
+          delay={0.1}
+        >
+          <div style={{ padding: '6px 4px 4px' }}>
+            <ReactEChartsCore
+              echarts={echarts}
+              option={pieOption}
+              style={{ height: 230 }}
+              notMerge
+              lazyUpdate
+            />
           </div>
         </PanelShell>
-        <PanelShell darkMode={darkMode} icon={<Activity size={15} color={darkMode ? "#00dbe7" : "#E67E22"}/>} title="模块活跃排行" delay={0.14}>
-          <div style={{ padding: "10px 14px 12px", minHeight: 180 }}>
-            {ranking.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center', height: '100%' }}>
-                {ranking.slice(0, 6).map((mod, i) => {
-                  const maxVal = Math.max(...ranking.map(r => r.value), 1);
-                  const pct = (mod.value / maxVal) * 100;
-                  const medals = ['🥇', '🥈', '🥉'];
-                  return (
-                    <div key={mod.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 14, width: 20, textAlign: 'center', flexShrink: 0 }}>{medals[i] || `#${i + 1}`}</span>
-                      <span style={{
-                        width: 64, fontSize: 11, fontWeight: 500,
-                        color: darkMode ? '#e2e2e6' : '#374151',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0,
-                      }}>{mod.name}</span>
-                      <div style={{ flex: 1, height: 16, background: darkMode ? 'rgba(66,71,79,0.3)' : '#F3F4F6', borderRadius: 8, overflow: 'hidden' }}>
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: pct + '%' }}
-                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: 0.15 + i * 0.06 }}
-                          style={{
-                            height: '100%', borderRadius: 8,
-                            background: i === 0
-                              ? 'linear-gradient(90deg, #F59E0B, #FBBF24)'
-                              : i === 1
-                                ? 'linear-gradient(90deg, #6B7280, #9CA3AF)'
-                                : i === 2
-                                  ? 'linear-gradient(90deg, #B45309, #D97706)'
-                                  : 'linear-gradient(90deg, #2563EB, #60A5FA)',
-                            position: 'relative',
-                          }}
-                        >
-                          <span style={{
-                            position: 'absolute', right: 4, top: '50%',
-                            transform: 'translateY(-50%)',
-                            fontSize: 9, fontWeight: 700, color: '#fff',
-                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                          }}>{mod.value}</span>
-                        </motion.div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无模块数据</div>
-            )}
+
+        {/* 模块活跃排行 - 柱状图 */}
+        <PanelShell
+          darkMode={darkMode}
+          icon={<Activity size={15} color={darkMode ? '#00dbe7' : '#E67E22'}/>}
+          title="模块活跃排行"
+          badge={`${ranking.length} 个`}
+          delay={0.14}
+        >
+          <div style={{ padding: '6px 4px 4px' }}>
+            <ReactEChartsCore
+              echarts={echarts}
+              option={barOption}
+              style={{ height: 230 }}
+              notMerge
+              lazyUpdate
+            />
           </div>
         </PanelShell>
       </div>
 
-      {/* ============= Activity Row (1:1 grid) ============= */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      {/* 底部行 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {/* 数据量概览 */}
+        <DataVolumeGauge />
+
+        {/* 最近动态 - 时间线风格 */}
         <PanelShell
           darkMode={darkMode}
-          icon={<ListTodo size={15} color={darkMode ? "#a3c9ff" : "#2E7DCA"}/>}
+          icon={<Zap size={15} color={darkMode ? '#a3c9ff' : '#2E7DCA'}/>}
           title="最近动态"
           badge={activities.length > 0 ? `${activities.length} 条` : undefined}
           delay={0.18}
         >
-          <div style={{ maxHeight: 300, overflowY: "auto" }}>
+          <div style={{ maxHeight: 300, overflowY: 'auto' }}>
             {activities.length === 0 ? (
-              <EmptyState title="暂无动态" />
+              <div style={{ padding: 24, textAlign: 'center', color: mutedColor, fontSize: 12 }}>暂无动态</div>
             ) : (
-              activities.map((a, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.35 + i * 0.04 }}
-                  style={{
-                    padding: "10px 14px",
-                    borderBottom: i < activities.length - 1
-                      ? (darkMode ? "1px solid rgba(66,71,79,0.3)" : "1px solid #F9FAFB")
-                      : "none",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <div style={{ position: 'relative', padding: '8px 0 8px 28px' }}>
+                {/* 竖线 */}
+                <div style={{
+                  position: 'absolute', left: 12, top: 12, bottom: 12, width: 1.5,
+                  background: `linear-gradient(to bottom, ${darkMode ? '#4B9EFF' : '#2563EB'}, transparent)`,
+                  opacity: 0.3,
+                }} />
+                {activities.map((a, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.04 }}
+                    style={{
+                      position: 'relative', paddingBottom: 12,
+                      borderBottom: i < activities.length - 1 ? `1px solid ${darkMode ? 'rgba(66,71,79,0.15)' : '#F9FAFB'}` : 'none',
+                    }}
+                  >
+                    {/* 圆点 */}
                     <div style={{
-                      width: 6, height: 6, borderRadius: "50%",
-                      background: darkMode ? "#00dbe7" : "#2E7DCA",
-                      marginTop: 5, flexShrink: 0,
-                      boxShadow: darkMode ? "0 0 6px rgba(0,219,231,0.4)" : "none",
+                      position: 'absolute', left: -20, top: 5,
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: i < 3 ? '#2563EB' : (darkMode ? '#8c919a' : '#D1D5DB'),
+                      border: `2px solid ${darkMode ? '#1a1d25' : '#fff'}`,
                     }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: 12,
-                        color: darkMode ? "#e2e2e6" : "#374151",
-                        fontWeight: 500, lineHeight: 1.4,
-                        display: "-webkit-box", WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical", overflow: "hidden",
-                      }}>
-                        {String(a.title)}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                        <span style={{
-                          fontSize: 10, color: darkMode ? "#8c919a" : "#9CA3AF",
-                          background: darkMode ? "rgba(0,59,109,0.25)" : "transparent",
-                          padding: darkMode ? "1px 6px" : 0,
-                          borderRadius: darkMode ? 4 : 0,
-                        }}>
-                          {a.moduleName}
-                        </span>
-                        <span style={{ fontSize: 9, color: darkMode ? "#42474f" : "#D1D5DB" }}>·</span>
-                        <span style={{ fontSize: 10, color: darkMode ? "#8c919a" : "#9CA3AF" }}>{a.date}</span>
-                      </div>
+                    <div style={{ fontSize: 11, color: mutedColor, marginBottom: 2 }}>
+                      <span style={{ fontWeight: 600, color: darkMode ? '#a3c9ff' : '#4B9EFF' }}>{a.moduleName}</span>
+                      <span style={{ margin: '0 6px', opacity: 0.4 }}>·</span>
+                      <span>{a.date}</span>
                     </div>
-                  </div>
-                </motion.div>
-              ))
-            )}
-          </div>
-        </PanelShell>
-
-        <PanelShell
-          darkMode={darkMode}
-          icon={<CheckCircle2 size={15} color={darkMode ? "#e9c349" : "#E67E22"} />}
-          title="待办工作"
-          badge={nextSteps.length > 0 ? `${nextSteps.length} 项` : undefined}
-          delay={0.22}
-        >
-          <div style={{ maxHeight: 300, overflowY: "auto" }}>
-            {!hasData ? (
-              <EmptyState title="暂无待办" description="填写记录时将自动提取待办内容" />
-            ) : nextSteps.length === 0 ? (
-              <EmptyState title="暂无待办" />
-            ) : (
-              nextSteps.map((s, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.43 + i * 0.05 }}
-                  style={{
-                    padding: "10px 14px",
-                    borderBottom: i < nextSteps.length - 1
-                      ? (darkMode ? "1px solid rgba(66,71,79,0.3)" : "1px solid #F9FAFB")
-                      : "none",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                     <div style={{
-                      width: 28, height: 28, borderRadius: 8,
-                      background: i === 0
-                        ? (darkMode ? "rgba(233,195,73,0.15)" : "#E67E221A")
-                        : (darkMode ? "rgba(66,71,79,0.3)" : "#F3F4F6"),
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      flexShrink: 0, fontSize: 12,
-                      color: i === 0
-                        ? (darkMode ? "#e9c349" : "#E67E22")
-                        : (darkMode ? "#8c919a" : "#6B7280"),
-                      fontWeight: 600,
+                      fontSize: 12.5, color: textColor, fontWeight: 500,
+                      lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}>
-                      {i + 1}
+                      {String(a.title)}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: 12,
-                        color: darkMode ? "#e2e2e6" : "#374151",
-                        fontWeight: 500, lineHeight: 1.4,
-                        display: "-webkit-box", WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical", overflow: "hidden",
-                      }}>
-                        {s.title}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                        <span style={{ fontSize: 10, color: darkMode ? "#8c919a" : "#9CA3AF" }}>{s.module}</span>
-                        <span style={{ fontSize: 9, color: darkMode ? "#42474f" : "#D1D5DB" }}>·</span>
-                        <span style={{ fontSize: 10, color: darkMode ? "#8c919a" : "#9CA3AF" }}>{s.time}</span>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                ))}
+              </div>
             )}
           </div>
         </PanelShell>
       </div>
 
-      {/* ============= Quick Entry Bottom (KPI Button Style) ============= */}
+      {/* 快捷入口 */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
         <div style={{
-          background: darkMode ? "rgba(28, 31, 38, 0.75)" : "#fff",
+          background: darkMode ? 'rgba(28, 31, 38, 0.75)' : '#fff',
           borderRadius: 12,
-          border: darkMode ? "1px solid rgba(163, 201, 255, 0.12)" : "1px solid #E5E7EB",
-          boxShadow: darkMode ? "0 2px 12px rgba(0,0,0,.25)" : "0 1px 4px rgba(0,0,0,.04)",
-          backdropFilter: darkMode ? "blur(14px)" : "none",
-          WebkitBackdropFilter: darkMode ? "blur(14px)" : "none",
-          overflow: "hidden",
+          border: `1px solid ${borderColor}`,
+          boxShadow: darkMode ? '0 2px 12px rgba(0,0,0,.25)' : '0 1px 4px rgba(0,0,0,.04)',
+          backdropFilter: darkMode ? 'blur(14px)' : 'none',
+          WebkitBackdropFilter: darkMode ? 'blur(14px)' : 'none',
+          overflow: 'hidden',
         }}>
           <div style={{
-            padding: "14px 18px",
-            borderBottom: darkMode ? "1px solid rgba(66, 71, 79, 0.4)" : "1px solid #F3F4F6",
-            display: "flex", alignItems: "center", gap: 8,
+            padding: '14px 18px',
+            borderBottom: darkMode ? '1px solid rgba(66, 71, 79, 0.4)' : '1px solid #F3F4F6',
+            display: 'flex', alignItems: 'center', gap: 8,
           }}>
-            <Zap size={15} color={darkMode ? "#a3c9ff" : "#F59E0B"} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: darkMode ? "#e2e2e6" : "#1F2937" }}>
-              快捷入口
-            </span>
+            <Zap size={15} color={darkMode ? '#a3c9ff' : '#F59E0B'} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: textColor }}>快捷入口</span>
           </div>
-
           <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 14,
-            padding: "18px 18px 20px",
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14,
+            padding: '18px 18px 20px',
           }}>
             {TOP_MODULES.map((m) => {
               const IconComp = m.icon;
               return (
                 <motion.div
-                  whileHover={{ y: -3, backgroundColor: darkMode ? "rgba(46,125,202,0.08)" : "rgba(46,125,202,0.04)" }}
+                  key={m.id}
+                  whileHover={{ y: -3 }}
                   onClick={() => setCurrentPage(m.id)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 10,
-                    cursor: "pointer", borderRadius: 10,
-                    padding: "14px 16px",
-                    background: darkMode ? "rgba(28, 31, 38, 0.6)" : "#fff",
-                    border: darkMode ? "1px solid rgba(163, 201, 255, 0.12)" : "1px solid #E5E7EB",
-                    transition: "all .2s",
-                    boxShadow: darkMode ? "0 1px 6px rgba(0,0,0,.2)" : "0 1px 3px rgba(0,0,0,.04)",
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    cursor: 'pointer', borderRadius: 10,
+                    padding: '14px 16px',
+                    background: darkMode ? 'rgba(28, 31, 38, 0.6)' : '#fff',
+                    border: `1px solid ${borderColor}`,
+                    transition: 'all .2s',
+                    boxShadow: darkMode ? '0 1px 6px rgba(0,0,0,.2)' : '0 1px 3px rgba(0,0,0,.04)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 4px 16px ${darkMode ? 'rgba(46,125,202,0.15)' : 'rgba(37,99,235,0.1)'}`;
+                    e.currentTarget.style.borderColor = m.color;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = darkMode ? '0 1px 6px rgba(0,0,0,.2)' : '0 1px 3px rgba(0,0,0,.04)';
+                    e.currentTarget.style.borderColor = borderColor;
                   }}
                 >
                   <div style={{
                     width: 34, height: 34, borderRadius: 8,
-                    background: darkMode ? "rgba(163, 201, 255, 0.1)" : m.color + "15",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    flexShrink: 0,
+                    background: darkMode ? 'rgba(163, 201, 255, 0.1)' : `${m.color}15`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    <IconComp size={17} color={darkMode ? "#a3c9ff" : m.color} />
+                    <IconComp size={17} color={darkMode ? '#a3c9ff' : m.color} />
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: darkMode ? "#e2e2e6" : "#374151" }}>
-                    {m.label}
-                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: textColor }}>{m.label}</span>
                 </motion.div>
               );
             })}
@@ -580,4 +460,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

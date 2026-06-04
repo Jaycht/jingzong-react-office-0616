@@ -4,7 +4,7 @@ import {
   DatabaseBackup, FileArchive, FileCog, FileSearch, FileText, FolderKanban,
   Gavel, Handshake, Landmark, LayoutDashboard, ListChecks, LockKeyhole,
   Megaphone, MessageSquareText, PieChart, ScrollText, SearchCheck,
-  TableProperties, Users, WalletCards
+  TableProperties, Users, WalletCards, Clock
 } from 'lucide-react';
 
 export type FieldType = 'text' | 'textarea' | 'date' | 'number' | 'select' | 'attachment' | 'section';
@@ -683,6 +683,27 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
     ];
   }
 
+  if (moduleId === 'evidence-phone-collection') {
+    return [
+      f('caseNo', '案件编号', 'text', false),
+      f('caseName', '案件名称', 'text', false),
+      f('holder', '持有人', 'text', false),
+      f('holderIdentity', '持有人身份', 'select', false, [
+        '报案人', '证人', '嫌疑人', '其他',
+      ], 'phone.holderIdentity'),
+      f('idNo', '身份证号码', 'text', false),
+      f('phone', '手机号', 'text', false),
+      f('phoneModel', '手机型号', 'text', false),
+      f('collectDate', '采集时间', 'date', false),
+      f('collectContent', '采集内容', 'select', false, [
+        '全部采集', '图像视频', '微信QQ', '其他',
+      ]),
+      f('squad', '所属中队', 'select', false, [
+        '涉众办', '法制室', '一中队', '二中队', '三中队', '线索登记', '外单位协助',
+      ], 'phone.squad'),
+    ];
+  }
+
   if (moduleId === 'evidence-report') {
     return [
       // 步骤1：线索/案件基本信息
@@ -1284,19 +1305,20 @@ export const DEPARTMENTS: NavDepartment[] = [
   },
   {
     id: 'evidence',
-    label: '调证分析组',
+    label: '调证分析',
     icon: SearchCheck,
     modules: [
-      singleModule('evidence', '调证分析组', 'evidence-clue', '线索登记', '上级下发、中队移交和资金线索登记。', '线索登记'),
-      singleModule('evidence', '调证分析组', 'evidence-request', '调证登记', '银行、支付平台、第三方数据调取登记。', '调证登记'),
-      singleModule('evidence', '调证分析组', 'evidence-freeze', '资金查控', '涉案账户冻结、续冻、解冻和执行银行记录。', '资金查控'),
-      singleModule('evidence', '调证分析组', 'evidence-report', '资金分析', '资金流向、账户关联、分析结论和报告提交。', '资金分析'),
+      singleModule('evidence', '调证分析', 'evidence-clue', '线索登记', '上级下发、中队移交和资金线索登记。', '线索登记'),
+      singleModule('evidence', '调证分析', 'evidence-request', '调证登记', '银行、支付平台、第三方数据调取登记。', '调证登记'),
+      singleModule('evidence', '调证分析', 'evidence-freeze', '资金查控', '涉案账户冻结、续冻、解冻和执行银行记录。', '资金查控'),
+      singleModule('evidence', '调证分析', 'evidence-phone-collection', '手机采集', '涉案手机信息采集与登记。', '手机采集'),
+      singleModule('evidence', '调证分析', 'evidence-report', '资金分析', '资金流向、账户关联、分析结论和报告提交。', '资金分析'),
     ],
   },
 ];
 
 export const PLATFORM_NAV = {
-  top: [{ id: 'dashboard', label: '工作台', icon: LayoutDashboard }],
+  top: [{ id: 'dashboard', label: '工作台', icon: LayoutDashboard }, { id: 'timeline', label: '案件时间轴', icon: Clock }],
   data: [
     { id: 'statistics', label: '统计分析', icon: PieChart },
     { id: 'importExport', label: '导入导出', icon: TableProperties },

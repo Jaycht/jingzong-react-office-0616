@@ -22,11 +22,14 @@ const Attachments = lazy(() => import("../pages/Attachments"));
 const PlaceholderPage = lazy(() => import("../pages/PlaceholderPage"));
 const ModulePage = lazy(() => import("../pages/ModulePage"));
 
+const CaseTimeline = lazy(() => import("../pages/CaseTimeline"));
+
 const PAGES: Record<string, React.FC> = {
   dashboard: Dashboard, statistics: Statistics,
   settings: SettingsPage, operationLog: OperationLog,
   importExport: ImportExport, backup: Backup, version: Version,
   attachments: Attachments,
+  timeline: CaseTimeline,
   interview: PlaceholderPage, meeting: PlaceholderPage, victim: PlaceholderPage,
   clue: PlaceholderPage, fund: PlaceholderPage, daily: PlaceholderPage,
   party: PlaceholderPage, report: PlaceholderPage, userSettings: PlaceholderPage,

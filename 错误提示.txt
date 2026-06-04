@@ -1,0 +1,36 @@
+Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+react-router-dom.js?v=fba7ea7b:3586 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+react-router-dom.js?v=fba7ea7b:3586 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+client-B4kob3VV.js?v=fba7ea7b:5274 ReferenceError: textColor is not defined
+    at NavGroup (Sidebar.tsx:282:77)
+
+
+The above error occurred in the <NavGroup> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+ErrorBoundary.tsx:22 [ErrorBoundary] ReferenceError: textColor is not defined
+    at NavGroup (Sidebar.tsx:282:77)
+ 
+    at NavGroup (http://localhost:5173/src/components/Sidebar.tsx:494:21)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at MotionComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=fba7ea7b:1194:35)
+    at Sidebar (http://localhost:5173/src/components/Sidebar.tsx:11:35)
+    at div (<anonymous>)
+    at div (<anonymous>)
+    at AppLayout (http://localhost:5173/src/components/AppLayout.tsx:75:18)
+    at div (<anonymous>)
+    at MotionComponent (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=fba7ea7b:1194:35)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=fba7ea7b:3301:8)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=fba7ea7b:3744:8)
+    at MotionConfig (http://localhost:5173/node_modules/.vite/deps/framer-motion.js?v=fba7ea7b:898:25)
+    at div (<anonymous>)
+    at AppContent (http://localhost:5173/src/App.tsx:19:2)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=fba7ea7b:3692:18)
+    at HashRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=fba7ea7b:4402:8)
+    at LocaleProvider (http://localhost:5173/node_modules/.vite/deps/antd.js?v=fba7ea7b:6220:10)
+    at MotionWrapper (http://localhost:5173/node_modules/.vite/deps/antd.js?v=fba7ea7b:7903:36)
+    at ProviderChildren (http://localhost:5173/node_modules/.vite/deps/antd.js?v=fba7ea7b:7983:10)
+    at ConfigProvider (http://localhost:5173/node_modules/.vite/deps/antd.js?v=fba7ea7b:8162:31)
+    at App (http://localhost:5173/src/App.tsx:222:19)
+    at ErrorBoundary (http://localhost:5173/src/components/ErrorBoundary.tsx:4:16)

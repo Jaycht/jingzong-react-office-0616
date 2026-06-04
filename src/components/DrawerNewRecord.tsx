@@ -11,11 +11,12 @@ import { useUnsavedChanges } from '../utils/useUnsavedChanges';
 import { useAppStore } from '../store/appStore';
 import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
-import { saveMassRecord, updateMassRecord } from '../store/massStore';
+import { saveMassRecord, updateMassRecord, getMassRecords } from '../store/massStore';
 import ErrorBoundary from './ErrorBoundary';
+import { recordFormFields, rebuildCaseIndex, getFieldHistory } from '../store/inputHistoryStore';
 import {
-  CaseNameAutoComplete, CaseNameMatchClue, CaseNameMatchReport,
-  CaseNameMatchSquad, CaseNoMatchSquad,
+  GlobalCaseNameField, GlobalCaseNoField,
+  InputWithHistory,
   MultiPersonField, PersistedSelect,
 } from './SharedFormFields';
 import { saveAttachment, relinkAttachment, getAttachment } from '../store/attachmentStore';
@@ -111,7 +112,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     try {
       const values = await form.validateFields();
 
-      // 清理附件字段：删除 originFileObj（File/Blob 无法 JSON 序列化到 localStorage）
+      // 清理附件字段：删除 originFileObj
       for (const key of Object.keys(values)) {
         if (Array.isArray(values[key]) && values[key].length > 0 && values[key][0]?.originFileObj) {
           values[key] = (values[key] as Record<string, unknown>[]).map((f) => {
@@ -123,9 +124,12 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
       setSaving(true);
       try {
+        // ─── 记录输入历史 ────────────────────
+        const allFieldIds = allFields.filter((f) => f.type !== 'section' && f.type !== 'attachment').map((f) => f.id);
+        recordFormFields(allFieldIds, values);
+
         if (isEditing && editRecord) {
           updateMassRecord(editRecord.id, values);
-          // 关联附件到真实记录 ID
           for (const attId of pendingAttachments.current) {
             relinkAttachment(attId, editRecord.id).catch(() => {});
           }
@@ -134,11 +138,12 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             safeSetSaving(false);
             safeSetDirty(false);
             showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已更新`, 'success');
+            // 重建案件索引
+            rebuildCaseIndex(getMassRecords());
             onClose();
           }, 300);
         } else {
           const newRecord = saveMassRecord(selectedModuleId, selectedTabId, values);
-          // 关联附件到真实记录 ID
           for (const attId of pendingAttachments.current) {
             relinkAttachment(attId, newRecord.id).catch(() => {});
           }
@@ -147,6 +152,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             safeSetSaving(false);
             safeSetDirty(false);
             showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已创建`, 'success');
+            // 重建案件索引
+            rebuildCaseIndex(getMassRecords());
             onClose();
           }, 300);
         }
@@ -458,29 +465,14 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
   editRecord?: import('../store/massStore').MassRecord | null;
 }) {
   const name = subName !== undefined ? [subName, field.id] : field.id;
-  // 涉众数据统计 → 案件名称自动匹配涉众线索项目名称
-  if (moduleId === 'mass-statistics' && field.id === 'caseName') {
-    return <CaseNameAutoComplete field={field} subName={subName} />;
+
+  // ─── 全局案件名称/编号联动 ───
+  // 所有模块的 caseName/caseNo 都使用全局 AutoComplete，实现全软件数据共享
+  if (field.id === 'caseName') {
+    return <GlobalCaseNameField field={field} subName={subName} moduleLabel={(() => { try { return useAppStore.getState().currentPage; } catch { return ''; } })()} />;
   }
-  // 调证登记 → 案件名称匹配线索登记中的交办线索名称
-  if (moduleId === 'evidence-request' && field.id === 'caseName') {
-    return <CaseNameMatchClue field={field} subName={subName} />;
-  }
-  // 资金分析 → 案件名称匹配线索登记中的交办线索名称
-  if (moduleId === 'evidence-report' && field.id === 'caseName') {
-    return <CaseNameMatchClue field={field} subName={subName} />;
-  }
-  // 法制室·案件总台账 → 案件名称匹配接报案登记的接报事项
-  if (moduleId === 'legal-case-ledger' && field.id === 'caseName') {
-    return <CaseNameMatchReport field={field} subName={subName} />;
-  }
-  // 每日工作记录 → 案件编号匹配中队案件管理
-  if (moduleId === 'squad-daily' && field.id === 'caseNo') {
-    return <CaseNoMatchSquad field={field} subName={subName} />;
-  }
-  // 每日工作记录 / 强制措施登记 → 案件名称匹配中队案件管理
-  if ((moduleId === 'squad-daily' || moduleId === 'squad-coercive') && field.id === 'caseName') {
-    return <CaseNameMatchSquad field={field} subName={subName} />;
+  if (field.id === 'caseNo') {
+    return <GlobalCaseNoField field={field} subName={subName} />;
   }
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
@@ -583,7 +575,7 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
     || `请输入${field.label}`;
   return (
     <Form.Item name={name} label={field.label} rules={rules}>
-      <Input placeholder={customPlaceholder} />
+      <InputWithHistory field={field} placeholder={customPlaceholder} />
     </Form.Item>
   );
 }

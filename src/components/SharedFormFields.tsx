@@ -7,6 +7,7 @@ import { AutoComplete, Button, Divider, Form, Input, Select, Space } from 'antd'
 import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
 import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames, getSquadCaseNames, getSquadCaseNos } from '../store/massStore';
+import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName } from '../store/inputHistoryStore';
 
 type SelectValue = string | string[] | undefined;
 
@@ -279,6 +280,167 @@ export function PersistedSelect({
 
   return (
     <Select value={value} onChange={onChange} mode={multiple ? 'multiple' : undefined} placeholder={`请选择${field.label}`} options={options.map((o) => ({ label: o, value: o }))} />
+  );
+}
+
+/* ===================== 输入历史 AutoComplete ===================== */
+
+interface InputWithHistoryProps {
+  field: FieldDefinition;
+  placeholder?: string;
+  /** 额外选项，合并到历史记录中一起展示 */
+  extraOptions?: string[];
+  /** 选择时的回调 */
+  onSelect?: (value: string) => void;
+}
+
+/**
+ * 带输入历史自动补全的文本输入框
+ * 在已有 AutoComplete 匹配的基础上，额外展示该字段的历史输入记录
+ */
+export function InputWithHistory({ field, placeholder, extraOptions, onSelect }: InputWithHistoryProps) {
+  const [open, setOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const options = useMemo(() => {
+    void refreshKey;
+    const history = getFieldHistory(field.id);
+    const merged = [
+      ...(extraOptions || []),
+      ...history,
+    ];
+    // 去重保留顺序
+    return Array.from(new Set(merged)).map((item) => ({ value: item, label: item }));
+  }, [field.id, extraOptions, refreshKey]);
+
+  return (
+    <AutoComplete
+      open={open}
+      onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+      onBlur={() => setTimeout(() => setOpen(false), 200)}
+      onSelect={(value: string) => onSelect?.(value)}
+      options={options}
+      placeholder={placeholder || `请输入${field.label}`}
+      filterOption={(inputValue, option) =>
+        (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
+      }
+      style={{ width: '100%' }}
+    />
+  );
+}
+
+/* ===================== 全局案件名称/编号联动 ===================== */
+
+/**
+ * 全局案件名称字段
+ * 展示所有模块中已保存的案件名称，选择后自动填充案件编号
+ */
+export function GlobalCaseNameField({ field, subName, moduleLabel }: {
+  field: FieldDefinition;
+  subName?: number;
+  moduleLabel?: string;
+}) {
+  const [value, setValue] = useState<string>('');
+  const [open, setOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const options = useMemo(() => {
+    void refreshKey;
+    const names = getAllCaseNames();
+    return names.map((name) => ({ value: name, label: name }));
+  }, [refreshKey]);
+
+  const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+
+  const handleSelect = (selectedValue: string) => {
+    setValue(selectedValue);
+    // 自动填充案件编号
+    const relatedNos = getCaseNosByName(selectedValue);
+    if (relatedNos.length > 0) {
+      const caseNoField = subName !== undefined ? [subName, 'caseNo'] : 'caseNo';
+      try {
+        const form = Form.useFormInstance();
+        form.setFieldsValue({ [typeof caseNoField === 'string' ? caseNoField : caseNoField[1]]: relatedNos[0] });
+      } catch {
+        // 静默处理，取不到 form 时不影响
+      }
+    }
+  };
+
+  return (
+    <Form.Item name={fieldName} label={field.label} rules={rules}>
+      <AutoComplete
+        value={value}
+        onChange={(val: string) => setValue(val)}
+        open={open}
+        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        onSelect={handleSelect}
+        options={options}
+        placeholder="请输入案件名称（全软件数据共享）"
+        filterOption={(inputValue, option) =>
+          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
+        }
+        style={{ width: '100%' }}
+      />
+    </Form.Item>
+  );
+}
+
+/**
+ * 全局案件编号字段
+ * 展示所有模块中已保存的案件编号，选择后自动填充案件名称
+ */
+export function GlobalCaseNoField({ field, subName }: {
+  field: FieldDefinition;
+  subName?: number;
+}) {
+  const [value, setValue] = useState<string>('');
+  const [open, setOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const options = useMemo(() => {
+    void refreshKey;
+    const nos = getAllCaseNos();
+    return nos.map((no) => ({ value: no, label: no }));
+  }, [refreshKey]);
+
+  const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+
+  const handleSelect = (selectedValue: string) => {
+    setValue(selectedValue);
+    // 自动填充案件名称
+    const relatedNames = getCaseNamesByNo(selectedValue);
+    if (relatedNames.length > 0) {
+      const caseNameField = subName !== undefined ? [subName, 'caseName'] : 'caseName';
+      try {
+        const form = Form.useFormInstance();
+        form.setFieldsValue({ [typeof caseNameField === 'string' ? caseNameField : caseNameField[1]]: relatedNames[0] });
+      } catch {
+        // 静默处理
+      }
+    }
+  };
+
+  return (
+    <Form.Item name={fieldName} label={field.label} rules={rules}>
+      <AutoComplete
+        value={value}
+        onChange={(val: string) => setValue(val)}
+        open={open}
+        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        onSelect={handleSelect}
+        options={options}
+        placeholder="请输入案件编号（全软件数据共享）"
+        filterOption={(inputValue, option) =>
+          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
+        }
+        style={{ width: '100%' }}
+      />
+    </Form.Item>
   );
 }
 

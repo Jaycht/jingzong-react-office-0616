@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>工作记录登记系统 - 工作台</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#765700",
+                        "inverse-on-surface": "#f0f1f2",
+                        "outline-variant": "#c2c6d5",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e7e8e9",
+                        "on-secondary-fixed": "#00174c",
+                        "surface-bright": "#f8f9fa",
+                        "primary": "#0058bd",
+                        "on-primary-fixed-variant": "#004494",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#424753",
+                        "secondary-container": "#88a5ff",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#2771df",
+                        "outline": "#727785",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#ffdfa0",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed": "#261a00",
+                        "surface-tint": "#005ac1",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2e3132",
+                        "secondary": "#3b5aaf",
+                        "surface-container-low": "#f3f4f5",
+                        "on-surface": "#191c1d",
+                        "background": "#f8f9fa",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface": "#f8f9fa",
+                        "on-primary-container": "#fefcff",
+                        "surface-dim": "#d9dadb",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-background": "#191c1d",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "tertiary-fixed-dim": "#fbbc05",
+                        "on-tertiary-container": "#fffbff",
+                        "tertiary-container": "#956e00",
+                        "surface-container": "#edeeef",
+                        "inverse-primary": "#adc6ff",
+                        "on-primary-fixed": "#001a41",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-variant": "#e1e3e4",
+                        "on-secondary-fixed-variant": "#1f4195",
+                        "on-secondary-container": "#11378c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "container-max-width": "1440px",
+                        "sidebar-width": "280px",
+                        "stack-lg": "16px",
+                        "stack-md": "12px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "title-lg": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .chart-container { position: relative; width: 100%; height: 300px; }
+        .sidebar-item-active { border-left-width: 4px; }
+    </style>
+</head>
+<body class="flex min-h-screen text-on-surface">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full flex flex-col gap-stack-md py-stack-lg bg-surface-container border-r border-outline-variant w-[280px] z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">工作记录登记系统</h1>
+<p class="font-label-md text-label-md text-on-surface-variant opacity-70">政府事务管理版</p>
+</div>
+<nav class="flex-1 flex flex-col px-2">
+<!-- Active: 工作台 -->
+<a class="flex items-center gap-stack-lg bg-secondary-container text-on-secondary-container border-l-4 border-primary px-4 py-3 transition-all scale-98 opacity-90" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-nav-parent text-nav-parent">工作台</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">business_center</span>
+<span class="font-nav-parent text-nav-parent">大队办公室</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-nav-parent text-nav-parent">涉众办</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-nav-parent text-nav-parent">法制室</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-nav-parent text-nav-parent">中队管理</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-nav-parent text-nav-parent">资金查控</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-nav-parent text-nav-parent">系统管理</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">backup</span>
+<span class="font-nav-parent text-nav-parent">数据备份</span>
+</a>
+</nav>
+<div class="px-6 py-4 mt-auto border-t border-outline-variant">
+<div class="flex items-center gap-3">
+<img alt="User profile avatar" class="w-10 h-10 rounded-full bg-surface-container-high" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJnXu2C0G8V9JtwfjvfQ2X9PRQ0qVzp_nptIwb3F8sG-WueTcQL9bcXMEZYiAZLWU9u7qNO4W2cw8NAKUhuVMujBiILuFsSLaJPQO_PgqOhYNjgBltmo7_zj2_rtGeNUzCpESaPqTpnEaBv8NS1fJ_28oBdSHC6_WzM2aax0Y8zYPEeQKPSDkyMSjXqkKY5Oq9Vo6JcGYrj4riXSpuHFjKioIJPlnLHQ8vED6FVK3R9tkU7_oH9G-kffdBj58ZcOT9kmMeeVC7j7g"/>
+<div>
+<p class="font-label-lg text-label-lg text-on-surface">管理员</p>
+<p class="font-label-md text-label-md text-on-surface-variant">高级权限</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-[280px] min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="h-16 bg-surface border-b border-outline-variant flex justify-between items-center px-10 sticky top-0 z-40">
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 w-80 text-body-md focus:ring-2 focus:ring-primary/20" placeholder="搜索工作记录、案件编号..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">dark_mode</span></button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
+</div>
+</header>
+<!-- Scrollable Dashboard Area -->
+<div class="p-margin-desktop flex flex-col gap-gutter max-w-container-max-width mx-auto w-full">
+<!-- Metric Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter">
+<!-- Total Records -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-lg text-label-lg text-on-surface-variant">记录总数</span>
+<span class="p-2 bg-primary/10 rounded-lg text-primary material-symbols-outlined">description</span>
+</div>
+<p class="font-headline-lg text-headline-lg mb-1">12,840</p>
+<div class="flex items-center gap-1 text-tertiary">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="font-label-md text-label-md">+12.5% vs 去年</span>
+</div>
+</div>
+<!-- Active Cases -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-lg text-label-lg text-on-surface-variant">在办案件</span>
+<span class="p-2 bg-secondary/10 rounded-lg text-secondary material-symbols-outlined">work</span>
+</div>
+<p class="font-headline-lg text-headline-lg mb-1">456</p>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="font-label-md text-label-md">+4.2% 本月</span>
+</div>
+</div>
+<!-- Today's New -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-lg text-label-lg text-on-surface-variant">今日新增</span>
+<span class="p-2 bg-tertiary/10 rounded-lg text-tertiary material-symbols-outlined">add_circle</span>
+</div>
+<p class="font-headline-lg text-headline-lg mb-1">32</p>
+<div class="flex items-center gap-1 text-error">
+<span class="material-symbols-outlined text-sm">trending_down</span>
+<span class="font-label-md text-label-md">-2% 昨日</span>
+</div>
+</div>
+<!-- Pending Review -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-lg text-label-lg text-on-surface-variant">待核查事项</span>
+<span class="p-2 bg-error/10 rounded-lg text-error material-symbols-outlined">pending_actions</span>
+</div>
+<p class="font-headline-lg text-headline-lg mb-1">87</p>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">horizontal_rule</span>
+<span class="font-label-md text-label-md">持平上周</span>
+</div>
+</div>
+</div>
+<!-- Middle Section: Bar Chart & Donut Chart -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Monthly Volume Bar Chart -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-8 rounded-xl border border-outline-variant">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">部门记录产量趋势</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">2024年度各科室月度申报数量统计</p>
+</div>
+<div class="flex gap-2">
+<button class="px-3 py-1 text-label-md border border-outline-variant rounded-md hover:bg-surface-variant">近6个月</button>
+<button class="px-3 py-1 text-label-md bg-primary text-white rounded-md">年度</button>
+</div>
+</div>
+<!-- Custom SVG Bar Chart -->
+<div class="h-80 w-full flex items-end gap-6 pt-4 px-4">
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full flex items-end gap-1 h-full">
+<div class="bg-primary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 60%"></div>
+<div class="bg-secondary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 40%"></div>
+</div>
+<span class="mt-4 font-label-md text-on-surface-variant">办公室</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full flex items-end gap-1 h-full">
+<div class="bg-primary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 85%"></div>
+<div class="bg-secondary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 65%"></div>
+</div>
+<span class="mt-4 font-label-md text-on-surface-variant">涉众办</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full flex items-end gap-1 h-full">
+<div class="bg-primary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 45%"></div>
+<div class="bg-secondary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 30%"></div>
+</div>
+<span class="mt-4 font-label-md text-on-surface-variant">法制室</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full flex items-end gap-1 h-full">
+<div class="bg-primary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 95%"></div>
+<div class="bg-secondary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 70%"></div>
+</div>
+<span class="mt-4 font-label-md text-on-surface-variant">中队</span>
+</div>
+<div class="flex-1 flex flex-col items-center group">
+<div class="w-full flex items-end gap-1 h-full">
+<div class="bg-primary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 75%"></div>
+<div class="bg-secondary w-full rounded-t-sm transition-all group-hover:opacity-80" style="height: 55%"></div>
+</div>
+<span class="mt-4 font-label-md text-on-surface-variant">资金科</span>
+</div>
+</div>
+</div>
+<!-- Case Type Distribution Donut Chart -->
+<div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant flex flex-col">
+<h3 class="font-title-lg text-title-lg text-on-surface mb-2">案件类型分布</h3>
+<p class="font-label-md text-label-md text-on-surface-variant mb-8">主要经济犯罪门类占比</p>
+<div class="relative w-48 h-48 mx-auto mb-8">
+<!-- Simulated Donut Chart using Conic Gradient -->
+<div class="w-full h-full rounded-full" style="background: conic-gradient(#0058bd 0% 35%, #3b5aaf 35% 60%, #765700 60% 80%, #e1e3e4 80% 100%);"></div>
+<div class="absolute inset-4 bg-white rounded-full flex flex-col items-center justify-center">
+<span class="font-headline-md text-headline-md text-on-surface">85</span>
+<span class="font-label-md text-label-md text-on-surface-variant">类细分</span>
+</div>
+</div>
+<div class="space-y-3 flex-1 overflow-y-auto">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="font-label-lg text-label-lg">非法集资类</span>
+</div>
+<span class="font-label-md text-label-md font-bold">35%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-secondary"></div>
+<span class="font-label-lg text-label-lg">金融诈骗类</span>
+</div>
+<span class="font-label-md text-label-md font-bold">25%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-tertiary"></div>
+<span class="font-label-lg text-label-lg">职务犯罪类</span>
+</div>
+<span class="font-label-md text-label-md font-bold">20%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-surface-variant"></div>
+<span class="font-label-lg text-label-lg">其他类型</span>
+</div>
+<span class="font-label-md text-label-md font-bold">20%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Area: Line Chart -->
+<div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">实时活跃度趋势 (24小时)</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">系统并发访问与记录上传动态</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-label-md text-label-md">上传记录</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-error animate-pulse"></div>
+<span class="font-label-md text-label-md">实时流量</span>
+</div>
+</div>
+</div>
+<!-- Line Chart Visualization Area -->
+<div class="h-64 w-full relative bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 200">
+<!-- Grid Lines -->
+<line stroke="#E1E3E4" stroke-dasharray="4" stroke-width="1" x1="0" x2="1000" y1="50" y2="50"></line>
+<line stroke="#E1E3E4" stroke-dasharray="4" stroke-width="1" x1="0" x2="1000" y1="100" y2="100"></line>
+<line stroke="#E1E3E4" stroke-dasharray="4" stroke-width="1" x1="0" x2="1000" y1="150" y2="150"></line>
+<!-- Smooth Area Background -->
+<path d="M0,200 L0,150 C100,140 150,180 250,120 C350,60 450,110 550,40 C650,-30 850,90 1000,10 L1000,200 Z" fill="url(#lineGradient)" opacity="0.1"></path>
+<!-- The Line -->
+<path d="M0,150 C100,140 150,180 250,120 C350,60 450,110 550,40 C650,-30 850,90 1000,10" fill="none" stroke="#0058bd" stroke-linecap="round" stroke-width="3"></path>
+<defs>
+<lineargradient id="lineGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#0058bd"></stop>
+<stop offset="100%" stop-color="#ffffff"></stop>
+</lineargradient>
+</defs>
+</svg>
+<!-- Time Labels Overlay -->
+<div class="absolute bottom-2 left-0 right-0 flex justify-between px-6 font-label-md text-label-md text-outline opacity-60">
+<span>00:00</span><span>04:00</span><span>08:00</span><span>12:00</span><span>16:00</span><span>20:00</span><span>23:59</span>
+</div>
+</div>
+</div>
+<!-- Dashboard Feature Section: Quick Actions / Recent Activity -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant">
+<h4 class="font-label-lg text-label-lg mb-4 text-on-surface">快捷入口</h4>
+<div class="grid grid-cols-3 gap-4">
+<button class="flex flex-col items-center gap-2 p-4 rounded-lg bg-surface-container hover:bg-primary-container hover:text-white transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:text-white">note_add</span>
+<span class="font-label-md text-label-md">新建记录</span>
+</button>
+<button class="flex flex-col items-center gap-2 p-4 rounded-lg bg-surface-container hover:bg-primary-container hover:text-white transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:text-white">folder_open</span>
+<span class="font-label-md text-label-md">案件卷宗</span>
+</button>
+<button class="flex flex-col items-center gap-2 p-4 rounded-lg bg-surface-container hover:bg-primary-container hover:text-white transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:text-white">analytics</span>
+<span class="font-label-md text-label-md">报表中心</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant">
+<h4 class="font-label-lg text-label-lg mb-4 text-on-surface">系统公告</h4>
+<div class="space-y-4">
+<div class="flex gap-4 items-start pb-3 border-b border-outline-variant/30">
+<div class="bg-error-container text-on-error-container text-[10px] px-2 py-0.5 rounded font-bold">重要</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md">关于加强涉众案件记录完整性的通知</p>
+<p class="text-[10px] text-outline mt-1">2024-05-24 14:30</p>
+</div>
+</div>
+<div class="flex gap-4 items-start">
+<div class="bg-primary-container text-white text-[10px] px-2 py-0.5 rounded font-bold">系统</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md">系统将于本周六 02:00 进行例行数据维护</p>
+<p class="text-[10px] text-outline mt-1">2024-05-23 09:15</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="mt-auto px-10 py-6 border-t border-outline-variant bg-surface-container-lowest flex justify-between items-center w-full">
+<span class="font-label-sm text-label-sm text-on-surface-variant opacity-60">© 2024 工作记录登记系统 | 版本 v2.4.0</span>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm text-outline hover:text-primary transition-colors" href="#">隐私政策</a>
+<a class="font-label-sm text-label-sm text-outline hover:text-primary transition-colors" href="#">使用条款</a>
+<a class="font-label-sm text-label-sm text-outline hover:text-primary transition-colors" href="#">技术支持</a>
+</div>
+</footer>
+</main>
+<!-- Contextual FAB (Only on Workbench) -->
+<button class="fixed bottom-10 right-10 w-14 h-14 bg-primary text-white rounded-full shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+<script>
+        // Simple interactivity for the bar chart
+        document.querySelectorAll('.group').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                item.style.cursor = 'pointer';
+            });
+        });
+
+        // Initialize any data effects
+        console.log('Work Record Management System Dashboard Loaded');
+    </script>
+</body></html>

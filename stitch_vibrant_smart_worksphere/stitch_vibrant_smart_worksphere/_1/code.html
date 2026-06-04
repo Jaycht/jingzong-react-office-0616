@@ -1,0 +1,520 @@
+<!DOCTYPE html><html class="light" lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-background": "#191c1d",
+                        outline: "#727785",
+                        "tertiary-fixed-dim": "#fbbc05",
+                        "on-tertiary": "#ffffff",
+                        error: "#ba1a1a",
+                        "on-tertiary-container": "#fffbff",
+                        "on-primary-fixed": "#001a41",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "on-tertiary-fixed": "#261a00",
+                        "outline-variant": "#c2c6d5",
+                        background: "#f8f9fa",
+                        primary: "#0058bd",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-variant": "#e1e3e4",
+                        "on-surface": "#191c1d",
+                        "surface-bright": "#f8f9fa",
+                        "tertiary-container": "#956e00",
+                        secondary: "#3b5aaf",
+                        "tertiary-fixed": "#ffdfa0",
+                        "inverse-surface": "#2e3132",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#adc6ff",
+                        "surface-dim": "#d9dadb",
+                        surface: "#f8f9fa",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#005ac1",
+                        "primary-container": "#2771df",
+                        "on-surface-variant": "#424753",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-secondary-container": "#11378c",
+                        "secondary-container": "#88a5ff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-primary-container": "#fefcff",
+                        "on-primary-fixed-variant": "#004494",
+                        "surface-container-highest": "#e1e3e4",
+                        tertiary: "#765700",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#edeeef",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#00174c",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#1f4195"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    spacing: {
+                        "margin-mobile": "16px",
+                        gutter: "24px",
+                        "margin-desktop": "40px",
+                        unit: "4px",
+                        "container-max-width": "1440px",
+                        "sidebar-width": "280px",
+                        "stack-lg": "16px",
+                        "stack-md": "12px",
+                        "page-margin": "32px"
+                    },
+                    fontFamily: {
+                        "label-lg": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        headline: ["Inter"],
+                        display: ["Inter"],
+                        body: ["Inter"],
+                        label: ["Inter"]
+                    },
+                    fontSize: {
+                        "label-lg": ["14px", {lineHeight: "20px", letterSpacing: "0.02em", fontWeight: "600"}],
+                        "display-lg": ["48px", {lineHeight: "60px", letterSpacing: "-0.02em", fontWeight: "700"}],
+                        "headline-md": ["24px", {lineHeight: "32px", fontWeight: "600"}],
+                        "label-md": ["12px", {lineHeight: "16px", fontWeight: "500"}],
+                        "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}],
+                        "title-lg": ["20px", {lineHeight: "28px", fontWeight: "500"}],
+                        "headline-lg": ["32px", {lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600"}],
+                        "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}],
+                        "nav-parent": ["18px", {lineHeight: "24px", fontWeight: "600"}]
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.35s cubic-bezier(0.2, 1, 0.3, 1) forwards',
+                        'ripple': 'ripple 1.5s infinite ease-out',
+                        'pulse-glow': 'pulseGlow 2s infinite ease-in-out',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(12px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        ripple: {
+                            '0%': { transform: 'scale(0.8)', opacity: '1' },
+                            '100%': { transform: 'scale(2.5)', opacity: '0' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 0 0 rgba(0, 88, 189, 0)' },
+                            '50%': { boxShadow: '0 0 15px 4px rgba(0, 88, 189, 0.2)' },
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .chart-container { position: relative; width: 100%; height: 300px; }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+        .scale-98:active { transform: scale(0.98); }
+
+        /* Snappier stagger delays */
+        .stagger-1 { animation-delay: 0.05s; }
+        .stagger-2 { animation-delay: 0.1s; }
+        .stagger-3 { animation-delay: 0.15s; }
+        .stagger-4 { animation-delay: 0.2s; }
+        .stagger-5 { animation-delay: 0.25s; }
+        .stagger-6 { animation-delay: 0.3s; }
+
+        .reveal-card { opacity: 0; }
+
+        /* Interactive Map Path */
+        .trend-path {
+            stroke-dasharray: 2000;
+            stroke-dashoffset: 2000;
+            animation: dash 2s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: 0; }
+        }
+
+        /* Nav Transition */
+        .nav-item {
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 0;
+            background: #0058bd;
+            transition: height 0.2s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+        .nav-item.active::after { height: 100%; }
+
+        /* Donut interaction */
+        .donut-segment {
+            transition: transform 0.2s cubic-bezier(0.2, 1, 0.3, 1), filter 0.2s ease;
+            transform-origin: center;
+        }
+        .donut-segment:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        /* Quick Entry Hover - Snappier */
+        .quick-entry-btn {
+            transition: all 0.2s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+        .quick-entry-btn:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 10px 15px -3px rgba(0, 88, 189, 0.3);
+        }
+
+        /* All other cards/buttons generic transitions */
+        .hover-card-transition {
+            transition: all 0.2s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full flex flex-col gap-stack-md py-stack-lg bg-surface-container dark:bg-surface-container border-r border-outline-variant dark:border-outline-variant w-[280px] z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface dark:text-on-surface leading-tight">经侦大队工作记录管理系统</h1>
+<p class="font-label-md text-label-md text-outline">政府事务管理版</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active Item -->
+<a class="nav-item active flex items-center gap-stack-lg bg-secondary-container/50 dark:bg-secondary-container/50 text-on-secondary-container dark:text-on-secondary-container px-4 py-4 font-nav-parent text-[18px]" href="#">
+<span class="material-symbols-outlined transition-transform duration-200 group-hover:scale-110" data-icon="dashboard">dashboard</span>
+<span class="">工作台</span>
+</a>
+<a class="nav-item flex items-center gap-stack-lg text-on-surface-variant dark:text-on-surface-variant px-4 py-4 hover:bg-surface-variant/50 dark:hover:bg-surface-variant/50 transition-colors duration-200 font-nav-parent text-[18px]" href="#">
+<span class="material-symbols-outlined" data-icon="business_center">business_center</span>
+<span class="">大队办公室</span>
+</a>
+<a class="nav-item flex items-center gap-stack-lg text-on-surface-variant dark:text-on-surface-variant px-4 py-4 hover:bg-surface-variant/50 dark:hover:bg-surface-variant/50 transition-colors duration-200 font-nav-parent text-[18px]" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="">涉众办</span>
+</a>
+<a class="nav-item flex items-center gap-stack-lg text-on-surface-variant dark:text-on-surface-variant px-4 py-4 hover:bg-surface-variant/50 dark:hover:bg-surface-variant/50 transition-colors duration-200 font-nav-parent text-[18px]" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="">法制室</span>
+</a>
+<a class="nav-item flex items-center gap-stack-lg text-on-surface-variant dark:text-on-surface-variant px-4 py-4 hover:bg-surface-variant/50 dark:hover:bg-surface-variant/50 transition-colors duration-200 font-nav-parent text-[18px]" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="">中队管理</span>
+</a>
+<a class="nav-item flex items-center gap-stack-lg text-on-surface-variant dark:text-on-surface-variant px-4 py-4 hover:bg-surface-variant/50 dark:hover:bg-surface-variant/50 transition-colors duration-200 font-nav-parent text-[18px]" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+<span class="">资金查控</span>
+</a>
+<a class="nav-item flex items-center gap-stack-lg text-on-surface-variant dark:text-on-surface-variant px-4 py-4 hover:bg-surface-variant/50 dark:hover:bg-surface-variant/50 transition-colors duration-200 font-nav-parent text-[18px]" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="">系统管理</span>
+</a>
+</nav>
+<div class="mt-auto px-4 py-6 border-t border-outline-variant">
+<button class="quick-entry-btn w-full flex items-center justify-center gap-2 bg-primary text-on-primary py-3 rounded-lg font-label-lg shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span class="">快捷入口</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-[280px] min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-[280px] h-16 flex justify-between items-center px-8 z-40 bg-surface/80 backdrop-blur-md dark:bg-surface/80 border-b border-outline-variant dark:border-outline-variant">
+<div class="flex items-center gap-4 w-1/3">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors duration-200">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-body-md focus:ring-2 focus:ring-primary/20 transition-all duration-200 outline-none" placeholder="搜索工作记录或案件..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all duration-200 hover:scale-110 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full animate-ping"></span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all duration-200 hover:scale-110" id="dark-mode-toggle">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<div class="text-right">
+<p class="font-label-lg text-on-surface group-hover:text-primary transition-colors duration-200">管理员</p>
+<p class="text-[10px] text-outline uppercase tracking-wider">Super Admin</p>
+</div>
+<span class="material-symbols-outlined text-[40px] text-outline group-hover:text-primary transition-colors duration-200">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="mt-16 p-8 flex-1 overflow-y-auto">
+<!-- Welcome Header -->
+<section class="mb-10 reveal-card animate-fade-in-up" style="opacity: 1;">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">欢迎回来，管理员</h2>
+<p class="text-on-surface-variant">今天是 2024年11月25日，当前系统运行状态良好，共有 12 条待办事项需要处理。</p>
+</section>
+<!-- Quick Department Access -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- Card 1 -->
+<div class="reveal-card animate-fade-in-up stagger-1 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-xl hover-card-transition hover:-translate-y-1 group flex flex-col justify-between h-[180px] hover:border-primary/30" style="opacity: 1;">
+<div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary text-3xl group-hover:scale-110 transition-transform duration-200">business_center</span>
+<span class="text-label-md text-secondary bg-secondary-container px-2 py-1 rounded">+2.4%</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface">大队办公室</h3>
+<p class="text-label-md text-outline">本月录入: 856 条</p>
+</div>
+<button class="mt-4 w-full py-2 bg-primary/5 text-primary font-label-lg rounded group-hover:bg-primary group-hover:text-on-primary transition-all duration-200">新条目</button>
+</div>
+<!-- Card 2 -->
+<div class="reveal-card animate-fade-in-up stagger-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-xl hover-card-transition hover:-translate-y-1 group flex flex-col justify-between h-[180px] hover:border-primary/30" style="opacity: 1;">
+<div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary text-3xl group-hover:scale-110 transition-transform duration-200">groups</span>
+<span class="text-label-md text-error bg-error-container px-2 py-1 rounded">-0.8%</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface">涉众办</h3>
+<p class="text-label-md text-outline">本月录入: 412 条</p>
+</div>
+<button class="mt-4 w-full py-2 bg-primary/5 text-primary font-label-lg rounded group-hover:bg-primary group-hover:text-on-primary transition-all duration-200">新条目</button>
+</div>
+<!-- Card 3 -->
+<div class="reveal-card animate-fade-in-up stagger-3 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-xl hover-card-transition hover:-translate-y-1 group flex flex-col justify-between h-[180px] hover:border-primary/30" style="opacity: 1;">
+<div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary text-3xl group-hover:scale-110 transition-transform duration-200">gavel</span>
+<span class="text-label-md text-secondary bg-secondary-container px-2 py-1 rounded">+12.1%</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface">法制室</h3>
+<p class="text-label-md text-outline">本月录入: 1,203 条</p>
+</div>
+<button class="mt-4 w-full py-2 bg-primary/5 text-primary font-label-lg rounded group-hover:bg-primary group-hover:text-on-primary transition-all duration-200">新条目</button>
+</div>
+<!-- Card 4 -->
+<div class="reveal-card animate-fade-in-up stagger-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 hover:shadow-xl hover-card-transition hover:-translate-y-1 group flex flex-col justify-between h-[180px] hover:border-primary/30" style="opacity: 1;">
+<div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary text-3xl group-hover:scale-110 transition-transform duration-200">account_balance</span>
+<span class="text-label-md text-secondary bg-secondary-container px-2 py-1 rounded">+5.0%</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface">资金查控</h3>
+<p class="text-label-md text-outline">本月录入: 2,841 条</p>
+</div>
+<button class="mt-4 w-full py-2 bg-primary/5 text-primary font-label-lg rounded group-hover:bg-primary group-hover:text-on-primary transition-all duration-200">新条目</button>
+</div>
+</section>
+<!-- Visualizations Section -->
+<div class="bento-grid">
+<!-- Bar Chart -->
+<div class="reveal-card animate-fade-in-up stagger-5 col-span-12 lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-8" style="opacity: 1;">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-on-surface">各部门月度录入量</h3>
+<select class="bg-surface-container-low border-none rounded text-label-md focus:ring-primary cursor-pointer">
+<option>最近六个月</option>
+<option>本年度</option>
+</select>
+</div>
+<div class="flex items-end justify-between h-64 gap-4 px-4">
+<div class="flex flex-col items-center gap-2 flex-1 group">
+<div class="w-full bg-primary/20 rounded-t-lg transition-all duration-300 ease-out origin-bottom scale-y-0" data-height="65" style="height: 65%; animation: growUp 0.6s 0.4s cubic-bezier(0.2, 1, 0.3, 1) forwards;"></div>
+<span class="text-label-md text-outline">办公室</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1 group">
+<div class="w-full bg-primary/20 rounded-t-lg transition-all duration-300 ease-out origin-bottom scale-y-0" data-height="40" style="height: 40%; animation: growUp 0.6s 0.45s cubic-bezier(0.2, 1, 0.3, 1) forwards;"></div>
+<span class="text-label-md text-outline">涉众办</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1 group">
+<div class="w-full bg-primary/20 rounded-t-lg transition-all duration-300 ease-out origin-bottom scale-y-0" data-height="85" style="height: 85%; animation: growUp 0.6s 0.5s cubic-bezier(0.2, 1, 0.3, 1) forwards;"></div>
+<span class="text-label-md text-outline">法制室</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1 group">
+<div class="w-full bg-primary/20 rounded-t-lg transition-all duration-300 ease-out origin-bottom scale-y-0" data-height="100" style="height: 100%; animation: growUp 0.6s 0.55s cubic-bezier(0.2, 1, 0.3, 1) forwards;"></div>
+<span class="text-label-md text-outline">中队</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1 group">
+<div class="w-full bg-primary/20 rounded-t-lg transition-all duration-300 ease-out origin-bottom scale-y-0" data-height="55" style="height: 55%; animation: growUp 0.6s 0.6s cubic-bezier(0.2, 1, 0.3, 1) forwards;"></div>
+<span class="text-label-md text-outline">查控</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-1 group">
+<div class="w-full bg-primary/20 rounded-t-lg transition-all duration-300 ease-out origin-bottom scale-y-0" data-height="30" style="height: 30%; animation: growUp 0.6s 0.65s cubic-bezier(0.2, 1, 0.3, 1) forwards;"></div>
+<span class="text-label-md text-outline">系统</span>
+</div>
+</div>
+</div>
+<!-- Donut Chart -->
+<div class="reveal-card animate-fade-in-up stagger-6 col-span-12 lg:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-8 flex flex-col items-center justify-center" style="opacity: 1;">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-8 w-full">案件类型分布</h3>
+<div class="relative w-48 h-48 flex items-center justify-center group cursor-pointer">
+<svg class="w-full h-full transform transition-transform duration-500 group-hover:rotate-12" viewBox="0 0 100 100">
+<circle cx="50" cy="50" fill="transparent" r="40" stroke="#f1f3f4" stroke-width="8"></circle>
+<circle class="donut-segment" cx="50" cy="50" fill="transparent" r="40" stroke="#0058bd" stroke-dasharray="251.2" stroke-dashoffset="105" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute text-center group-hover:scale-110 transition-transform duration-200">
+<p class="font-display-lg text-[32px] font-bold text-on-surface">58%</p>
+<p class="text-label-md text-outline">刑事案件</p>
+</div>
+</div>
+<div class="mt-8 space-y-2 w-full">
+<div class="flex justify-between items-center hover:bg-surface-container-low p-1 rounded transition-colors duration-200 cursor-pointer">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-primary rounded-full"></span>
+<span class="text-label-md">刑事案件</span>
+</div>
+<span class="text-label-md font-bold">1,245</span>
+</div>
+<div class="flex justify-between items-center hover:bg-surface-container-low p-1 rounded transition-colors duration-200 cursor-pointer">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 bg-primary/40 rounded-full"></span>
+<span class="text-label-md">行政案件</span>
+</div>
+<span class="text-label-md font-bold">892</span>
+</div>
+</div>
+</div>
+<!-- Line Chart -->
+<div class="reveal-card animate-fade-in-up stagger-6 col-span-12 bg-surface-container-lowest border border-outline-variant rounded-xl p-8" style="opacity: 1;">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-6">活跃趋势 (24小时)</h3>
+<div class="h-48 w-full relative overflow-hidden">
+<svg class="w-full h-full" viewBox="0 0 1000 200">
+<path class="opacity-80 trend-path" d="M0,150 Q100,140 200,80 T400,100 T600,40 T800,90 T1000,60" fill="none" stroke="#0058bd" stroke-width="4"></path>
+<path d="M0,150 Q100,140 200,80 T400,100 T600,40 T800,90 T1000,60 L1000,200 L0,200 Z" fill="url(#grad1)"></path>
+<defs>
+<linearGradient id="grad1" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#0058bd;stop-opacity:0.1"></stop>
+<stop offset="100%" style="stop-color:#0058bd;stop-opacity:0"></stop>
+</linearGradient>
+</defs>
+</svg>
+<!-- Ripple points -->
+<div class="absolute top-[80px] left-[20%] group">
+<div class="absolute w-3 h-3 bg-primary rounded-full animate-ripple"></div>
+<div class="w-3 h-3 bg-primary rounded-full shadow-lg cursor-pointer"></div>
+</div>
+<div class="absolute top-[40px] left-[60%] group">
+<div class="absolute w-3 h-3 bg-primary rounded-full animate-ripple" style="animation-delay: 0.5s"></div>
+<div class="w-3 h-3 bg-primary rounded-full shadow-lg cursor-pointer"></div>
+</div>
+<div class="absolute bottom-0 left-0 right-0 flex justify-between px-2">
+<span class="text-label-md text-outline">00:00</span>
+<span class="text-label-md text-outline">04:00</span>
+<span class="text-label-md text-outline">08:00</span>
+<span class="text-label-md text-outline">12:00</span>
+<span class="text-label-md text-outline">16:00</span>
+<span class="text-label-md text-outline">20:00</span>
+<span class="text-label-md text-outline">23:59</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="flex justify-between items-center px-8 w-full mt-auto py-4 bg-surface-container-lowest border-t border-outline-variant">
+<div class="font-label-md text-on-surface-variant">
+            © 2024 经侦大队工作记录管理系统 | 版本 v2.4.0
+        </div>
+<div class="flex gap-6">
+<a class="text-outline hover:text-primary transition-colors duration-200 underline font-label-sm" href="#">隐私政策</a>
+<a class="text-outline hover:text-primary transition-colors duration-200 underline font-label-sm" href="#">使用条款</a>
+<a class="text-outline hover:text-primary transition-colors duration-200 underline font-label-sm" href="#">技术支持</a>
+</div>
+</footer>
+</main>
+<style>
+    @keyframes growUp {
+        from { transform: scaleY(0); }
+        to { transform: scaleY(1); }
+    }
+</style>
+<script>
+    // Dark Mode Toggle Logic
+    const toggleBtn = document.getElementById('dark-mode-toggle');
+    const html = document.documentElement;
+    
+    toggleBtn.addEventListener('click', () => {
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            toggleBtn.innerHTML = '<span class="material-symbols-outlined">dark_mode</span>';
+        } else {
+            html.classList.add('dark');
+            toggleBtn.innerHTML = '<span class="material-symbols-outlined">light_mode</span>';
+        }
+    });
+
+    // Bar Chart Hover Interaction - Snappier
+    const bars = document.querySelectorAll('.bg-primary\\/20');
+    bars.forEach(bar => {
+        bar.addEventListener('mouseenter', () => {
+            bar.classList.add('bg-primary');
+            bar.classList.add('shadow-lg');
+            bar.style.transform = 'scaleY(1.05)';
+            bar.style.transition = 'all 0.2s cubic-bezier(0.2, 1, 0.3, 1)';
+        });
+        bar.addEventListener('mouseleave', () => {
+            bar.classList.remove('bg-primary');
+            bar.classList.remove('shadow-lg');
+            bar.style.transform = 'scaleY(1)';
+        });
+    });
+
+    // Nav Item Click States
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            navItems.forEach(i => {
+                i.classList.remove('active', 'bg-secondary-container/50');
+                i.classList.add('text-on-surface-variant');
+            });
+            item.classList.add('active', 'bg-secondary-container/50');
+            item.classList.remove('text-on-surface-variant');
+        });
+    });
+
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-fade-in-up');
+                entry.target.style.opacity = "1";
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal-card').forEach(el => observer.observe(el));
+</script>
+
+
+</body></html>

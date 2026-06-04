@@ -1,7 +1,7 @@
 ﻿import { useMemo, useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut, Search, Moon, Sun } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut, Moon, Sun } from 'lucide-react';
 import { Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
@@ -31,8 +31,6 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
   const toggleLowPerfMode = useAppStore((s) => s.toggleLowPerfMode);
   const customAvatar = (() => { try { return localStorage.getItem("jingzong.avatar"); } catch { return null; } })();
-  const searchQuery = useAppStore((s) => s.searchQuery);
-  const setSearchQuery = useAppStore((s) => s.setSearchQuery);
   const { customModules } = useCustomModules();
   const [expanded, setExpanded] = useState<string | null>('office');
 
@@ -170,24 +168,6 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           <ChevronLeft size={13} color="#64748B" />
         </motion.div>
       </motion.button>
-
-      {/* 搜索栏 */}
-      {!collapsed && (
-        <div style={{ padding: '4px 10px 2px', position: 'relative' }}>
-          <Search size={13} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: 18, top: 12, zIndex: 1 }} />
-          <input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="搜索..."
-            style={{
-              width: '100%', height: 28, paddingLeft: 28, paddingRight: 8,
-              borderRadius: 4, border: 'none', outline: 'none',
-              background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12,
-              fontFamily: 'inherit', boxSizing: 'border-box',
-            }}
-          />
-        </div>
-      )}
 
       {/* 用户信息区域 */}
       {!collapsed && (

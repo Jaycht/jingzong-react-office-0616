@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>案件总台账 - 工作记录登记系统</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#765700",
+                        "inverse-on-surface": "#f0f1f2",
+                        "outline-variant": "#c2c6d5",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#e7e8e9",
+                        "on-secondary-fixed": "#00174c",
+                        "surface-bright": "#f8f9fa",
+                        "primary": "#0058bd",
+                        "on-primary-fixed-variant": "#004494",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#424753",
+                        "secondary-container": "#88a5ff",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#2771df",
+                        "outline": "#727785",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#ffdfa0",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed": "#261a00",
+                        "surface-tint": "#005ac1",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2e3132",
+                        "secondary": "#3b5aaf",
+                        "surface-container-low": "#f3f4f5",
+                        "on-surface": "#191c1d",
+                        "background": "#f8f9fa",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface": "#f8f9fa",
+                        "on-primary-container": "#fefcff",
+                        "surface-dim": "#d9dadb",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-background": "#191c1d",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "tertiary-fixed-dim": "#fbbc05",
+                        "on-tertiary-container": "#fffbff",
+                        "tertiary-container": "#956e00",
+                        "surface-container": "#edeeef",
+                        "inverse-primary": "#adc6ff",
+                        "on-primary-fixed": "#001a41",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-variant": "#e1e3e4",
+                        "on-secondary-fixed-variant": "#1f4195",
+                        "on-secondary-container": "#11378c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "container-max-width": "1440px",
+                        "sidebar-width": "280px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "title-lg": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .case-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .case-table tr:hover {
+            background-color: #f1f3f4;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<!-- Side Navigation Bar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width flex flex-col bg-surface-container border-r border-outline-variant z-50">
+<div class="py-stack-lg px-6 mb-8 mt-6">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">工作记录登记系统</h1>
+<p class="text-label-md text-on-surface-variant opacity-70">政府事务管理版</p>
+</div>
+<nav class="flex-1 px-2 sidebar-scroll overflow-y-auto">
+<div class="space-y-1">
+<!-- Navigation Items -->
+<a class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-variant transition-colors duration-200 px-4 py-3" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-nav-parent text-nav-parent">工作台</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-variant transition-colors duration-200 px-4 py-3" href="#">
+<span class="material-symbols-outlined" data-icon="business_center">business_center</span>
+<span class="font-nav-parent text-nav-parent">大队办公室</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-variant transition-colors duration-200 px-4 py-3" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-nav-parent text-nav-parent">涉众办</span>
+</a>
+<!-- Active Dept: 法制室 -->
+<div class="flex flex-col">
+<a class="flex items-center gap-4 bg-secondary-container text-on-secondary-container border-l-4 border-primary px-4 py-3 scale-98 opacity-90 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="gavel" style="font-variation-settings: 'FILL' 1;">gavel</span>
+<span class="font-nav-parent text-nav-parent font-bold">法制室</span>
+</a>
+<!-- Sub-menu -->
+<div class="ml-10 mt-1 space-y-1">
+<a class="block py-2 text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">报送案件</a>
+<a class="block py-2 text-label-md text-primary font-bold" href="#">案件总台账</a>
+<a class="block py-2 text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">专项行动</a>
+<a class="block py-2 text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">考核评价</a>
+</div>
+</div>
+<a class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-variant transition-colors duration-200 px-4 py-3" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="font-nav-parent text-nav-parent">中队管理</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-variant transition-colors duration-200 px-4 py-3" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+<span class="font-nav-parent text-nav-parent">资金查控</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-variant transition-colors duration-200 px-4 py-3" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-nav-parent text-nav-parent">系统管理</span>
+</a>
+</div>
+</nav>
+<div class="mt-auto p-4 border-t border-outline-variant bg-surface-container-low">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</div>
+<div>
+<div class="text-label-lg font-bold">管理员</div>
+<div class="text-label-md opacity-60">法制业务岗</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 left-[280px] h-16 flex justify-between items-center px-10 bg-surface border-b border-outline-variant z-40">
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="absolute inset-y-0 left-3 flex items-center text-outline">
+<span class="material-symbols-outlined text-[20px]" data-icon="search">search</span>
+</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-lg text-label-md w-64 focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all" placeholder="搜索功能或台账..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span>
+</button>
+<div class="h-6 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-2 text-on-surface-variant cursor-pointer hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="text-label-md font-medium">张建国</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[280px] mt-16 p-10 h-[calc(100vh-64px)] overflow-y-auto flex flex-col">
+<!-- Header Section -->
+<section class="mb-8">
+<nav class="flex items-center gap-2 text-label-md text-outline mb-3">
+<span>工作台</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="chevron_right">chevron_right</span>
+<span>法制室</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="chevron_right">chevron_right</span>
+<span class="text-on-surface">案件总台账</span>
+</nav>
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-1">案件总台账</h2>
+<p class="text-body-md text-on-surface-variant">管理并追踪全队范围内所有的法制审查案件，确保执法合规性。</p>
+</div>
+<button class="bg-primary text-white px-6 py-2.5 rounded-lg font-label-lg flex items-center gap-2 hover:bg-[#004494] transition-all shadow-sm active:scale-95">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                    新增记录
+                </button>
+</div>
+</section>
+<!-- Filter Bar -->
+<section class="bg-white border border-outline-variant rounded-xl p-6 mb-6 shadow-sm">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="space-y-1.5">
+<label class="text-label-md font-bold text-on-surface-variant">案件编号</label>
+<input class="w-full bg-[#F1F3F4] border-none rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:bg-white transition-all text-body-md" placeholder="输入案号，如：2024-001" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-label-md font-bold text-on-surface-variant">案件名称</label>
+<input class="w-full bg-[#F1F3F4] border-none rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:bg-white transition-all text-body-md" placeholder="关键词搜索..." type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-label-md font-bold text-on-surface-variant">案件类型</label>
+<select class="w-full bg-[#F1F3F4] border-none rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:bg-white transition-all text-body-md">
+<option>全部类型</option>
+<option>行政处罚</option>
+<option>刑事侦查</option>
+<option>行政强制</option>
+<option>法律咨询</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="text-label-md font-bold text-on-surface-variant">立案日期范围</label>
+<div class="flex items-center gap-2">
+<input class="w-full bg-[#F1F3F4] border-none rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:bg-white transition-all text-body-md" type="date"/>
+<span class="text-outline">至</span>
+<input class="w-full bg-[#F1F3F4] border-none rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:bg-white transition-all text-body-md" type="date"/>
+</div>
+</div>
+</div>
+<div class="flex justify-end mt-6 gap-3">
+<button class="px-6 py-2 border border-outline-variant rounded-lg text-label-lg hover:bg-surface-container-low transition-colors">重置</button>
+<button class="px-6 py-2 bg-secondary text-white rounded-lg text-label-lg hover:bg-[#1f4195] transition-colors">查询数据</button>
+</div>
+</section>
+<!-- Data Table Section -->
+<section class="flex-1 bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse case-table">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-6 py-4 font-label-lg text-on-surface-variant uppercase tracking-wider">案件编号</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant uppercase tracking-wider">案件名称</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant uppercase tracking-wider">案件类型</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant uppercase tracking-wider">立案日期</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant uppercase tracking-wider">承办人</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant uppercase tracking-wider">状态</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant uppercase tracking-wider text-right">操作</th>
+</tr>
+</thead>
+<tbody class="text-body-md">
+<!-- Row 1 -->
+<tr class="transition-colors duration-150">
+<td class="px-6 py-4 font-medium text-primary">MS-2024-0512</td>
+<td class="px-6 py-4">某金融机构违规吸储风险核查案</td>
+<td class="px-6 py-4">刑事侦查</td>
+<td class="px-6 py-4 text-on-surface-variant">2024-05-12</td>
+<td class="px-6 py-4">王志伟</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-md font-medium bg-primary-container text-on-primary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-white mr-2 animate-pulse"></span>
+                                    进行中
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-1.5 hover:text-primary transition-colors" title="详情">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+</button>
+<button class="p-1.5 hover:text-secondary transition-colors" title="编辑">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="transition-colors duration-150">
+<td class="px-6 py-4 font-medium text-primary">XZ-2024-0489</td>
+<td class="px-6 py-4">关于XXX大厦消防安全隐患处罚案</td>
+<td class="px-6 py-4">行政处罚</td>
+<td class="px-6 py-4 text-on-surface-variant">2024-04-28</td>
+<td class="px-6 py-4">李芳明</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-md font-medium bg-[#81c784] text-white">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="check_circle">check_circle</span>
+                                    已结案
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-1.5 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+</button>
+<button class="p-1.5 hover:text-secondary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="transition-colors duration-150">
+<td class="px-6 py-4 font-medium text-primary">FW-2024-0321</td>
+<td class="px-6 py-4">2023年度大队法律咨询汇编</td>
+<td class="px-6 py-4">法律咨询</td>
+<td class="px-6 py-4 text-on-surface-variant">2024-03-15</td>
+<td class="px-6 py-4">陈思远</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-md font-medium bg-surface-container-highest text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="archive">archive</span>
+                                    已归档
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-1.5 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+</button>
+<button class="p-1.5 hover:text-secondary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="transition-colors duration-150">
+<td class="px-6 py-4 font-medium text-primary">MS-2024-0601</td>
+<td class="px-6 py-4">网络平台非法集资线索初查</td>
+<td class="px-6 py-4">刑事侦查</td>
+<td class="px-6 py-4 text-on-surface-variant">2024-06-01</td>
+<td class="px-6 py-4">赵强</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-md font-medium bg-primary-container text-on-primary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-white mr-2"></span>
+                                    进行中
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-1.5 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+</button>
+<button class="p-1.5 hover:text-secondary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="mt-auto border-t border-outline-variant px-6 py-4 flex justify-between items-center bg-white">
+<span class="text-label-md text-on-surface-variant">共 128 条记录，显示 1-10 条</span>
+<div class="flex items-center gap-2">
+<button class="p-1 rounded-lg hover:bg-surface-container transition-colors disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-primary text-white text-label-md font-bold">1</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container text-label-md">2</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container text-label-md">3</button>
+<span class="text-outline">...</span>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container text-label-md">13</button>
+<button class="p-1 rounded-lg hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="mt-8 pt-6 border-t border-outline-variant flex justify-between items-center text-label-sm text-outline">
+<p>© 2024 工作记录登记系统 | 版本 v2.4.0</p>
+<div class="flex gap-6">
+<a class="hover:text-primary transition-colors underline decoration-transparent hover:decoration-primary" href="#">隐私政策</a>
+<a class="hover:text-primary transition-colors underline decoration-transparent hover:decoration-primary" href="#">使用条款</a>
+<a class="hover:text-primary transition-colors underline decoration-transparent hover:decoration-primary" href="#">技术支持</a>
+</div>
+</footer>
+</main>
+<script>
+        // Simple interactive feedback for table rows
+        document.querySelectorAll('.case-table tbody tr').forEach(row => {
+            row.addEventListener('mousedown', () => {
+                row.classList.add('scale-[0.995]', 'opacity-90');
+            });
+            row.addEventListener('mouseup', () => {
+                row.classList.remove('scale-[0.995]', 'opacity-90');
+            });
+        });
+
+        // Search bar animation focus
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/20');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20');
+        });
+    </script>
+</body></html>

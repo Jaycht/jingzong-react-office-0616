@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>资金分析 - 工作记录登记系统</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#004494",
+                        "surface": "#f8f9fa",
+                        "on-surface-variant": "#424753",
+                        "inverse-on-surface": "#f0f1f2",
+                        "secondary-container": "#88a5ff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f8f9fa",
+                        "tertiary-fixed": "#ffdfa0",
+                        "secondary-fixed": "#dbe1ff",
+                        "surface-container": "#edeeef",
+                        "secondary": "#3b5aaf",
+                        "inverse-primary": "#adc6ff",
+                        "on-secondary-container": "#11378c",
+                        "on-secondary-fixed": "#00174c",
+                        "background": "#f8f9fa",
+                        "outline": "#727785",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                        "on-primary-container": "#fefcff",
+                        "surface-container-low": "#f3f4f5",
+                        "on-secondary-fixed-variant": "#1f4195",
+                        "on-primary-fixed": "#001a41",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-tertiary-fixed": "#261a00",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#005ac1",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#2771df",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "outline-variant": "#c2c6d5",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e7e8e9",
+                        "inverse-surface": "#2e3132",
+                        "surface-variant": "#e1e3e4",
+                        "primary-fixed": "#d8e2ff",
+                        "on-tertiary-container": "#fffbff",
+                        "tertiary-container": "#956e00",
+                        "tertiary": "#765700",
+                        "on-surface": "#191c1d",
+                        "tertiary-fixed-dim": "#fbbc05",
+                        "primary": "#0058bd",
+                        "surface-dim": "#d9dadb",
+                        "on-background": "#191c1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "container-max-width": "1440px",
+                        "gutter": "24px",
+                        "margin-desktop": "40px",
+                        "unit": "4px",
+                        "sidebar-width": "280px",
+                        "stack-lg": "16px",
+                        "stack-md": "12px",
+                        "stack-sm": "8px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "nav-parent": ["Inter"],
+                        "nav-child": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .sidebar-active {
+            border-left: 4px solid #0058bd;
+            background-color: #88a5ff;
+            color: #11378c;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c2c6d5; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-surface-container border-r border-outline-variant flex flex-col z-50">
+<div class="py-6 px-6">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">工作记录登记系统</h1>
+<p class="font-label-md text-label-md text-outline">政府事务管理版</p>
+</div>
+<nav class="flex-1 overflow-y-auto py-4">
+<div class="px-4 mb-2">
+<span class="text-xs font-bold text-outline uppercase tracking-wider">主要模块</span>
+</div>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md">工作台</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="business_center">business_center</span>
+<span class="font-body-md">大队办公室</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-body-md">涉众办</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="font-body-md">法制室</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="font-body-md">中队管理</span>
+</a>
+<!-- Active State for 资金查控 -->
+<div class="sidebar-active flex items-center gap-stack-lg px-4 py-3">
+<span class="material-symbols-outlined" data-icon="account_balance" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<span class="font-body-md font-semibold">资金查控</span>
+</div>
+<div class="pl-12 pr-4 py-2 space-y-1">
+<a class="block py-2 text-primary font-bold border-l-2 border-primary pl-3" href="#">资金分析</a>
+<a class="block py-2 text-on-surface-variant hover:text-primary transition-colors pl-3" href="#">调证申请</a>
+<a class="block py-2 text-on-surface-variant hover:text-primary transition-colors pl-3" href="#">结果查询</a>
+</div>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md">系统管理</span>
+</a>
+<a class="flex items-center gap-stack-lg text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="backup">backup</span>
+<span class="font-body-md">数据备份</span>
+</a>
+</nav>
+<div class="p-4 border-t border-outline-variant bg-surface-container-low">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full" data-alt="A professional headshot of a middle-aged male government official in a sharp dark suit. He is posed against a neutral grey studio background with soft cinematic lighting. The image maintains a high-end corporate aesthetic, reflecting trust and authority in a modern administrative setting. The color palette is muted and sophisticated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjaNVuL3XxHbeYb1lZ1aDYjy1o52J1YXuuN6gRVZeQ1fBRoVjGQe4XzeC5GQMNARL9oef94WPZqW4rUz2AfPtsYXUL0k3dt0voOlZVX_-D1JJZDd69x1xyj5FcsTWz5yMNPNmaoY5a6ZA53Mwmuc-weOcD4H0U104Mj8OBmS8Q8t8dYNgQ_0tH0-uSfIRmABiROo7g4QGLcDulQgNfmEZ-FafohnW1mHPtLqOuyESrWAO_Sw_doFTShCi9mpBDmFzrVl55q76rqqU"/>
+<div>
+<p class="text-sm font-bold">李卫国</p>
+<p class="text-xs text-outline">高级分析员</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Shell -->
+<main class="flex-1 ml-sidebar-width flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-sidebar-width h-16 bg-surface border-b border-outline-variant flex justify-between items-center px-8 z-40">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 transition-all" placeholder="搜索案件号、申请人或报告编号..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6 ml-4">
+<button class="relative text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-lg">账户设置</span>
+</button>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="mt-16 p-8 flex-1 flex flex-col gap-8">
+<!-- Page Header Actions -->
+<div class="flex justify-between items-end">
+<div>
+<nav class="flex items-center gap-2 text-xs text-outline mb-2">
+<span>资金查控</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface-variant font-medium">资金分析</span>
+</nav>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">资金分析报告</h2>
+<p class="text-on-surface-variant mt-1">管理并审计所有调证分析组产生的资金往来报告。</p>
+</div>
+<button class="flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-lg hover:bg-[#004494] transition-all transform active:scale-95 shadow-lg shadow-primary/10" onclick="location.href='#new-analysis'">
+<span class="material-symbols-outlined">add</span>
+<span class="font-label-lg">新建分析</span>
+</button>
+</div>
+<!-- Dashboard Stats Grid (Institutional Modernism style) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest p-6 border border-outline-variant rounded-xl flex flex-col">
+<span class="text-outline text-xs font-bold uppercase mb-2">本月新增分析</span>
+<div class="flex justify-between items-end">
+<span class="text-3xl font-bold text-primary">124</span>
+<span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">+12% ↑</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 border border-outline-variant rounded-xl flex flex-col">
+<span class="text-outline text-xs font-bold uppercase mb-2">涉案总金额 (CNY)</span>
+<div class="flex justify-between items-end">
+<span class="text-3xl font-bold text-on-surface">¥84.2M</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 border border-outline-variant rounded-xl flex flex-col">
+<span class="text-outline text-xs font-bold uppercase mb-2">已冻结金额</span>
+<div class="flex justify-between items-end">
+<span class="text-3xl font-bold text-secondary">¥32.5M</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 border border-outline-variant rounded-xl flex flex-col">
+<span class="text-outline text-xs font-bold uppercase mb-2">分析成功率</span>
+<div class="flex justify-between items-end">
+<span class="text-3xl font-bold text-on-surface">94.8%</span>
+</div>
+</div>
+</div>
+<!-- List Section -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="flex gap-4">
+<select class="bg-surface border border-outline-variant text-sm rounded-lg px-3 py-1.5 focus:ring-primary focus:border-primary">
+<option>全部状态</option>
+<option>进行中</option>
+<option>已完成</option>
+<option>异常中断</option>
+</select>
+<select class="bg-surface border border-outline-variant text-sm rounded-lg px-3 py-1.5 focus:ring-primary focus:border-primary">
+<option>最近更新</option>
+<option>金额从高到低</option>
+</select>
+</div>
+<button class="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">filter_list</span> 更多筛选
+                    </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high border-b border-outline-variant">
+<th class="px-6 py-4 font-label-lg text-on-surface-variant">报告编号 / 案件名称</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant">涉案总金额</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant">冻结金额</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant">分析人员</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant">状态</th>
+<th class="px-6 py-4 font-label-lg text-on-surface-variant text-right">操作</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-primary group-hover:underline cursor-pointer">FA-2024-0512-01</span>
+<span class="text-sm text-on-surface-variant mt-1">某特大跨境网络诈骗案</span>
+</div>
+</td>
+<td class="px-6 py-5 font-medium">¥12,450,000.00</td>
+<td class="px-6 py-5 text-secondary font-medium">¥4,200,000.00</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary-fixed text-[10px] flex items-center justify-center font-bold">ZW</div>
+<span class="text-sm">张炜</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+<span class="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                                        已完成
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined">visibility</span></button>
+<button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined">download</span></button>
+<button class="text-outline hover:text-error transition-colors p-1"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-primary group-hover:underline cursor-pointer">FA-2024-0512-08</span>
+<span class="text-sm text-on-surface-variant mt-1">非法吸收公众存款专案 - “易融汇”</span>
+</div>
+</td>
+<td class="px-6 py-5 font-medium">¥45,000,000.00</td>
+<td class="px-6 py-5 text-secondary font-medium">¥18,300,000.00</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-fixed text-[10px] flex items-center justify-center font-bold">LW</div>
+<span class="text-sm">李卫国</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                                        分析中 (64%)
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined">visibility</span></button>
+<button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined">edit</span></button>
+<button class="text-outline hover:text-error transition-colors p-1"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group bg-surface-container-lowest">
+<td class="px-6 py-5">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-primary group-hover:underline cursor-pointer">FA-2024-0511-22</span>
+<span class="text-sm text-on-surface-variant mt-1">洗钱风险预警报告 - 重点账户监控</span>
+</div>
+</td>
+<td class="px-6 py-5 font-medium">¥3,200,000.00</td>
+<td class="px-6 py-5 text-secondary font-medium">¥0.00</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-tertiary-fixed text-[10px] flex items-center justify-center font-bold">YM</div>
+<span class="text-sm">姚敏</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-error-container text-on-error-container">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                        数据异常
+                                    </span>
+</td>
+<td class="px-6 py-5 text-right">
+<button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined">visibility</span></button>
+<button class="text-outline hover:text-primary transition-colors p-1"><span class="material-symbols-outlined">refresh</span></button>
+<button class="text-outline hover:text-error transition-colors p-1"><span class="material-symbols-outlined">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 flex items-center justify-between bg-surface-container-low border-t border-outline-variant">
+<span class="text-xs text-outline">显示 1-10 条，共 1,248 条数据</span>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-outline hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-primary bg-primary text-on-primary text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-outline hover:bg-surface-variant transition-colors text-xs font-bold">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-outline hover:bg-surface-variant transition-colors text-xs font-bold">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-outline hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+<!-- Bento Layout Feature Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="md:col-span-2 bg-primary-container text-on-primary-container p-8 rounded-2xl relative overflow-hidden flex flex-col justify-between min-h-[240px]">
+<div class="z-10">
+<h3 class="font-headline-md text-headline-md mb-4">自动化智能洗钱穿透</h3>
+<p class="max-w-md opacity-90 leading-relaxed">系统已集成最新的多层级穿透模型，支持最高12层的自动路径追踪，帮助您从复杂的转账链路中快速锁定最终嫌疑账户。</p>
+</div>
+<div class="z-10 mt-6">
+<button class="bg-white text-primary px-5 py-2.5 rounded-lg font-bold text-sm shadow-xl shadow-black/10 hover:bg-surface-bright transition-colors">立即运行模型</button>
+</div>
+<!-- Background Decoration -->
+<div class="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+<div class="absolute right-10 top-10 opacity-20">
+<span class="material-symbols-outlined text-[120px]" style="font-variation-settings: 'wght' 200;">hub</span>
+</div>
+</div>
+<div class="bg-surface-container-highest p-8 rounded-2xl flex flex-col justify-between border border-outline-variant">
+<div>
+<div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-on-primary mb-6">
+<span class="material-symbols-outlined">auto_graph</span>
+</div>
+<h3 class="font-title-lg text-title-lg mb-2">历史趋势分析</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">基于近六个月的调证分析量，本月涉案金额增长率为 12.4%，主要集中在新型网络赌诈领域。</p>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant/30 flex items-center gap-2 text-primary font-bold text-sm">
+<span>查看详细图表</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="mt-auto bg-surface-container-lowest border-t border-outline-variant px-8 py-4 flex justify-between items-center text-outline">
+<div class="text-sm">
+                © 2024 工作记录登记系统 | 版本 v2.4.0
+            </div>
+<div class="flex gap-6 text-sm">
+<a class="hover:text-primary underline" href="#">隐私政策</a>
+<a class="hover:text-primary underline" href="#">使用条款</a>
+<a class="hover:text-primary underline" href="#">技术支持</a>
+</div>
+</footer>
+</main>
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.03] z-[-1]" style="background-image: radial-gradient(#0058bd 1px, transparent 1px); background-size: 32px 32px;"></div>
+<script>
+        // Micro-interactions and effects
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.96)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+
+        // Search Bar Focus Effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/20');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20');
+        });
+    </script>
+</body></html>
