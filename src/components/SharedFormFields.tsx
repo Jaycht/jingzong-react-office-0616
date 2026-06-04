@@ -279,7 +279,7 @@ export function PersistedSelect({
   }
 
   return (
-    <Select value={value} onChange={onChange} mode={multiple ? 'multiple' : undefined} placeholder={`请选择${field.label}`} options={options.map((o) => ({ label: o, value: o }))} />
+    <Select value={value} onChange={onChange} mode={multiple ? 'multiple' : undefined} showSearch placeholder={`请选择${field.label}`} options={options.map((o) => ({ label: o, value: o }))} />
   );
 }
 

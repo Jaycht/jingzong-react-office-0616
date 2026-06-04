@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, FileText, Check, Users, Paperclip, TrendingUp, TrendingDown, Download } from 'lucide-react';
+import * as echarts from 'echarts';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { useAppStore } from "../store/appStore"
@@ -10,109 +11,144 @@ import { getBaseModules } from '../moduleConfig';
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 26 } } };
 
+/** 简单的 ECharts 包装组件 */
+function EChartBox({ option, style }: { option: Record<string, unknown>; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const chart = echarts.init(ref.current);
+    chart.setOption(option, true);
+    const h = () => chart.resize();
+    window.addEventListener('resize', h);
+    return () => { window.removeEventListener('resize', h); chart.dispose(); };
+  }, [option]);
+  return <div ref={ref} style={{ width: '100%', ...style }} />;
+}
+
 export default function Statistics() {
   const showToast = useAppStore((s) => s.showToast);
+  const darkMode = useAppStore((s) => s.darkMode);
 
-  // 强制刷新 key：每次挂载时 +1，保证数据从 localStorage 重新读取
   const [refreshKey, setRefreshKey] = useState(0);
   useEffect(() => { setRefreshKey(k => k + 1); }, []);
 
-  // 从 localStorage 读取真实数据（每次 refreshKey 变化时重新读取）
   const [records, setRecords] = useState(() => getMassRecords());
   const [cases, setCases] = useState(() => getMassRecords('squad-case'));
   useEffect(() => {
-    // 组件挂载后强制刷新一次（即使 React 复用组件实例）
     setRecords(getMassRecords());
     setCases(getMassRecords('squad-case'));
   }, [refreshKey]);
-  // 窗口聚焦时也刷新
   useEffect(() => {
-    const onFocus = () => {
-      setRecords(getMassRecords());
-      setCases(getMassRecords('squad-case'));
-    };
+    const onFocus = () => { setRecords(getMassRecords()); setCases(getMassRecords('squad-case')); };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, []);
-  const modules = useMemo(() => getBaseModules(), []);
 
-  // 按 moduleId 分组统计
+  const modules = useMemo(() => getBaseModules(), []);
   const moduleRecords: Record<string, number> = {};
-  for (const r of records) {
-    moduleRecords[r.moduleId] = (moduleRecords[r.moduleId] || 0) + 1;
-  }
+  for (const r of records) moduleRecords[r.moduleId] = (moduleRecords[r.moduleId] || 0) + 1;
 
   const totalRecords = records.length;
   const totalCases = cases.length;
-  const thisMonth = records.filter((r) => r.createdAt?.startsWith(new Date().toISOString().slice(0, 7))).length;
-  const lastMonth = records.filter((r) => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 1);
-    const ym = d.toISOString().slice(0, 7);
-    return r.createdAt?.startsWith(ym);
-  }).length;
+  const thisMonth = records.filter(r => r.createdAt?.startsWith(new Date().toISOString().slice(0, 7))).length;
+  const lastMonth = records.filter(r => { const d = new Date(); d.setMonth(d.getMonth() - 1); return r.createdAt?.startsWith(d.toISOString().slice(0, 7)); }).length;
 
-  // 带附件的记录数（粗略估计——有 attachment 字段的）
-  const attachmentCount = records.filter((r) => {
-    const data = r.data || {};
-    return Object.values(data).some((v) => typeof v === 'object' && v !== null && 'fileList' in v);
-  }).length;
-
-  // 统计数据卡片
   const STATS = [
     { label: '总记录数', value: String(totalRecords + totalCases), change: `本月+${thisMonth}`, up: true, color: '#1B5E9B' },
-    { label: '案件总数', value: String(totalCases), change: `累计案件`, up: true, color: '#38A169' },
+    { label: '案件总数', value: String(totalCases), change: '累计案件', up: true, color: '#38A169' },
     { label: '本月新增', value: String(thisMonth), change: `上月${lastMonth}`, up: thisMonth >= lastMonth, color: '#00ACC1' },
-    { label: '附件总数', value: String(attachmentCount || records.length), change: '含附件的记录', up: false, color: '#E67E22' },
+    { label: '活跃模块', value: String(Object.keys(moduleRecords).length), change: '有数据模块', up: false, color: '#E67E22' },
   ];
 
-  // 各岗位统计（按模块分组）
-  const rawModuleStats = modules.map((mod) => {
-    const count = moduleRecords[mod.id] || 0;
-    return {
-      dept: mod.departmentLabel,
-      type: mod.label,
-      count,
-    };
-  });
-  const moduleStats = rawModuleStats.filter((m) => m.count > 0);
+  const rawModuleStats = modules.map(mod => ({ dept: mod.departmentLabel, type: mod.label, count: moduleRecords[mod.id] || 0 }));
+  const moduleStats = rawModuleStats.filter(m => m.count > 0);
+  const hasData = totalRecords > 0;
 
-  // 没有数据时只有前面的统计数据，不显示图表的空状态
-  const hasData = totalRecords > 0 || totalCases > 0;
+  const textColor = '#1F2937';
+  const mutedColor = '#6B7280';
+  const CHART_PALETTE = ['#2563EB', '#7C3AED', '#0891B2', '#059669', '#D97706', '#DC2626', '#6D28D9', '#E11D48', '#0284C7', '#9333EA'];
 
-  // 各模块记录数的柱状图数据
-  const barData = moduleStats.slice(0, 8);
-  const maxVal = Math.max(...barData.map(d => d.count), 1);
+  // 各模块记录对比 — ECharts 渐变柱状图
+  const barData = moduleStats.slice(0, 10);
+  const barOption = useMemo(() => ({
+    tooltip: { trigger: 'axis' as const, axisPointer: { type: 'shadow' as const }, backgroundColor: '#fff', borderColor: '#E5E7EB', textStyle: { color: textColor } },
+    grid: { left: 10, right: 20, top: 15, bottom: 30, containLabel: true },
+    xAxis: { type: 'value' as const, splitLine: { lineStyle: { color: '#F3F4F6' } }, axisLabel: { color: mutedColor, fontSize: 10 }, show: true },
+    yAxis: {
+      type: 'category' as const, data: barData.map(d => d.type).reverse(),
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: mutedColor, fontSize: 10 },
+    },
+    series: [{
+      type: 'bar' as const,
+      data: barData.map((d, i) => ({
+        value: d.count,
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+            { offset: 0, color: CHART_PALETTE[(barData.length - 1 - i) % CHART_PALETTE.length] },
+            { offset: 1, color: CHART_PALETTE[(barData.length - 1 - i) % CHART_PALETTE.length] + '33' },
+          ]),
+          borderRadius: [0, 6, 6, 0],
+        },
+      })).reverse(),
+      barWidth: 20,
+      animationDuration: 700,
+      animationEasing: 'cubicOut' as const,
+      label: { show: true, position: 'right' as const, fontSize: 11, fontWeight: 700, color: textColor, formatter: (p: { value: number }) => String(p.value) },
+    }],
+  }), [barData]);
+
+  // 记录类型分布 — ECharts 玫瑰图
+  const pieOption = useMemo(() => ({
+    tooltip: { trigger: 'item' as const, backgroundColor: '#fff', borderColor: '#E5E7EB', textStyle: { color: textColor } },
+    legend: { bottom: 0, textStyle: { color: mutedColor, fontSize: 10 }, type: 'scroll' as const },
+    series: [{
+      type: 'pie' as const,
+      radius: ['28%', '62%'],
+      center: ['50%', '45%'],
+      roseType: 'area' as const,
+      avoidLabelOverlap: true,
+      padAngle: 2,
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      label: { show: true, formatter: '{b}\n{d}%', fontSize: 10, color: mutedColor, lineHeight: 14 },
+      labelLine: { length: 10, length2: 12, smooth: true },
+      data: barData.length > 0
+        ? barData.map((d, i) => ({ name: d.type, value: d.count, itemStyle: { color: CHART_PALETTE[i % CHART_PALETTE.length] } }))
+        : [{ name: '暂无数据', value: 1, itemStyle: { color: '#E5E7EB' } }],
+      animationDuration: 900,
+      animationEasing: 'cubicOut' as const,
+    }],
+  }), [barData]);
 
   return (
     <div>
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}
-      >
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
             style={{ width: 42, height: 42, borderRadius: 11, background: 'linear-gradient(135deg, #1B5E9B, #2E7DCA)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(27,94,155,.3)' }}>
             <BarChart3 size={20} color="#fff" />
           </motion.div>
           <div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: '#1F2937' }}>数据统计</div>
-            <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>工作数据可视化分析 · 基于本地存储真实数据</div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: textColor }}>数据统计</div>
+            <div style={{ fontSize: 12, color: mutedColor, marginTop: 1 }}>工作数据可视化分析 · 基于本地存储真实数据</div>
           </div>
         </div>
         <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
           onClick={() => {
-            const report = { 生成时间: new Date().toISOString(), 统计数据: [{ 指标: '总记录数', 数值: totalRecords }, { 指标: '案件总数', 数值: totalCases }, { 指标: '本月新增', 数值: thisMonth }], 模块明细: moduleStats.map(m => ({ 部门: m.dept, 模块: m.type, 记录数: m.count })) };
-            saveAs(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }), `统计报告_${new Date().toISOString().slice(0,10)}.json`);
-            showToast('统计报告已导出', 'success');
+            const wb = XLSX.utils.book_new();
+            const rows = moduleStats.map(m => ({ 部门: m.dept, 模块: m.type, 记录数: m.count }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '模块统计');
+            saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `模块统计明细_${new Date().toISOString().slice(0,10)}.xlsx`);
+            showToast('已导出 Excel', 'success');
           }}
           style={{ height: 34, padding: '0 16px', background: '#fff', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
           <Download size={14} />导出报告
         </motion.button>
       </motion.div>
 
-      {/* Stats - 真实数据，统一字体 */}
+      {/* Stats Cards */}
       <motion.div variants={container} initial="hidden" animate="show"
         style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
         {STATS.map((s, i) => (
@@ -125,11 +161,11 @@ export default function Statistics() {
               {i === 3 && <Paperclip size={19} color={s.color} />}
             </div>
             <div>
-              <div style={{ fontSize: 11.5, color: '#6B7280', marginBottom: 4 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#1F2937' }}>{s.value}</div>
+              <div style={{ fontSize: 11.5, color: mutedColor, marginBottom: 4 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: textColor }}>{s.value}</div>
               <div style={{ fontSize: 11, color: s.up ? '#388E3C' : '#9CA3AF', marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
                 {s.up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                {s.change} {s.up ? '↑' : ''}
+                {s.change}
               </div>
             </div>
           </motion.div>
@@ -138,148 +174,35 @@ export default function Statistics() {
 
       {hasData && (
         <>
-          {/* Charts */}
+          {/* ECharts Charts Row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18 }}>
-            {/* 各模块记录对比 - 垂直柱状图 + 圆顶 */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              style={{ background: '#fff', borderRadius: 10, padding: 18, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
+            {/* 各模块记录对比 */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              style={{ background: '#fff', borderRadius: 10, padding: '14px 14px 6px', boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                各模块记录对比 <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>单位：条记录</span>
+                各模块记录对比 <span style={{ fontSize: 11, color: mutedColor, fontWeight: 400 }}>单位：条记录</span>
               </div>
-              {barData.length > 0 ? (
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 180, padding: '16px 2px 0', position: 'relative' }}>
-                  {/* 基线 */}
-                  <div style={{ position: 'absolute', bottom: 24, left: 0, right: 0, height: 1, background: '#E5E7EB' }} />
-                  {barData.map((d, i) => {
-                    const pct = Math.max((d.count / maxVal) * 100, 4);
-                    const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48'];
-                    return (
-                      <div key={d.type} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, height: '100%', justifyContent: 'flex-end' }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: colors[i % colors.length] }}>{d.count}</span>
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: `${pct}%`, opacity: 1 }}
-                          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.35 + i * 0.06 }}
-                          style={{
-                            width: '100%', maxWidth: 40,
-                            borderRadius: '6px 6px 2px 2px',
-                            background: `linear-gradient(180deg, ${colors[i % colors.length]}, ${colors[i % colors.length]}99)`,
-                            boxShadow: `0 2px 8px ${colors[i % colors.length]}44`,
-                            position: 'relative',
-                            display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-                          }}
-                        >
-                          {/* 圆顶光晕 */}
-                          <div style={{
-                            width: '70%', height: 8,
-                            borderRadius: '50%',
-                            background: 'rgba(255,255,255,0.25)',
-                            marginTop: 2,
-                            flexShrink: 0,
-                          }} />
-                        </motion.div>
-                        <span style={{
-                          fontSize: 9, color: '#6B7280', textAlign: 'center',
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                          maxWidth: 56, lineHeight: 1.2,
-                        }}>{d.type}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无数据</div>
-              )}
+              <EChartBox option={barOption} style={{ height: 240 }} />
             </motion.div>
 
-            {/* 记录类型分布 - 甜甜圈+横向图例 */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-              style={{ background: '#fff', borderRadius: 10, padding: 18, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                记录类型分布 <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>按数量占比</span>
+            {/* 记录类型分布 */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+              style={{ background: '#fff', borderRadius: 10, padding: '14px 14px 6px', boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                记录类型分布 <span style={{ fontSize: 11, color: mutedColor, fontWeight: 400 }}>按数量占比</span>
               </div>
-              {barData.length > 0 ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                  {/* 左侧甜甜圈 */}
-                  <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
-                    style={{
-                      width: 112, height: 112, borderRadius: '50%',
-                      flexShrink: 0, position: 'relative',
-                      background: (() => {
-                        const total = barData.reduce((s, d) => s + d.count, 0) || 1;
-                        let deg = 0;
-                        const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48'];
-                        const stops = barData.map((d, i) => {
-                          const pct = (d.count / total) * 360;
-                          const start = deg;
-                          deg += pct;
-                          return `${colors[i % colors.length]} ${start}deg ${deg}deg`;
-                        });
-                        return `conic-gradient(${stops.join(', ')})`;
-                      })(),
-                    }}
-                  >
-                    {/* 中心空心 */}
-                    <div style={{
-                      position: 'absolute', top: '50%', left: '50%',
-                      transform: 'translate(-50%,-50%)',
-                      width: 60, height: 60, borderRadius: '50%',
-                      background: '#fff',
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <span style={{ fontSize: 16, fontWeight: 800, color: '#1F2937' }}>{barData.length}</span>
-                      <span style={{ fontSize: 8.5, color: '#9CA3AF', marginTop: -1 }}>类</span>
-                    </div>
-                  </motion.div>
-                  {/* 右侧图例：两层网格排列 */}
-                  <div style={{
-                    flex: 1,
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '4px 12px',
-                  }}>
-                    {barData.slice(0, 8).map((d, i) => {
-                      const colors = ['#2563EB','#7C3AED','#0891B2','#059669','#D97706','#DC2626','#6D28D9','#E11D48'];
-                      const total = barData.reduce((s, d) => s + d.count, 0) || 1;
-                      const pct = Math.round((d.count / total) * 100);
-                      return (
-                        <motion.div
-                          key={d.type}
-                          initial={{ opacity: 0, x: 12 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.55 + i * 0.05 }}
-                          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                        >
-                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i % colors.length], flexShrink: 0 }} />
-                          <span style={{ fontSize: 11, color: '#6B7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{d.type}</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: '#374151', flexShrink: 0 }}>{pct}%</span>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无数据</div>
-              )}
+              <EChartBox option={pieOption} style={{ height: 240 }} />
             </motion.div>
           </div>
 
           {/* Module Stats Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
             style={{ background: '#fff', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 13, color: '#6B7280' }}>各模块记录统计明细</div>
+              <div style={{ fontSize: 13, color: mutedColor }}>各模块记录统计明细</div>
               <motion.button whileTap={{ scale: 0.97 }} onClick={() => {
                 const wb = XLSX.utils.book_new();
-                const rows = moduleStats.map(m => ({ 部门: m.dept, 模块: m.type, 记录数: m.count }));
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '模块统计');
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(moduleStats.map(m => ({ 部门: m.dept, 模块: m.type, 记录数: m.count }))), '模块统计');
                 saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `模块统计明细_${new Date().toISOString().slice(0,10)}.xlsx`);
                 showToast('已导出 Excel', 'success');
               }}
@@ -291,8 +214,8 @@ export default function Statistics() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#F8FAFC' }}>
-                    {['部门', '模块', '记录数', '操作'].map((h, i) => (
-                      <th key={i} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#6B7280', borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap' }}>{h}</th>
+                    {['部门', '模块', '记录数', '操作'].map(h => (
+                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: mutedColor, borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -319,7 +242,7 @@ export default function Statistics() {
         <div style={{ textAlign: 'center', padding: 60, color: '#94A3B8', background: '#fff', borderRadius: 10, border: '1px solid #E5E7EB' }}>
           <BarChart3 size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
           <div style={{ fontSize: 16, fontWeight: 600, color: '#6B7280', marginBottom: 8 }}>暂无统计数据</div>
-          <div style={{ fontSize: 13 }}>请先在各个工作模块中新建记录，<br />统计数据将自动生成。</div>
+          <div style={{ fontSize: 13 }}>请先在各个工作模块中新建记录，统计数据将自动生成。</div>
         </div>
       )}
     </div>
