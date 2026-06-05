@@ -51,6 +51,17 @@ export function recordFieldValue(fieldId: string, value: string): void {
 }
 
 /**
+ * 删除某条历史记录
+ */
+export function deleteFieldHistoryEntry(fieldId: string, value: string): void {
+  const store = loadStore();
+  const history = store[fieldId];
+  if (!history) return;
+  store[fieldId] = history.filter((item) => item !== value);
+  saveStore(store);
+}
+
+/**
  * 批量记录表单数据中的字段值
  * 支持从扁平数据和 repeatable section 数组中都提取
  */

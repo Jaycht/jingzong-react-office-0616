@@ -118,7 +118,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
     return (
       <motion.div
         key={item.id}
-        whileHover={{ background: '#F9FAFB' }}
+        whileHover={{ background: darkMode ? '#374151' : '#F9FAFB' }}
         whileTap={{ scale: 0.99 }}
         onClick={() => setCurrentPage(item.id)}
         style={{
@@ -126,12 +126,12 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           padding: '10px 14px', cursor: 'pointer',
           borderLeft: '3px solid',
           borderLeftColor: active ? '#2563EB' : 'transparent',
-          background: active ? '#EFF6FF' : 'transparent',
+          background: active ? (darkMode ? '#1E3A5F' : '#EFF6FF') : 'transparent',
         }}
       >
-        <Icon size={15} color={active ? '#2563EB' : '#6B7280'} style={{ flexShrink: 0 }} />
+        <Icon size={15} color={active ? '#2563EB' : (darkMode ? '#9CA3AF' : '#6B7280')} style={{ flexShrink: 0 }} />
         {!collapsed && (
-          <span style={{ fontSize: 13, color: active ? '#2563EB' : '#374151', flex: 1, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 13, color: active ? '#2563EB' : (darkMode ? '#D1D5DB' : '#374151'), flex: 1, whiteSpace: 'nowrap' }}>
             {item.label}
           </span>
         )}
@@ -144,9 +144,9 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       animate={{ width: collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        background: '#ffffff', display: 'flex', flexDirection: 'column',
+        background: darkMode ? '#1F2937' : '#ffffff', display: 'flex', flexDirection: 'column',
         overflow: 'hidden', flexShrink: 0, position: 'relative',
-        borderRight: '1px solid #E5E7EB',
+        borderRight: darkMode ? '1px solid #374151' : '1px solid #E5E7EB',
       }}>
       {/* Electron 无边框窗口拖拽区域 */}
       {/* @ts-expect-error WebkitAppRegion is Electron-only CSS property */}
@@ -183,10 +183,10 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
               </div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#1F2937", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: darkMode ? "#F3F4F6" : "#1F2937", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {userName || "用户"}
               </div>
-              <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 2 }}>
+              <div style={{ fontSize: 11, color: darkMode ? "#9CA3AF" : "#9CA3AF", marginTop: 2 }}>
                 {userRole || "普通用户"}
               </div>
             </div>
@@ -206,7 +206,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       )}
       {/* 折叠状态用户工具栏 */}
       {collapsed && (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0 8px", gap: 6, borderBottom: "1px solid #E5E7EB" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0 8px", gap: 6, borderBottom: darkMode ? "1px solid #374151" : "1px solid #E5E7EB" }}>
           {customAvatar ? (
               <img src={customAvatar} alt="avatar" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
             ) : (
@@ -222,7 +222,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         </div>
       )}
       {/* 分隔线 */}
-      <div style={{ height: 1, background: "#E5E7EB", margin: "0 14px" }} />
+      <div style={{ height: 1, background: darkMode ? "#374151" : "#E5E7EB", margin: "0 14px" }} />
 
       {/* 侧边栏主导航区域 */}
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 2 }}>
@@ -320,7 +320,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         <div style={{
           padding: '4px 14px 8px', flexShrink: 0,
           fontSize: 10, color: '#9CA3AF',
-          textAlign: 'center', borderTop: '1px solid #E5E7EB',
+          textAlign: 'center', borderTop: darkMode ? '1px solid #374151' : '1px solid #E5E7EB',
           fontFamily: "'JetBrains Mono',monospace",
         }}>
           {APP_VERSION} &copy; 2026
@@ -332,6 +332,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
 
 /** 带文字标签的操作按钮 */
 function ActionBtn({ icon: Icon, label, onClick }: { icon: IconComponent; label: string; onClick: () => void }) {
+  const darkMode = useAppStore((s) => s.darkMode);
   return (
     <div
       onClick={onClick}
@@ -339,11 +340,11 @@ function ActionBtn({ icon: Icon, label, onClick }: { icon: IconComponent; label:
       style={{
         display: 'flex', alignItems: 'center', gap: 5,
         padding: '5px 8px', borderRadius: 6, cursor: 'pointer',
-        color: '#6B7280', fontSize: 11,
+        color: darkMode ? '#D1D5DB' : '#6B7280', fontSize: 11,
         whiteSpace: 'nowrap', transition: 'all .15s',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6'; e.currentTarget.style.color = '#111827'; }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6B7280'; }}
+      onMouseEnter={e => { e.currentTarget.style.background = darkMode ? '#374151' : '#F3F4F6'; e.currentTarget.style.color = darkMode ? '#F9FAFB' : '#111827'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = darkMode ? '#D1D5DB' : '#6B7280'; }}
     >
       <Icon size={14} /><span>{label}</span>
     </div>
@@ -352,6 +353,7 @@ function ActionBtn({ icon: Icon, label, onClick }: { icon: IconComponent; label:
 
 /** 紧凑工具栏图标按钮 */
 function ToolbarIcon({ icon: Icon, title, onClick }: { icon: IconComponent; title: string; onClick: () => void }) {
+  const darkMode = useAppStore((s) => s.darkMode);
   return (
     <div
       onClick={onClick}
@@ -359,11 +361,11 @@ function ToolbarIcon({ icon: Icon, title, onClick }: { icon: IconComponent; titl
       style={{
         width: 32, height: 32, borderRadius: 6,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', color: '#6B7280', flexShrink: 0,
+        cursor: 'pointer', color: darkMode ? '#D1D5DB' : '#6B7280', flexShrink: 0,
         fontSize: 12,
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6'; e.currentTarget.style.color = '#111827'; }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6B7280'; }}
+      onMouseEnter={e => { e.currentTarget.style.background = darkMode ? '#374151' : '#F3F4F6'; e.currentTarget.style.color = darkMode ? '#F9FAFB' : '#111827'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = darkMode ? '#D1D5DB' : '#6B7280'; }}
     >
       <Icon size={15} />
     </div>
@@ -385,11 +387,12 @@ interface NavGroupProps {
 function NavGroup({ id, label, icon: Icon, expanded, collapsed, currentPage, items, onToggle, onNavigate }: NavGroupProps) {
   const isExpanded = expanded === id;
   const childActive = items.some((item) => currentPage === item.id);
+  const darkMode = useAppStore((s) => s.darkMode);
 
   return (
     <div>
       <motion.div
-        whileHover={{ background: '#F9FAFB' }}
+        whileHover={{ background: darkMode ? '#374151' : '#F9FAFB' }}
         whileTap={{ scale: 0.99 }}
         onClick={() => onToggle(id)}
         style={{
@@ -397,11 +400,11 @@ function NavGroup({ id, label, icon: Icon, expanded, collapsed, currentPage, ite
           padding: '10px 14px', cursor: 'pointer',
           borderLeft: '3px solid',
           borderLeftColor: childActive || isExpanded ? '#2563EB' : 'transparent',
-          background: childActive || isExpanded ? '#EFF6FF' : 'transparent',
+          background: childActive || isExpanded ? (darkMode ? '#1E3A5F' : '#EFF6FF') : 'transparent',
         }}
       >
-        <Icon size={15} color={childActive || isExpanded ? '#2563EB' : '#6B7280'} style={{ flexShrink: 0 }} />
-        {!collapsed && <span style={{ fontSize: 13, color: childActive || isExpanded ? '#2563EB' : '#374151', flex: 1, whiteSpace: 'nowrap' }}>{label}</span>}
+        <Icon size={15} color={childActive || isExpanded ? '#2563EB' : (darkMode ? '#9CA3AF' : '#6B7280')} style={{ flexShrink: 0 }} />
+        {!collapsed && <span style={{ fontSize: 13, color: childActive || isExpanded ? '#2563EB' : (darkMode ? '#D1D5DB' : '#374151'), flex: 1, whiteSpace: 'nowrap' }}>{label}</span>}
         {!collapsed && (
           <motion.div animate={{ rotate: isExpanded ? 0 : -90 }} style={{ flexShrink: 0 }}>
             <ChevronDown size={13} color="#9CA3AF" />
@@ -418,9 +421,9 @@ function NavGroup({ id, label, icon: Icon, expanded, collapsed, currentPage, ite
               return (
                 <motion.div
                   key={item.id}
-                  whileHover={{ background: '#F9FAFB' }}
+                  whileHover={{ background: darkMode ? '#374151' : '#F9FAFB' }}
                   onClick={() => onNavigate(item.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px 9px 42px', cursor: 'pointer', background: active ? '#EFF6FF' : 'transparent' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px 9px 42px', cursor: 'pointer', background: active ? (darkMode ? '#1E3A5F' : '#EFF6FF') : 'transparent' }}
                 >
                   <ChildIcon size={13} color={active ? '#2563EB' : '#6B7280'} />
                   <span style={{ fontSize: 12.5, color: active ? '#2563EB' : '#4B5563', whiteSpace: 'nowrap' }}>{item.label}</span>

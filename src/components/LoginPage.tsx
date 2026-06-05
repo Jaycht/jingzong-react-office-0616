@@ -426,11 +426,11 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                   gap: 7,
                   padding: "4px 12px 4px 10px",
                   borderRadius: 20,
-                  background: "rgba(0,59,109,0.35)",
-                  border: "1px solid rgba(163,201,255,0.15)",
+                  background: "#EFF6FF",
+                  border: "1px solid #BFDBFE",
                   marginBottom: 16,
                   fontSize: 10.5,
-                  color: "#00dbe7",
+                  color: "#2563EB",
                   fontFamily: "'JetBrains Mono',monospace",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
@@ -441,7 +441,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                     width: 6,
                     height: 6,
                     borderRadius: "50%",
-                    background: "#00dbe7",
+                    background: "#2563EB",
                     display: "inline-block",
                     animation: "pulse 2s infinite",
                   }}
@@ -494,7 +494,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                       borderRadius: 6,
                       background: "rgba(255,75,75,0.12)",
                       border: "1px solid rgba(255,75,75,0.25)",
-                      color: "#ffb4ab",
+                      color: "rgba(255,75,75,0.9)",
                       fontSize: 12,
                     }}
                   >
@@ -723,14 +723,15 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 style={{
                   fontSize: "clamp(11px, 1.2vw, 13px)",
                   lineHeight: 2.2,
-                  color: "rgba(194, 198, 208, 0.4)",
+                  color: "rgba(75, 85, 99, 0.8)",
                   fontFamily: "'JetBrains Mono','Noto Sans SC',monospace",
                   letterSpacing: "0.08em",
                   userSelect: "none",
                 }}
               >
                 {DISCIPLINE_RULES.map((rule) => (
-                  <div key={rule}>{rule}</div>
+                  <div key={rule}>{rule}
+                  </div>
                 ))}
               </motion.div>
             </motion.div>
@@ -760,7 +761,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                     width: 5,
                     height: 5,
                     borderRadius: "50%",
-                    background: "#00dbe7",
+                    background: "#2563EB",
                     display: "inline-block",
                     animation: "pulse 2s infinite",
                   }}
@@ -769,7 +770,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                   style={{
                     fontFamily: "'JetBrains Mono',monospace",
                     fontSize: 10,
-                    color: "#00dbe7",
+                    color: "#2563EB",
                     letterSpacing: "0.08em",
                     textTransform: "uppercase",
                   }}
@@ -781,7 +782,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 style={{
                   fontSize: "clamp(22px, 3vw, 32px)",
                   fontWeight: 700,
-                  color: "#e2e2e6",
+                  color: "#111827",
                   fontFamily: "'JetBrains Mono',monospace",
                 }}
               >
@@ -820,7 +821,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background: "rgba(0,59,109,0.2)",
+                    background: "rgba(37,99,235,0.1)",
                     borderRadius: 8,
                     marginBottom: 14,
                     fontSize: 20,
@@ -828,7 +829,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 >
                   {card.icon}
                 </div>
-                <h3 style={{ fontSize: "clamp(14px, 1.5vw, 18px)", fontWeight: 600, color: "#e2e2e6", marginBottom: 6 }}>
+                <h3 style={{ fontSize: "clamp(14px, 1.5vw, 18px)", fontWeight: 600, color: "#1F2937", marginBottom: 6 }}>
                   {card.title}
                 </h3>
                 <p style={{ fontSize: "clamp(11px, 1.2vw, 13px)", lineHeight: 1.6, color: "#6B7280" }}>{card.desc}</p>
@@ -852,7 +853,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           <span
             style={{
               fontSize: "clamp(10px, 1vw, 12px)",
-              color: "rgba(226,226,230,0.35)",
+              color: "#9CA3AF",
               fontFamily: "'JetBrains Mono',monospace",
             }}
           >
@@ -861,7 +862,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           <span
             style={{
               fontSize: "clamp(10px, 1vw, 12px)",
-              color: "rgba(226,226,230,0.35)",
+              color: "#9CA3AF",
               fontFamily: "'JetBrains Mono',monospace",
             }}
           >

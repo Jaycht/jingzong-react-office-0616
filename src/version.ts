@@ -1,16 +1,16 @@
-export const APP_VERSION = "V2.8.1";
+export const APP_VERSION = "V2.9.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 8;
-export const VERSION_PATCH = 1;
+export const VERSION_MINOR = 9;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
-  // ===== V2.8.1 =====
-  "V2.8.1 修复 - echarts-for-react 导入导致 React error #130（改用 ref 方式直连 ECharts 渲染）",
-  "V2.8.1 修复 - 安装时 installDir 非有效配置项导致打包失败（改用 perMachine + NSIS 宏）",
-  "V2.8.1 修复 - 下拉菜单无法搜索筛选（统一添加 showSearch）",
-  "V2.8.1 重构 - 统计分析页面可视化重做（各模块对比→ECharts渐变横向柱状图，类型分布→ECharts玫瑰图）",
-  "V2.8.1 重构 - 工作台到期预警改为动态摘要面板（三列动画数字+脉冲动效，替换模块活跃排行）",
-  "V2.8.1 重构 - 移除工作台模块活跃排行（与数据概览TOP5内容重叠）",
+  // ===== V2.9.0 =====
+  "V2.9.0 新增 - 全局嫌疑人跨模块联动（选/填嫌疑人姓名自动填充身份证号、手机号、地址，中队案件/资金查控/强制措施三大模块共享数据池）",
+  "V2.9.0 新增 - 持有人引用嫌疑人数据池（设备采集/涉案财物的持有人字段可自动补全已有嫌疑人姓名）",
+  "V2.9.0 修复 - 新建记录时文本字段（身份证号、手机号、具体型号等）无法保存（InputWithHistory 未传递 value/onChange 给 AutoComplete）",
+  "V2.9.0 修复 - 案件名称/编号联动未生效（Form.useFormInstance 在回调中调用违反 Hooks 规则，联动逻辑被静默吞掉）",
+  "V2.9.0 修复 - 案件名称/编号手动输入后不触发联动（onChange 只更新显示，未做精确匹配检测）",
+  "V2.9.0 重构 - 全站主题统一为亮色（侧边栏、标题栏、登录页、注册页背景改 #F0F2F5/#ffffff，文字改为深色系）",
   // ===== V2.8.0 =====
   "V2.8.0 新增 - 全局搜索（工作台醒目搜索框，搜遍所有模块，结果按模块分组，点击跳转编辑）",
   "V2.8.0 新增 - 到期预警（依据刑诉法自动计算刑拘30天/取保12月/受案7天等法定期限，过期红标/3天橙标/7天黄标）",

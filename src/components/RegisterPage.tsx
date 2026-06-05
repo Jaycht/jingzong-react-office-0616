@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useState, useRef } from "react";
 import { hashPassword } from "../utils/crypto";
 import type { FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,6 +38,10 @@ export default function RegisterPage({ onBack }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState(0);
+  const [avatar, setAvatar] = useState<string | null>(() => {
+    try { return localStorage.getItem("jingzong.avatar"); } catch { return null; }
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handle = (e: FormEvent) => {
     e.preventDefault();
@@ -175,17 +179,35 @@ export default function RegisterPage({ onBack }: Props) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              onClick={() => fileInputRef.current?.click()}
               style={{
-                width: 52, height: 52, borderRadius: 14,
-                background: "linear-gradient(135deg, #155A8A, #1E7BB5)",
+                width: 52, height: 52, borderRadius: 14, cursor: "pointer",
+                background: avatar ? "none" : "linear-gradient(135deg, #155A8A, #1E7BB5)",
                 border: "1px solid rgba(21,90,138,0.15)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 margin: "0 auto 12px",
                 boxShadow: "0 4px 16px rgba(21,90,138,0.3)",
               }}
             >
-              <UserPlus size={24} color="#1F2937" />
+              {avatar ? (
+                <img src={avatar} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: 14, objectFit: "cover" }} />
+              ) : (
+                <UserPlus size={24} color="#1F2937" />
+              )}
             </motion.div>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              if (!file.type.startsWith("image/")) return;
+              if (file.size > 2 * 1024 * 1024) return;
+              const reader = new FileReader();
+              reader.onload = () => {
+                const dataUrl = reader.result as string;
+                setAvatar(dataUrl);
+                try { localStorage.setItem("jingzong.avatar", dataUrl); } catch {}
+              };
+              reader.readAsDataURL(file);
+            }} />
 
             <div style={{ textAlign: "center", marginBottom: 22 }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#1F2937", marginBottom: 4 }}>

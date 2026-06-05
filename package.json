@@ -1,7 +1,7 @@
 {
   "name": "jingzong-work-log",
   "private": true,
-  "version": "2.8.1",
+  "version": "2.9.0",
   "description": "经侦大队工作记录管理系统",
   "author": "陈洪涛",
   "license": "MIT",
@@ -28,6 +28,7 @@
     ],
     "win": {
       "icon": "app.ico",
+      "artifactName": "${productName}-V${version}-${arch}.${ext}",
       "target": [
         {
           "target": "nsis",
