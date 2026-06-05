@@ -464,6 +464,7 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
     e.stopPropagation();
     e.preventDefault();
     deleteFieldHistoryEntry('caseName', val);
+    deleteFieldHistoryEntry('caseNo', val);
     setRefreshKey((k) => k + 1);
   }, []);
 
@@ -478,7 +479,7 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
     return allOptions.filter((item) => item.toUpperCase().includes(q));
   }, [allOptions, value]);
 
-  const history = getFieldHistory('caseName');
+  const history = [...new Set([...getFieldHistory('caseName'), ...getFieldHistory('caseNo')])];
 
   const handleChange = (val: string) => {
     setValue(val);
@@ -612,6 +613,7 @@ export function GlobalCaseNoField({ field, subName }: {
     e.stopPropagation();
     e.preventDefault();
     deleteFieldHistoryEntry('caseNo', val);
+    deleteFieldHistoryEntry('caseName', val);
     setRefreshKey((k) => k + 1);
   }, []);
 
@@ -626,7 +628,7 @@ export function GlobalCaseNoField({ field, subName }: {
     return allOptions.filter((item) => item.toUpperCase().includes(q));
   }, [allOptions, value]);
 
-  const history = getFieldHistory('caseNo');
+  const history = [...new Set([...getFieldHistory('caseNo'), ...getFieldHistory('caseName')])];
 
   const handleChange = (val: string) => {
     setValue(val);
