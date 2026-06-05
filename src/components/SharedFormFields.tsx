@@ -431,18 +431,22 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
   const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  // 将 form 实例提到组件顶层，不能在回调中调用 useFormInstance
   let form: any = null;
   try { form = Form.useFormInstance(); } catch { /* 无 Form 上下文时降级 */ }
 
   const caseNoField = subName !== undefined ? [subName, 'caseNo'] : 'caseNo';
   const caseNoKey = typeof caseNoField === 'string' ? caseNoField : caseNoField[1];
 
-  const options = useMemo(() => {
+  const allOptions = useMemo(() => {
     void refreshKey;
-    const names = getAllCaseNames();
-    return names.map((name) => ({ value: name, label: name }));
+    return getAllCaseNames();
   }, [refreshKey]);
+
+  // 同步外部 form 值到内部状态
+  const formValue = form?.getFieldValue(field.id);
+  if (formValue !== undefined && formValue !== value && formValue !== '') {
+    setValue(formValue);
+  }
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
@@ -455,42 +459,105 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
     }
   };
 
+  const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    deleteFieldHistoryEntry('caseName', val);
+    setRefreshKey((k) => k + 1);
+  }, []);
+
+  const filteredOptions = useMemo(() => {
+    if (!value) return allOptions;
+    const q = value.toUpperCase();
+    return allOptions.filter((item) => item.toUpperCase().includes(q));
+  }, [allOptions, value]);
+
   const handleChange = (val: string) => {
     setValue(val);
-    // 通知 Form 当前字段值已变化（补上 Form.Item 的自控缺口）
-    if (form) {
-      const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
-      form.setFieldsValue({ [nameKey]: val });
-    }
-    // 无论选择还是填写，只要输入内容精确匹配了某个已保存的案件名称，就自动填充编号
+    const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
+    form?.setFieldsValue({ [nameKey]: val });
     doFillCaseNo(val);
   };
 
   const handleSelect = (selectedValue: string) => {
     setValue(selectedValue);
-    if (form) {
-      const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
-      form.setFieldsValue({ [nameKey]: selectedValue });
-    }
+    const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
+    form?.setFieldsValue({ [nameKey]: selectedValue });
     doFillCaseNo(selectedValue);
+    setOpen(false);
   };
+
+  const history = getFieldHistory('caseName');
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
-      <AutoComplete
-        value={value}
-        onChange={handleChange}
-        open={open}
-        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        onSelect={handleSelect}
-        options={options}
-        placeholder="请输入案件名称（全软件数据共享）"
-        filterOption={(inputValue, option) =>
-          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-        }
-        style={{ width: '100%' }}
-      />
+      <div style={{ position: 'relative' }}>
+        <input
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+          onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          placeholder="请输入案件名称（全软件数据共享）"
+          style={{
+            width: '100%', height: 32, padding: '0 11px',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
+            fontFamily: 'inherit', boxSizing: 'border-box',
+            transition: 'border-color .2s, box-shadow .2s',
+          }}
+          onFocusCapture={(e) => {
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
+          }}
+          onBlurCapture={(e) => {
+            e.currentTarget.style.borderColor = '#D9D9D9';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        />
+        {open && filteredOptions.length > 0 && (
+          <div
+            style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+              marginTop: 2, background: '#fff', borderRadius: 6,
+              border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              maxHeight: 240, overflow: 'auto',
+            }}
+          >
+            {filteredOptions.map((item) => {
+              const isHistory = history.includes(item);
+              return (
+                <div
+                  key={item}
+                  onMouseDown={() => handleSelect(item)}
+                  style={{
+                    display: 'flex', alignItems: 'center', padding: '6px 12px',
+                    cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                    transition: 'background .1s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {item}
+                  </span>
+                  {isHistory && (
+                    <span
+                      onMouseDown={(e) => handleDelete(e, item)}
+                      style={{
+                        cursor: 'pointer', padding: '2px 6px',
+                        fontSize: 14, lineHeight: 1, color: '#D1D5DB',
+                        borderRadius: 3, userSelect: 'none', flexShrink: 0,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
+                    >×</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </Form.Item>
   );
 }
@@ -506,18 +573,22 @@ export function GlobalCaseNoField({ field, subName }: {
   const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  // 将 form 实例提到组件顶层
   let form: any = null;
   try { form = Form.useFormInstance(); } catch { /* 无 Form 上下文时降级 */ }
 
   const caseNameField = subName !== undefined ? [subName, 'caseName'] : 'caseName';
   const caseNameKey = typeof caseNameField === 'string' ? caseNameField : caseNameField[1];
 
-  const options = useMemo(() => {
+  const allOptions = useMemo(() => {
     void refreshKey;
-    const nos = getAllCaseNos();
-    return nos.map((no) => ({ value: no, label: no }));
+    return getAllCaseNos();
   }, [refreshKey]);
+
+  // 同步外部 form 值到内部状态
+  const formValue = form?.getFieldValue(field.id);
+  if (formValue !== undefined && formValue !== value && formValue !== '') {
+    setValue(formValue);
+  }
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
@@ -530,42 +601,105 @@ export function GlobalCaseNoField({ field, subName }: {
     }
   };
 
+  const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    deleteFieldHistoryEntry('caseNo', val);
+    setRefreshKey((k) => k + 1);
+  }, []);
+
+  const filteredOptions = useMemo(() => {
+    if (!value) return allOptions;
+    const q = value.toUpperCase();
+    return allOptions.filter((item) => item.toUpperCase().includes(q));
+  }, [allOptions, value]);
+
   const handleChange = (val: string) => {
     setValue(val);
-    // 通知 Form 当前字段值已变化
-    if (form) {
-      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
-      form.setFieldsValue({ [key]: val });
-    }
-    // 输入内容精确匹配已保存案件编号时，自动填充名称
+    const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+    form?.setFieldsValue({ [key]: val });
     doFillCaseName(val);
   };
 
   const handleSelect = (selectedValue: string) => {
     setValue(selectedValue);
-    if (form) {
-      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
-      form.setFieldsValue({ [key]: selectedValue });
-    }
+    const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+    form?.setFieldsValue({ [key]: selectedValue });
     doFillCaseName(selectedValue);
+    setOpen(false);
   };
+
+  const history = getFieldHistory('caseNo');
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
-      <AutoComplete
-        value={value}
-        onChange={handleChange}
-        open={open}
-        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        onSelect={handleSelect}
-        options={options}
-        placeholder="请输入案件编号（全软件数据共享）"
-        filterOption={(inputValue, option) =>
-          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-        }
-        style={{ width: '100%' }}
-      />
+      <div style={{ position: 'relative' }}>
+        <input
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+          onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          placeholder="请输入案件编号（全软件数据共享）"
+          style={{
+            width: '100%', height: 32, padding: '0 11px',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
+            fontFamily: 'inherit', boxSizing: 'border-box',
+            transition: 'border-color .2s, box-shadow .2s',
+          }}
+          onFocusCapture={(e) => {
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
+          }}
+          onBlurCapture={(e) => {
+            e.currentTarget.style.borderColor = '#D9D9D9';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        />
+        {open && filteredOptions.length > 0 && (
+          <div
+            style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+              marginTop: 2, background: '#fff', borderRadius: 6,
+              border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              maxHeight: 240, overflow: 'auto',
+            }}
+          >
+            {filteredOptions.map((item) => {
+              const isHistory = history.includes(item);
+              return (
+                <div
+                  key={item}
+                  onMouseDown={() => handleSelect(item)}
+                  style={{
+                    display: 'flex', alignItems: 'center', padding: '6px 12px',
+                    cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                    transition: 'background .1s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {item}
+                  </span>
+                  {isHistory && (
+                    <span
+                      onMouseDown={(e) => handleDelete(e, item)}
+                      style={{
+                        cursor: 'pointer', padding: '2px 6px',
+                        fontSize: 14, lineHeight: 1, color: '#D1D5DB',
+                        borderRadius: 3, userSelect: 'none', flexShrink: 0,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
+                    >×</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </Form.Item>
   );
 }
@@ -681,6 +815,14 @@ export function GlobalSuspectField({ field, subName }: {
     }
   };
 
+  const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    deleteFieldHistoryEntry('suspect', val);
+    deleteFieldHistoryEntry('suspectName', val);
+    setRefreshKey((k) => k + 1);
+  }, []);
+
   const handleChange = (val: string) => {
     setValue(val);
     if (form) {
@@ -697,24 +839,88 @@ export function GlobalSuspectField({ field, subName }: {
       form.setFieldsValue({ [key]: selectedValue });
     }
     fillSuspectRelated(selectedValue);
+    setOpen(false);
   };
+
+  const filteredOptions = useMemo(() => {
+    if (!value) return getAllSuspectNames();
+    const q = value.toUpperCase();
+    return getAllSuspectNames().filter((item) => item.toUpperCase().includes(q));
+  }, [value, refreshKey]);
+
+  const history = getFieldHistory('suspect');
+  const history2 = getFieldHistory('suspectName');
+  const allHistory = [...new Set([...history, ...history2])];
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
-      <AutoComplete
-        value={value}
-        onChange={handleChange}
-        open={open}
-        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        onSelect={handleSelect}
-        options={options}
-        placeholder="请输入嫌疑人姓名（跨模块共享）"
-        filterOption={(inputValue, option) =>
-          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-        }
-        style={{ width: '100%' }}
-      />
+      <div style={{ position: 'relative' }}>
+        <input
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+          onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          placeholder="请输入嫌疑人姓名（跨模块共享）"
+          style={{
+            width: '100%', height: 32, padding: '0 11px',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
+            fontFamily: 'inherit', boxSizing: 'border-box',
+            transition: 'border-color .2s, box-shadow .2s',
+          }}
+          onFocusCapture={(e) => {
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
+          }}
+          onBlurCapture={(e) => {
+            e.currentTarget.style.borderColor = '#D9D9D9';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        />
+        {open && filteredOptions.length > 0 && (
+          <div
+            style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+              marginTop: 2, background: '#fff', borderRadius: 6,
+              border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              maxHeight: 240, overflow: 'auto',
+            }}
+          >
+            {filteredOptions.map((item) => {
+              const isHistory = allHistory.includes(item);
+              return (
+                <div
+                  key={item}
+                  onMouseDown={() => handleSelect(item)}
+                  style={{
+                    display: 'flex', alignItems: 'center', padding: '6px 12px',
+                    cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                    transition: 'background .1s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {item}
+                  </span>
+                  {isHistory && (
+                    <span
+                      onMouseDown={(e) => handleDelete(e, item)}
+                      style={{
+                        cursor: 'pointer', padding: '2px 6px',
+                        fontSize: 14, lineHeight: 1, color: '#D1D5DB',
+                        borderRadius: 3, userSelect: 'none', flexShrink: 0,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
+                    >×</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </Form.Item>
   );
 }
@@ -735,47 +941,117 @@ export function HolderAutoComplete({ field, subName }: {
   let form: any = null;
   try { form = Form.useFormInstance(); } catch { /* 降级 */ }
 
-  const options = useMemo(() => {
-    void refreshKey;
-    const suspectNames = getAllSuspectNames();
-    return suspectNames.map((name) => ({ value: name, label: name }));
-  }, [refreshKey]);
-
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
 
+  // 同步外部 form 值到内部状态
+  const formValue = form?.getFieldValue(field.id);
+  if (formValue !== undefined && formValue !== value && formValue !== '') {
+    setValue(formValue);
+  }
+
+  const allOptions = useMemo(() => {
+    void refreshKey;
+    return getAllSuspectNames();
+  }, [refreshKey]);
+
+  const filteredOptions = useMemo(() => {
+    if (!value) return allOptions;
+    const q = value.toUpperCase();
+    return allOptions.filter((item) => item.toUpperCase().includes(q));
+  }, [allOptions, value]);
+
+  const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    deleteFieldHistoryEntry('holder', val);
+    setRefreshKey((k) => k + 1);
+  }, []);
+
   const handleChange = (val: string) => {
     setValue(val);
-    if (form) {
-      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
-      form.setFieldsValue({ [key]: val });
-    }
+    const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+    form?.setFieldsValue({ [key]: val });
   };
 
   const handleSelect = (selectedValue: string) => {
     setValue(selectedValue);
-    if (form) {
-      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
-      form.setFieldsValue({ [key]: selectedValue });
-    }
+    const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+    form?.setFieldsValue({ [key]: selectedValue });
+    setOpen(false);
   };
+
+  const history = getFieldHistory('holder');
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
-      <AutoComplete
-        value={value}
-        onChange={handleChange}
-        open={open}
-        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        onSelect={handleSelect}
-        options={options}
-        placeholder="请输入持有人姓名（可匹配嫌疑人）"
-        filterOption={(inputValue, option) =>
-          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-        }
-        style={{ width: '100%' }}
-      />
+      <div style={{ position: 'relative' }}>
+        <input
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+          onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          placeholder="请输入持有人姓名（可匹配嫌疑人）"
+          style={{
+            width: '100%', height: 32, padding: '0 11px',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
+            fontFamily: 'inherit', boxSizing: 'border-box',
+            transition: 'border-color .2s, box-shadow .2s',
+          }}
+          onFocusCapture={(e) => {
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
+          }}
+          onBlurCapture={(e) => {
+            e.currentTarget.style.borderColor = '#D9D9D9';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        />
+        {open && filteredOptions.length > 0 && (
+          <div
+            style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+              marginTop: 2, background: '#fff', borderRadius: 6,
+              border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              maxHeight: 240, overflow: 'auto',
+            }}
+          >
+            {filteredOptions.map((item) => {
+              const isHistory = history.includes(item);
+              return (
+                <div
+                  key={item}
+                  onMouseDown={() => handleSelect(item)}
+                  style={{
+                    display: 'flex', alignItems: 'center', padding: '6px 12px',
+                    cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                    transition: 'background .1s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {item}
+                  </span>
+                  {isHistory && (
+                    <span
+                      onMouseDown={(e) => handleDelete(e, item)}
+                      style={{
+                        cursor: 'pointer', padding: '2px 6px',
+                        fontSize: 14, lineHeight: 1, color: '#D1D5DB',
+                        borderRadius: 3, userSelect: 'none', flexShrink: 0,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
+                    >×</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </Form.Item>
   );
 }

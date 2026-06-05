@@ -384,7 +384,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
 
       {!lowPerfMode && <div className="scanline-overlay" />}
       {/* 亮色主题覆盖 glass-panel 背景 */}
-      <style>{`.glass-panel { background: #ffffff !important; } .glass-panel.corner-accent { background: #ffffff !important; }`}</style>
+      <style>{`.glass-panel { background: #ffffff !important; } .glass-panel.corner-accent { background: #ffffff !important; } .low-perf-mode .glass-panel { background: #ffffff !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }`}</style>
 
       <main
         style={{
