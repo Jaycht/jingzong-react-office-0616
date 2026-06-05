@@ -16,14 +16,14 @@ interface Props {
 const inputStyle: React.CSSProperties = {
   width: "100%", height: 40,
   padding: "0 12px",
-  background: "rgba(12,14,17,0.8)", border: "1.5px solid #42474f",
-  borderRadius: 8, fontSize: 13, color: "#e2e2e6",
+  background: "#ffffff", border: "1.5px solid #D1D5DB",
+  borderRadius: 8, fontSize: 13, color: "#1F2937",
   outline: "none", transition: "border-color .25s, box-shadow .25s",
   fontFamily: "inherit", boxSizing: "border-box",
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 12, fontWeight: 600, color: "#c2c6d0",
+  fontSize: 12, fontWeight: 600, color: "#6B7280",
   display: "block", marginBottom: 5,
 };
 
@@ -135,6 +135,8 @@ export default function RegisterPage({ onBack }: Props) {
           width: "min(500px, 95vw)", maxHeight: "90vh", overflow: "auto",
           padding: "32px 36px 28px", borderRadius: 16,
           position: "relative",
+          background: "#ffffff",
+          border: "1px solid #E5E7EB",
         }}
       >
         {/* Close button */}
@@ -142,13 +144,13 @@ export default function RegisterPage({ onBack }: Props) {
           onClick={onBack}
           style={{
             position: "absolute", top: 14, right: 14,
-            background: "rgba(66,71,79,0.3)", border: "none",
+            background: "#F3F4F6", border: "none",
             width: 32, height: 32, borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: "#c2c6d0", transition: "background .2s",
+            cursor: "pointer", color: "#6B7280", transition: "background .2s",
           }}
-          onMouseOver={e => (e.currentTarget.style.background = "rgba(66,71,79,0.5)")}
-          onMouseOut={e => (e.currentTarget.style.background = "rgba(66,71,79,0.3)")}
+          onMouseOver={e => (e.currentTarget.style.background = "#E5E7EB")}
+          onMouseOut={e => (e.currentTarget.style.background = "#F3F4F6")}
         >
           <X size={16} />
         </button>
@@ -161,7 +163,7 @@ export default function RegisterPage({ onBack }: Props) {
               style={{
                 background: "none", border: "none", cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6,
-                color: "#a3c9ff", fontSize: 12, marginBottom: 16,
+                color: "#2563EB", fontSize: 12, marginBottom: 16,
                 fontFamily: "inherit", padding: 0,
               }}
             >
@@ -175,18 +177,18 @@ export default function RegisterPage({ onBack }: Props) {
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               style={{
                 width: 52, height: 52, borderRadius: 14,
-                background: "linear-gradient(135deg, #003b6d, #0a5090)",
-                border: "1px solid rgba(163,201,255,0.15)",
+                background: "linear-gradient(135deg, #155A8A, #1E7BB5)",
+                border: "1px solid rgba(21,90,138,0.15)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 margin: "0 auto 12px",
-                boxShadow: "0 4px 16px rgba(0,59,109,0.3)",
+                boxShadow: "0 4px 16px rgba(21,90,138,0.3)",
               }}
             >
-              <UserPlus size={24} color="#e2e2e6" />
+              <UserPlus size={24} color="#1F2937" />
             </motion.div>
 
             <div style={{ textAlign: "center", marginBottom: 22 }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#e2e2e6", marginBottom: 4 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#1F2937", marginBottom: 4 }}>
                 用户注册
               </div>
               <div style={{ fontSize: 12, color: "#8c919a", lineHeight: 1.6 }}>
@@ -220,15 +222,15 @@ export default function RegisterPage({ onBack }: Props) {
                 <div>
                   <label style={labelStyle}>姓名 <span style={{ color: "#ffb4ab" }}>*</span></label>
                   <input value={name} onChange={e => setName(e.target.value)} placeholder="真实姓名" style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = "#a3c9ff"; e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)"; }}
-                    onBlur={e => { e.target.style.borderColor = "#42474f"; e.target.style.boxShadow = "none"; }}
+                    onFocus={e => { e.target.style.borderColor = "#2563EB"; e.target.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
+                    onBlur={e => { e.target.style.borderColor = "#D1D5DB"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
                 <div>
                   <label style={labelStyle}>警号 <span style={{ color: "#ffb4ab" }}>*</span></label>
                   <input value={badge} onChange={e => setBadge(e.target.value)} placeholder="6位警号" maxLength={6} style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = "#a3c9ff"; e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)"; }}
-                    onBlur={e => { e.target.style.borderColor = "#42474f"; e.target.style.boxShadow = "none"; }}
+                    onFocus={e => { e.target.style.borderColor = "#2563EB"; e.target.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
+                    onBlur={e => { e.target.style.borderColor = "#D1D5DB"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
               </div>
@@ -240,9 +242,9 @@ export default function RegisterPage({ onBack }: Props) {
                   backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c919a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
                   backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center", paddingRight: 32,
                 }}>
-                  <option value="" style={{ background: "#1e2023", color: "#c2c6d0" }}>请选择所属科室</option>
+                  <option value="" style={{ background: "#ffffff", color: "#6B7280" }}>请选择所属科室</option>
                   {POSITION_LIST.map(p => (
-                    <option key={p} value={p} style={{ background: "#1e2023", color: "#e2e2e6" }}>{p}</option>
+                    <option key={p} value={p} style={{ background: "#ffffff", color: "#1F2937" }}>{p}</option>
                   ))}
                 </select>
               </div>
@@ -251,15 +253,15 @@ export default function RegisterPage({ onBack }: Props) {
                 <div>
                   <label style={labelStyle}>登录账号 <span style={{ color: "#ffb4ab" }}>*</span></label>
                   <input value={account} onChange={e => setAccount(e.target.value)} placeholder="设置账号" autoComplete="off" style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = "#a3c9ff"; e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)"; }}
-                    onBlur={e => { e.target.style.borderColor = "#42474f"; e.target.style.boxShadow = "none"; }}
+                    onFocus={e => { e.target.style.borderColor = "#2563EB"; e.target.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
+                    onBlur={e => { e.target.style.borderColor = "#D1D5DB"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
                 <div>
                   <label style={labelStyle}>登录密码 <span style={{ color: "#ffb4ab" }}>*</span></label>
                   <input type="password" value={pwd} onChange={e => setPwd(e.target.value)} placeholder="6位以上" autoComplete="new-password" style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = "#a3c9ff"; e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)"; }}
-                    onBlur={e => { e.target.style.borderColor = "#42474f"; e.target.style.boxShadow = "none"; }}
+                    onFocus={e => { e.target.style.borderColor = "#2563EB"; e.target.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
+                    onBlur={e => { e.target.style.borderColor = "#D1D5DB"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
               </div>
@@ -268,15 +270,15 @@ export default function RegisterPage({ onBack }: Props) {
                 <div>
                   <label style={labelStyle}>确认密码 <span style={{ color: "#ffb4ab" }}>*</span></label>
                   <input type="password" value={pwd2} onChange={e => setPwd2(e.target.value)} placeholder="再次输入" style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = "#a3c9ff"; e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)"; }}
-                    onBlur={e => { e.target.style.borderColor = "#42474f"; e.target.style.boxShadow = "none"; }}
+                    onFocus={e => { e.target.style.borderColor = "#2563EB"; e.target.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
+                    onBlur={e => { e.target.style.borderColor = "#D1D5DB"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
                 <div>
                   <label style={labelStyle}>手机号</label>
                   <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="用于密码找回" style={inputStyle}
-                    onFocus={e => { e.target.style.borderColor = "#a3c9ff"; e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)"; }}
-                    onBlur={e => { e.target.style.borderColor = "#42474f"; e.target.style.boxShadow = "none"; }}
+                    onFocus={e => { e.target.style.borderColor = "#2563EB"; e.target.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)"; }}
+                    onBlur={e => { e.target.style.borderColor = "#D1D5DB"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
               </div>
@@ -289,14 +291,14 @@ export default function RegisterPage({ onBack }: Props) {
                 className="shimmer-btn"
                 style={{
                   height: 44,
-                  background: "linear-gradient(135deg, #003b6d, #0a5090)",
-                  color: "#e2e2e6",
-                  border: "1px solid rgba(163,201,255,0.15)",
+                  background: "linear-gradient(135deg, #155A8A, #1E7BB5)",
+                  color: "#ffffff",
+                  border: "1px solid rgba(21,90,138,0.15)",
                   borderRadius: 8, fontSize: 14, fontWeight: 600,
                   letterSpacing: 3, cursor: loading ? "not-allowed" : "pointer",
                   position: "relative", overflow: "hidden",
                   fontFamily: "inherit", opacity: loading ? 0.8 : 1,
-                  boxShadow: "0 4px 16px rgba(0,59,109,0.3)",
+                  boxShadow: "0 4px 16px rgba(21,90,138,0.3)",
                   marginTop: 4,
                 }}
               >
@@ -328,10 +330,10 @@ export default function RegisterPage({ onBack }: Props) {
             >
               <CheckCircle size={36} color="#38A169" />
             </motion.div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#e2e2e6", marginBottom: 8 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#1F2937", marginBottom: 8 }}>
               注册提交成功！
             </div>
-            <div style={{ fontSize: 13, color: "#c2c6d0", marginBottom: 28, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 28, lineHeight: 1.7 }}>
               您的账号注册申请已提交<br />
               请等待管理员审核后登录使用
             </div>
@@ -341,12 +343,12 @@ export default function RegisterPage({ onBack }: Props) {
               whileTap={{ scale: 0.98 }}
               style={{
                 height: 42, padding: "0 32px",
-                background: "linear-gradient(135deg, #003b6d, #0a5090)",
-                color: "#e2e2e6",
-                border: "1px solid rgba(163,201,255,0.15)",
+                background: "linear-gradient(135deg, #155A8A, #1E7BB5)",
+                color: "#ffffff",
+                border: "1px solid rgba(21,90,138,0.15)",
                 borderRadius: 8, fontSize: 14, fontWeight: 600,
                 cursor: "pointer", fontFamily: "inherit",
-                boxShadow: "0 4px 16px rgba(0,59,109,0.3)",
+                boxShadow: "0 4px 16px rgba(21,90,138,0.3)",
               }}
             >
               返回登录

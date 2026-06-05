@@ -314,11 +314,11 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
     height: 44,
     paddingLeft: 40,
     paddingRight: 14,
-    background: "rgba(12,14,17,0.8)",
-    border: "1.5px solid #42474f",
+    background: "#ffffff",
+    border: "1.5px solid #D1D5DB",
     borderRadius: 8,
     fontSize: 13.5,
-    color: "#e2e2e6",
+    color: "#1F2937",
     outline: "none",
     transition: "border-color .25s, box-shadow .25s",
     fontFamily: "inherit",
@@ -326,13 +326,13 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
   };
 
   const bgStyle = lowPerfMode
-    ? { backgroundColor: "#111316" }
+    ? { backgroundColor: "#F0F2F5" }
     : {
-        backgroundColor: "#111316",
+        backgroundColor: "#F0F2F5",
         backgroundImage: [
-          "radial-gradient(rgba(0, 59, 109, 0.25) 1px, transparent 1px)",
-          "linear-gradient(to right, rgba(0, 59, 109, 0.06) 1px, transparent 1px)",
-          "linear-gradient(to bottom, rgba(0, 59, 109, 0.06) 1px, transparent 1px)",
+          "radial-gradient(rgba(21, 90, 138, 0.06) 1px, transparent 1px)",
+          "linear-gradient(to right, rgba(21, 90, 138, 0.03) 1px, transparent 1px)",
+          "linear-gradient(to bottom, rgba(21, 90, 138, 0.03) 1px, transparent 1px)",
         ].join(", "),
         backgroundSize: "32px 32px, 128px 128px, 128px 128px",
       };
@@ -364,11 +364,12 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
           style={{
             height: 28, flexShrink: 0, display: 'flex', alignItems: 'center',
             WebkitAppRegion: 'drag' as any,
-            background: '#0a1420',
+            background: '#F0F2F5',
             paddingLeft: 12,
+            borderBottom: '1px solid #E5E7EB',
           }}
         >
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
+          <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
             经侦大队工作记录管理系统
           </span>
           <div style={{ WebkitAppRegion: 'no-drag' as any, display: 'flex', paddingRight: 4 }}>
@@ -382,6 +383,8 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
       )}
 
       {!lowPerfMode && <div className="scanline-overlay" />}
+      {/* 亮色主题覆盖 glass-panel 背景 */}
+      <style>{`.glass-panel { background: #ffffff !important; } .glass-panel.corner-accent { background: #ffffff !important; }`}</style>
 
       <main
         style={{
@@ -459,7 +462,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 marginBottom: 6,
               }}
             >
-              <span style={{ color: "#a3c9ff" }}>经侦大队工作记录管理系统</span>
+              <span style={{ color: "#2563EB" }}>经侦大队工作记录管理系统</span>
             </motion.h2>
 
             {!lowPerfMode && (
@@ -467,7 +470,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.7 }}
-                style={{ fontSize: 14, lineHeight: 1.6, color: "#c2c6d0", marginBottom: 24, maxWidth: 420 }}
+                style={{ fontSize: 14, lineHeight: 1.6, color: "#6B7280", marginBottom: 24, maxWidth: 420 }}
               >
                 面向日常登记、台账沉淀与报表输出的本地工作台，先把数据记准，再把协同做顺。
               </motion.p>
@@ -503,7 +506,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               <div style={{ position: "relative" }} ref={historyRef}>
                 <User
                   size={15}
-                  color="#8c919a"
+                  color="#9CA3AF"
                   style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", zIndex: 1 }}
                 />
                 <input
@@ -514,7 +517,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                   autoComplete="off"
                   style={{
                     ...inputBase,
-                    borderColor: historyOpen ? "#a3c9ff" : inputBase.borderColor,
+                    borderColor: historyOpen ? "#2563EB" : inputBase.borderColor,
                     boxShadow: historyOpen ? "0 0 0 3px rgba(163,201,255,0.1)" : "none",
                   }}
                 />
@@ -531,7 +534,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                         position: "absolute", top: '100%', left: 0, right: 0, zIndex: 50,
                         marginTop: 4,
                         background: "#1a1d23",
-                        border: "1.5px solid #42474f",
+                        border: "1.5px solid #D1D5DB",
                         borderRadius: 8,
                         boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                         overflow: "hidden",
@@ -554,15 +557,15 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                               cursor: "pointer",
                               background: active ? "rgba(163,201,255,0.08)" : "transparent",
                               borderLeft: "3px solid",
-                              borderLeftColor: active ? "#a3c9ff" : "transparent",
+                              borderLeftColor: active ? "#2563EB" : "transparent",
                               transition: "all .12s",
                               fontSize: 13,
-                              color: active ? "#e2e2e6" : "#c2c6d0",
+                              color: active ? "#1F2937" : "#6B7280",
                             }}
                             onMouseEnter={e => { e.currentTarget.style.background = "rgba(163,201,255,0.06)"; }}
                             onMouseLeave={e => { e.currentTarget.style.background = active ? "rgba(163,201,255,0.08)" : "transparent"; }}
                           >
-                            <User size={13} color={active ? "#a3c9ff" : "#8c919a"} />
+                            <User size={13} color={active ? "#2563EB" : "#9CA3AF"} />
                             <span style={{ flex: 1 }}>{a}</span>
                             <span style={{ fontSize: 10, color: "#8c919a" }}>登录</span>
                           </motion.div>
@@ -576,7 +579,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
               <div style={{ position: "relative" }}>
                 <Lock
                   size={15}
-                  color="#8c919a"
+                  color="#9CA3AF"
                   style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", zIndex: 1 }}
                 />
                 <input
@@ -586,11 +589,11 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                   placeholder="密码"
                   style={{ ...inputBase, paddingRight: 38 }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "#a3c9ff";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(163,201,255,0.1)";
+                    e.target.style.borderColor = "#2563EB";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(37,99,235,0.1)";
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = "#42474f";
+                    e.target.style.borderColor = "#D1D5DB";
                     e.target.style.boxShadow = "none";
                   }}
                 />
@@ -613,7 +616,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 </button>
               </div>
 
-              <div style={{ display: "flex", gap: 12, fontSize: 11.5, color: "#c2c6d0", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 12, fontSize: 11.5, color: "#6B7280", flexWrap: "wrap" }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}>
                   <input
                     type="checkbox"
@@ -624,7 +627,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                         clearCredentials();
                       }
                     }}
-                    style={{ accentColor: "#a3c9ff", width: 12, height: 12 }}
+                    style={{ accentColor: "#2563EB", width: 12, height: 12 }}
                   />
                   记住账号
                 </label>
@@ -633,7 +636,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                     type="checkbox"
                     checked={remember}
                     onChange={(e) => handleRememberChange(e.target.checked)}
-                    style={{ accentColor: "#a3c9ff", width: 12, height: 12 }}
+                    style={{ accentColor: "#2563EB", width: 12, height: 12 }}
                   />
                   记住密码
                 </label>
@@ -647,7 +650,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                       type="checkbox"
                       checked={autoLogin}
                       onChange={(e) => setAutoLogin(e.target.checked)}
-                      style={{ accentColor: "#a3c9ff", width: 12, height: 12 }}
+                      style={{ accentColor: "#2563EB", width: 12, height: 12 }}
                     />
                     自动登录
                   </motion.label>
@@ -657,7 +660,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                     type="checkbox"
                     checked={lowPerfMode}
                     onChange={toggleLowPerfMode}
-                    style={{ accentColor: "#a3c9ff", width: 12, height: 12 }}
+                    style={{ accentColor: "#2563EB", width: 12, height: 12 }}
                   />
                   低性能
                 </label>
@@ -673,9 +676,9 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                   style={{
                     flex: 1,
                     height: 44,
-                    background: loading ? "rgba(0,59,109,0.5)" : "linear-gradient(135deg,#003b6d,#0a5090)",
-                    color: "#e2e2e6",
-                    border: "1px solid rgba(163,201,255,0.15)",
+                    background: loading ? "rgba(21,90,138,0.5)" : "linear-gradient(135deg,#155A8A,#1E7BB5)",
+                    color: "#ffffff",
+                    border: "1px solid rgba(21,90,138,0.15)",
                     borderRadius: 8,
                     fontSize: 14,
                     fontWeight: 600,
@@ -694,7 +697,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#a3c9ff",
+                    color: "#2563EB",
                     cursor: "pointer",
                     fontSize: 12,
                     fontFamily: "inherit",
@@ -785,7 +788,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 {String(now.getHours()).padStart(2, "0")}:{String(now.getMinutes()).padStart(2, "0")}:
                 {String(now.getSeconds()).padStart(2, "0")}
               </div>
-              <div style={{ fontSize: 10, color: "#c2c6d0", fontFamily: "'JetBrains Mono',monospace", marginTop: 2 }}>
+              <div style={{ fontSize: 10, color: "#9CA3AF", fontFamily: "'JetBrains Mono',monospace", marginTop: 2 }}>
                 系统运行中
               </div>
             </motion.div>
@@ -828,7 +831,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
                 <h3 style={{ fontSize: "clamp(14px, 1.5vw, 18px)", fontWeight: 600, color: "#e2e2e6", marginBottom: 6 }}>
                   {card.title}
                 </h3>
-                <p style={{ fontSize: "clamp(11px, 1.2vw, 13px)", lineHeight: 1.6, color: "#c2c6d0" }}>{card.desc}</p>
+                <p style={{ fontSize: "clamp(11px, 1.2vw, 13px)", lineHeight: 1.6, color: "#6B7280" }}>{card.desc}</p>
               </motion.div>
             ))}
           </section>

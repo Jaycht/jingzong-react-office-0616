@@ -167,3 +167,108 @@ export function getAllCaseNames(): string[] {
   const map = loadCaseData();
   return Object.keys(map.caseNameToNo);
 }
+
+/* ============================================================
+   全局嫌疑人联动数据
+   从所有模块的记录中提取嫌疑人姓名及关联信息（身份证号、手机号、地址、关联案件）
+   ============================================================ */
+
+const SUSPECT_DATA_KEY = 'jingzong.suspectData.v1';
+
+interface SuspectInfo {
+  idNo: string;
+  phone: string;
+  address: string;
+  caseName: string;
+}
+
+type SuspectDataMap = Record<string, SuspectInfo>;
+
+function loadSuspectData(): SuspectDataMap {
+  return localStorageAdapter.getItem<SuspectDataMap>(SUSPECT_DATA_KEY, {});
+}
+
+function saveSuspectData(map: SuspectDataMap): void {
+  localStorageAdapter.setItem(SUSPECT_DATA_KEY, map);
+}
+
+/**
+ * 根据所有已保存的记录，重建嫌疑人姓名索引
+ * 数据来源：
+ *   - squad-case.suspects[] （含 suspectName + suspectIdNo + suspectPhone + suspectAddress）
+ *   - evidence-freeze.suspect （仅姓名）
+ *   - squad-coercive.suspect   （仅姓名）
+ *   - evidence-phone-collection.holder （仅姓名，持有人也可能是嫌疑人）
+ *   - squad-property.holder    （仅姓名）
+ * 后写入的值会覆盖先写入的（保证最新记录优先）
+ */
+export function rebuildSuspectIndex(records: Array<{ moduleId: string; data: Record<string, unknown> }>): void {
+  const map: SuspectDataMap = {};
+
+  // 从旧到新遍历，后出现的覆盖前面的（最新记录获胜）
+  for (const rec of records) {
+    const moduleId = rec.moduleId;
+    const data = rec.data || {};
+
+    // 1) squad-case：嫌疑人 section 数组
+    if (moduleId === 'squad-case') {
+      const suspects = data.suspects;
+      if (Array.isArray(suspects)) {
+        for (const s of suspects) {
+          const name = typeof s.suspectName === 'string' ? s.suspectName.trim() : '';
+          if (!name) continue;
+          map[name] = {
+            idNo: typeof s.suspectIdNo === 'string' ? s.suspectIdNo.trim() : '',
+            phone: typeof s.suspectPhone === 'string' ? s.suspectPhone.trim() : '',
+            address: typeof s.suspectAddress === 'string' ? s.suspectAddress.trim() : '',
+            caseName: typeof data.caseName === 'string' ? data.caseName.trim() : '',
+          };
+        }
+      }
+    }
+
+    // 2) evidence-freeze / squad-coercive：扁平 suspect 字段
+    if (moduleId === 'evidence-freeze' || moduleId === 'squad-coercive') {
+      const name = typeof data.suspect === 'string' ? data.suspect.trim() : '';
+      if (!name) continue;
+      if (!map[name]) {
+        map[name] = { idNo: '', phone: '', address: '', caseName: typeof data.caseName === 'string' ? data.caseName.trim() : '' };
+      } else if (data.caseName) {
+        // 已有信息则补充案件名称
+        map[name].caseName = map[name].caseName || (typeof data.caseName === 'string' ? data.caseName.trim() : '');
+      }
+    }
+
+    // 3) 持有人字段（可能是嫌疑人）
+    if (moduleId === 'evidence-phone-collection' || moduleId === 'squad-property') {
+      const name = typeof data.holder === 'string' ? data.holder.trim() : '';
+      if (!name) continue;
+      if (!map[name]) {
+        map[name] = {
+          idNo: typeof data.idNo === 'string' ? data.idNo.trim() : '',
+          phone: typeof data.phone === 'string' ? data.phone.trim() : '',
+          address: '',
+          caseName: typeof data.caseName === 'string' ? data.caseName.trim() : '',
+        };
+      }
+    }
+  }
+
+  saveSuspectData(map);
+}
+
+/**
+ * 根据嫌疑人姓名获取关联信息
+ */
+export function getSuspectInfo(name: string): SuspectInfo | null {
+  const map = loadSuspectData();
+  return map[name] || null;
+}
+
+/**
+ * 获取所有已知的嫌疑人姓名列表（去重排序）
+ */
+export function getAllSuspectNames(): string[] {
+  const map = loadSuspectData();
+  return Object.keys(map).sort();
+}

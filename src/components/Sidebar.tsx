@@ -118,20 +118,20 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
     return (
       <motion.div
         key={item.id}
-        whileHover={{ background: 'rgba(255,255,255,0.08)' }}
+        whileHover={{ background: '#F9FAFB' }}
         whileTap={{ scale: 0.99 }}
         onClick={() => setCurrentPage(item.id)}
         style={{
           display: 'flex', alignItems: 'center', gap: 9,
           padding: '10px 14px', cursor: 'pointer',
           borderLeft: '3px solid',
-          borderLeftColor: active ? '#7DD3FC' : 'transparent',
-          background: active ? 'rgba(255,255,255,0.12)' : 'transparent',
+          borderLeftColor: active ? '#2563EB' : 'transparent',
+          background: active ? '#EFF6FF' : 'transparent',
         }}
       >
-        <Icon size={15} color={active ? '#fff' : 'rgba(255,255,255,0.72)'} style={{ flexShrink: 0 }} />
+        <Icon size={15} color={active ? '#2563EB' : '#6B7280'} style={{ flexShrink: 0 }} />
         {!collapsed && (
-          <span style={{ fontSize: 13, color: active ? '#fff' : 'rgba(255,255,255,0.72)', flex: 1, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 13, color: active ? '#2563EB' : '#374151', flex: 1, whiteSpace: 'nowrap' }}>
             {item.label}
           </span>
         )}
@@ -144,8 +144,9 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       animate={{ width: collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        background: '#0F3A5F', display: 'flex', flexDirection: 'column',
+        background: '#ffffff', display: 'flex', flexDirection: 'column',
         overflow: 'hidden', flexShrink: 0, position: 'relative',
+        borderRight: '1px solid #E5E7EB',
       }}>
       {/* Electron 无边框窗口拖拽区域 */}
       {/* @ts-expect-error WebkitAppRegion is Electron-only CSS property */}
@@ -182,10 +183,10 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
               </div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#1F2937", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {userName || "用户"}
               </div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
+              <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 2 }}>
                 {userRole || "普通用户"}
               </div>
             </div>
@@ -205,7 +206,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       )}
       {/* 折叠状态用户工具栏 */}
       {collapsed && (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0 8px", gap: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0 8px", gap: 6, borderBottom: "1px solid #E5E7EB" }}>
           {customAvatar ? (
               <img src={customAvatar} alt="avatar" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
             ) : (
@@ -221,7 +222,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         </div>
       )}
       {/* 分隔线 */}
-      <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "0 14px" }} />
+      <div style={{ height: 1, background: "#E5E7EB", margin: "0 14px" }} />
 
       {/* 侧边栏主导航区域 */}
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 2 }}>
@@ -235,26 +236,26 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           return (
             <div key={dept.id}>
               <motion.div
-                whileHover={{ background: 'rgba(255,255,255,0.08)' }}
+                whileHover={{ background: '#F9FAFB' }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => toggleExpand(dept.id)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 9,
                   padding: '10px 14px', cursor: 'pointer',
                   borderLeft: '3px solid',
-                  borderLeftColor: childActive || isExpanded ? '#7DD3FC' : 'transparent',
-                  background: childActive || isExpanded ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  borderLeftColor: childActive || isExpanded ? '#2563EB' : 'transparent',
+                  background: childActive || isExpanded ? '#EFF6FF' : 'transparent',
                 }}
               >
-                <Icon size={15} color={childActive || isExpanded ? '#fff' : 'rgba(255,255,255,0.72)'} style={{ flexShrink: 0 }} />
+                <Icon size={15} color={childActive || isExpanded ? '#2563EB' : '#6B7280'} style={{ flexShrink: 0 }} />
                 {!collapsed && (
-                  <span style={{ fontSize: 13, color: childActive || isExpanded ? '#fff' : 'rgba(255,255,255,0.72)', flex: 1, whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 13, color: childActive || isExpanded ? '#2563EB' : '#374151', flex: 1, whiteSpace: 'nowrap' }}>
                     {dept.label}
                   </span>
                 )}
                 {!collapsed && (
                   <motion.div animate={{ rotate: isExpanded ? 0 : -90 }} style={{ flexShrink: 0 }}>
-                    <ChevronDown size={13} color="rgba(255,255,255,0.5)" />
+                    <ChevronDown size={13} color="#9CA3AF" />
                   </motion.div>
                 )}
               </motion.div>
@@ -273,19 +274,19 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
                       return (
                         <motion.div
                           key={module.id}
-                          whileHover={{ background: 'rgba(255,255,255,0.07)' }}
+                          whileHover={{ background: '#F9FAFB' }}
                           whileTap={{ scale: 0.99 }}
                           onClick={() => setCurrentPage(module.id)}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 9,
                             padding: '9px 14px 9px 42px',
                             cursor: 'pointer', position: 'relative',
-                            background: active ? 'rgba(255,255,255,0.1)' : 'transparent',
+                            background: active ? '#EFF6FF' : 'transparent',
                           }}
                         >
-                          <div style={{ position: 'absolute', left: 24, top: 0, bottom: 0, width: 1, background: 'rgba(255,255,255,0.08)' }} />
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: active ? '#7DD3FC' : 'rgba(255,255,255,0.32)', flexShrink: 0 }} />
-                          <span style={{ fontSize: 12.5, color: active ? '#fff' : 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ position: 'absolute', left: 24, top: 0, bottom: 0, width: 1, background: '#E5E7EB' }} />
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: active ? '#2563EB' : '#D1D5DB', flexShrink: 0 }} />
+                          <span style={{ fontSize: 12.5, color: active ? '#2563EB' : '#4B5563', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {module.label}
                           </span>
                         </motion.div>
@@ -318,8 +319,8 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       {!collapsed && (
         <div style={{
           padding: '4px 14px 8px', flexShrink: 0,
-          fontSize: 10, color: 'rgba(255,255,255,0.25)',
-          textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)',
+          fontSize: 10, color: '#9CA3AF',
+          textAlign: 'center', borderTop: '1px solid #E5E7EB',
           fontFamily: "'JetBrains Mono',monospace",
         }}>
           {APP_VERSION} &copy; 2026
@@ -338,11 +339,11 @@ function ActionBtn({ icon: Icon, label, onClick }: { icon: IconComponent; label:
       style={{
         display: 'flex', alignItems: 'center', gap: 5,
         padding: '5px 8px', borderRadius: 6, cursor: 'pointer',
-        color: 'rgba(255,255,255,0.55)', fontSize: 11,
+        color: '#6B7280', fontSize: 11,
         whiteSpace: 'nowrap', transition: 'all .15s',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#fff'; }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)'; }}
+      onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6'; e.currentTarget.style.color = '#111827'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6B7280'; }}
     >
       <Icon size={14} /><span>{label}</span>
     </div>
@@ -358,11 +359,11 @@ function ToolbarIcon({ icon: Icon, title, onClick }: { icon: IconComponent; titl
       style={{
         width: 32, height: 32, borderRadius: 6,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', color: 'rgba(255,255,255,0.45)', flexShrink: 0,
+        cursor: 'pointer', color: '#6B7280', flexShrink: 0,
         fontSize: 12,
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; }}
+      onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6'; e.currentTarget.style.color = '#111827'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6B7280'; }}
     >
       <Icon size={15} />
     </div>
@@ -388,22 +389,22 @@ function NavGroup({ id, label, icon: Icon, expanded, collapsed, currentPage, ite
   return (
     <div>
       <motion.div
-        whileHover={{ background: 'rgba(255,255,255,0.08)' }}
+        whileHover={{ background: '#F9FAFB' }}
         whileTap={{ scale: 0.99 }}
         onClick={() => onToggle(id)}
         style={{
           display: 'flex', alignItems: 'center', gap: 9,
           padding: '10px 14px', cursor: 'pointer',
           borderLeft: '3px solid',
-          borderLeftColor: childActive || isExpanded ? '#7DD3FC' : 'transparent',
-          background: childActive || isExpanded ? 'rgba(255,255,255,0.1)' : 'transparent',
+          borderLeftColor: childActive || isExpanded ? '#2563EB' : 'transparent',
+          background: childActive || isExpanded ? '#EFF6FF' : 'transparent',
         }}
       >
-        <Icon size={15} color={childActive || isExpanded ? '#fff' : 'rgba(255,255,255,0.72)'} style={{ flexShrink: 0 }} />
-        {!collapsed && <span style={{ fontSize: 13, color: childActive || isExpanded ? '#fff' : 'rgba(255,255,255,0.72)', flex: 1, whiteSpace: 'nowrap' }}>{label}</span>}
+        <Icon size={15} color={childActive || isExpanded ? '#2563EB' : '#6B7280'} style={{ flexShrink: 0 }} />
+        {!collapsed && <span style={{ fontSize: 13, color: childActive || isExpanded ? '#2563EB' : '#374151', flex: 1, whiteSpace: 'nowrap' }}>{label}</span>}
         {!collapsed && (
           <motion.div animate={{ rotate: isExpanded ? 0 : -90 }} style={{ flexShrink: 0 }}>
-            <ChevronDown size={13} color="rgba(255,255,255,0.5)" />
+            <ChevronDown size={13} color="#9CA3AF" />
           </motion.div>
         )}
       </motion.div>
@@ -417,12 +418,12 @@ function NavGroup({ id, label, icon: Icon, expanded, collapsed, currentPage, ite
               return (
                 <motion.div
                   key={item.id}
-                  whileHover={{ background: 'rgba(255,255,255,0.07)' }}
+                  whileHover={{ background: '#F9FAFB' }}
                   onClick={() => onNavigate(item.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px 9px 42px', cursor: 'pointer', background: active ? 'rgba(255,255,255,0.1)' : 'transparent' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 14px 9px 42px', cursor: 'pointer', background: active ? '#EFF6FF' : 'transparent' }}
                 >
-                  <ChildIcon size={13} color={active ? '#fff' : 'rgba(255,255,255,0.6)'} />
-                  <span style={{ fontSize: 12.5, color: active ? '#fff' : 'rgba(255,255,255,0.65)', whiteSpace: 'nowrap' }}>{item.label}</span>
+                  <ChildIcon size={13} color={active ? '#2563EB' : '#6B7280'} />
+                  <span style={{ fontSize: 12.5, color: active ? '#2563EB' : '#4B5563', whiteSpace: 'nowrap' }}>{item.label}</span>
                 </motion.div>
               );
             })}

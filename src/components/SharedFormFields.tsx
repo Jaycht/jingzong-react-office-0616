@@ -7,7 +7,7 @@ import { AutoComplete, Button, Divider, Form, Input, Select, Space } from 'antd'
 import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
 import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames, getSquadCaseNames, getSquadCaseNos } from '../store/massStore';
-import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName } from '../store/inputHistoryStore';
+import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName, getAllSuspectNames, getSuspectInfo } from '../store/inputHistoryStore';
 
 type SelectValue = string | string[] | undefined;
 
@@ -292,13 +292,16 @@ interface InputWithHistoryProps {
   extraOptions?: string[];
   /** 选择时的回调 */
   onSelect?: (value: string) => void;
+  /** Form.Item 注入的值与变更回调 */
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
 /**
  * 带输入历史自动补全的文本输入框
  * 在已有 AutoComplete 匹配的基础上，额外展示该字段的历史输入记录
  */
-export function InputWithHistory({ field, placeholder, extraOptions, onSelect }: InputWithHistoryProps) {
+export function InputWithHistory({ field, placeholder, extraOptions, onSelect, value, onChange }: InputWithHistoryProps) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -315,10 +318,12 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect }:
 
   return (
     <AutoComplete
+      value={value}
+      onChange={(val: string) => onChange?.(val)}
       open={open}
       onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
       onBlur={() => setTimeout(() => setOpen(false), 200)}
-      onSelect={(value: string) => onSelect?.(value)}
+      onSelect={(val: string) => onSelect?.(val)}
       options={options}
       placeholder={placeholder || `请输入${field.label}`}
       filterOption={(inputValue, option) =>
@@ -343,6 +348,12 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
   const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  // 将 form 实例提到组件顶层，不能在回调中调用 useFormInstance
+  let form: any = null;
+  try { form = Form.useFormInstance(); } catch { /* 无 Form 上下文时降级 */ }
+
+  const caseNoField = subName !== undefined ? [subName, 'caseNo'] : 'caseNo';
+  const caseNoKey = typeof caseNoField === 'string' ? caseNoField : caseNoField[1];
 
   const options = useMemo(() => {
     void refreshKey;
@@ -353,26 +364,39 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
 
+  const doFillCaseNo = (nameValue: string) => {
+    if (!form) return;
+    const relatedNos = getCaseNosByName(nameValue);
+    if (relatedNos.length > 0) {
+      form.setFieldsValue({ [caseNoKey]: relatedNos[0] });
+    }
+  };
+
+  const handleChange = (val: string) => {
+    setValue(val);
+    // 通知 Form 当前字段值已变化（补上 Form.Item 的自控缺口）
+    if (form) {
+      const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
+      form.setFieldsValue({ [nameKey]: val });
+    }
+    // 无论选择还是填写，只要输入内容精确匹配了某个已保存的案件名称，就自动填充编号
+    doFillCaseNo(val);
+  };
+
   const handleSelect = (selectedValue: string) => {
     setValue(selectedValue);
-    // 自动填充案件编号
-    const relatedNos = getCaseNosByName(selectedValue);
-    if (relatedNos.length > 0) {
-      const caseNoField = subName !== undefined ? [subName, 'caseNo'] : 'caseNo';
-      try {
-        const form = Form.useFormInstance();
-        form.setFieldsValue({ [typeof caseNoField === 'string' ? caseNoField : caseNoField[1]]: relatedNos[0] });
-      } catch {
-        // 静默处理，取不到 form 时不影响
-      }
+    if (form) {
+      const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
+      form.setFieldsValue({ [nameKey]: selectedValue });
     }
+    doFillCaseNo(selectedValue);
   };
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <AutoComplete
         value={value}
-        onChange={(val: string) => setValue(val)}
+        onChange={handleChange}
         open={open}
         onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
         onBlur={() => setTimeout(() => setOpen(false), 200)}
@@ -399,6 +423,12 @@ export function GlobalCaseNoField({ field, subName }: {
   const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  // 将 form 实例提到组件顶层
+  let form: any = null;
+  try { form = Form.useFormInstance(); } catch { /* 无 Form 上下文时降级 */ }
+
+  const caseNameField = subName !== undefined ? [subName, 'caseName'] : 'caseName';
+  const caseNameKey = typeof caseNameField === 'string' ? caseNameField : caseNameField[1];
 
   const options = useMemo(() => {
     void refreshKey;
@@ -409,26 +439,39 @@ export function GlobalCaseNoField({ field, subName }: {
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
 
+  const doFillCaseName = (noValue: string) => {
+    if (!form) return;
+    const relatedNames = getCaseNamesByNo(noValue);
+    if (relatedNames.length > 0) {
+      form.setFieldsValue({ [caseNameKey]: relatedNames[0] });
+    }
+  };
+
+  const handleChange = (val: string) => {
+    setValue(val);
+    // 通知 Form 当前字段值已变化
+    if (form) {
+      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+      form.setFieldsValue({ [key]: val });
+    }
+    // 输入内容精确匹配已保存案件编号时，自动填充名称
+    doFillCaseName(val);
+  };
+
   const handleSelect = (selectedValue: string) => {
     setValue(selectedValue);
-    // 自动填充案件名称
-    const relatedNames = getCaseNamesByNo(selectedValue);
-    if (relatedNames.length > 0) {
-      const caseNameField = subName !== undefined ? [subName, 'caseName'] : 'caseName';
-      try {
-        const form = Form.useFormInstance();
-        form.setFieldsValue({ [typeof caseNameField === 'string' ? caseNameField : caseNameField[1]]: relatedNames[0] });
-      } catch {
-        // 静默处理
-      }
+    if (form) {
+      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+      form.setFieldsValue({ [key]: selectedValue });
     }
+    doFillCaseName(selectedValue);
   };
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <AutoComplete
         value={value}
-        onChange={(val: string) => setValue(val)}
+        onChange={handleChange}
         open={open}
         onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
         onBlur={() => setTimeout(() => setOpen(false), 200)}
@@ -498,6 +541,157 @@ export function DeviceBrandField({ field, subName }: { field: FieldDefinition; s
             </Space>
           </>
         )}
+      />
+    </Form.Item>
+  );
+}
+
+/* ===================== 全局嫌疑人联动字段 ===================== */
+
+/**
+ * 全局嫌疑人姓名字段
+ * 展示所有模块中已保存的嫌疑人，选择/填写后自动填充身份证号、手机号、地址
+ */
+export function GlobalSuspectField({ field, subName }: {
+  field: FieldDefinition;
+  subName?: number;
+}) {
+  const [value, setValue] = useState<string>('');
+  const [open, setOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  let form: any = null;
+  try { form = Form.useFormInstance(); } catch { /* 降级 */ }
+
+  const options = useMemo(() => {
+    void refreshKey;
+    const names = getAllSuspectNames();
+    return names.map((name) => ({ value: name, label: name }));
+  }, [refreshKey]);
+
+  const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+
+  /** 填充关联的嫌疑人信息 */
+  const fillSuspectRelated = (suspectName: string) => {
+    if (!form) return;
+    const info = getSuspectInfo(suspectName);
+    if (!info) return;
+
+    const thisFieldId = typeof fieldName === 'string' ? fieldName : fieldName[1];
+    const isInSuspectsSection = thisFieldId === 'suspectName';
+
+    const kv: Record<string, string> = {};
+
+    if (isInSuspectsSection) {
+      // squad-case 的嫌疑人 section 内：字段名带 suspect 前缀
+      if (info.idNo)   kv.suspectIdNo = info.idNo;
+      if (info.phone)  kv.suspectPhone = info.phone;
+      if (info.address) kv.suspectAddress = info.address;
+    } else {
+      // 平铺模式（资金查控、强制措施、设备采集等）：用 idNo / phone
+      if (info.idNo)   kv.idNo = info.idNo;
+      if (info.phone)  kv.phone = info.phone;
+    }
+
+    if (Object.keys(kv).length > 0) {
+      form.setFieldsValue(kv);
+    }
+  };
+
+  const handleChange = (val: string) => {
+    setValue(val);
+    if (form) {
+      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+      form.setFieldsValue({ [key]: val });
+    }
+    fillSuspectRelated(val);
+  };
+
+  const handleSelect = (selectedValue: string) => {
+    setValue(selectedValue);
+    if (form) {
+      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+      form.setFieldsValue({ [key]: selectedValue });
+    }
+    fillSuspectRelated(selectedValue);
+  };
+
+  return (
+    <Form.Item name={fieldName} label={field.label} rules={rules}>
+      <AutoComplete
+        value={value}
+        onChange={handleChange}
+        open={open}
+        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        onSelect={handleSelect}
+        options={options}
+        placeholder="请输入嫌疑人姓名（跨模块共享）"
+        filterOption={(inputValue, option) =>
+          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
+        }
+        style={{ width: '100%' }}
+      />
+    </Form.Item>
+  );
+}
+
+/* ===================== 持有人自动补全（引用嫌疑人数据池） ===================== */
+
+/**
+ * 持有人姓名字段
+ * 数据源包含所有已保存的嫌疑人姓名，方便选取，但不联动填充其他字段
+ */
+export function HolderAutoComplete({ field, subName }: {
+  field: FieldDefinition;
+  subName?: number;
+}) {
+  const [value, setValue] = useState<string>('');
+  const [open, setOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  let form: any = null;
+  try { form = Form.useFormInstance(); } catch { /* 降级 */ }
+
+  const options = useMemo(() => {
+    void refreshKey;
+    const suspectNames = getAllSuspectNames();
+    return suspectNames.map((name) => ({ value: name, label: name }));
+  }, [refreshKey]);
+
+  const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+
+  const handleChange = (val: string) => {
+    setValue(val);
+    if (form) {
+      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+      form.setFieldsValue({ [key]: val });
+    }
+  };
+
+  const handleSelect = (selectedValue: string) => {
+    setValue(selectedValue);
+    if (form) {
+      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+      form.setFieldsValue({ [key]: selectedValue });
+    }
+  };
+
+  return (
+    <Form.Item name={fieldName} label={field.label} rules={rules}>
+      <AutoComplete
+        value={value}
+        onChange={handleChange}
+        open={open}
+        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        onSelect={handleSelect}
+        options={options}
+        placeholder="请输入持有人姓名（可匹配嫌疑人）"
+        filterOption={(inputValue, option) =>
+          (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
+        }
+        style={{ width: '100%' }}
       />
     </Form.Item>
   );

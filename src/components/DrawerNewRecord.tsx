@@ -13,11 +13,11 @@ import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { saveMassRecord, updateMassRecord, getMassRecords } from '../store/massStore';
 import ErrorBoundary from './ErrorBoundary';
-import { recordFormFields, rebuildCaseIndex, getFieldHistory } from '../store/inputHistoryStore';
+import { recordFormFields, rebuildCaseIndex, rebuildSuspectIndex, getFieldHistory } from '../store/inputHistoryStore';
 import {
-  GlobalCaseNameField, GlobalCaseNoField,
+  GlobalCaseNameField, GlobalCaseNoField, GlobalSuspectField,
   InputWithHistory,
-  MultiPersonField, PersistedSelect, DeviceBrandField,
+  MultiPersonField, PersistedSelect, DeviceBrandField, HolderAutoComplete,
 } from './SharedFormFields';
 import { saveAttachment, relinkAttachment, getAttachment } from '../store/attachmentStore';
 
@@ -140,6 +140,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已更新`, 'success');
             // 重建案件索引
             rebuildCaseIndex(getMassRecords());
+            rebuildSuspectIndex(getMassRecords());
             onClose();
           }, 300);
         } else {
@@ -154,6 +155,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已创建`, 'success');
             // 重建案件索引
             rebuildCaseIndex(getMassRecords());
+            rebuildSuspectIndex(getMassRecords());
             onClose();
           }, 300);
         }
@@ -476,6 +478,16 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
   }
 
   // 设备品牌字段：联动设备类型动态切换选项
+  // 全局嫌疑人联动字段
+  if (field.id === 'suspect' || field.id === 'suspectName') {
+    return <GlobalSuspectField field={field} subName={subName} />;
+  }
+
+  // 持有人字段：引用嫌疑人数据池做自动补全
+  if (field.id === 'holder') {
+    return <HolderAutoComplete field={field} subName={subName} />;
+  }
+
   if (field.id === 'deviceBrand') {
     return <DeviceBrandField field={field} subName={subName} />;
   }
