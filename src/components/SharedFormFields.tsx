@@ -437,12 +437,6 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
   const caseNoField = subName !== undefined ? [subName, 'caseNo'] : 'caseNo';
   const caseNoKey = typeof caseNoField === 'string' ? caseNoField : caseNoField[1];
 
-  const allOptions = useMemo(() => {
-    void refreshKey;
-    // 只显示输入历史记录（支持删除），索引数据用于自动填充联动
-    return getFieldHistory('caseName');
-  }, [refreshKey]);
-
   // 同步外部 form 值到内部状态
   const formValue = form?.getFieldValue(field.id);
   if (formValue !== undefined && formValue !== value && formValue !== '') {
@@ -585,12 +579,6 @@ export function GlobalCaseNoField({ field, subName }: {
 
   const caseNameField = subName !== undefined ? [subName, 'caseName'] : 'caseName';
   const caseNameKey = typeof caseNameField === 'string' ? caseNameField : caseNameField[1];
-
-  const allOptions = useMemo(() => {
-    void refreshKey;
-    // 只显示输入历史记录（支持删除），索引数据用于自动填充联动
-    return getFieldHistory('caseNo');
-  }, [refreshKey]);
 
   // 同步外部 form 值到内部状态
   const formValue = form?.getFieldValue(field.id);
@@ -996,8 +984,6 @@ export function HolderAutoComplete({ field, subName }: {
     form?.setFieldsValue({ [key]: selectedValue });
     setOpen(false);
   };
-
-  const history = getFieldHistory('holder');
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
