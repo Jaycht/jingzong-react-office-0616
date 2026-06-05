@@ -2,7 +2,7 @@
  * 共享表单字段组件
  * 消除 DrawerNewRecord.tsx 中多份重复的 AutoComplete/MultiPerson 组件
  */
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { AutoComplete, Button, Divider, Form, Input, Select, Space } from 'antd';
 import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
