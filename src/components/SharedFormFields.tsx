@@ -439,7 +439,8 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
 
   const allOptions = useMemo(() => {
     void refreshKey;
-    return getAllCaseNames();
+    // 只显示输入历史记录（支持删除），索引数据用于自动填充联动
+    return getFieldHistory('caseName');
   }, [refreshKey]);
 
   // 同步外部 form 值到内部状态
@@ -466,11 +467,18 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
     setRefreshKey((k) => k + 1);
   }, []);
 
+  const allOptions = useMemo(() => {
+    void refreshKey;
+    return getAllCaseNames();
+  }, [refreshKey]);
+
   const filteredOptions = useMemo(() => {
     if (!value) return allOptions;
     const q = value.toUpperCase();
     return allOptions.filter((item) => item.toUpperCase().includes(q));
   }, [allOptions, value]);
+
+  const history = getFieldHistory('caseName');
 
   const handleChange = (val: string) => {
     setValue(val);
@@ -486,8 +494,6 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
     doFillCaseNo(selectedValue);
     setOpen(false);
   };
-
-  const history = getFieldHistory('caseName');
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
@@ -581,7 +587,8 @@ export function GlobalCaseNoField({ field, subName }: {
 
   const allOptions = useMemo(() => {
     void refreshKey;
-    return getAllCaseNos();
+    // 只显示输入历史记录（支持删除），索引数据用于自动填充联动
+    return getFieldHistory('caseNo');
   }, [refreshKey]);
 
   // 同步外部 form 值到内部状态
@@ -608,11 +615,18 @@ export function GlobalCaseNoField({ field, subName }: {
     setRefreshKey((k) => k + 1);
   }, []);
 
+  const allOptions = useMemo(() => {
+    void refreshKey;
+    return getAllCaseNos();
+  }, [refreshKey]);
+
   const filteredOptions = useMemo(() => {
     if (!value) return allOptions;
     const q = value.toUpperCase();
     return allOptions.filter((item) => item.toUpperCase().includes(q));
   }, [allOptions, value]);
+
+  const history = getFieldHistory('caseNo');
 
   const handleChange = (val: string) => {
     setValue(val);
@@ -628,8 +642,6 @@ export function GlobalCaseNoField({ field, subName }: {
     doFillCaseName(selectedValue);
     setOpen(false);
   };
-
-  const history = getFieldHistory('caseNo');
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
@@ -846,7 +858,7 @@ export function GlobalSuspectField({ field, subName }: {
     if (!value) return getAllSuspectNames();
     const q = value.toUpperCase();
     return getAllSuspectNames().filter((item) => item.toUpperCase().includes(q));
-  }, [value, refreshKey]);
+  }, [value]);
 
   const history = getFieldHistory('suspect');
   const history2 = getFieldHistory('suspectName');
@@ -860,7 +872,7 @@ export function GlobalSuspectField({ field, subName }: {
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
-          placeholder="请输入嫌疑人姓名（跨模块共享）"
+          placeholder="请输入持有人姓名（可匹配嫌疑人）"
           style={{
             width: '100%', height: 32, padding: '0 11px',
             border: '1px solid #D9D9D9', borderRadius: 6,
@@ -960,6 +972,8 @@ export function HolderAutoComplete({ field, subName }: {
     const q = value.toUpperCase();
     return allOptions.filter((item) => item.toUpperCase().includes(q));
   }, [allOptions, value]);
+
+  const history = getFieldHistory('holder');
 
   const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
     e.stopPropagation();
