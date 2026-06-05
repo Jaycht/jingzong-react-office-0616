@@ -174,32 +174,58 @@ export default function RegisterPage({ onBack }: Props) {
               <ArrowLeft size={14} /> 返回登录
             </button>
 
-            {/* Icon */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                width: 52, height: 52, borderRadius: 14, cursor: "pointer",
-                background: avatar ? "none" : "linear-gradient(135deg, #155A8A, #1E7BB5)",
-                border: "1px solid rgba(21,90,138,0.15)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 12px",
-                boxShadow: "0 4px 16px rgba(21,90,138,0.3)",
-              }}
-            >
-              {avatar ? (
-                <img src={avatar} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: 14, objectFit: "cover" }} />
-              ) : (
-                <UserPlus size={24} color="#1F2937" />
+            {/* Icon / Avatar */}
+            <div style={{ position: 'relative', width: 80, margin: '0 auto 12px' }}>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  width: 80, height: 80, borderRadius: "50%", cursor: "pointer",
+                  background: avatar ? "none" : "linear-gradient(135deg, #155A8A, #1E7BB5)",
+                  border: avatar ? "3px solid #E5E7EB" : "1px solid rgba(21,90,138,0.15)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto",
+                  boxShadow: avatar ? "0 2px 12px rgba(0,0,0,0.08)" : "0 4px 16px rgba(21,90,138,0.3)",
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+                onMouseEnter={e => { if (avatar) return; e.currentTarget.style.borderColor = '#2563EB'; }}
+                onMouseLeave={e => { if (avatar) return; e.currentTarget.style.borderColor = 'rgba(21,90,138,0.15)'; }}
+              >
+                {avatar ? (
+                  <img src={avatar} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <UserPlus size={32} color="#1F2937" />
+                )}
+              </motion.div>
+              {/* 删除头像按钮 */}
+              {avatar && (
+                <div
+                  onClick={() => {
+                    setAvatar(null);
+                    try { localStorage.removeItem("jingzong.avatar"); } catch {}
+                  }}
+                  style={{
+                    position: 'absolute', top: 0, right: 0,
+                    width: 22, height: 22, borderRadius: '50%',
+                    background: '#DC2626', color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', fontSize: 14, lineHeight: 1,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                    userSelect: 'none',
+                  }}
+                  title="删除头像"
+                >×</div>
               )}
-            </motion.div>
+            </div>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) return;
-              if (!file.type.startsWith("image/")) return;
-              if (file.size > 2 * 1024 * 1024) return;
+              if (!file.type.startsWith("image/")) { setError("请选择图片文件"); return; }
+              if (file.size > 2 * 1024 * 1024) { setError("图片大小不能超过 2MB"); return; }
+              setError("");
               const reader = new FileReader();
               reader.onload = () => {
                 const dataUrl = reader.result as string;
@@ -208,6 +234,9 @@ export default function RegisterPage({ onBack }: Props) {
               };
               reader.readAsDataURL(file);
             }} />
+            <div style={{ textAlign: "center", fontSize: 11, color: "#9CA3AF", marginBottom: 18 }}>
+              {avatar ? "点击头像重新上传" : "点击上传头像"}
+            </div>
 
             <div style={{ textAlign: "center", marginBottom: 22 }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#1F2937", marginBottom: 4 }}>

@@ -2,7 +2,7 @@
  * 共享表单字段组件
  * 消除 DrawerNewRecord.tsx 中多份重复的 AutoComplete/MultiPerson 组件
  */
-import React, { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import { AutoComplete, Button, Divider, Form, Input, Select, Space } from 'antd';
 import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
@@ -304,17 +304,28 @@ interface InputWithHistoryProps {
 export function InputWithHistory({ field, placeholder, extraOptions, onSelect, value, onChange }: InputWithHistoryProps) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [hoveredValue, setHoveredValue] = useState<string | null>(null);
+  const [inputValue, setInputValue] = useState(value || '');
 
-  const options = useMemo(() => {
+  // 同步外部 value 到内部状态
+  if (value !== undefined && value !== inputValue) {
+    setInputValue(value);
+  }
+
+  const allOptions = useMemo(() => {
     void refreshKey;
     const history = getFieldHistory(field.id);
     const merged = [
       ...(extraOptions || []),
       ...history,
     ];
-    return Array.from(new Set(merged)).map((item) => ({ value: item, label: item }));
+    return Array.from(new Set(merged));
   }, [field.id, extraOptions, refreshKey]);
+
+  const filteredOptions = useMemo(() => {
+    if (!inputValue) return allOptions;
+    const q = inputValue.toUpperCase();
+    return allOptions.filter((item) => item.toUpperCase().includes(q));
+  }, [allOptions, inputValue]);
 
   const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
     e.stopPropagation();
@@ -323,59 +334,86 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
     setRefreshKey((k) => k + 1);
   }, [field.id]);
 
+  const handleInputChange = (val: string) => {
+    setInputValue(val);
+    onChange?.(val);
+  };
+
+  const handleSelect = (val: string) => {
+    setInputValue(val);
+    onChange?.(val);
+    onSelect?.(val);
+    setOpen(false);
+  };
+
   return (
-    <AutoComplete
-      value={value}
-      onChange={(val: string) => onChange?.(val)}
-      open={open}
-      onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-      onBlur={() => setTimeout(() => setOpen(false), 200)}
-      onSelect={(val: string) => onSelect?.(val)}
-      options={options}
-      placeholder={placeholder || `请输入${field.label}`}
-      filterOption={(inputValue, option) =>
-        (option?.value?.toUpperCase() ?? '').includes(inputValue.toUpperCase())
-      }
-      dropdownRender={(menu) => {
-        const history = getFieldHistory(field.id);
-        if (history.length === 0) return menu;
-        return (
-          <div>
-            {React.cloneElement(menu as React.ReactElement, {
-              children: React.Children.map((menu as React.ReactElement).props.children, (child: any) => {
-                if (!child || !child.props?.value) return child;
-                const val = child.props.value;
-                const isHistory = history.includes(val);
-                if (!isHistory) return child;
-                return React.cloneElement(child, {
-                  style: { ...child.props.style, display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-                  children: (
-                    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                      <span style={{ flex: 1 }}>{val}</span>
-                      <span
-                        onMouseDown={(e: React.MouseEvent) => handleDelete(e, val)}
-                        onMouseEnter={() => setHoveredValue(val)}
-                        onMouseLeave={() => setHoveredValue(null)}
-                        style={{
-                          cursor: 'pointer',
-                          fontSize: 14,
-                          lineHeight: 1,
-                          padding: '0 4px',
-                          color: hoveredValue === val ? '#DC2626' : '#D1D5DB',
-                          transition: 'color .15s',
-                          userSelect: 'none',
-                        }}
-                      >×</span>
-                    </div>
-                  ),
-                });
-              }),
-            })}
-          </div>
-        );
-      }}
-      style={{ width: '100%' }}
-    />
+    <div style={{ position: 'relative' }}>
+      <input
+        value={inputValue}
+        onChange={(e) => handleInputChange(e.target.value)}
+        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        placeholder={placeholder || `请输入${field.label}`}
+        style={{
+          width: '100%', height: 32, padding: '0 11px',
+          border: '1px solid #D9D9D9', borderRadius: 6,
+          fontSize: 14, color: '#333', outline: 'none',
+          fontFamily: 'inherit', boxSizing: 'border-box',
+          transition: 'border-color .2s, box-shadow .2s',
+        }}
+        onFocusCapture={(e) => {
+          e.currentTarget.style.borderColor = '#1677ff';
+          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
+        }}
+        onBlurCapture={(e) => {
+          e.currentTarget.style.borderColor = '#D9D9D9';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+      />
+      {open && filteredOptions.length > 0 && (
+        <div
+          style={{
+            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+            marginTop: 2, background: '#fff', borderRadius: 6,
+            border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+            maxHeight: 240, overflow: 'auto',
+          }}
+        >
+          {filteredOptions.map((item) => {
+            const isHistory = getFieldHistory(field.id).includes(item);
+            return (
+              <div
+                key={item}
+                onMouseDown={() => handleSelect(item)}
+                style={{
+                  display: 'flex', alignItems: 'center', padding: '6px 12px',
+                  cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                  transition: 'background .1s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {item}
+                </span>
+                {isHistory && (
+                  <span
+                    onMouseDown={(e) => handleDelete(e, item)}
+                    style={{
+                      cursor: 'pointer', padding: '2px 6px',
+                      fontSize: 14, lineHeight: 1, color: '#D1D5DB',
+                      borderRadius: 3, userSelect: 'none', flexShrink: 0,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
+                  >×</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
