@@ -304,12 +304,8 @@ interface InputWithHistoryProps {
 export function InputWithHistory({ field, placeholder, extraOptions, onSelect, value, onChange }: InputWithHistoryProps) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [inputValue, setInputValue] = useState(value || '');
-
-  // 同步外部 value 到内部状态
-  if (value !== undefined && value !== inputValue) {
-    setInputValue(value);
-  }
+  // 直接用 prop value（来自 Form.Item 注入），不维护内部状态——编辑时才能正确显示已存数据
+  const displayValue = value || '';
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -322,25 +318,16 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
   }, [field.id, extraOptions, refreshKey]);
 
   const filteredOptions = useMemo(() => {
-    if (!inputValue) return allOptions;
-    const q = inputValue.toUpperCase();
+    if (!displayValue) return allOptions;
+    const q = displayValue.toUpperCase();
     return allOptions.filter((item) => item.toUpperCase().includes(q));
-  }, [allOptions, inputValue]);
-
-  const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    deleteFieldHistoryEntry(field.id, val);
-    setRefreshKey((k) => k + 1);
-  }, [field.id]);
+  }, [allOptions, displayValue]);
 
   const handleInputChange = (val: string) => {
-    setInputValue(val);
     onChange?.(val);
   };
 
   const handleSelect = (val: string) => {
-    setInputValue(val);
     onChange?.(val);
     onSelect?.(val);
     setOpen(false);
@@ -349,7 +336,7 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
   return (
     <div style={{ position: 'relative' }}>
       <input
-        value={inputValue}
+        value={displayValue}
         onChange={(e) => handleInputChange(e.target.value)}
         onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
         onBlur={() => setTimeout(() => setOpen(false), 200)}
@@ -384,23 +371,30 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
             return (
               <div
                 key={item}
-                onMouseDown={() => handleSelect(item)}
                 style={{
                   display: 'flex', alignItems: 'center', padding: '6px 12px',
-                  cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                  fontSize: 13, color: '#1F2937',
                   transition: 'background .1s',
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               >
-                <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span
+                  onMouseDown={() => handleSelect(item)}
+                  style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
+                >
                   {item}
                 </span>
                 {isHistory && (
                   <span
-                    onMouseDown={(e) => handleDelete(e, item)}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      deleteFieldHistoryEntry(field.id, item);
+                      setRefreshKey((k) => k + 1);
+                    }}
                     style={{
-                      cursor: 'pointer', padding: '2px 6px',
+                      cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
                       fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                       borderRadius: 3, userSelect: 'none', flexShrink: 0,
                     }}
@@ -423,28 +417,37 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
  * 全局案件名称字段
  * 展示所有模块中已保存的案件名称，选择后自动填充案件编号
  */
-export function GlobalCaseNameField({ field, subName, moduleLabel }: {
+export function GlobalCaseNameField({ field, subName }: {
   field: FieldDefinition;
   subName?: number;
-  moduleLabel?: string;
 }) {
-  const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   let form: any = null;
   try { form = Form.useFormInstance(); } catch { /* 无 Form 上下文时降级 */ }
 
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+  const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
   const caseNoField = subName !== undefined ? [subName, 'caseNo'] : 'caseNo';
   const caseNoKey = typeof caseNoField === 'string' ? caseNoField : caseNoField[1];
 
-  // 同步外部 form 值到内部状态
-  const formValue = form?.getFieldValue(field.id);
-  if (formValue !== undefined && formValue !== value && formValue !== '') {
-    setValue(formValue);
-  }
+  // 直接从 form 读取，不维护内部 state
+  const currentValue: string = form?.getFieldValue(nameKey) || '';
+
+  const allOptions = useMemo(() => {
+    void refreshKey;
+    return getAllCaseNames();
+  }, [refreshKey]);
+
+  const filteredOptions = useMemo(() => {
+    if (!currentValue) return allOptions;
+    const q = currentValue.toUpperCase();
+    return allOptions.filter((item) => item.toUpperCase().includes(q));
+  }, [allOptions, currentValue]);
+
+  const history = [...new Set([...getFieldHistory('caseName'), ...getFieldHistory('caseNo')])];
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
-  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
 
   const doFillCaseNo = (nameValue: string) => {
     if (!form) return;
@@ -454,37 +457,12 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
     }
   };
 
-  const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    deleteFieldHistoryEntry('caseName', val);
-    deleteFieldHistoryEntry('caseNo', val);
-    setRefreshKey((k) => k + 1);
-  }, []);
-
-  const allOptions = useMemo(() => {
-    void refreshKey;
-    return getAllCaseNames();
-  }, [refreshKey]);
-
-  const filteredOptions = useMemo(() => {
-    if (!value) return allOptions;
-    const q = value.toUpperCase();
-    return allOptions.filter((item) => item.toUpperCase().includes(q));
-  }, [allOptions, value]);
-
-  const history = [...new Set([...getFieldHistory('caseName'), ...getFieldHistory('caseNo')])];
-
   const handleChange = (val: string) => {
-    setValue(val);
-    const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
     form?.setFieldsValue({ [nameKey]: val });
     doFillCaseNo(val);
   };
 
   const handleSelect = (selectedValue: string) => {
-    setValue(selectedValue);
-    const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
     form?.setFieldsValue({ [nameKey]: selectedValue });
     doFillCaseNo(selectedValue);
     setOpen(false);
@@ -494,7 +472,7 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
         <input
-          value={value}
+          value={currentValue}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
@@ -529,23 +507,31 @@ export function GlobalCaseNameField({ field, subName, moduleLabel }: {
               return (
                 <div
                   key={item}
-                  onMouseDown={() => handleSelect(item)}
                   style={{
                     display: 'flex', alignItems: 'center', padding: '6px 12px',
-                    cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                    fontSize: 13, color: '#1F2937',
                     transition: 'background .1s',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
-                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span
+                    onMouseDown={() => handleSelect(item)}
+                    style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
+                  >
                     {item}
                   </span>
                   {isHistory && (
                     <span
-                      onMouseDown={(e) => handleDelete(e, item)}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        deleteFieldHistoryEntry('caseName', item);
+                        deleteFieldHistoryEntry('caseNo', item);
+                        setRefreshKey((k) => k + 1);
+                      }}
                       style={{
-                        cursor: 'pointer', padding: '2px 6px',
+                        cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
                         fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                         borderRadius: 3, userSelect: 'none', flexShrink: 0,
                       }}
@@ -571,23 +557,33 @@ export function GlobalCaseNoField({ field, subName }: {
   field: FieldDefinition;
   subName?: number;
 }) {
-  const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   let form: any = null;
   try { form = Form.useFormInstance(); } catch { /* 无 Form 上下文时降级 */ }
 
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+  const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
   const caseNameField = subName !== undefined ? [subName, 'caseName'] : 'caseName';
   const caseNameKey = typeof caseNameField === 'string' ? caseNameField : caseNameField[1];
 
-  // 同步外部 form 值到内部状态
-  const formValue = form?.getFieldValue(field.id);
-  if (formValue !== undefined && formValue !== value && formValue !== '') {
-    setValue(formValue);
-  }
+  // 直接从 form 读取，不维护内部 state
+  const currentValue: string = form?.getFieldValue(nameKey) || '';
+
+  const allOptions = useMemo(() => {
+    void refreshKey;
+    return getAllCaseNos();
+  }, [refreshKey]);
+
+  const filteredOptions = useMemo(() => {
+    if (!currentValue) return allOptions;
+    const q = currentValue.toUpperCase();
+    return allOptions.filter((item) => item.toUpperCase().includes(q));
+  }, [allOptions, currentValue]);
+
+  const history = [...new Set([...getFieldHistory('caseNo'), ...getFieldHistory('caseName')])];
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
-  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
 
   const doFillCaseName = (noValue: string) => {
     if (!form) return;
@@ -597,38 +593,13 @@ export function GlobalCaseNoField({ field, subName }: {
     }
   };
 
-  const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    deleteFieldHistoryEntry('caseNo', val);
-    deleteFieldHistoryEntry('caseName', val);
-    setRefreshKey((k) => k + 1);
-  }, []);
-
-  const allOptions = useMemo(() => {
-    void refreshKey;
-    return getAllCaseNos();
-  }, [refreshKey]);
-
-  const filteredOptions = useMemo(() => {
-    if (!value) return allOptions;
-    const q = value.toUpperCase();
-    return allOptions.filter((item) => item.toUpperCase().includes(q));
-  }, [allOptions, value]);
-
-  const history = [...new Set([...getFieldHistory('caseNo'), ...getFieldHistory('caseName')])];
-
   const handleChange = (val: string) => {
-    setValue(val);
-    const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
-    form?.setFieldsValue({ [key]: val });
+    form?.setFieldsValue({ [nameKey]: val });
     doFillCaseName(val);
   };
 
   const handleSelect = (selectedValue: string) => {
-    setValue(selectedValue);
-    const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
-    form?.setFieldsValue({ [key]: selectedValue });
+    form?.setFieldsValue({ [nameKey]: selectedValue });
     doFillCaseName(selectedValue);
     setOpen(false);
   };
@@ -637,7 +608,7 @@ export function GlobalCaseNoField({ field, subName }: {
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
         <input
-          value={value}
+          value={currentValue}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
@@ -672,23 +643,31 @@ export function GlobalCaseNoField({ field, subName }: {
               return (
                 <div
                   key={item}
-                  onMouseDown={() => handleSelect(item)}
                   style={{
                     display: 'flex', alignItems: 'center', padding: '6px 12px',
-                    cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                    fontSize: 13, color: '#1F2937',
                     transition: 'background .1s',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
-                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span
+                    onMouseDown={() => handleSelect(item)}
+                    style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
+                  >
                     {item}
                   </span>
                   {isHistory && (
                     <span
-                      onMouseDown={(e) => handleDelete(e, item)}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        deleteFieldHistoryEntry('caseNo', item);
+                        deleteFieldHistoryEntry('caseName', item);
+                        setRefreshKey((k) => k + 1);
+                      }}
                       style={{
-                        cursor: 'pointer', padding: '2px 6px',
+                        cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
                         fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                         borderRadius: 3, userSelect: 'none', flexShrink: 0,
                       }}
@@ -705,7 +684,6 @@ export function GlobalCaseNoField({ field, subName }: {
     </Form.Item>
   );
 }
-
 /* ===================== 设备品牌字段（联动设备类型） ===================== */
 
 const HARDDRIVE_BRANDS = ['三星', '希捷', '西部数据', '铠侠', '东芝', '金士顿', '致钛', '英睿达', '闪迪', '威刚', '联想'];
@@ -775,17 +753,10 @@ export function GlobalSuspectField({ field, subName }: {
   field: FieldDefinition;
   subName?: number;
 }) {
-  const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   let form: any = null;
   try { form = Form.useFormInstance(); } catch { /* 降级 */ }
-
-  const options = useMemo(() => {
-    void refreshKey;
-    const names = getAllSuspectNames();
-    return names.map((name) => ({ value: name, label: name }));
-  }, [refreshKey]);
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
@@ -817,27 +788,19 @@ export function GlobalSuspectField({ field, subName }: {
     }
   };
 
-  const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    deleteFieldHistoryEntry('suspect', val);
-    deleteFieldHistoryEntry('suspectName', val);
-    setRefreshKey((k) => k + 1);
-  }, []);
+  const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
+  // 直接从 form 读取，不维护内部 state
+  const currentValue: string = form?.getFieldValue(key) || '';
 
   const handleChange = (val: string) => {
-    setValue(val);
     if (form) {
-      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
       form.setFieldsValue({ [key]: val });
     }
     fillSuspectRelated(val);
   };
 
   const handleSelect = (selectedValue: string) => {
-    setValue(selectedValue);
     if (form) {
-      const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
       form.setFieldsValue({ [key]: selectedValue });
     }
     fillSuspectRelated(selectedValue);
@@ -845,10 +808,10 @@ export function GlobalSuspectField({ field, subName }: {
   };
 
   const filteredOptions = useMemo(() => {
-    if (!value) return getAllSuspectNames();
-    const q = value.toUpperCase();
+    if (!currentValue) return getAllSuspectNames();
+    const q = currentValue.toUpperCase();
     return getAllSuspectNames().filter((item) => item.toUpperCase().includes(q));
-  }, [value]);
+  }, [currentValue]);
 
   const history = getFieldHistory('suspect');
   const history2 = getFieldHistory('suspectName');
@@ -858,7 +821,7 @@ export function GlobalSuspectField({ field, subName }: {
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
         <input
-          value={value}
+          value={currentValue}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
@@ -893,23 +856,31 @@ export function GlobalSuspectField({ field, subName }: {
               return (
                 <div
                   key={item}
-                  onMouseDown={() => handleSelect(item)}
                   style={{
                     display: 'flex', alignItems: 'center', padding: '6px 12px',
-                    cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                    fontSize: 13, color: '#1F2937',
                     transition: 'background .1s',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
-                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span
+                    onMouseDown={() => handleSelect(item)}
+                    style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
+                  >
                     {item}
                   </span>
                   {isHistory && (
                     <span
-                      onMouseDown={(e) => handleDelete(e, item)}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        deleteFieldHistoryEntry('suspect', item);
+                        deleteFieldHistoryEntry('suspectName', item);
+                        setRefreshKey((k) => k + 1);
+                      }}
                       style={{
-                        cursor: 'pointer', padding: '2px 6px',
+                        cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
                         fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                         borderRadius: 3, userSelect: 'none', flexShrink: 0,
                       }}
@@ -937,7 +908,6 @@ export function HolderAutoComplete({ field, subName }: {
   field: FieldDefinition;
   subName?: number;
 }) {
-  const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   let form: any = null;
@@ -945,12 +915,10 @@ export function HolderAutoComplete({ field, subName }: {
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+  const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
-  // 同步外部 form 值到内部状态
-  const formValue = form?.getFieldValue(field.id);
-  if (formValue !== undefined && formValue !== value && formValue !== '') {
-    setValue(formValue);
-  }
+  // 直接从 form 读取，不维护内部 state
+  const currentValue: string = form?.getFieldValue(key) || '';
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -958,29 +926,18 @@ export function HolderAutoComplete({ field, subName }: {
   }, [refreshKey]);
 
   const filteredOptions = useMemo(() => {
-    if (!value) return allOptions;
-    const q = value.toUpperCase();
+    if (!currentValue) return allOptions;
+    const q = currentValue.toUpperCase();
     return allOptions.filter((item) => item.toUpperCase().includes(q));
-  }, [allOptions, value]);
+  }, [allOptions, currentValue]);
 
   const history = getFieldHistory('holder');
 
-  const handleDelete = useCallback((e: React.MouseEvent, val: string) => {
-    e.stopPropagation();
-    e.preventDefault();
-    deleteFieldHistoryEntry('holder', val);
-    setRefreshKey((k) => k + 1);
-  }, []);
-
   const handleChange = (val: string) => {
-    setValue(val);
-    const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
     form?.setFieldsValue({ [key]: val });
   };
 
   const handleSelect = (selectedValue: string) => {
-    setValue(selectedValue);
-    const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
     form?.setFieldsValue({ [key]: selectedValue });
     setOpen(false);
   };
@@ -989,7 +946,7 @@ export function HolderAutoComplete({ field, subName }: {
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
         <input
-          value={value}
+          value={currentValue}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
@@ -1024,23 +981,30 @@ export function HolderAutoComplete({ field, subName }: {
               return (
                 <div
                   key={item}
-                  onMouseDown={() => handleSelect(item)}
                   style={{
                     display: 'flex', alignItems: 'center', padding: '6px 12px',
-                    cursor: 'pointer', fontSize: 13, color: '#1F2937',
+                    fontSize: 13, color: '#1F2937',
                     transition: 'background .1s',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
-                  <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span
+                    onMouseDown={() => handleSelect(item)}
+                    style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
+                  >
                     {item}
                   </span>
                   {isHistory && (
                     <span
-                      onMouseDown={(e) => handleDelete(e, item)}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        deleteFieldHistoryEntry('holder', item);
+                        setRefreshKey((k) => k + 1);
+                      }}
                       style={{
-                        cursor: 'pointer', padding: '2px 6px',
+                        cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
                         fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                         borderRadius: 3, userSelect: 'none', flexShrink: 0,
                       }}
