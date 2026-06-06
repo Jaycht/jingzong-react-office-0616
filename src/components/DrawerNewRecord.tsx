@@ -471,7 +471,7 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
   // ─── 全局案件名称/编号联动 ───
   // 所有模块的 caseName/caseNo 都使用全局 AutoComplete，实现全软件数据共享
   if (field.id === 'caseName') {
-    return <GlobalCaseNameField field={field} subName={subName} moduleLabel={(() => { try { return useAppStore.getState().currentPage; } catch { return ''; } })()} />;
+    return <GlobalCaseNameField field={field} subName={subName} />;
   }
   if (field.id === 'caseNo') {
     return <GlobalCaseNoField field={field} subName={subName} />;

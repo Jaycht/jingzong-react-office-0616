@@ -128,6 +128,16 @@ function MultiPersonInput({ value, onChange, compact }: { value?: string; onChan
     return value.split('、').filter(Boolean);
   });
 
+  // 同步外部 value（编辑时 Form 异步设值后 state 不会被重新初始化）
+  if (value !== undefined) {
+    const expected = value.split('、').filter(Boolean);
+    if (expected.length > 0 && (expected.length !== items.length || expected.some((v, i) => v !== items[i]))) {
+      setItems(expected);
+    } else if (expected.length === 0 && items.length === 1 && items[0] !== '') {
+      setItems(['']);
+    }
+  }
+
   const sync = (next: string[]) => {
     setItems(next);
     onChange?.(next.filter(Boolean).join('、'));
