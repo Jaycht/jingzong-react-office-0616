@@ -35,10 +35,20 @@ function AppContent() {
 
   // 恢复持久化的用户登录状态（跨窗口/跨应用重启）
   useEffect(() => {
+    // 先检查用户是否开启了「自动登录」
+    let isAutoLogin = false;
+    try {
+      const loginRaw = localStorage.getItem('jingzong.login.v1');
+      if (loginRaw) {
+        const loginData = JSON.parse(loginRaw);
+        isAutoLogin = !!loginData.autoLogin;
+      }
+    } catch { /* ignore */ }
+
     const saved = loadUserFromStorage();
-    if (saved && saved.name) {
+    if (saved && saved.name && isAutoLogin) {
       useAppStore.getState().setUser(saved.name, saved.role);
-      // 有持久化的用户 → 直接进入主界面，同时调整窗口大小
+      // 有持久化的用户且开启了自动登录 → 直接进入主界面
       if (isElectron) {
         window.electronAPI?.resizeToMain();
       }

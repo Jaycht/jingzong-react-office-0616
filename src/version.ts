@@ -1,9 +1,16 @@
-export const APP_VERSION = "V2.9.0";
+export const APP_VERSION = "V2.9.1";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 9;
-export const VERSION_PATCH = 0;
+export const VERSION_PATCH = 1;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.9.1 =====
+  "V2.9.1 修复 - 只选记住密码未选自动登录时重开仍直接进主页面（App.tsx 增加 autoLogin 标志检查）",
+  "V2.9.1 修复 - 编辑记录时案件名称/编号需点击输入框才显示（GlobalCaseNameField/GlobalCaseNoField 改用 Form.useWatch 响应式取值）",
+  "V2.9.1 修复 - 强制措施登记缺少案件编号字段导致列表不显示、时间轴不匹配（新增 caseNo 字段）",
+  "V2.9.1 修复 - 受/立案文书号排在页面开头不合理（移至 4 个模块的字段列表末尾）",
+  "V2.9.1 新增 - 所有案件来源下拉添加'自首'选项（5 个模块）",
+  "V2.9.1 优化 - 手机采集改为设备采集，设备类型/品牌联动（硬盘/手机自动切换品牌列表）",
   // ===== V2.9.0 =====
   "V2.9.0 新增 - 全局嫌疑人跨模块联动（选/填嫌疑人姓名自动填充身份证号、手机号、地址，中队案件/资金查控/强制措施三大模块共享数据池）",
   "V2.9.0 新增 - 持有人引用嫌疑人数据池（设备采集/涉案财物的持有人字段可自动补全已有嫌疑人姓名）",

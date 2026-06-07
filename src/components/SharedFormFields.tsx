@@ -441,8 +441,8 @@ export function GlobalCaseNameField({ field, subName }: {
   const caseNoField = subName !== undefined ? [subName, 'caseNo'] : 'caseNo';
   const caseNoKey = typeof caseNoField === 'string' ? caseNoField : caseNoField[1];
 
-  // 直接从 form 读取，不维护内部 state
-  const currentValue: string = form?.getFieldValue(nameKey) || '';
+  // 使用 Form.useWatch 响应式监听字段值
+  const currentValue: string = form ? (Form.useWatch(nameKey, form) as string) || '' : '';
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -577,8 +577,8 @@ export function GlobalCaseNoField({ field, subName }: {
   const caseNameField = subName !== undefined ? [subName, 'caseName'] : 'caseName';
   const caseNameKey = typeof caseNameField === 'string' ? caseNameField : caseNameField[1];
 
-  // 直接从 form 读取，不维护内部 state
-  const currentValue: string = form?.getFieldValue(nameKey) || '';
+  // 使用 Form.useWatch 响应式监听字段值
+  const currentValue: string = form ? (Form.useWatch(nameKey, form) as string) || '' : '';
 
   const allOptions = useMemo(() => {
     void refreshKey;

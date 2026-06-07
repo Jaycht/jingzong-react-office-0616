@@ -136,7 +136,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('reportLocation', '接报地点'),
       f('receivingOfficer', '接报民警', 'text', false),
       f('caseSource', '案件来源', 'select', false, [
-        '群众报案', '控告', '举报', '上级交办', '部门移送', '工作发现',
+        '群众报案', '控告', '举报', '上级交办', '部门移送', '工作发现', '自首',
       ]),
       f('massCase', '是否涉众案件', 'select', false, ['是', '否']),
       f('caseType', '案件类型', 'select', false, [
@@ -603,6 +603,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('assignMatter', '交办事项', 'textarea', false),
       f('feedbackResult', '反馈结果', 'textarea'),
       f('clueDetail', '线索详情', 'textarea'),
+      f('filingDocNo', '受/立案文书号'),
       ...commonTail,
     ];
   }
@@ -613,8 +614,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       section('线索/案件信息'),
       f('caseNo', '案件编号'),
       f('caseName', '案件名称', 'text', false),
-      f('filingDocNo', '受/立案文书号'),
-      f('caseSource', '案件来源', 'select', false, ['群众报案', '举报', '上级交办', '部门移送', '工作发现']),
+      f('caseSource', '案件来源', 'select', false, ['群众报案', '举报', '上级交办', '部门移送', '工作发现', '自首']),
       f('caseType', '案件类型', 'select', false, [
         '帮助恐怖活动案', '走私假币案', '虚报注册资本案', '虚假出资、抽逃出资案',
         '欺诈发行股票、债券案', '违规披露、不披露重要信息案', '妨害清算案',
@@ -714,8 +714,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       section('线索/案件基本信息'),
       f('caseNo', '线索/案件编号'),
       f('caseName', '线索/案件名称', 'text', false),
-      f('filingDocNo', '受/立案文书号'),
-      f('caseSource', '线索/案件来源', 'select', false, ['群众报案', '举报', '上级交办', '部门移送', '工作发现']),
+      f('caseSource', '线索/案件来源', 'select', false, ['群众报案', '举报', '上级交办', '部门移送', '工作发现', '自首']),
       f('caseType', '线索/案件类型', 'select', false, [
         '帮助恐怖活动案', '走私假币案', '虚报注册资本案', '虚假出资、抽逃出资案',
         '欺诈发行股票、债券案', '违规披露、不披露重要信息案', '妨害清算案',
@@ -809,6 +808,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('conclusionDeepClue', '待深挖线索', 'textarea'),
       f('conclusionNextStep', '下一步工作', 'textarea'),
       f('attachConclusion', '附件材料（分析结论）', 'attachment'),
+      f('filingDocNo', '受/立案文书号'),
     ];
   }
 
@@ -875,7 +875,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
   }
 
   if (moduleId === 'squad-coercive') {
-    return [section('基本信息', true, 'coerciveMeasures'), f('caseName', '案件名称', 'text', false), f('suspect', '嫌疑人姓名', 'text', false), f('measure', '强制措施类型', 'select', false, ['刑事拘留', '取保候审', '监视居住', '逮捕', '变更措施'], 'squad.coercive.measure'), f('isNotified', '是否告知/通知', 'select', false, ['是', '否']), f('notifyDate', '告知/通知时间', 'date'), f('approvalDate', '审批时间', 'date'), f('executeDate', '执行时间', 'date', false), f('deadline', '期限届满时间', 'date'), f('approver', '审批人'), f('executeResult', '执行情况', 'textarea'), ...commonTail];
+    return [section('基本信息', true, 'coerciveMeasures'), f('caseNo', '案件编号', 'text', false), f('caseName', '案件名称', 'text', false), f('suspect', '嫌疑人姓名', 'text', false), f('measure', '强制措施类型', 'select', false, ['刑事拘留', '取保候审', '监视居住', '逮捕', '变更措施'], 'squad.coercive.measure'), f('isNotified', '是否告知/通知', 'select', false, ['是', '否']), f('notifyDate', '告知/通知时间', 'date'), f('approvalDate', '审批时间', 'date'), f('executeDate', '执行时间', 'date', false), f('deadline', '期限届满时间', 'date'), f('approver', '审批人'), f('executeResult', '执行情况', 'textarea'), ...commonTail];
   }
 
   if (moduleId === 'squad-property') {
@@ -1014,7 +1014,6 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       // 一、案件基础信息
       section('案件基础信息'),
       f('caseNo', '案件编号', 'text', false),
-      f('filingDocNo', '受、立案决定书编号'),
       f('caseName', '案件名称', 'text', false),
       f('receiveDate', '受案时间', 'date', false),
       f('filingDate', '立案时间', 'date'),
@@ -1022,7 +1021,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('noFilingReason', '不予立案理由', 'text'),
       f('briefCase', '简要案情', 'textarea'),
       f('caseSource', '案件来源', 'select', false, [
-        '群众报案', '举报', '上级交办', '部门移送', '工作发现', '12345转办',
+        '群众报案', '举报', '上级交办', '部门移送', '工作发现', '12345转办', '自首',
       ], 'legal.caseSource'),
       f('caseType', '案件类型', 'select', false, [
         '帮助恐怖活动案', '走私假币案', '虚报注册资本案',
@@ -1133,6 +1132,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('archiveStatus', '案卷归档情况', 'textarea'),
       f('superiorSupervision', '上级督办情况', 'textarea'),
       f('supervisionCase', '是否挂牌案件', 'select', false, ['是', '否']),
+      f('filingDocNo', '受、立案决定书编号'),
 
       ...commonTail,
     ];
@@ -1142,10 +1142,9 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
     return [
       section('案件基本信息'),
       f('caseNo', '案件编号'),
-      f('filingDocNo', '受/立案文书号'),
       f('caseName', '案件名称', 'text', false),
       f('caseSource', '案件来源', 'select', false, [
-        '群众报案', '举报', '上级交办', '部门移送', '专项行动', '工作发现',
+        '群众报案', '举报', '上级交办', '部门移送', '专项行动', '工作发现', '自首',
       ]),
       f('caseType', '案件类型', 'select', false, [
         '帮助恐怖活动案', '走私假币案', '虚报注册资本案',
@@ -1198,6 +1197,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
         '中队移交', '外单位移交', '退回法制室',
       ]),
       f('transferUnit', '移交单位'),
+      f('filingDocNo', '受/立案文书号'),
 
       ...commonTail,
     ];
