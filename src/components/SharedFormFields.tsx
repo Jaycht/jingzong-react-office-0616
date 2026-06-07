@@ -422,6 +422,82 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
   );
 }
 
+/* ===================== 身份证号字段（自动提取出生日期） ===================== */
+
+/** 从身份证号提取出生日期，支持18位和15位 */
+function parseBirthFromIdNo(idNo: string): string | null {
+  let birth: string | null = null;
+  if (idNo.length === 18) {
+    const s = idNo.substring(6, 14);
+    birth = s.substring(0, 4) + '-' + s.substring(4, 6) + '-' + s.substring(6, 8);
+  } else if (idNo.length === 15) {
+    const s = idNo.substring(6, 12);
+    birth = '19' + s.substring(0, 2) + '-' + s.substring(2, 4) + '-' + s.substring(4, 6);
+  }
+  if (birth) {
+    const d = dayjs(birth);
+    return d.isValid() ? birth : null;
+  }
+  return null;
+}
+
+/**
+ * 身份证号输入框
+ * 输入18位/15位身份证号后自动提取出生日期填入 birthDate 字段
+ */
+export function IdNoField({ field, subName, listName }: {
+  field: FieldDefinition;
+  subName?: number;
+  listName?: string;
+}) {
+  const form = Form.useFormInstance();
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+  const birthDateName = (subName !== undefined && listName)
+    ? [listName, subName, 'birthDate']
+    : 'birthDate';
+
+  const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
+
+  const handleIdNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    form.setFieldsValue({ [fieldName as any]: val });
+    // 身份证号达到15位或18位时自动提取出生日期
+    if (val.length === 18 || val.length === 15) {
+      const birth = parseBirthFromIdNo(val);
+      if (birth) {
+        form.setFieldsValue({ [birthDateName as any]: dayjs(birth) });
+      }
+    }
+  };
+
+  const watchedValue: unknown = Form.useWatch(fieldName as any, form);
+  const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
+
+  return (
+    <Form.Item name={fieldName} label={field.label} rules={rules}>
+      <input
+        value={currentValue}
+        onChange={handleIdNoChange}
+        placeholder="请输入身份证号（自动提取出生日期）"
+        style={{
+          width: '100%', height: 32, padding: '0 11px',
+          border: '1px solid #D9D9D9', borderRadius: 6,
+          fontSize: 14, color: '#333', outline: 'none',
+          fontFamily: 'inherit', boxSizing: 'border-box',
+        }}
+        onFocusCapture={(e) => {
+          e.currentTarget.style.borderColor = '#1677ff';
+          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
+        }}
+        onBlurCapture={(e) => {
+          e.currentTarget.style.borderColor = '#D9D9D9';
+          e.currentTarget.style.boxShadow = 'none';
+        }}
+      />
+    </Form.Item>
+  );
+}
+
 /* ===================== 全局案件名称/编号联动 ===================== */
 
 /**

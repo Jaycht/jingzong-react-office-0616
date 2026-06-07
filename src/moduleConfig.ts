@@ -1154,7 +1154,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
 
   if (moduleId === 'squad-case') {
     return [
-      // 步骤1：案件基本信息（合并原步骤1/2/3，按办案时间顺序排列）
+      // ═══ 步骤1：案件基本信息 ═══
       section('案件基本信息'),
       f('caseNo', '案件编号'),
       f('caseName', '案件名称', 'text', false),
@@ -1192,12 +1192,12 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
         '非法经营案', '非法转让、倒卖土地使用权案', '提供虚假证明文件案',
         '出具证明文件重大失实案', '职务侵占案', '挪用资金案', '虚假诉讼案',
       ]),
-      // 原步骤2的涉案信息移到这里
+      // 原步骤2涉案信息的两个项目移到这里
       f('totalAmount', '涉案总金额（万元）', 'number'),
       f('victimCount', '受害人数', 'number'),
       f('leadOfficer', '主办民警', 'text', false),
       f('assistOfficer', '协办民警'),
-      // 原步骤3的日期节点按法律办案时间顺序排列
+      // 原步骤3日期节点按法律办案时间顺序排列
       f('receiveDate', '受案日期', 'date'),
       f('filingDate', '立案日期', 'date'),
       f('noFilingDate', '不予立案日期', 'date'),
@@ -1205,7 +1205,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('prosecutionDate', '移送审查起诉日期', 'date'),
       f('caseCloseDate', '结案日期', 'date'),
 
-      // 步骤2：嫌疑人信息（可重复添加，全局联动）
+      // ═══ 步骤2：嫌疑人信息（repeatable，全局联动）═══
       section('嫌疑人信息', true, 'suspects'),
       // 【基本信息】
       f('suspectName', '姓名', 'text', false),

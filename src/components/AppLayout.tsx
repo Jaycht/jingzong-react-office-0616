@@ -95,7 +95,7 @@ export default function AppLayout() {
             borderBottom: darkMode ? 'none' : '1px solid #E5E7EB',
           }}
         >
-          <span style={{ fontSize: 12, color: darkMode ? 'rgba(255,255,255,0.35)' : '#9CA3AF', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
+          <span style={{ fontSize: 12, lineHeight: 1, color: darkMode ? 'rgba(255,255,255,0.35)' : '#9CA3AF', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
             经侦大队工作记录管理系统
           </span>
           {/* 窗口控制按钮（不可拖拽） */}

@@ -18,6 +18,7 @@ import {
   GlobalCaseNameField, GlobalCaseNoField, GlobalSuspectField,
   InputWithHistory,
   MultiPersonField, PersistedSelect, DeviceBrandField, HolderAutoComplete,
+  IdNoField,
 } from './SharedFormFields';
 import { saveAttachment, relinkAttachment, getAttachment } from '../store/attachmentStore';
 
@@ -81,7 +82,9 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   }, [allFields]);
 
   // flatMode：基本信息 + 一个 repeatable section 不分步，内容同时渲染在同一页
-  const flatMode = steps.length === 2 && steps[1].repeatable;
+  // 排除中队案件管理（squad-case），它需要明确的步骤1/步骤2分隔
+  const isSquadCase = currentPage === 'squad-case';
+  const flatMode = steps.length === 2 && steps[1].repeatable && !isSquadCase;
   const hasSections = flatMode ? false : steps.length > 1;
   const totalSteps = steps.length;
   const currentStepMeta = steps[currentStep];
@@ -518,6 +521,11 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
   // 全局嫌疑人联动字段
   if (field.id === 'suspect' || field.id === 'suspectName') {
     return <GlobalSuspectField field={field} subName={subName} listName={listName} />;
+  }
+
+  // 身份证号字段：自动提取出生日期
+  if (field.id === 'suspectIdNo') {
+    return <IdNoField field={field} subName={subName} listName={listName} />;
   }
 
   // 持有人字段：引用嫌疑人数据池做自动补全

@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.9.11";
+export const APP_VERSION = "V2.9.12";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 9;
-export const VERSION_PATCH = 11;
+export const VERSION_PATCH = 12;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.9.12 =====
+  "V2.9.12 修复 - 中队案件管理 flatMode 排除 squad-case，恢复步骤1/步骤2分步显示",
+  "V2.9.12 新增 - 身份证号输入自动提取出生日期（suspectIdNo→birthDate）",
+  "V2.9.12 修复 - 标题栏文字垂直居中（lineHeight: 1）",
   // ===== V2.9.11 =====
   "V2.9.11 重构 - 中队案件管理(squad-case)字段重排：步骤1(案件基本信息合并涉案信息/日期节点)、步骤2(嫌疑人信息40+字段全局联动+投资理财+参保情况)",
   "V2.9.11 修复 - 时间轴 FIELD_LABELS 补全新增嫌疑人字段（formerName/ethnicity/education等30+字段）",
