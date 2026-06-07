@@ -58,7 +58,7 @@ function AppContent() {
       }
     }
     if (migrated) {
-      localStorageAdapter.setItem('jingzong.massStore.v2', allRecords);
+      localStorageAdapter.setItem('jingzong.mass.records', allRecords);
     }
     rebuildCaseIndex(allRecords);
   }, []);

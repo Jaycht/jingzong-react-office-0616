@@ -413,7 +413,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                                           : { gridColumn: 'span 3' }
                                       }
                                     >
-                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} form={form} pendingAttachments={pendingAttachments} editRecord={editRecord} />
+                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} listName={stepListName} form={form} pendingAttachments={pendingAttachments} editRecord={editRecord} />
                                     </div>
                                   ))}
                                 </div>
@@ -463,13 +463,14 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
 /* ===================== Field components ===================== */
 
-function DynamicField({ field, moduleId, subName, form, pendingAttachments, editRecord }: { 
+function DynamicField({ field, moduleId, subName, form, pendingAttachments, editRecord, listName }: { 
   field: FieldDefinition; 
   moduleId: string; 
   subName?: number; 
   form: any;
   pendingAttachments: React.MutableRefObject<Set<string>>;
   editRecord?: import('../store/massStore').MassRecord | null;
+  listName?: string;
 }) {
   const name = subName !== undefined ? [subName, field.id] : field.id;
 
@@ -485,7 +486,7 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
   // 设备品牌字段：联动设备类型动态切换选项
   // 全局嫌疑人联动字段
   if (field.id === 'suspect' || field.id === 'suspectName') {
-    return <GlobalSuspectField field={field} subName={subName} />;
+    return <GlobalSuspectField field={field} subName={subName} listName={listName} />;
   }
 
   // 持有人字段：引用嫌疑人数据池做自动补全

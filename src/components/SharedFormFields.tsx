@@ -436,7 +436,6 @@ export function GlobalCaseNameField({ field, subName }: {
 }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [manualRefresh, setManualRefresh] = useState(0);
   let form: any = null;
   try { form = Form.useFormInstance(); } catch {}
 
@@ -465,18 +464,16 @@ export function GlobalCaseNameField({ field, subName }: {
   const handleChange = (val: string) => {
     if (!form) return;
     form.setFieldsValue({ [nameKey]: val });
-    // 触发一次刷新，让 currentValue 读取最新值
     setRefreshKey((k) => k + 1);
   };
 
   const handleSelect = (val: string) => {
     if (!form) return;
     form.setFieldsValue({ [nameKey]: val });
-    // 联动填充案件编号
+    // 联动填充案件编号（所有模块 caseNo 都是扁平字段，直接写 caseNo）
     const relatedNos = getCaseNosByName(val);
     if (relatedNos.length > 0) {
-      const caseNoKey = subName !== undefined ? 'caseNo' : 'caseNo';
-      form.setFieldsValue({ [caseNoKey]: relatedNos[0] });
+      form.setFieldsValue({ caseNo: relatedNos[0] });
     }
     setOpen(false);
   };
@@ -577,7 +574,6 @@ export function GlobalCaseNoField({ field, subName }: {
 }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [manualRefresh, setManualRefresh] = useState(0);
   let form: any = null;
   try { form = Form.useFormInstance(); } catch {}
 
@@ -614,8 +610,7 @@ export function GlobalCaseNoField({ field, subName }: {
     form.setFieldsValue({ [nameKey]: val });
     const relatedNames = getCaseNamesByNo(val);
     if (relatedNames.length > 0) {
-      const caseNameKey = subName !== undefined ? 'caseName' : 'caseName';
-      form.setFieldsValue({ [caseNameKey]: relatedNames[0] });
+      form.setFieldsValue({ caseName: relatedNames[0] });
     }
     setOpen(false);
   };
@@ -768,9 +763,10 @@ export function DeviceBrandField({ field, subName }: { field: FieldDefinition; s
  * 全局嫌疑人姓名字段
  * 展示所有模块中已保存的嫌疑人，选择/填写后自动填充身份证号、手机号、地址
  */
-export function GlobalSuspectField({ field, subName }: {
+export function GlobalSuspectField({ field, subName, listName }: {
   field: FieldDefinition;
   subName?: number;
+  listName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -779,6 +775,10 @@ export function GlobalSuspectField({ field, subName }: {
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+  // 完整路径（Form.useWatch 需要 root-relative 路径）
+  const fullName = (subName !== undefined && listName)
+    ? [listName, subName, field.id]
+    : fieldName;
 
   /** 填充关联的嫌疑人信息 */
   const fillSuspectRelated = (suspectName: string) => {
@@ -789,38 +789,35 @@ export function GlobalSuspectField({ field, subName }: {
     const thisFieldId = typeof fieldName === 'string' ? fieldName : fieldName[1];
     const isInSuspectsSection = thisFieldId === 'suspectName';
 
-    const kv: Record<string, string> = {};
-
-    if (isInSuspectsSection) {
-      // squad-case 的嫌疑人 section 内：字段名带 suspect 前缀
-      if (info.idNo)   kv.suspectIdNo = info.idNo;
-      if (info.phone)  kv.suspectPhone = info.phone;
-      if (info.address) kv.suspectAddress = info.address;
+    if (isInSuspectsSection && subName !== undefined && listName) {
+      // legal-case-ledger 的嫌疑人 section 内：用 setFieldValue 写入嵌套路径
+      if (info.idNo)   form.setFieldValue([listName, subName, 'suspectIdNo'], info.idNo);
+      if (info.phone)  form.setFieldValue([listName, subName, 'suspectPhone'], info.phone);
+      if (info.address) form.setFieldValue([listName, subName, 'suspectAddress'], info.address);
     } else {
       // 平铺模式（资金查控、强制措施、设备采集等）：用 idNo / phone
+      const kv: Record<string, string> = {};
       if (info.idNo)   kv.idNo = info.idNo;
       if (info.phone)  kv.phone = info.phone;
-    }
-
-    if (Object.keys(kv).length > 0) {
-      form.setFieldsValue(kv);
+      if (Object.keys(kv).length > 0) form.setFieldsValue(kv);
     }
   };
 
-  const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
-  // 直接从 form 读取，不维护内部 state
-  const currentValue: string = form?.getFieldValue(key) || '';
+  // Form.useWatch 响应式读取（自身输入和联动赋值都能触发重渲染）
+  const watchedValue: unknown = form ? Form.useWatch(fullName, form) : '';
+  const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
 
   const handleChange = (val: string) => {
     if (form) {
-      form.setFieldsValue({ [key]: val });
+      form.setFieldValue(fullName, val);
+      setRefreshKey((k) => k + 1);
     }
     fillSuspectRelated(val);
   };
 
   const handleSelect = (selectedValue: string) => {
     if (form) {
-      form.setFieldsValue({ [key]: selectedValue });
+      form.setFieldValue(fullName, selectedValue);
     }
     fillSuspectRelated(selectedValue);
     setOpen(false);
