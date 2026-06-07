@@ -9,7 +9,8 @@ import RegisterPage from "./components/RegisterPage";
 import { Toaster } from "./components/Toaster";
 import { DARK_THEME, LIGHT_THEME } from "./constants/theme";
 import { useAppStore, loadUserFromStorage } from "./store/appStore";
-import { migrateOldCasesToMassStore } from "./store/massStore";
+import { migrateOldCasesToMassStore, getMassRecords } from "./store/massStore";
+import { rebuildCaseIndex } from "./store/inputHistoryStore";
 
 declare global {
   interface Window {
@@ -30,8 +31,11 @@ declare global {
 }
 
 function AppContent() {
-  // 数据迁移：旧 caseStore → massStore（一次性）
-  useEffect(() => { migrateOldCasesToMassStore(); }, []);
+  // 数据迁移 + 重建案件索引
+  useEffect(() => {
+    migrateOldCasesToMassStore();
+    rebuildCaseIndex(getMassRecords());
+  }, []);
 
   // 恢复持久化的用户登录状态（跨窗口/跨应用重启）
   useEffect(() => {

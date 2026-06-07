@@ -390,7 +390,7 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <span
-                  onMouseDown={() => { syncFormValue(item); setOpen(false); }}
+                  onMouseDown={() => { handleSelect(item); }}
                   style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                 >
                   {item}
@@ -434,15 +434,13 @@ export function GlobalCaseNameField({ field, subName }: {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   let form: any = null;
-  try { form = Form.useFormInstance(); } catch { /* 无 Form 上下文时降级 */ }
+  try { form = Form.useFormInstance(); } catch {}
 
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
-  const caseNoField = subName !== undefined ? [subName, 'caseNo'] : 'caseNo';
-  const caseNoKey = typeof caseNoField === 'string' ? caseNoField : caseNoField[1];
 
-  // 用 state 维护当前值，初始化时从 form 读取
-  const [currentValue, setCurrentValue] = useState<string>(() => form?.getFieldValue(nameKey) || '');
+  // 使用 Form.useWatch 响应式读取当前值
+  const currentValue: string = form ? (Form.useWatch(nameKey, form) as string) || '' : '';
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -459,40 +457,25 @@ export function GlobalCaseNameField({ field, subName }: {
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
 
-  const syncFormValue = (val: string) => {
-    setCurrentValue(val);
-    form?.setFieldsValue({ [nameKey]: val });
+  const handleSelect = (val: string) => {
+    if (!form) return;
+    form.setFieldsValue({ [nameKey]: val });
     // 联动填充案件编号
     const relatedNos = getCaseNosByName(val);
     if (relatedNos.length > 0) {
-      form?.setFieldsValue({ [caseNoKey]: relatedNos[0] });
+      const caseNoKey = subName !== undefined ? `caseNo` : 'caseNo';
+      form.setFieldsValue({ [caseNoKey]: relatedNos[0] });
     }
+    setOpen(false);
   };
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
-        <input
-          value={currentValue}
-          onChange={(e) => syncFormValue(e.target.value)}
+        <Input
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           placeholder="请输入案件名称（全软件数据共享）"
-          style={{
-            width: '100%', height: 32, padding: '0 11px',
-            border: '1px solid #D9D9D9', borderRadius: 6,
-            fontSize: 14, color: '#333', outline: 'none',
-            fontFamily: 'inherit', boxSizing: 'border-box',
-            transition: 'border-color .2s, box-shadow .2s',
-          }}
-          onFocusCapture={(e) => {
-            e.currentTarget.style.borderColor = '#1677ff';
-            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
-          }}
-          onBlurCapture={(e) => {
-            e.currentTarget.style.borderColor = '#D9D9D9';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
         />
         {open && filteredOptions.length > 0 && (
           <div
@@ -517,7 +500,7 @@ export function GlobalCaseNameField({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => { syncFormValue(item); setOpen(false); }}
+                    onMouseDown={() => { handleSelect(item); }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}
@@ -561,15 +544,13 @@ export function GlobalCaseNoField({ field, subName }: {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   let form: any = null;
-  try { form = Form.useFormInstance(); } catch { /* 无 Form 上下文时降级 */ }
+  try { form = Form.useFormInstance(); } catch {}
 
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
-  const caseNameField = subName !== undefined ? [subName, 'caseName'] : 'caseName';
-  const caseNameKey = typeof caseNameField === 'string' ? caseNameField : caseNameField[1];
 
-  // 用 state 维护当前值，初始化时从 form 读取
-  const [currentValue, setCurrentValue] = useState<string>(() => form?.getFieldValue(nameKey) || '');
+  // 用 Form.useWatch 响应式读取当前值
+  const currentValue: string = form ? (Form.useWatch(nameKey, form) as string) || '' : '';
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -586,40 +567,24 @@ export function GlobalCaseNoField({ field, subName }: {
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
 
-  const syncFormValue = (val: string) => {
-    setCurrentValue(val);
-    form?.setFieldsValue({ [nameKey]: val });
-    // 联动填充案件名称
+  const handleSelect = (val: string) => {
+    if (!form) return;
+    form.setFieldsValue({ [nameKey]: val });
     const relatedNames = getCaseNamesByNo(val);
     if (relatedNames.length > 0) {
-      form?.setFieldsValue({ [caseNameKey]: relatedNames[0] });
+      const caseNameKey = subName !== undefined ? `caseName` : 'caseName';
+      form.setFieldsValue({ [caseNameKey]: relatedNames[0] });
     }
+    setOpen(false);
   };
 
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
-        <input
-          value={currentValue}
-          onChange={(e) => handleChange(e.target.value)}
+        <Input
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           placeholder="请输入案件编号（全软件数据共享）"
-          style={{
-            width: '100%', height: 32, padding: '0 11px',
-            border: '1px solid #D9D9D9', borderRadius: 6,
-            fontSize: 14, color: '#333', outline: 'none',
-            fontFamily: 'inherit', boxSizing: 'border-box',
-            transition: 'border-color .2s, box-shadow .2s',
-          }}
-          onFocusCapture={(e) => {
-            e.currentTarget.style.borderColor = '#1677ff';
-            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
-          }}
-          onBlurCapture={(e) => {
-            e.currentTarget.style.borderColor = '#D9D9D9';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
         />
         {open && filteredOptions.length > 0 && (
           <div
@@ -644,7 +609,7 @@ export function GlobalCaseNoField({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => { syncFormValue(item); setOpen(false); }}
+                    onMouseDown={() => { handleSelect(item); }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}
@@ -857,7 +822,7 @@ export function GlobalSuspectField({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => { syncFormValue(item); setOpen(false); }}
+                    onMouseDown={() => { handleSelect(item); }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}
@@ -982,7 +947,7 @@ export function HolderAutoComplete({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => { syncFormValue(item); setOpen(false); }}
+                    onMouseDown={() => { handleSelect(item); }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}
