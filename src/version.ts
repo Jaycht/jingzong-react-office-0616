@@ -8,6 +8,10 @@ export const CHANGELOG: string[] = [
   "V2.9.2 修复 - 新建弹窗[记录模板]下拉默认第一项，不能自动选中当前标签（store 新增 currentTabId，同步 ModulePage 标签切换）",
   "V2.9.2 修复 - 涉众办/法制室/案件中队/调证分析模块列表多出不存在的[经办人]列（按 departmentId 条件渲染）",
   "V2.9.2 修复 - 全局案件编号/名称历史记录点击无反应/联动消失/删除按钮消失/录入不存历史（替换 antd Input+Form.useWatch 为原生 input+form.getFieldValue 模式）",
+  "V2.9.2 重构 - 强制措施登记 caseNo/caseName 从 repeatable section 移到顶层，与全局联动/时间轴/索引彻底兼容",
+  "V2.9.2 迁移 - 强制措施旧记录自动迁移（coerciveMeasures[0].caseNo/caseName 提升到 data 根层级）",
+  "V2.9.2 修复 - 删除记录后重建案件/嫌疑人索引，历史记录不会残留（deleteMassRecord 新增 rebuildCaseIndex/rebuildSuspectIndex）",
+  "V2.9.2 修复 - 全局案件名称/编号联动后对面字段需点击才显示（改用 Form.useWatch 替代 form.getFieldValue 实现响应式联动重渲染）",
   // ===== V2.9.1 =====
   "V2.9.1 修复 - 只选记住密码未选自动登录时重开仍直接进主页面（App.tsx 增加 autoLogin 标志检查）",
   "V2.9.1 修复 - 编辑记录时案件名称/编号需点击输入框才显示（GlobalCaseNameField/GlobalCaseNoField 改用 Form.useWatch 响应式取值）",

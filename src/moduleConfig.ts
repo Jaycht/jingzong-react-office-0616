@@ -875,7 +875,21 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
   }
 
   if (moduleId === 'squad-coercive') {
-    return [section('基本信息', true, 'coerciveMeasures'), f('caseNo', '案件编号', 'text', false), f('caseName', '案件名称', 'text', false), f('suspect', '嫌疑人姓名', 'text', false), f('measure', '强制措施类型', 'select', false, ['刑事拘留', '取保候审', '监视居住', '逮捕', '变更措施'], 'squad.coercive.measure'), f('isNotified', '是否告知/通知', 'select', false, ['是', '否']), f('notifyDate', '告知/通知时间', 'date'), f('approvalDate', '审批时间', 'date'), f('executeDate', '执行时间', 'date', false), f('deadline', '期限届满时间', 'date'), f('approver', '审批人'), f('executeResult', '执行情况', 'textarea'), ...commonTail];
+    return [
+      f('caseNo', '案件编号', 'text', false),
+      f('caseName', '案件名称', 'text', false),
+      section('强制措施明细', true, 'coerciveMeasures'),
+      f('suspect', '嫌疑人姓名', 'text', false),
+      f('measure', '强制措施类型', 'select', false, ['刑事拘留', '取保候审', '监视居住', '逮捕', '变更措施'], 'squad.coercive.measure'),
+      f('isNotified', '是否告知/通知', 'select', false, ['是', '否']),
+      f('notifyDate', '告知/通知时间', 'date'),
+      f('approvalDate', '审批时间', 'date'),
+      f('executeDate', '执行时间', 'date', false),
+      f('deadline', '期限届满时间', 'date'),
+      f('approver', '审批人'),
+      f('executeResult', '执行情况', 'textarea'),
+      ...commonTail,
+    ];
   }
 
   if (moduleId === 'squad-property') {

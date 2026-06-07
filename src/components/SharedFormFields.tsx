@@ -427,10 +427,8 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
  * 全局案件名称字段
  * 展示所有模块中已保存的案件名称，选择后自动填充案件编号
  *
- * 注意：必须使用 native <input> + form.getFieldValue/setFieldsValue 模式
- * 而非 antd <Input> 包裹在 <Form.Item><div>...</div></Form.Item 中
- * 因为 Form.Item 只给直接子元素注入 value/onChange，嵌套的 antd Input 拿不到，
- * 导致 value 和 UI 显示不同步、历史选择无效、联动断裂。
+ * 使用 Form.useWatch 响应式读取（联动赋值后自动触发对面字段重渲染）
+ * + native <input> 显式绑定 value（避免 antd Form.Item 包裹 div 时注入不到 Input 的问题）
  */
 export function GlobalCaseNameField({ field, subName }: {
   field: FieldDefinition;
@@ -438,14 +436,16 @@ export function GlobalCaseNameField({ field, subName }: {
 }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [manualRefresh, setManualRefresh] = useState(0);
   let form: any = null;
   try { form = Form.useFormInstance(); } catch {}
 
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
-  // 用 form.getFieldValue 读取当前值（而非 Form.useWatch），避免与 Form.Item 的内部管理冲突
-  const currentValue: string = form?.getFieldValue(nameKey) || '';
+  // Form.useWatch 订阅表单变化：自身输入、联动赋值、setFieldsValue 都能触发重渲染
+  const watchedValue: unknown = form ? Form.useWatch(nameKey, form) : '';
+  const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -569,7 +569,7 @@ export function GlobalCaseNameField({ field, subName }: {
  * 全局案件编号字段
  * 展示所有模块中已保存的案件编号，选择后自动填充案件名称
  *
- * 同 GlobalCaseNameField，使用 native <input> + form.getFieldValue/setFieldsValue 模式
+ * 同 GlobalCaseNameField，使用 Form.useWatch + native <input> 模式
  */
 export function GlobalCaseNoField({ field, subName }: {
   field: FieldDefinition;
@@ -577,14 +577,16 @@ export function GlobalCaseNoField({ field, subName }: {
 }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [manualRefresh, setManualRefresh] = useState(0);
   let form: any = null;
   try { form = Form.useFormInstance(); } catch {}
 
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
-  // 用 form.getFieldValue 替代 Form.useWatch
-  const currentValue: string = form?.getFieldValue(nameKey) || '';
+  // Form.useWatch 订阅表单变化，联动赋值或 setFieldsValue 后自动重渲染
+  const watchedValue: unknown = form ? Form.useWatch(nameKey, form) : '';
+  const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
 
   const allOptions = useMemo(() => {
     void refreshKey;

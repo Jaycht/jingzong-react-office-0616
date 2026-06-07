@@ -11,6 +11,7 @@ import { DARK_THEME, LIGHT_THEME } from "./constants/theme";
 import { useAppStore, loadUserFromStorage } from "./store/appStore";
 import { migrateOldCasesToMassStore, getMassRecords } from "./store/massStore";
 import { rebuildCaseIndex } from "./store/inputHistoryStore";
+import { localStorageAdapter } from "./store/adapter";
 
 declare global {
   interface Window {
@@ -34,7 +35,32 @@ function AppContent() {
   // 数据迁移 + 重建案件索引
   useEffect(() => {
     migrateOldCasesToMassStore();
-    rebuildCaseIndex(getMassRecords());
+    // 迁移强制措施旧数据：coerciveMeasures[0].caseNo/caseName → 顶层
+    const allRecords = getMassRecords();
+    let migrated = false;
+    for (const rec of allRecords) {
+      if (rec.moduleId !== 'squad-coercive') continue;
+      const data = rec.data || {};
+      // 检查旧结构：caseNo/caseName 在 coerciveMeasures 内而非顶层
+      if (!data.caseNo && !data.caseName) {
+        const list = data.coerciveMeasures;
+        if (Array.isArray(list) && list.length > 0 && (list[0].caseNo || list[0].caseName)) {
+          const item = list[0];
+          if (item.caseNo) data.caseNo = item.caseNo;
+          if (item.caseName) data.caseName = item.caseName;
+          // 从重复段中移除已提升到顶层的字段，避免冗余
+          for (const entry of list) {
+            delete entry.caseNo;
+            delete entry.caseName;
+          }
+          migrated = true;
+        }
+      }
+    }
+    if (migrated) {
+      localStorageAdapter.setItem('jingzong.massStore.v2', allRecords);
+    }
+    rebuildCaseIndex(allRecords);
   }, []);
 
   // 恢复持久化的用户登录状态（跨窗口/跨应用重启）

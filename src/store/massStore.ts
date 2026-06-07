@@ -6,6 +6,7 @@
 import { localStorageAdapter } from './adapter';
 import { addOperationLog } from './operationLogStore';
 import { useAppStore } from './appStore';
+import { rebuildCaseIndex, rebuildSuspectIndex } from './inputHistoryStore';
 
 const STORAGE_KEY = 'jingzong.mass.records';
 
@@ -84,6 +85,8 @@ export function updateMassRecord(id: string, data: MassRecordData): MassRecord |
 export function deleteMassRecord(id: string): void {
   const records = getMassRecords().filter((record) => record.id !== id);
   localStorageAdapter.setItem(STORAGE_KEY, records);
+  rebuildCaseIndex(records);
+  rebuildSuspectIndex(records);
   addOperationLog({
     user: currentUser(),
     action: '删除',
@@ -97,6 +100,8 @@ export function deleteMassRecords(ids: string[]): void {
   const idSet = new Set(ids);
   const records = getMassRecords().filter((record) => !idSet.has(record.id));
   localStorageAdapter.setItem(STORAGE_KEY, records);
+  rebuildCaseIndex(records);
+  rebuildSuspectIndex(records);
   addOperationLog({
     user: currentUser(),
     action: '批量删除',
