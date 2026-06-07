@@ -77,23 +77,12 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       }
     }
     if (buffer.length > 0) sections.push({ label, fields: buffer, repeatable, listName });
-    // 如果只有一步基本信息 + 一步 repeatable section，合并为一个步骤
-    // 这样强制措施等模块的字段不切分步骤，直接在同一页展示
-    if (sections.length === 2 && sections[1].repeatable) {
-      const first = sections[0];
-      const second = sections[1];
-      sections[0] = {
-        label: first.label,
-        fields: [...first.fields, ...second.fields],
-        repeatable: true,
-        listName: second.listName,
-      };
-      sections.pop();
-    }
     return sections;
   }, [allFields]);
 
-  const hasSections = steps.length > 1;
+  // flatMode：基本信息 + 一个 repeatable section 不分步，内容同时渲染在同一页
+  const flatMode = steps.length === 2 && steps[1].repeatable;
+  const hasSections = flatMode ? false : steps.length > 1;
   const totalSteps = steps.length;
   const currentStepMeta = steps[currentStep];
   const stepFields = currentStepMeta?.fields || [];
@@ -314,12 +303,12 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             <Button onClick={handleClose} style={{ height: 36, paddingInline: 18 }}>取消</Button>
           </Space>
           <Space>
-            {!isFirstStep && (
+            {!flatMode && !isFirstStep && (
               <Button icon={<LeftOutlined />} onClick={() => setCurrentStep((s) => s - 1)} style={{ height: 36, paddingInline: 18 }}>
                 上一步
               </Button>
             )}
-            {isLastStep ? (
+            {(flatMode || isLastStep) ? (
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
@@ -382,7 +371,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                 {selectedModule?.departmentLabel} · {selectedModule?.label} · {selectedTab?.label}
               </div>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#172033', marginBottom: 8 }}>
-                {hasSections ? steps[currentStep]?.label : '基本信息'}
+                {flatMode ? `${steps[0]?.label} · ${steps[1]?.label}` : (hasSections ? steps[currentStep]?.label : '基本信息')}
               </div>
               <div style={{ display: 'flex', gap: 14 }}>
                 <Form.Item label="所属模块" style={{ marginBottom: 0 }}>
@@ -403,7 +392,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                     </Select>
                   </Form.Item>
                 )}
-                {hasSections && (
+                {hasSections && !flatMode && (
                   <div style={{ marginLeft: 'auto', fontSize: 12, color: '#94A3B8', alignSelf: 'flex-end', paddingBottom: 4 }}>
                     {stepFields.length} 个字段 · 第 {currentStep + 1}/{totalSteps} 步
                   </div>
@@ -420,7 +409,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             >
               {/* 所有步骤字段同时渲染、用 display 切换可见性，保证 antd Form.Item / Form.List 永不卸载 */}
               {steps.map((step, si) => {
-                const isVisible = si === currentStep;
+                const isVisible = flatMode ? true : (si === currentStep);
                 return (
                   <div key={si} style={{ display: isVisible ? '' : 'none' }}>
                     {step.repeatable ? (
