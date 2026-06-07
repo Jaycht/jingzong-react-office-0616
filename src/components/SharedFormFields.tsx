@@ -390,7 +390,7 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <span
-                  onMouseDown={() => handleSelect(item)}
+                  onMouseDown={() => { syncFormValue(item); setOpen(false); }}
                   style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                 >
                   {item}
@@ -441,8 +441,8 @@ export function GlobalCaseNameField({ field, subName }: {
   const caseNoField = subName !== undefined ? [subName, 'caseNo'] : 'caseNo';
   const caseNoKey = typeof caseNoField === 'string' ? caseNoField : caseNoField[1];
 
-  // 使用 Form.useWatch 响应式监听字段值
-  const currentValue: string = form ? (Form.useWatch(nameKey, form) as string) || '' : '';
+  // 用 state 维护当前值，初始化时从 form 读取
+  const [currentValue, setCurrentValue] = useState<string>(() => form?.getFieldValue(nameKey) || '');
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -459,23 +459,14 @@ export function GlobalCaseNameField({ field, subName }: {
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
 
-  const doFillCaseNo = (nameValue: string) => {
-    if (!form) return;
-    const relatedNos = getCaseNosByName(nameValue);
-    if (relatedNos.length > 0) {
-      form.setFieldsValue({ [caseNoKey]: relatedNos[0] });
-    }
-  };
-
-  const handleChange = (val: string) => {
+  const syncFormValue = (val: string) => {
+    setCurrentValue(val);
     form?.setFieldsValue({ [nameKey]: val });
-    doFillCaseNo(val);
-  };
-
-  const handleSelect = (selectedValue: string) => {
-    form?.setFieldsValue({ [nameKey]: selectedValue });
-    doFillCaseNo(selectedValue);
-    setOpen(false);
+    // 联动填充案件编号
+    const relatedNos = getCaseNosByName(val);
+    if (relatedNos.length > 0) {
+      form?.setFieldsValue({ [caseNoKey]: relatedNos[0] });
+    }
   };
 
   return (
@@ -483,7 +474,7 @@ export function GlobalCaseNameField({ field, subName }: {
       <div style={{ position: 'relative' }}>
         <input
           value={currentValue}
-          onChange={(e) => handleChange(e.target.value)}
+          onChange={(e) => syncFormValue(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           placeholder="请输入案件名称（全软件数据共享）"
@@ -526,7 +517,7 @@ export function GlobalCaseNameField({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => handleSelect(item)}
+                    onMouseDown={() => { syncFormValue(item); setOpen(false); }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}
@@ -577,8 +568,8 @@ export function GlobalCaseNoField({ field, subName }: {
   const caseNameField = subName !== undefined ? [subName, 'caseName'] : 'caseName';
   const caseNameKey = typeof caseNameField === 'string' ? caseNameField : caseNameField[1];
 
-  // 使用 Form.useWatch 响应式监听字段值
-  const currentValue: string = form ? (Form.useWatch(nameKey, form) as string) || '' : '';
+  // 用 state 维护当前值，初始化时从 form 读取
+  const [currentValue, setCurrentValue] = useState<string>(() => form?.getFieldValue(nameKey) || '');
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -595,23 +586,14 @@ export function GlobalCaseNoField({ field, subName }: {
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
 
-  const doFillCaseName = (noValue: string) => {
-    if (!form) return;
-    const relatedNames = getCaseNamesByNo(noValue);
-    if (relatedNames.length > 0) {
-      form.setFieldsValue({ [caseNameKey]: relatedNames[0] });
-    }
-  };
-
-  const handleChange = (val: string) => {
+  const syncFormValue = (val: string) => {
+    setCurrentValue(val);
     form?.setFieldsValue({ [nameKey]: val });
-    doFillCaseName(val);
-  };
-
-  const handleSelect = (selectedValue: string) => {
-    form?.setFieldsValue({ [nameKey]: selectedValue });
-    doFillCaseName(selectedValue);
-    setOpen(false);
+    // 联动填充案件名称
+    const relatedNames = getCaseNamesByNo(val);
+    if (relatedNames.length > 0) {
+      form?.setFieldsValue({ [caseNameKey]: relatedNames[0] });
+    }
   };
 
   return (
@@ -662,7 +644,7 @@ export function GlobalCaseNoField({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => handleSelect(item)}
+                    onMouseDown={() => { syncFormValue(item); setOpen(false); }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}
@@ -875,7 +857,7 @@ export function GlobalSuspectField({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => handleSelect(item)}
+                    onMouseDown={() => { syncFormValue(item); setOpen(false); }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}
@@ -1000,7 +982,7 @@ export function HolderAutoComplete({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => handleSelect(item)}
+                    onMouseDown={() => { syncFormValue(item); setOpen(false); }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}
