@@ -4,10 +4,11 @@
  */
 import React, { useMemo, useState, useCallback } from 'react';
 import { AutoComplete, Button, Divider, Form, Input, Select, Space } from 'antd';
+import dayjs from 'dayjs';
 import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
 import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames, getSquadCaseNames, getSquadCaseNos } from '../store/massStore';
-import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName, getAllSuspectNames, getSuspectInfo, deleteFieldHistoryEntry } from '../store/inputHistoryStore';
+import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName, getCaseDetail, type CaseDetail, getAllSuspectNames, getSuspectInfo, deleteFieldHistoryEntry } from '../store/inputHistoryStore';
 
 type SelectValue = string | string[] | undefined;
 
@@ -424,6 +425,26 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
 /* ===================== 全局案件名称/编号联动 ===================== */
 
 /**
+ * 从 CaseDetail 中提取字段填入表单
+ * 仅填充表单中实际存在的字段，不抛出未定义字段的错误
+ */
+function fillCaseDetail(form: any, detail: CaseDetail): void {
+  const kv: Record<string, unknown> = {};
+  if (detail.leadOfficer) kv.leadOfficer = detail.leadOfficer;
+  if (detail.assistOfficer) kv.assistOfficer = detail.assistOfficer;
+  if (detail.receiveDate) kv.receiveDate = dayjs(detail.receiveDate);
+  if (detail.filingDate) kv.filingDate = dayjs(detail.filingDate);
+  if (detail.caseType) kv.caseType = detail.caseType;
+  if (detail.caseSource) kv.caseSource = detail.caseSource;
+  if (detail.totalAmount !== undefined) kv.totalAmount = detail.totalAmount;
+  if (detail.caseSummary) kv.caseSummary = detail.caseSummary;
+  if (detail.filingDocNo) kv.filingDocNo = detail.filingDocNo;
+  if (Object.keys(kv).length > 0) {
+    form.setFieldsValue(kv);
+  }
+}
+
+/**
  * 全局案件名称字段
  * 展示所有模块中已保存的案件名称，选择后自动填充案件编号
  *
@@ -470,10 +491,13 @@ export function GlobalCaseNameField({ field, subName }: {
   const handleSelect = (val: string) => {
     if (!form) return;
     form.setFieldsValue({ [nameKey]: val });
-    // 联动填充案件编号（所有模块 caseNo 都是扁平字段，直接写 caseNo）
+    // 联动填充案件编号
     const relatedNos = getCaseNosByName(val);
     if (relatedNos.length > 0) {
       form.setFieldsValue({ caseNo: relatedNos[0] });
+      // 填充更多案件详情（主办民警、受案日期、立案日期等）
+      const detail = getCaseDetail(relatedNos[0]);
+      if (detail) fillCaseDetail(form, detail);
     }
     setOpen(false);
   };
@@ -611,6 +635,9 @@ export function GlobalCaseNoField({ field, subName }: {
     const relatedNames = getCaseNamesByNo(val);
     if (relatedNames.length > 0) {
       form.setFieldsValue({ caseName: relatedNames[0] });
+      // 填充更多案件详情
+      const detail = getCaseDetail(val);
+      if (detail) fillCaseDetail(form, detail);
     }
     setOpen(false);
   };

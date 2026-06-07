@@ -94,19 +94,46 @@ export function recordFormFields(
 /**
  * 全局案件编号/案件名称联动数据
  * 从所有模块的所有记录中提取 caseNo 和 caseName，并建立映射关系
+ * 同时记录每条案件的详细信息（主办民警、受案日期等），用于联动填充更多字段
  */
 
-const CASE_DATA_KEY = 'jingzong.caseData.v1';
+const CASE_DATA_KEY = 'jingzong.caseData.v2';
+
+/** 一条案件的详细摘要 */
+export interface CaseDetail {
+  caseName: string;
+  /** 主办民警 */
+  leadOfficer?: string;
+  /** 协办民警 */
+  assistOfficer?: string;
+  /** 受案日期 */
+  receiveDate?: string;
+  /** 立案日期 */
+  filingDate?: string;
+  /** 案件类型 */
+  caseType?: string;
+  /** 案件来源 */
+  caseSource?: string;
+  /** 涉案总金额 */
+  totalAmount?: number;
+  /** 简要案情 */
+  caseSummary?: string;
+  /** 受立案文书号 */
+  filingDocNo?: string;
+}
 
 interface CaseDataMap {
   caseNoToName: Record<string, string[]>;
   caseNameToNo: Record<string, string[]>;
+  /** 按案件编号索引的详细信息（最新记录覆盖旧记录） */
+  caseDetails: Record<string, CaseDetail>;
 }
 
 function loadCaseData(): CaseDataMap {
   return localStorageAdapter.getItem<CaseDataMap>(CASE_DATA_KEY, {
     caseNoToName: {},
     caseNameToNo: {},
+    caseDetails: {},
   });
 }
 
@@ -114,33 +141,77 @@ function saveCaseData(map: CaseDataMap): void {
   localStorageAdapter.setItem(CASE_DATA_KEY, map);
 }
 
+/** 从记录中安全读取字符串值 */
+function str(data: Record<string, unknown>, key: string): string | undefined {
+  const v = data[key];
+  return typeof v === 'string' && v.trim() ? v.trim() : undefined;
+}
+
+/** 从记录中安全读取数值 */
+function num(data: Record<string, unknown>, key: string): number | undefined {
+  const v = data[key];
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string') {
+    const n = parseFloat(v);
+    return isNaN(n) ? undefined : n;
+  }
+  return undefined;
+}
+
+/**
+ * 从一条记录中提取 CaseDetail（只取有值的字段）
+ */
+function extractCaseDetail(data: Record<string, unknown>): CaseDetail {
+  return {
+    caseName: str(data, 'caseName') || '',
+    leadOfficer: str(data, 'leadOfficer'),
+    assistOfficer: str(data, 'assistOfficer'),
+    receiveDate: str(data, 'receiveDate'),
+    filingDate: str(data, 'filingDate'),
+    caseType: str(data, 'caseType'),
+    caseSource: str(data, 'caseSource'),
+    totalAmount: num(data, 'totalAmount'),
+    caseSummary: str(data, 'caseSummary'),
+    filingDocNo: str(data, 'filingDocNo'),
+  };
+}
+
 /**
  * 根据所有已保存的记录，重建案件编号 / 案件名称映射索引
  */
 export function rebuildCaseIndex(records: Array<{ data: Record<string, unknown> }>): void {
-  const map: CaseDataMap = { caseNoToName: {}, caseNameToNo: {} };
+  const map: CaseDataMap = { caseNoToName: {}, caseNameToNo: {}, caseDetails: {} };
 
   for (const rec of records) {
-    const caseNo = typeof rec.data?.caseNo === 'string' ? rec.data.caseNo.trim() : '';
-    const caseName = typeof rec.data?.caseName === 'string' ? rec.data.caseName.trim() : '';
+    const data = rec.data || {};
+    const caseNo = str(data, 'caseNo') || '';
+    const caseName = str(data, 'caseName') || '';
 
-    if (caseNo && caseName) {
-      // caseNo → caseName
-      if (!map.caseNoToName[caseNo]) map.caseNoToName[caseNo] = [];
-      if (!map.caseNoToName[caseNo].includes(caseName)) {
-        map.caseNoToName[caseNo].push(caseName);
+    if (caseNo || caseName) {
+      // 建立编号↔名称双向映射
+      if (caseNo && caseName) {
+        if (!map.caseNoToName[caseNo]) map.caseNoToName[caseNo] = [];
+        if (!map.caseNoToName[caseNo].includes(caseName)) {
+          map.caseNoToName[caseNo].push(caseName);
+        }
+        if (!map.caseNameToNo[caseName]) map.caseNameToNo[caseName] = [];
+        if (!map.caseNameToNo[caseName].includes(caseNo)) {
+          map.caseNameToNo[caseName].push(caseNo);
+        }
+      } else if (caseNo) {
+        if (!map.caseNoToName[caseNo]) map.caseNoToName[caseNo] = [];
+      } else if (caseName) {
+        if (!map.caseNameToNo[caseName]) map.caseNameToNo[caseName] = [];
       }
-      // caseName → caseNo
-      if (!map.caseNameToNo[caseName]) map.caseNameToNo[caseName] = [];
-      if (!map.caseNameToNo[caseName].includes(caseNo)) {
-        map.caseNameToNo[caseName].push(caseNo);
+
+      // 提取案件详情（以 caseNo 为 key，无 caseNo 时用 caseName）
+      const detailKey = caseNo || caseName;
+      if (detailKey) {
+        const existing = map.caseDetails[detailKey];
+        const detail = extractCaseDetail(data);
+        // 后写入覆盖先写入，保留最新的记录信息
+        map.caseDetails[detailKey] = { ...existing, ...detail };
       }
-    } else if (caseNo) {
-      // 只有编号没有名称，也记录
-      if (!map.caseNoToName[caseNo]) map.caseNoToName[caseNo] = [];
-    } else if (caseName) {
-      // 只有名称没有编号，也记录
-      if (!map.caseNameToNo[caseName]) map.caseNameToNo[caseName] = [];
     }
   }
 
@@ -161,6 +232,14 @@ export function getCaseNamesByNo(caseNo: string): string[] {
 export function getCaseNosByName(caseName: string): string[] {
   const map = loadCaseData();
   return map.caseNameToNo[caseName] || [];
+}
+
+/**
+ * 根据案件编号（或名称）获取案件详细信息
+ */
+export function getCaseDetail(caseNo: string): CaseDetail | null {
+  const map = loadCaseData();
+  return map.caseDetails[caseNo] || null;
 }
 
 /**

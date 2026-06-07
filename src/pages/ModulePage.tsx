@@ -1,8 +1,9 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Button, Descriptions, Dropdown, Empty, Input, Modal, Space, Table, Tabs, Tag } from 'antd';
+import { Button, DatePicker, Descriptions, Dropdown, Empty, Input, Modal, Select, Space, Table, Tabs, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { Download, Eye, FileText, Pen, Plus, Search, Trash2, Upload } from 'lucide-react';
+import dayjs from 'dayjs';
+import { Download, Eye, FileText, Pen, Plus, Search, Trash2, Upload, Filter } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { findModule, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
@@ -103,6 +104,11 @@ export default function ModulePage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [reporting, setReporting] = useState(false);
 
+  // ─── 筛选状态 ───
+  const [filterText, setFilterText] = useState('');
+  const [filterDateRange, setFilterDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+
   const activeTab = module
     ? activeTabs[module.id] && module.tabs.some((tab) => tab.id === activeTabs[module.id])
       ? activeTabs[module.id]
@@ -147,6 +153,35 @@ export default function ModulePage() {
   const active = module.tabs.find((tab) => tab.id === activeTab) || module.tabs[0];
   const activeRecords = realRecords.filter((r) => r.tabId === activeTab);
 
+  // ─── 筛选逻辑 ────────────────────────────────
+  const filteredRecords = useMemo(() => {
+    let list = activeRecords;
+    if (filterText.trim()) {
+      const kw = filterText.trim().toLowerCase();
+      list = list.filter((r) =>
+        Object.values(r.data || {}).some((v) =>
+          v != null && String(v).toLowerCase().includes(kw)
+        )
+      );
+    }
+    if (filterDateRange && filterDateRange[0] && filterDateRange[1]) {
+      const start = filterDateRange[0].valueOf();
+      const end = filterDateRange[1].valueOf();
+      list = list.filter((r) => {
+        const t = new Date(r.createdAt).getTime();
+        return t >= start && t <= end;
+      });
+    }
+    if (filterStatus) {
+      list = list.filter((r) => {
+        const s = r.data?.status;
+        if (filterStatus === '办理中') return s !== '已完成' && s !== '待补充';
+        return s === filterStatus;
+      });
+    }
+    return list;
+  }, [activeRecords, filterText, filterDateRange, filterStatus]);
+
   // ─── 动态生成列 ──────────────────────────────
   const fields = active?.fields || [];
   const dataFields = getDataFields(fields, 6);
@@ -161,7 +196,7 @@ export default function ModulePage() {
     _record: MassRecord;
   }
 
-  const rows: DynamicRow[] = activeRecords.map((rec, index) => {
+  const rows: DynamicRow[] = filteredRecords.map((rec, index) => {
     const row: DynamicRow = {
       key: rec.id,
       code: String(index + 1).padStart(4, '0'),
@@ -431,6 +466,46 @@ export default function ModulePage() {
           </div>
         );
       })()}
+
+      {/* 筛选栏 */}
+      <div style={{
+        background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8,
+        padding: '10px 14px', marginBottom: 12,
+        display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+      }}>
+        <Filter size={15} color="#64748B" style={{ flexShrink: 0 }} />
+        <Input
+          allowClear
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          placeholder="关键词搜索..."
+          prefix={<Search size={14} color="#94A3B8" />}
+          style={{ width: 220, height: 34 }}
+        />
+        <DatePicker.RangePicker
+          value={filterDateRange as any}
+          onChange={(dates) => setFilterDateRange(dates as any)}
+          placeholder={['开始日期', '结束日期']}
+          style={{ width: 250, height: 34 }}
+        />
+        <Select
+          value={filterStatus}
+          onChange={(v) => setFilterStatus(v)}
+          allowClear
+          placeholder="状态筛选"
+          style={{ width: 130, height: 34 }}
+          options={[
+            { label: '办理中', value: '办理中' },
+            { label: '待补充', value: '待补充' },
+            { label: '已完成', value: '已完成' },
+          ]}
+        />
+        {(filterText || filterDateRange || filterStatus) && (
+          <Button size="small" onClick={() => { setFilterText(''); setFilterDateRange(null); setFilterStatus(null); }}>
+            清除筛选
+          </Button>
+        )}
+      </div>
 
       <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, overflow: 'hidden' }}>
         {module.tabs.length > 1 && (

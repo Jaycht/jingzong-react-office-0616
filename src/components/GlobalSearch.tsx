@@ -1,13 +1,14 @@
 /**
  * 全局搜索组件
- * 搜遍所有模块的所有字段，结果按模块分组展示
+ * 搜遍所有模块的所有字段 + 附件名，结果按模块分组展示，命中关键词高亮
  */
-import { useMemo, useState, useRef, useCallback } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ChevronRight, FileText } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
+import { getAllAttachments } from '../store/attachmentStore';
 
 interface SearchResult {
   moduleId: string;
@@ -43,22 +44,105 @@ const MODULE_LABEL_MAP: Record<string, { label: string; dept: string }> = {
   'evidence-freeze': { label: '资金查控', dept: '调证分析' },
   'evidence-phone-collection': { label: '设备采集', dept: '调证分析' },
   'evidence-report': { label: '资金分析', dept: '调证分析' },
+  'legal-process': { label: '流程监督', dept: '法制室' },
 };
 
 /** 优先展示的字段（匹配到这些字段时排前面） */
-const PRIORITY_FIELDS = new Set(['caseName', 'caseNo', 'holder', 'suspect', 'person', 'reportMatter', 'projectName', 'clueName', 'enterprise']);
+const PRIORITY_FIELDS = new Set([
+  'caseName', 'caseNo', 'suspect', 'suspectName', 'holder', 'person',
+  'enterprise', 'reportMatter', 'projectName', 'clueName',
+  'idNo', 'phone', 'leadOfficer', 'assistOfficer',
+]);
 
-/** 字段标签映射 */
+/** 完整字段标签映射 */
 const FIELD_LABELS: Record<string, string> = {
+  // 案件相关
   caseName: '案件名称', caseNo: '案件编号',
-  holder: '持有人', holderIdentity: '持有人身份',
-  idNo: '身份证号码', phone: '手机号', phoneModel: '手机型号',
-  collectContent: '采集内容', squad: '所属中队',
+  caseSource: '案件来源', caseType: '案件类型',
+  caseStage: '案件阶段', caseSummary: '简要案情',
+  // 嫌疑人/人员
   suspect: '嫌疑人', suspectName: '嫌疑人姓名',
+  suspectIdNo: '嫌疑人身份证号', suspectPhone: '嫌疑人手机号',
+  suspectAddress: '嫌疑人地址',
+  holder: '持有人', holderIdentity: '持有人身份',
   person: '涉案个人', enterprise: '涉案企业',
-  reportMatter: '接报事项', projectName: '项目名称',
-  clueName: '线索名称', leadOfficer: '主办民警',
+  // 身份证/电话
+  idNo: '身份证号码', phone: '手机号',
+  // 办案民警
+  leadOfficer: '主办民警', assistOfficer: '协办民警',
+  handler: '经办人', approver: '审批人',
+  handlingOfficer: '经办民警', legalReviewer: '法制审核人',
+  receivingOfficer: '接报民警', statistician: '内勤统计人',
+  // 日期
+  receiveDate: '受案时间', filingDate: '立案时间',
+  noFilingDate: '不予立案时间', executeDate: '执行时间',
+  deadline: '期限届满时间', notifyDate: '告知时间',
+  approvalDate: '审批时间', recordDate: '记录日期',
+  crimeDate: '案发时间', investEndDate: '侦查终结',
+  prosecutionDate: '移送起诉', caseCloseDate: '结案时间',
+  // 涉众
+  projectName: '项目名称',
+  reportMatter: '接报事项',
+  clueName: '线索名称',
+  visitorName: '来访人',
+  // 资金
+  totalAmount: '涉案金额', recoveredAmount: '挽损金额',
+  actualLoss: '实际损失', frozenFunds: '冻结资金',
+  // 设备采集
+  deviceType: '设备类型', deviceBrand: '设备品牌',
+  deviceModel: '具体型号', collectContent: '采集内容',
+  // 强制措施
+  measure: '强制措施类型', executeResult: '执行情况',
+  // 其他
+  propertyName: '财物名称',
+  actionName: '专项行动名称',
+  battleName: '战役名称', battleNo: '战役编号',
+  squad: '所属中队',
+  filingDocNo: '受立案文书号',
+  summary: '用途摘要', details: '具体内容',
+  nextDayPlan: '次日计划', nextInvestDirection: '侦查方向',
+  // 调证
+  investigateAccount: '调证账号',
+  investigatePlatform: '调证平台',
+  bankAccount: '银行账户',
+  companyAccount: '公司账户',
+  // 党建/考勤
+  partyMember: '党员姓名',
+  meetingName: '会议名称',
+  // 文件
+  matterName: '事项名称',
+  // 附件（特殊标记）
+  _attachment: '附件名称',
 };
+
+/** 高亮关键词，返回 JSX 片段 */
+function highlightText(text: string, keyword: string): (string | JSX.Element)[] {
+  if (!keyword) return [text];
+  const lower = text.toLowerCase();
+  const kw = keyword.toLowerCase();
+  const parts: (string | JSX.Element)[] = [];
+  let lastIndex = 0;
+  let idx = lower.indexOf(kw, lastIndex);
+  while (idx !== -1) {
+    if (idx > lastIndex) {
+      parts.push(text.slice(lastIndex, idx));
+    }
+    parts.push(
+      <mark key={idx} style={{
+        background: '#FDE68A', color: '#92400E',
+        borderRadius: 2, padding: '0 2px',
+      }}>
+        {text.slice(idx, idx + kw.length)}
+      </mark>
+    );
+    lastIndex = idx + kw.length;
+    idx = lower.indexOf(kw, lastIndex);
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  return parts;
+}
 
 /**
  * 扁平化一条记录的所有文本字段，过滤出匹配关键词的字段
@@ -69,11 +153,12 @@ function matchRecord(record: MassRecord, keyword: string): Array<{ label: string
 
   for (const [key, raw] of Object.entries(record.data || {})) {
     if (raw === null || raw === undefined) continue;
+    // 跳过附件文件列表对象
+    if (key === 'attachment' || key === 'fileList') continue;
     const str = String(raw);
     if (str.toLowerCase().includes(lowerKw)) {
       const label = FIELD_LABELS[key] || key;
-      // 截断过长值
-      const display = str.length > 60 ? str.slice(0, 60) + '…' : str;
+      const display = str.length > 80 ? str.slice(0, 80) + '…' : str;
       matches.push({ label, value: display });
     }
   }
@@ -91,11 +176,20 @@ function matchRecord(record: MassRecord, keyword: string): Array<{ label: string
 export default function GlobalSearch() {
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
+  const [attachmentNames, setAttachmentNames] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
   const openModal = useAppStore((s) => s.openModal);
   const setEditRecord = useAppStore((s) => s.setEditRecord);
   const darkMode = useAppStore((s) => s.darkMode);
+
+  // 异步加载附件名列表
+  useEffect(() => {
+    getAllAttachments().then((list) => {
+      const names = Array.from(new Set(list.map((a) => a.fileName)));
+      setAttachmentNames(names);
+    }).catch(() => {});
+  }, []);
 
   const results = useMemo<SearchResult[]>(() => {
     const q = query.trim();
@@ -103,9 +197,31 @@ export default function GlobalSearch() {
 
     const allRecords = getMassRecords();
     const grouped = new Map<string, SearchResult>();
+    const lowerKw = q.toLowerCase();
 
     for (const record of allRecords) {
       const matches = matchRecord(record, q);
+      // 也搜附件名：如果记录的 data 中有附件字段，检查文件名
+      if (matches.length === 0) {
+        // 检查附件名索引
+        for (const name of attachmentNames) {
+          if (name.toLowerCase().includes(lowerKw)) {
+            const data = record.data || {};
+            // 检查该记录是否有附件引用
+            for (const [, val] of Object.entries(data)) {
+              if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object' && val[0]?.name) {
+                const fileItems = val as Array<{ name?: string }>;
+                for (const item of fileItems) {
+                  if (item.name && item.name.toLowerCase().includes(lowerKw)) {
+                    matches.push({ label: '附件名称', value: item.name });
+                  }
+                }
+              }
+            }
+            break;
+          }
+        }
+      }
       if (matches.length === 0) continue;
 
       const info = MODULE_LABEL_MAP[record.moduleId] || { label: record.moduleId, dept: '' };
@@ -122,7 +238,7 @@ export default function GlobalSearch() {
 
     // 按匹配数量降序排列模块
     return Array.from(grouped.values()).sort((a, b) => b.records.length - a.records.length);
-  }, [query]);
+  }, [query, attachmentNames]);
 
   const totalMatches = useMemo(() => results.reduce((s, g) => s + g.records.length, 0), [results]);
 
@@ -173,7 +289,7 @@ export default function GlobalSearch() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 250)}
-            placeholder="全局搜索所有模块的全部数据..."
+            placeholder="全局搜索：案件编号/姓名/手机号/身份证号/附件名..."
             style={{
               flex: 1, marginLeft: 12,
               border: 'none', outline: 'none',
@@ -294,20 +410,20 @@ export default function GlobalSearch() {
                           <div style={{ flex: 1, minWidth: 0 }}>
                             {/* 匹配字段列表 */}
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 10px' }}>
-                              {item.matchFields.slice(0, 3).map((mf, fi) => (
+                              {item.matchFields.slice(0, 4).map((mf, fi) => (
                                 <span key={fi} style={{ fontSize: 12, color: darkMode ? '#c8ccd4' : '#4B5563', lineHeight: 1.6 }}>
                                   <span style={{ color: darkMode ? '#8c919a' : '#9CA3AF' }}>{mf.label}: </span>
                                   <span style={{
                                     color: darkMode ? '#4B9EFF' : '#2563EB',
                                     fontWeight: 500,
                                   }}>
-                                    {mf.value}
+                                    {highlightText(mf.value, query)}
                                   </span>
                                 </span>
                               ))}
-                              {item.matchFields.length > 3 && (
+                              {item.matchFields.length > 4 && (
                                 <span style={{ fontSize: 11, color: '#9CA3AF' }}>
-                                  +{item.matchFields.length - 3} 项
+                                  +{item.matchFields.length - 4} 项
                                 </span>
                               )}
                             </div>
@@ -333,7 +449,7 @@ export default function GlobalSearch() {
               textAlign: 'center',
               background: darkMode ? 'rgba(28,31,38,0.6)' : '#FAFBFC',
             }}>
-              共搜索 {getMassRecords().length} 条记录 · 点击结果自动打开编辑
+              共搜索 {getMassRecords().length} 条记录 · 搜附件名 {attachmentNames.length} 个 · 点击结果打开编辑
             </div>
           </motion.div>
         )}
