@@ -77,6 +77,19 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       }
     }
     if (buffer.length > 0) sections.push({ label, fields: buffer, repeatable, listName });
+    // 如果只有一步基本信息 + 一步 repeatable section，合并为一个步骤
+    // 这样强制措施等模块的字段不切分步骤，直接在同一页展示
+    if (sections.length === 2 && sections[1].repeatable) {
+      const first = sections[0];
+      const second = sections[1];
+      sections[0] = {
+        label: first.label,
+        fields: [...first.fields, ...second.fields],
+        repeatable: true,
+        listName: second.listName,
+      };
+      sections.pop();
+    }
     return sections;
   }, [allFields]);
 
@@ -174,75 +187,104 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   };
 
   // Unused variable removed — field visibility filtering not needed for step wizard
-  // 编辑模式：预填表单
+  // 编辑模式：预填表单 + 新建模式：自动展开 repeatable section
   const isEditing = !!editRecord;
   useEffect(() => {
-    if (!editRecord || allFields.length === 0) return;
+    if (allFields.length === 0) return;
     const timer = setTimeout(() => {
       try {
-        const formData: Record<string, unknown> = {};
+        if (editRecord) {
+          // ── 编辑模式：回填表单数据 ──
+          const formData: Record<string, unknown> = {};
 
-        // 1. 处理 repeatable section 数据
-        for (const f of allFields) {
-          if (f.type !== 'section' || !f.repeatable || !f.listName) continue;
-          const listData = editRecord.data?.[f.listName];
-          if (Array.isArray(listData) && listData.length > 0) {
-            const converted = listData.map((item: Record<string, unknown>) => {
-              const copy: Record<string, unknown> = { ...item };
-              for (const df of allFields) {
-                if (df.type === 'date' && typeof copy[df.id] === 'string') {
-                  const d = dayjs(copy[df.id] as string);
-                  if (d.isValid()) copy[df.id] = d;
+          // 1. 处理 repeatable section 数据
+          for (const f of allFields) {
+            if (f.type !== 'section' || !f.repeatable || !f.listName) continue;
+            const listData = editRecord.data?.[f.listName];
+            if (Array.isArray(listData) && listData.length > 0) {
+              const converted = listData.map((item: Record<string, unknown>) => {
+                const copy: Record<string, unknown> = { ...item };
+                for (const df of allFields) {
+                  if (df.type === 'date' && typeof copy[df.id] === 'string') {
+                    const d = dayjs(copy[df.id] as string);
+                    if (d.isValid()) copy[df.id] = d;
+                  }
                 }
+                return copy;
+              });
+              formData[f.listName] = converted;
+            }
+          }
+
+          // 2. 处理普通字段
+          for (const f of allFields) {
+            if (f.type === 'section') continue;
+            const raw = editRecord.data?.[f.id];
+            if (raw === undefined || raw === null) continue;
+            if (f.type === 'attachment') {
+              formData[f.id] = Array.isArray(raw) ? raw : [];
+              continue;
+            }
+            if (f.type === 'date' && typeof raw === 'string') {
+              const d = dayjs(raw);
+              if (d.isValid()) formData[f.id] = d;
+              continue;
+            }
+            if (f.multiple && typeof raw === 'string') {
+              formData[f.id] = [raw];
+              continue;
+            }
+            formData[f.id] = raw;
+          }
+
+          // 过滤：只设置表单识别的字段
+          const validFieldIds = new Set(
+            allFields.filter(f => f.type !== 'section').map(f => f.id)
+          );
+          const sectionListNames = new Set(
+            allFields.filter(f => f.type === 'section' && f.repeatable && f.listName).map(f => f.listName!)
+          );
+          const safeData: Record<string, unknown> = {};
+          for (const key of Object.keys(formData)) {
+            if (validFieldIds.has(key) || sectionListNames.has(key)) {
+              safeData[key] = formData[key];
+            }
+          }
+          form.setFieldsValue(safeData);
+        } else {
+          // ── 新建模式：repeatable section 自动展开第一行 ──
+          for (const step of steps) {
+            if (step.repeatable && step.listName) {
+              const existing = form.getFieldValue(step.listName);
+              if (!existing || existing.length === 0) {
+                form.setFieldsValue({ [step.listName]: [{}] });
               }
-              return copy;
-            });
-            formData[f.listName] = converted;
+            }
           }
         }
-
-        // 2. 处理普通字段
-        for (const f of allFields) {
-          if (f.type === 'section') continue;
-          const raw = editRecord.data?.[f.id];
-          if (raw === undefined || raw === null) continue;
-          if (f.type === 'attachment') {
-            formData[f.id] = Array.isArray(raw) ? raw : [];
-            continue;
-          }
-          if (f.type === 'date' && typeof raw === 'string') {
-            const d = dayjs(raw);
-            if (d.isValid()) formData[f.id] = d;
-            continue;
-          }
-          if (f.multiple && typeof raw === 'string') {
-            formData[f.id] = [raw];
-            continue;
-          }
-          formData[f.id] = raw;
-        }
-
-        // 过滤：只设置表单识别的字段（含 attachment，编辑时需要回填 fileList）
-        const validFieldIds = new Set(
-          allFields.filter(f => f.type !== 'section').map(f => f.id)
-        );
-        const sectionListNames = new Set(
-          allFields.filter(f => f.type === 'section' && f.repeatable && f.listName).map(f => f.listName!)
-        );
-        const safeData: Record<string, unknown> = {};
-        for (const key of Object.keys(formData)) {
-          if (validFieldIds.has(key) || sectionListNames.has(key)) {
-            safeData[key] = formData[key];
-          }
-        }
-        form.setFieldsValue(safeData);
       } catch (err) {
-        console.warn('[DrawerNewRecord] setFieldsValue error:', err);
-        showToast('加载记录数据失败', 'warning');
+        console.warn('[DrawerNewRecord] init error:', err);
+        if (editRecord) showToast('加载记录数据失败', 'warning');
       }
     }, 100);
     return () => clearTimeout(timer);
   }, [allFields, editRecord, form, showToast]);
+
+  // 再次展开：切换模块或模板时，新建模式下自动展开 repeatable section
+  useEffect(() => {
+    if (editRecord) return;
+    const timer = setTimeout(() => {
+      for (const step of steps) {
+        if (step.repeatable && step.listName) {
+          const existing = form.getFieldValue(step.listName);
+          if (!existing || existing.length === 0) {
+            form.setFieldsValue({ [step.listName]: [{}] });
+          }
+        }
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [selectedModuleId, selectedTabId, editRecord]);
 
   const showTemplateSelector = Boolean(selectedModule && !selectedModule.hideTemplateSelector && selectedModule.tabs.length > 1);
   const scopedModules = currentModule
