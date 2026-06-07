@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 release/
 *.exe
@@ -11,4 +11,5 @@ _extract_types.cjs
 _fix*.cjs
 _fix*.b64
 *.log
-\"$null\"  
+$null
+codex*

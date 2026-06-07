@@ -107,10 +107,20 @@ ipcMain.handle("save-attachment-file", async (_event, { buffer, fileName, module
   }
 });
 
+/** 校验路径位于附件目录下，防止渲染进程访问任意磁盘文件 */
+function safePath(filePath) {
+  const resolved = path.resolve(filePath);
+  if (!resolved.startsWith(path.resolve(ATTACHMENTS_DIR))) {
+    throw new Error('Access denied: path outside attachments directory');
+  }
+  return resolved;
+}
+
 // 附件文件操作 — 从硬盘读取文件
 ipcMain.handle("read-attachment-file", async (_event, filePath) => {
   try {
-    const buffer = await fsp.readFile(filePath);
+    const resolved = safePath(filePath);
+    const buffer = await fsp.readFile(resolved);
     const uint8 = new Uint8Array(buffer);
     return { success: true, buffer: uint8.buffer };
   } catch (err) {
@@ -121,7 +131,8 @@ ipcMain.handle("read-attachment-file", async (_event, filePath) => {
 // 附件文件操作 — 从硬盘删除文件
 ipcMain.handle("delete-attachment-file", async (_event, filePath) => {
   try {
-    await fsp.unlink(filePath);
+    const resolved = safePath(filePath);
+    await fsp.unlink(resolved);
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };

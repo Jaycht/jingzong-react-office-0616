@@ -1,9 +1,15 @@
-export const APP_VERSION = "V2.9.3";
+export const APP_VERSION = "V2.9.4";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 9;
-export const VERSION_PATCH = 3;
+export const VERSION_PATCH = 4;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.9.4 =====
+  "V2.9.4 修复 - App.tsx isElectron/navigate 闭包引用问题（声明提到 useEffect 前）",
+  "V2.9.4 修复 - SharedFormFields.tsx 全部全局字段组件移除 try/catch 内 hooks 调用，改用无条件 useFormInstance + useWatch",
+  "V2.9.4 安全 - Electron main.cjs readAttachmentFile/deleteAttachmentFile 增加路径校验，防止越界访问磁盘文件",
+  "V2.9.4 构建 - electron:build 脚本追加 typecheck（tsc --noEmit），阻止类型错误通过构建",
+  "V2.9.4 清理 - 移除根目录历史构建日志（build*.txt/错误提示.txt）、修正 .gitignore 中 $null 匹配",
   // ===== V2.9.3 =====
   "V2.9.3 修复 - 案件总台账嫌疑人section内选择嫌疑人姓名未自动填充身份证号/手机号（GlobalSuspectField 改用 Form.useWatch + 嵌套路径 setFieldValue）",
   "V2.9.3 修复 - 案件名称/编号联动赋值路径冗余清理",

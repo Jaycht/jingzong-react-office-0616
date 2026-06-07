@@ -32,6 +32,9 @@ declare global {
 }
 
 function AppContent() {
+  const navigate = useNavigate();
+  const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
+
   // 数据迁移 + 重建案件索引
   useEffect(() => {
     migrateOldCasesToMassStore();
@@ -86,14 +89,11 @@ function AppContent() {
     }
   }, []);
 
-  const navigate = useNavigate();
   const setUser = useAppStore((s) => s.setUser);
   const toasts = useAppStore((s) => s.toasts);
   const removeToast = useAppStore((s) => s.removeToast);
   const darkMode = useAppStore((s) => s.darkMode);
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
-
-  const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
 
   const handleLogin = (name: string, role: string) => {
     setUser(name, role);

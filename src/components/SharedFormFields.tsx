@@ -443,7 +443,7 @@ export function GlobalCaseNameField({ field, subName }: {
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
   // Form.useWatch 订阅表单变化：自身输入、联动赋值、setFieldsValue 都能触发重渲染
-  const watchedValue: unknown = form ? Form.useWatch(nameKey, form) : '';
+  const watchedValue: unknown = Form.useWatch(nameKey, form);
   const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
 
   const allOptions = useMemo(() => {
@@ -581,7 +581,7 @@ export function GlobalCaseNoField({ field, subName }: {
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
   // Form.useWatch 订阅表单变化，联动赋值或 setFieldsValue 后自动重渲染
-  const watchedValue: unknown = form ? Form.useWatch(nameKey, form) : '';
+  const watchedValue: unknown = Form.useWatch(nameKey, form);
   const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
 
   const allOptions = useMemo(() => {
@@ -804,7 +804,7 @@ export function GlobalSuspectField({ field, subName, listName }: {
   };
 
   // Form.useWatch 响应式读取（自身输入和联动赋值都能触发重渲染）
-  const watchedValue: unknown = form ? Form.useWatch(fullName, form) : '';
+  const watchedValue: unknown = Form.useWatch(fullName, form);
   const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
 
   const handleChange = (val: string) => {
@@ -926,15 +926,15 @@ export function HolderAutoComplete({ field, subName }: {
 }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  let form: any = null;
-  try { form = Form.useFormInstance(); } catch { /* 降级 */ }
+  const form = Form.useFormInstance();
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
-  // 直接从 form 读取，不维护内部 state
-  const currentValue: string = form?.getFieldValue(key) || '';
+  // Form.useWatch 响应式读取，联动赋值也能触发重渲染
+  const watchedValue: unknown = Form.useWatch(key, form);
+  const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -950,11 +950,11 @@ export function HolderAutoComplete({ field, subName }: {
   const history = getFieldHistory('holder');
 
   const handleChange = (val: string) => {
-    form?.setFieldsValue({ [key]: val });
+    form.setFieldsValue({ [key]: val });
   };
 
   const handleSelect = (selectedValue: string) => {
-    form?.setFieldsValue({ [key]: selectedValue });
+    form.setFieldsValue({ [key]: selectedValue });
     setOpen(false);
   };
 
