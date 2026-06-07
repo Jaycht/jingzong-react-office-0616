@@ -7,7 +7,7 @@ import AppLayout from "./components/AppLayout";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import { Toaster } from "./components/Toaster";
-import { DARK_THEME, LIGHT_THEME } from "./constants/theme";
+import { LIGHT_THEME } from "./constants/theme";
 import { useAppStore, loadUserFromStorage } from "./store/appStore";
 import { migrateOldCasesToMassStore, getMassRecords } from "./store/massStore";
 import { rebuildCaseIndex } from "./store/inputHistoryStore";
@@ -105,7 +105,7 @@ function AppContent() {
 
   return (
     <div
-      className={(darkMode ? "theme-dark " : "") + (lowPerfMode ? "low-perf-mode" : "")}
+      className={lowPerfMode ? "low-perf-mode" : ""}
       style={{ minHeight: "100vh" }}
     >
       <MotionConfig reducedMotion={lowPerfMode ? "always" : "never"}>
@@ -175,10 +175,8 @@ function AppContent() {
 }
 
 export default function App() {
-  const darkMode = useAppStore((s) => s.darkMode);
-
   return (
-    <ConfigProvider locale={zhCN} theme={darkMode ? DARK_THEME : LIGHT_THEME}>
+    <ConfigProvider locale={zhCN} theme={LIGHT_THEME}>
       <HashRouter>
         <AppContent />
       </HashRouter>
