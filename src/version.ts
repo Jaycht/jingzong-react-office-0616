@@ -1,9 +1,27 @@
-export const APP_VERSION = "V2.9.4";
+export const APP_VERSION = "V2.9.9";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 9;
-export const VERSION_PATCH = 4;
+export const VERSION_PATCH = 9;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.9.9 =====
+  "V2.9.9 修复 - package.json 中文乱码导致安装包名缺少中文前缀（bump-version 编码兼容）",
+  "V2.9.9 修复 - 强制措施登记分两步合并为单步+自动展开首行",
+  "V2.9.9 修复 - 案件时间轴补充经费保障模块 30+ 字段中文标签",
+  "V2.9.9 修复 - version.ts 和 package.json 版本号同步回 V2.9.9（此前多个版本未更新 version.ts）",
+  // ===== V2.9.8 =====
+  "V2.9.8 修复 - 案件时间轴展示字段过少，改为动态扫描所有有值字段展示前8项",
+  "V2.9.8 修复 - 案件名称/编号点删除后文字仍在、删除按钮消失（改用 hideFieldSuggestion 隐藏建议项机制）",
+  "V2.9.8 修复 - 嫌疑人/案件名称/案件编号输入法首字丢失（handleChange 移除 setRefreshKey 避免输入中重渲染）",
+  // ===== V2.9.7 =====
+  "V2.9.7 增强 - 附件档案显示文件大小(KB/MB自动换算)、上传时间(精确到分钟)、Electron 本地文件完整性检测",
+  "V2.9.7 安全 - Electron main.cjs 新增 check-attachment-file IPC，校验附件文件是否存在",
+  // ===== V2.9.6 =====
+  "V2.9.6 重构 - 移除暗黑模式（锁定浅色，隐藏切换按钮）",
+  // ===== V2.9.5 =====
+  "V2.9.5 增强 - 全局搜索关键词黄色高亮+搜索附件名+80+字段标签全覆盖",
+  "V2.9.5 增强 - 所有模块列表页统一筛选栏（关键词+日期范围+状态筛选）",
+  "V2.9.5 增强 - 案件索引升级 v2，选案件时联动填充主办民警/受案日期/立案日期等更多详情",
   // ===== V2.9.4 =====
   "V2.9.4 修复 - App.tsx isElectron/navigate 闭包引用问题（声明提到 useEffect 前）",
   "V2.9.4 修复 - SharedFormFields.tsx 全部全局字段组件移除 try/catch 内 hooks 调用，改用无条件 useFormInstance + useWatch",
