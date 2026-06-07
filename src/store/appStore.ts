@@ -46,6 +46,10 @@ interface AppState {
   lowPerfMode: boolean;
   toggleLowPerfMode: () => void;
 
+  // Current active tab (synced from ModulePage for DrawerNewRecord)
+  currentTabId: string;
+  setCurrentTabId: (tabId: string) => void;
+
   // Edit
   editRecord: MassRecord | null;
   setEditRecord: (r: MassRecord | null) => void;
@@ -131,6 +135,9 @@ export const useAppStore = create<AppState>((set) => ({
       localStorageAdapter.setItem("jingzong.lowPerfMode", next);
       return { lowPerfMode: next };
     }),
+
+  currentTabId: '',
+  setCurrentTabId: (currentTabId) => set({ currentTabId }),
 
   editRecord: null,
   setEditRecord: (editRecord) => set({ editRecord }),

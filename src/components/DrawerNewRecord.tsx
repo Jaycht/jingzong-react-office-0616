@@ -28,14 +28,19 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   
     const currentPage = useAppStore((s) => s.currentPage);
   const showToast = useAppStore((s) => s.showToast);
+  const currentTabId = useAppStore((s) => s.currentTabId);
   const { allModules } = useCustomModules();
   const currentModule = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [selectedModuleId, setSelectedModuleId] = useState(
     editRecord?.moduleId || currentModule?.id || allModules[0]?.id || ''
   );
-  const [selectedTabId, setSelectedTabId] = useState(
-    editRecord?.tabId || currentModule?.tabs[0]?.id || allModules[0]?.tabs[0]?.id || ''
-  );
+  const [selectedTabId, setSelectedTabId] = useState(() => {
+    // 优先使用编辑记录中的 tabId，其次用 store 记录的当前标签，最后才落到第一个 tab
+    if (editRecord?.tabId) return editRecord.tabId;
+    // 检查 currentTabId 是否属于当前模块
+    if (currentTabId && currentModule?.tabs.some((t) => t.id === currentTabId)) return currentTabId;
+    return currentModule?.tabs[0]?.id || allModules[0]?.tabs[0]?.id || '';
+  });
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);

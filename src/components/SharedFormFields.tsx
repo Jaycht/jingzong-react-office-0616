@@ -426,6 +426,11 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
 /**
  * 全局案件名称字段
  * 展示所有模块中已保存的案件名称，选择后自动填充案件编号
+ *
+ * 注意：必须使用 native <input> + form.getFieldValue/setFieldsValue 模式
+ * 而非 antd <Input> 包裹在 <Form.Item><div>...</div></Form.Item 中
+ * 因为 Form.Item 只给直接子元素注入 value/onChange，嵌套的 antd Input 拿不到，
+ * 导致 value 和 UI 显示不同步、历史选择无效、联动断裂。
  */
 export function GlobalCaseNameField({ field, subName }: {
   field: FieldDefinition;
@@ -439,8 +444,8 @@ export function GlobalCaseNameField({ field, subName }: {
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
-  // 使用 Form.useWatch 响应式读取当前值
-  const currentValue: string = form ? (Form.useWatch(nameKey, form) as string) || '' : '';
+  // 用 form.getFieldValue 读取当前值（而非 Form.useWatch），避免与 Form.Item 的内部管理冲突
+  const currentValue: string = form?.getFieldValue(nameKey) || '';
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -457,13 +462,20 @@ export function GlobalCaseNameField({ field, subName }: {
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
 
+  const handleChange = (val: string) => {
+    if (!form) return;
+    form.setFieldsValue({ [nameKey]: val });
+    // 触发一次刷新，让 currentValue 读取最新值
+    setRefreshKey((k) => k + 1);
+  };
+
   const handleSelect = (val: string) => {
     if (!form) return;
     form.setFieldsValue({ [nameKey]: val });
     // 联动填充案件编号
     const relatedNos = getCaseNosByName(val);
     if (relatedNos.length > 0) {
-      const caseNoKey = subName !== undefined ? `caseNo` : 'caseNo';
+      const caseNoKey = subName !== undefined ? 'caseNo' : 'caseNo';
       form.setFieldsValue({ [caseNoKey]: relatedNos[0] });
     }
     setOpen(false);
@@ -472,10 +484,27 @@ export function GlobalCaseNameField({ field, subName }: {
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
-        <Input
+        <input
+          value={currentValue}
+          onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           placeholder="请输入案件名称（全软件数据共享）"
+          style={{
+            width: '100%', height: 32, padding: '0 11px',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
+            fontFamily: 'inherit', boxSizing: 'border-box',
+            transition: 'border-color .2s, box-shadow .2s',
+          }}
+          onFocusCapture={(e) => {
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
+          }}
+          onBlurCapture={(e) => {
+            e.currentTarget.style.borderColor = '#D9D9D9';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
         />
         {open && filteredOptions.length > 0 && (
           <div
@@ -500,7 +529,10 @@ export function GlobalCaseNameField({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => { handleSelect(item); }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(item);
+                    }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}
@@ -536,6 +568,8 @@ export function GlobalCaseNameField({ field, subName }: {
 /**
  * 全局案件编号字段
  * 展示所有模块中已保存的案件编号，选择后自动填充案件名称
+ *
+ * 同 GlobalCaseNameField，使用 native <input> + form.getFieldValue/setFieldsValue 模式
  */
 export function GlobalCaseNoField({ field, subName }: {
   field: FieldDefinition;
@@ -549,8 +583,8 @@ export function GlobalCaseNoField({ field, subName }: {
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
-  // 用 Form.useWatch 响应式读取当前值
-  const currentValue: string = form ? (Form.useWatch(nameKey, form) as string) || '' : '';
+  // 用 form.getFieldValue 替代 Form.useWatch
+  const currentValue: string = form?.getFieldValue(nameKey) || '';
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -567,12 +601,18 @@ export function GlobalCaseNoField({ field, subName }: {
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
 
+  const handleChange = (val: string) => {
+    if (!form) return;
+    form.setFieldsValue({ [nameKey]: val });
+    setRefreshKey((k) => k + 1);
+  };
+
   const handleSelect = (val: string) => {
     if (!form) return;
     form.setFieldsValue({ [nameKey]: val });
     const relatedNames = getCaseNamesByNo(val);
     if (relatedNames.length > 0) {
-      const caseNameKey = subName !== undefined ? `caseName` : 'caseName';
+      const caseNameKey = subName !== undefined ? 'caseName' : 'caseName';
       form.setFieldsValue({ [caseNameKey]: relatedNames[0] });
     }
     setOpen(false);
@@ -581,10 +621,27 @@ export function GlobalCaseNoField({ field, subName }: {
   return (
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
-        <Input
+        <input
+          value={currentValue}
+          onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           placeholder="请输入案件编号（全软件数据共享）"
+          style={{
+            width: '100%', height: 32, padding: '0 11px',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
+            fontFamily: 'inherit', boxSizing: 'border-box',
+            transition: 'border-color .2s, box-shadow .2s',
+          }}
+          onFocusCapture={(e) => {
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
+          }}
+          onBlurCapture={(e) => {
+            e.currentTarget.style.borderColor = '#D9D9D9';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
         />
         {open && filteredOptions.length > 0 && (
           <div
@@ -609,7 +666,10 @@ export function GlobalCaseNoField({ field, subName }: {
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
-                    onMouseDown={() => { handleSelect(item); }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelect(item);
+                    }}
                     style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
                   >
                     {item}

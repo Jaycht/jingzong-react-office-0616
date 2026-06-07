@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.9.1";
+export const APP_VERSION = "V2.9.2";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 9;
-export const VERSION_PATCH = 1;
+export const VERSION_PATCH = 2;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.9.2 =====
+  "V2.9.2 修复 - 新建弹窗[记录模板]下拉默认第一项，不能自动选中当前标签（store 新增 currentTabId，同步 ModulePage 标签切换）",
+  "V2.9.2 修复 - 涉众办/法制室/案件中队/调证分析模块列表多出不存在的[经办人]列（按 departmentId 条件渲染）",
+  "V2.9.2 修复 - 全局案件编号/名称历史记录点击无反应/联动消失/删除按钮消失/录入不存历史（替换 antd Input+Form.useWatch 为原生 input+form.getFieldValue 模式）",
   // ===== V2.9.1 =====
   "V2.9.1 修复 - 只选记住密码未选自动登录时重开仍直接进主页面（App.tsx 增加 autoLogin 标志检查）",
   "V2.9.1 修复 - 编辑记录时案件名称/编号需点击输入框才显示（GlobalCaseNameField/GlobalCaseNoField 改用 Form.useWatch 响应式取值）",

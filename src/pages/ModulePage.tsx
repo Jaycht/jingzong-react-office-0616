@@ -91,6 +91,7 @@ export default function ModulePage() {
   const modalId = useAppStore((s) => s.modalId);
   const editRecord = useAppStore((s) => s.editRecord);
   const setEditRecord = useAppStore((s) => s.setEditRecord);
+  const setCurrentTabId = useAppStore((s) => s.setCurrentTabId);
   const { allModules } = useCustomModules();
   const module = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
@@ -183,7 +184,10 @@ export default function ModulePage() {
       width: 120,
       ellipsis: true,
     })),
-    { title: '经办人', dataIndex: '_handler', width: 80, ellipsis: true },
+    // 除大队办公室（office）外，涉众办、法制室、案件中队、调证分析不显示经办人列
+    ...(module.departmentId === 'office'
+      ? [{ title: '经办人' as const, dataIndex: '_handler' as const, width: 80, ellipsis: true }]
+      : []),
     { title: '更新时间', dataIndex: '_updatedAt', width: 130 },
     {
       title: '操作',
@@ -342,7 +346,10 @@ export default function ModulePage() {
           type="primary"
           size="large"
           icon={<Plus size={16} />}
-          onClick={() => openModal('newRecord')}
+          onClick={() => {
+            if (module && activeTab) setCurrentTabId(activeTab);
+            openModal('newRecord');
+          }}
           style={{ height: 42, paddingInline: 22, boxShadow: '0 8px 20px rgba(21,90,138,.25)', flexShrink: 0 }}
         >
           新建{active?.label || module.label}
@@ -451,6 +458,7 @@ export default function ModulePage() {
               activeKey={active?.id}
                onChange={(tabId) => {
                  setActiveTabs((prev) => (module ? { ...prev, [module.id]: tabId } : prev));
+                 if (module) setCurrentTabId(tabId);
                }}
               items={module.tabs.map((tab) => ({ key: tab.id, label: tab.label }))}
             />
