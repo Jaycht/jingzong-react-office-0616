@@ -1154,6 +1154,7 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
 
   if (moduleId === 'squad-case') {
     return [
+      // 步骤1：案件基本信息（合并原步骤1/2/3，按办案时间顺序排列）
       section('案件基本信息'),
       f('caseNo', '案件编号'),
       f('caseName', '案件名称', 'text', false),
@@ -1191,14 +1192,12 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
         '非法经营案', '非法转让、倒卖土地使用权案', '提供虚假证明文件案',
         '出具证明文件重大失实案', '职务侵占案', '挪用资金案', '虚假诉讼案',
       ]),
-      f('leadOfficer', '主办民警', 'text', false),
-      f('assistOfficer', '协办民警'),
-
-      section('涉案信息'),
+      // 原步骤2的涉案信息移到这里
       f('totalAmount', '涉案总金额（万元）', 'number'),
       f('victimCount', '受害人数', 'number'),
-
-      section('日期节点'),
+      f('leadOfficer', '主办民警', 'text', false),
+      f('assistOfficer', '协办民警'),
+      // 原步骤3的日期节点按法律办案时间顺序排列
       f('receiveDate', '受案日期', 'date'),
       f('filingDate', '立案日期', 'date'),
       f('noFilingDate', '不予立案日期', 'date'),
@@ -1206,12 +1205,64 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('prosecutionDate', '移送审查起诉日期', 'date'),
       f('caseCloseDate', '结案日期', 'date'),
 
-      section('案件移交'),
-      f('transferRecord', '案件移交记录', 'select', false, [
-        '中队移交', '外单位移交', '退回法制室',
+      // 步骤2：嫌疑人信息（可重复添加，全局联动）
+      section('嫌疑人信息', true, 'suspects'),
+      // 【基本信息】
+      f('suspectName', '姓名', 'text', false),
+      f('formerName', '曾用名'),
+      f('gender', '性别', 'select', false, ['男', '女']),
+      f('ethnicity', '民族', 'select', false, [
+        '汉族', '蒙古族', '回族', '藏族', '维吾尔族',
+        '苗族', '彝族', '壮族', '布依族', '朝鲜族',
+        '满族', '侗族', '瑶族', '白族', '土家族',
+        '哈尼族', '哈萨克族', '傣族', '黎族', '傈僳族',
+        '佤族', '畲族', '高山族', '拉祜族', '水族',
+        '东乡族', '纳西族', '景颇族', '柯尔克孜族', '土族',
+        '达斡尔族', '仫佬族', '羌族', '布朗族', '撒拉族',
+        '毛南族', '仡佬族', '锡伯族', '阿昌族', '普米族',
+        '塔吉克族', '怒族', '乌孜别克族', '俄罗斯族', '鄂温克族',
+        '德昂族', '保安族', '裕固族', '京族', '塔塔尔族',
+        '独龙族', '鄂伦春族', '赫哲族', '门巴族', '珞巴族',
+        '基诺族',
       ]),
-      f('transferUnit', '移交单位'),
-      f('filingDocNo', '受/立案文书号'),
+      f('birthDate', '出生日期', 'date'),
+      f('suspectIdNo', '身份证号'),
+      f('registeredAddress', '户籍地'),
+      f('currentAddress', '现住址'),
+      f('education', '文化程度', 'select', false, ['小学', '初中', '高中/中专', '大专', '本科', '硕士', '博士']),
+      f('occupation', '职业'),
+      // 【联络信息】
+      f('suspectPhone', '手机号'),
+      f('landline', '固定电话'),
+      f('socialAccount', '社交账号'),
+      f('emergencyContact', '紧急联系人及电话'),
+      // 【前科状态】
+      f('hasCriminalRecord', '有无前科', 'select', false, ['是', '否']),
+      f('criminalRecordDetail', '前科详情', 'textarea'),
+      f('isFugitive', '是否在逃', 'select', false, ['是', '否']),
+      f('captureDate', '抓获时间', 'date'),
+      // 【涉案信息】
+      f('suspectRole', '涉案身份', 'select', false, ['主犯', '从犯', '骨干人员', '业务员', '财务', '客服', '一般参与者']),
+      f('personalIllegalIncome', '个人违法所得'),
+      f('arrestMethod', '归案方式', 'select', false, ['群众扭送', '主动投案', '传唤到案', '抓捕归案']),
+      // 【强制措施】
+      f('summonDate', '传唤时间', 'date'),
+      f('interrogationDate', '询问时间', 'date'),
+      f('measureStatus', '措施状态', 'select', false, ['刑事拘留', '取保候审', '监视居住', '逮捕', '移诉']),
+      f('detentionDate', '拘留时间', 'date'),
+      f('arrestDate', '逮捕时间', 'date'),
+      f('bailDate', '取保时间', 'date'),
+      f('residentialSurveillanceDate', '监视居住时间', 'date'),
+      f('transferProsecutionDate', '移诉时间', 'date'),
+      // 【资金资产】
+      f('bankCardNo', '银行卡号'),
+      f('ownedVehiclesProperties', '名下车辆/房产'),
+      f('frozenAssetsInfo', '已冻结资产信息', 'textarea'),
+      // 【补充信息】
+      f('accomplice', '同案人员'),
+      f('appearance', '体貌特征'),
+      f('healthStatus', '健康状况'),
+      f('remarks', '备注', 'textarea'),
 
       ...commonTail,
     ];

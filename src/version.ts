@@ -11,6 +11,8 @@ export const CHANGELOG: string[] = [
   "V2.9.10 修复 - version.ts 和 package.json 版本号同步（此前多版本未更新 version.ts）",
   "V2.9.10 修复 - CI Release 冲突（跳过缓存标签 v2.9.9，使用 v2.9.10）",
   "V2.9.10 修复 - flatMode 中 DynamicField 的 listName 错误传递（stepListName 全局变量取步骤0，改为 step.listName 取当前步骤）",
+  "V2.9.10 修复 - 全局字段改用本地state+onBlur同步form解决IME中文输入问题（GlobalSuspectField/GlobalCaseNameField/GlobalCaseNoField/HolderAutoComplete）",
+  "V2.9.10 重构 - 中队案件管理(squad-case)合并为2步：步骤1含全部基本信息和日期节点，步骤2为嫌疑人信息(repeatable)含40+字段全局联动",
   "V2.9.10 构建 - 提交前增加 typecheck + build 双重验证",
   // ===== V2.9.8 =====
   "V2.9.8 修复 - 案件时间轴展示字段过少，改为动态扫描所有有值字段展示前8项",
