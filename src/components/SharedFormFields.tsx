@@ -2,7 +2,7 @@
  * 共享表单字段组件
  * 消除 DrawerNewRecord.tsx 中多份重复的 AutoComplete/MultiPerson 组件
  */
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { AutoComplete, Button, Divider, Form, Input, Select, Space } from 'antd';
 import dayjs from 'dayjs';
 import { localStorageAdapter } from "../store/adapter";
@@ -457,15 +457,16 @@ export function GlobalCaseNameField({ field, subName }: {
 }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  let form: any = null;
-  try { form = Form.useFormInstance(); } catch {}
+  const form = Form.useFormInstance();
 
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
-  // Form.useWatch 订阅表单变化：自身输入、联动赋值、setFieldsValue 都能触发重渲染
-  const watchedValue: unknown = Form.useWatch(nameKey, form);
-  const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
+  // 本地 state 管理输入值，避免每次输入触发重渲染打断 IME
+  const formValue: unknown = Form.useWatch(nameKey, form);
+  const syncedValue: string = (typeof formValue === 'string' ? formValue : '') || '';
+  const [localValue, setLocalValue] = useState(syncedValue);
+  useEffect(() => { setLocalValue(syncedValue); }, [syncedValue]);
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -474,28 +475,39 @@ export function GlobalCaseNameField({ field, subName }: {
   }, [refreshKey]);
 
   const filteredOptions = useMemo(() => {
-    if (!currentValue) return allOptions;
-    const q = currentValue.toUpperCase();
+    if (!syncedValue) return allOptions;
+    const q = syncedValue.toUpperCase();
     return allOptions.filter((item) => item.toUpperCase().includes(q));
-  }, [allOptions, currentValue]);
+  }, [allOptions, syncedValue]);
 
   const history = [...new Set([...getFieldHistory('caseName'), ...getFieldHistory('caseNo')])];
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
 
+  // 输入时只更新本地 state
   const handleChange = (val: string) => {
-    if (!form) return;
-    form.setFieldsValue({ [nameKey]: val });
+    setLocalValue(val);
+  };
+
+  // 失焦时同步到 form + 关闭下拉
+  const handleBlurSync = () => {
+    setTimeout(() => {
+      setOpen(false);
+      if (!form) return;
+      const current = form.getFieldValue(nameKey);
+      if (String(current || '') !== localValue) {
+        form.setFieldsValue({ [nameKey]: localValue });
+      }
+    }, 200);
   };
 
   const handleSelect = (val: string) => {
     if (!form) return;
     form.setFieldsValue({ [nameKey]: val });
-    // 联动填充案件编号
+    setLocalValue(val);
     const relatedNos = getCaseNosByName(val);
     if (relatedNos.length > 0) {
       form.setFieldsValue({ caseNo: relatedNos[0] });
-      // 填充更多案件详情（主办民警、受案日期、立案日期等）
       const detail = getCaseDetail(relatedNos[0]);
       if (detail) fillCaseDetail(form, detail);
     }
@@ -506,10 +518,10 @@ export function GlobalCaseNameField({ field, subName }: {
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
         <input
-          value={currentValue}
+          value={localValue}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          onBlur={handleBlurSync}
           placeholder="请输入案件名称（全软件数据共享）"
           style={{
             width: '100%', height: 32, padding: '0 11px',
@@ -598,15 +610,15 @@ export function GlobalCaseNoField({ field, subName }: {
 }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  let form: any = null;
-  try { form = Form.useFormInstance(); } catch {}
+  const form = Form.useFormInstance();
 
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
-  // Form.useWatch 订阅表单变化，联动赋值或 setFieldsValue 后自动重渲染
-  const watchedValue: unknown = Form.useWatch(nameKey, form);
-  const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
+  const formValue: unknown = Form.useWatch(nameKey, form);
+  const syncedValue: string = (typeof formValue === 'string' ? formValue : '') || '';
+  const [localValue, setLocalValue] = useState(syncedValue);
+  useEffect(() => { setLocalValue(syncedValue); }, [syncedValue]);
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -615,27 +627,37 @@ export function GlobalCaseNoField({ field, subName }: {
   }, [refreshKey]);
 
   const filteredOptions = useMemo(() => {
-    if (!currentValue) return allOptions;
-    const q = currentValue.toUpperCase();
+    if (!syncedValue) return allOptions;
+    const q = syncedValue.toUpperCase();
     return allOptions.filter((item) => item.toUpperCase().includes(q));
-  }, [allOptions, currentValue]);
+  }, [allOptions, syncedValue]);
 
   const history = [...new Set([...getFieldHistory('caseNo'), ...getFieldHistory('caseName')])];
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
 
   const handleChange = (val: string) => {
-    if (!form) return;
-    form.setFieldsValue({ [nameKey]: val });
+    setLocalValue(val);
+  };
+
+  const handleBlurSync = () => {
+    setTimeout(() => {
+      setOpen(false);
+      if (!form) return;
+      const current = form.getFieldValue(nameKey);
+      if (String(current || '') !== localValue) {
+        form.setFieldsValue({ [nameKey]: localValue });
+      }
+    }, 200);
   };
 
   const handleSelect = (val: string) => {
     if (!form) return;
     form.setFieldsValue({ [nameKey]: val });
+    setLocalValue(val);
     const relatedNames = getCaseNamesByNo(val);
     if (relatedNames.length > 0) {
       form.setFieldsValue({ caseName: relatedNames[0] });
-      // 填充更多案件详情
       const detail = getCaseDetail(val);
       if (detail) fillCaseDetail(form, detail);
     }
@@ -646,10 +668,10 @@ export function GlobalCaseNoField({ field, subName }: {
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
         <input
-          value={currentValue}
+          value={localValue}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          onBlur={handleBlurSync}
           placeholder="请输入案件编号（全软件数据共享）"
           style={{
             width: '100%', height: 32, padding: '0 11px',
@@ -797,15 +819,23 @@ export function GlobalSuspectField({ field, subName, listName }: {
 }) {
   const [open, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  let form: any = null;
-  try { form = Form.useFormInstance(); } catch { /* 降级 */ }
+  const form = Form.useFormInstance();
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
-  // 完整路径（Form.useWatch 需要 root-relative 路径）
   const fullName = (subName !== undefined && listName)
     ? [listName, subName, field.id]
     : fieldName;
+
+  // 本地 state 管理输入值，避免每次输入都触发 form.setFieldValue 重渲染打断 IME
+  const formValue: unknown = Form.useWatch(fullName, form);
+  const syncedValue: string = (typeof formValue === 'string' ? formValue : '') || '';
+  const [localValue, setLocalValue] = useState(syncedValue);
+
+  // 联动/外部修改时同步到本地
+  useEffect(() => {
+    setLocalValue(syncedValue);
+  }, [syncedValue]);
 
   /** 填充关联的嫌疑人信息 */
   const fillSuspectRelated = (suspectName: string) => {
@@ -817,12 +847,10 @@ export function GlobalSuspectField({ field, subName, listName }: {
     const isInSuspectsSection = thisFieldId === 'suspectName';
 
     if (isInSuspectsSection && subName !== undefined && listName) {
-      // legal-case-ledger 的嫌疑人 section 内：用 setFieldValue 写入嵌套路径
       if (info.idNo)   form.setFieldValue([listName, subName, 'suspectIdNo'], info.idNo);
       if (info.phone)  form.setFieldValue([listName, subName, 'suspectPhone'], info.phone);
       if (info.address) form.setFieldValue([listName, subName, 'suspectAddress'], info.address);
     } else {
-      // 平铺模式（资金查控、强制措施、设备采集等）：用 idNo / phone
       const kv: Record<string, string> = {};
       if (info.idNo)   kv.idNo = info.idNo;
       if (info.phone)  kv.phone = info.phone;
@@ -830,30 +858,38 @@ export function GlobalSuspectField({ field, subName, listName }: {
     }
   };
 
-  // Form.useWatch 响应式读取（自身输入和联动赋值都能触发重渲染）
-  const watchedValue: unknown = Form.useWatch(fullName, form);
-  const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
-
+  // 输入时只更新本地 state，不写 form（避免 IME 中断）
   const handleChange = (val: string) => {
-    if (form) {
-      form.setFieldValue(fullName, val);
-    }
-    fillSuspectRelated(val);
+    setLocalValue(val);
+  };
+
+  // 失焦时同步到 form，并关闭下拉
+  const handleBlurSync = () => {
+    setTimeout(() => {
+      setOpen(false);
+      if (!form) return;
+      const current = form.getFieldValue(fullName);
+      if (String(current || '') !== localValue) {
+        form.setFieldValue(fullName, localValue);
+      }
+      fillSuspectRelated(localValue);
+    }, 200);
   };
 
   const handleSelect = (selectedValue: string) => {
     if (form) {
       form.setFieldValue(fullName, selectedValue);
+      setLocalValue(selectedValue);
     }
     fillSuspectRelated(selectedValue);
     setOpen(false);
   };
 
   const filteredOptions = useMemo(() => {
-    if (!currentValue) return getAllSuspectNames();
-    const q = currentValue.toUpperCase();
+    if (!syncedValue) return getAllSuspectNames();
+    const q = syncedValue.toUpperCase();
     return getAllSuspectNames().filter((item) => item.toUpperCase().includes(q));
-  }, [currentValue]);
+  }, [syncedValue]);
 
   const history = getFieldHistory('suspect');
   const history2 = getFieldHistory('suspectName');
@@ -863,8 +899,9 @@ export function GlobalSuspectField({ field, subName, listName }: {
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
         <input
-          value={currentValue}
+          value={localValue}
           onChange={(e) => handleChange(e.target.value)}
+          onBlur={handleBlurSync}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           placeholder="请输入持有人姓名（可匹配嫌疑人）"
