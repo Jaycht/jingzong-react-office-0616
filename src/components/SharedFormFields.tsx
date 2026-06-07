@@ -903,8 +903,7 @@ export function GlobalSuspectField({ field, subName, listName }: {
           onChange={(e) => handleChange(e.target.value)}
           onBlur={handleBlurSync}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-          onBlur={() => setTimeout(() => setOpen(false), 200)}
-          placeholder="请输入持有人姓名（可匹配嫌疑人）"
+          placeholder="请输入嫌疑人姓名（可匹配历史记录）"
           style={{
             width: '100%', height: 32, padding: '0 11px',
             border: '1px solid #D9D9D9', borderRadius: 6,
