@@ -995,9 +995,11 @@ export function HolderAutoComplete({ field, subName }: {
   const fieldName = subName !== undefined ? [subName, field.id] : field.id;
   const key = typeof fieldName === 'string' ? fieldName : fieldName[1];
 
-  // Form.useWatch 响应式读取，联动赋值也能触发重渲染
-  const watchedValue: unknown = Form.useWatch(key, form);
-  const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
+  // 本地 state 管理输入值
+  const formValue: unknown = Form.useWatch(key, form);
+  const syncedValue: string = (typeof formValue === 'string' ? formValue : '') || '';
+  const [localValue, setLocalValue] = useState(syncedValue);
+  useEffect(() => { setLocalValue(syncedValue); }, [syncedValue]);
 
   const allOptions = useMemo(() => {
     void refreshKey;
@@ -1005,19 +1007,31 @@ export function HolderAutoComplete({ field, subName }: {
   }, [refreshKey]);
 
   const filteredOptions = useMemo(() => {
-    if (!currentValue) return allOptions;
-    const q = currentValue.toUpperCase();
+    if (!syncedValue) return allOptions;
+    const q = syncedValue.toUpperCase();
     return allOptions.filter((item) => item.toUpperCase().includes(q));
-  }, [allOptions, currentValue]);
+  }, [allOptions, syncedValue]);
 
   const history = getFieldHistory('holder');
 
   const handleChange = (val: string) => {
-    form.setFieldsValue({ [key]: val });
+    setLocalValue(val);
+  };
+
+  const handleBlurSync = () => {
+    setTimeout(() => {
+      setOpen(false);
+      if (!form) return;
+      const current = form.getFieldValue(key);
+      if (String(current || '') !== localValue) {
+        form.setFieldsValue({ [key]: localValue });
+      }
+    }, 200);
   };
 
   const handleSelect = (selectedValue: string) => {
     form.setFieldsValue({ [key]: selectedValue });
+    setLocalValue(selectedValue);
     setOpen(false);
   };
 
@@ -1025,10 +1039,10 @@ export function HolderAutoComplete({ field, subName }: {
     <Form.Item name={fieldName} label={field.label} rules={rules}>
       <div style={{ position: 'relative' }}>
         <input
-          value={currentValue}
+          value={localValue}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          onBlur={handleBlurSync}
           placeholder="请输入持有人姓名（可匹配嫌疑人）"
           style={{
             width: '100%', height: 32, padding: '0 11px',
