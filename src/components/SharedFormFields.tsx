@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
 import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames, getSquadCaseNames, getSquadCaseNos } from '../store/massStore';
-import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName, getCaseDetail, type CaseDetail, getAllSuspectNames, getSuspectInfo, deleteFieldHistoryEntry } from '../store/inputHistoryStore';
+import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName, getCaseDetail, type CaseDetail, getAllSuspectNames, getSuspectInfo, deleteFieldHistoryEntry, getHiddenSuggestions, hideFieldSuggestion } from '../store/inputHistoryStore';
 
 type SelectValue = string | string[] | undefined;
 
@@ -469,7 +469,8 @@ export function GlobalCaseNameField({ field, subName }: {
 
   const allOptions = useMemo(() => {
     void refreshKey;
-    return getAllCaseNames();
+    const hidden = new Set(getHiddenSuggestions('caseName'));
+    return getAllCaseNames().filter((item) => !hidden.has(item));
   }, [refreshKey]);
 
   const filteredOptions = useMemo(() => {
@@ -485,7 +486,6 @@ export function GlobalCaseNameField({ field, subName }: {
   const handleChange = (val: string) => {
     if (!form) return;
     form.setFieldsValue({ [nameKey]: val });
-    setRefreshKey((k) => k + 1);
   };
 
   const handleSelect = (val: string) => {
@@ -563,8 +563,8 @@ export function GlobalCaseNameField({ field, subName }: {
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        deleteFieldHistoryEntry('caseName', item);
-                        deleteFieldHistoryEntry('caseNo', item);
+                        hideFieldSuggestion('caseName', item);
+                        hideFieldSuggestion('caseNo', item);
                         setRefreshKey((k) => k + 1);
                       }}
                       style={{
@@ -610,7 +610,8 @@ export function GlobalCaseNoField({ field, subName }: {
 
   const allOptions = useMemo(() => {
     void refreshKey;
-    return getAllCaseNos();
+    const hidden = new Set(getHiddenSuggestions('caseNo'));
+    return getAllCaseNos().filter((item) => !hidden.has(item));
   }, [refreshKey]);
 
   const filteredOptions = useMemo(() => {
@@ -626,7 +627,6 @@ export function GlobalCaseNoField({ field, subName }: {
   const handleChange = (val: string) => {
     if (!form) return;
     form.setFieldsValue({ [nameKey]: val });
-    setRefreshKey((k) => k + 1);
   };
 
   const handleSelect = (val: string) => {
@@ -703,8 +703,8 @@ export function GlobalCaseNoField({ field, subName }: {
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        deleteFieldHistoryEntry('caseNo', item);
-                        deleteFieldHistoryEntry('caseName', item);
+                        hideFieldSuggestion('caseNo', item);
+                        hideFieldSuggestion('caseName', item);
                         setRefreshKey((k) => k + 1);
                       }}
                       style={{
@@ -837,7 +837,6 @@ export function GlobalSuspectField({ field, subName, listName }: {
   const handleChange = (val: string) => {
     if (form) {
       form.setFieldValue(fullName, val);
-      setRefreshKey((k) => k + 1);
     }
     fillSuspectRelated(val);
   };

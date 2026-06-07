@@ -10,6 +10,43 @@ import { getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import { getAllCaseNames } from '../store/inputHistoryStore';
 
+/** 字段中文标签映射 */
+const FIELD_LABELS: Record<string, string> = {
+  caseName: '案件名称', caseNo: '案件编号',
+  suspect: '嫌疑人', suspectName: '嫌疑人姓名',
+  suspectIdNo: '身份证号', suspectPhone: '手机号',
+  holder: '持有人', holderIdentity: '持有人身份',
+  idNo: '身份证号', phone: '手机号',
+  measure: '强制措施类型', executeDate: '执行时间',
+  deadline: '期限', executeResult: '执行情况',
+  leadOfficer: '主办民警', assistOfficer: '协办民警',
+  handler: '经办人', approver: '审批人',
+  receiveDate: '受案时间', filingDate: '立案时间',
+  caseType: '案件类型', caseSource: '案件来源',
+  caseStage: '案件阶段',
+  totalAmount: '涉案金额', recoveredAmount: '挽损',
+  actualLoss: '实际损失',
+  deviceType: '设备类型', deviceBrand: '品牌',
+  deviceModel: '型号', collectContent: '采集内容',
+  reportMatter: '接报事项', projectName: '项目名称',
+  clueName: '线索名称',
+  propertyName: '财物名称',
+  filingDocNo: '文书号',
+  amount: '金额',
+  inquiryRecord: '询问', interrogationRecord: '讯问',
+  reception: '接待', evidenceObtained: '调证',
+  fundFlowAnalysis: '资金流水', documentPreparation: '文书',
+  police: '民警',
+  nextDayPlan: '次日计划',
+  executeResult: '执行情况',
+  isNotified: '是否告知', notifyDate: '告知时间',
+  approvalDate: '审批时间',
+  criminalDetentionDate: '刑拘日期',
+  arrestDate: '逮捕日期', bailDate: '取保日期',
+  caseSummary: '案情摘要',
+  reportAppeal: '报案诉求',
+};
+
 const MODULE_META: Record<string, { label: string; dept: string; icon: React.ComponentType<{ size?: number; color?: string }>; color: string }> = {
   'office-finance-assets': { label: '经费保障', dept: '大队办公室', icon: Landmark, color: '#6D28D9' },
   'office-party-attendance': { label: '党建考勤', dept: '大队办公室', icon: Landmark, color: '#6D28D9' },
@@ -39,20 +76,32 @@ function recordTitle(rec: MassRecord): string {
   return String(d.caseName || d.suspect || d.reportMatter || d.projectName || d.clueName || d.title || d.matterName || '未命名');
 }
 
-/** 提取记录的关键信息摘要 */
+/** 跳过不展示的字段名 */
+const SKIP_FIELDS = new Set([
+  'attachment', 'fileList', 'status',
+  'caseName', 'caseNo', 'title', 'matterName',
+]);
+
+/** 提取记录的关键信息摘要：动态扫描所有字段，用标签映射取值 */
 function recordSummary(rec: MassRecord): { label: string; value: string }[] {
   const d = rec.data || {};
   const items: { label: string; value: string }[] = [];
-  if (d.caseNo) items.push({ label: '编号', value: String(d.caseNo) });
-  if (d.leadOfficer) items.push({ label: '主办', value: String(d.leadOfficer) });
-  if (d.suspect) items.push({ label: '嫌疑人', value: String(d.suspect) });
-  if (d.holder) items.push({ label: '持有人', value: String(d.holder) });
-  if (d.amount) items.push({ label: '金额', value: String(d.amount) + (d.amountUnit || '') });
-  if (d.totalAmount) items.push({ label: '涉案金额', value: String(d.totalAmount) + '万' });
-  if (d.measure) items.push({ label: '措施', value: String(d.measure) });
-  if (d.reportAppeal) items.push({ label: '诉求', value: String(d.reportAppeal) });
-  if (d.handler) items.push({ label: '经办', value: String(d.handler) });
-  return items.slice(0, 4);
+  for (const [key, raw] of Object.entries(d)) {
+    if (SKIP_FIELDS.has(key)) continue;
+    if (raw === null || raw === undefined) continue;
+    const str = String(raw).trim();
+    if (!str || str === '—') continue;
+    // 跳过 ISO 日期长字符串（已在 recordDate 中展示）
+    if (/^\d{4}-\d{2}-\d{2}T/.test(str)) continue;
+    // 跳过空数组
+    if (Array.isArray(raw) && raw.length === 0) continue;
+    // 跳过对象
+    if (typeof raw === 'object') continue;
+    const label = FIELD_LABELS[key] || key;
+    const value = str.length > 30 ? str.slice(0, 30) + '…' : str;
+    items.push({ label, value });
+  }
+  return items.slice(0, 8);
 }
 
 /** 获取记录的最佳时间戳 */

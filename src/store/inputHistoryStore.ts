@@ -51,6 +51,46 @@ export function recordFieldValue(fieldId: string, value: string): void {
 }
 
 /**
+ * 隐藏建议项存储：用户点了删除，只隐藏不删真实数据
+ */
+const HIDDEN_SUGGESTIONS_KEY = 'jingzong.inputHistory.hidden.v1';
+type HiddenSuggestionStore = Record<string, string[]>;
+
+function loadHiddenSuggestions(): HiddenSuggestionStore {
+  return localStorageAdapter.getItem<HiddenSuggestionStore>(HIDDEN_SUGGESTIONS_KEY, {});
+}
+
+function saveHiddenSuggestions(store: HiddenSuggestionStore): void {
+  localStorageAdapter.setItem(HIDDEN_SUGGESTIONS_KEY, store);
+}
+
+/** 获取某个字段已隐藏的建议项列表 */
+export function getHiddenSuggestions(fieldId: string): string[] {
+  const store = loadHiddenSuggestions();
+  return store[fieldId] || [];
+}
+
+/**
+ * 隐藏一条建议项（同时从输入历史中删除，并加入隐藏列表）
+ * 用于案件名称/编号这类下拉数据来自已保存记录索引的字段
+ */
+export function hideFieldSuggestion(fieldId: string, value: string): void {
+  const v = value.trim();
+  if (!v) return;
+
+  // 加入隐藏列表
+  const store = loadHiddenSuggestions();
+  const list = store[fieldId] || [];
+  if (!list.includes(v)) {
+    store[fieldId] = [v, ...list];
+    saveHiddenSuggestions(store);
+  }
+
+  // 同时从输入历史中删除
+  deleteFieldHistoryEntry(fieldId, v);
+}
+
+/**
  * 删除某条历史记录
  */
 export function deleteFieldHistoryEntry(fieldId: string, value: string): void {
