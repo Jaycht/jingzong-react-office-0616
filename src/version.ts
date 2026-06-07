@@ -1,9 +1,12 @@
-export const APP_VERSION = "V2.9.10";
+export const APP_VERSION = "V2.9.11";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 9;
-export const VERSION_PATCH = 10;
+export const VERSION_PATCH = 11;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.9.11 =====
+  "V2.9.11 重构 - 中队案件管理(squad-case)字段重排：步骤1(案件基本信息合并涉案信息/日期节点)、步骤2(嫌疑人信息40+字段全局联动+投资理财+参保情况)",
+  "V2.9.11 修复 - 时间轴 FIELD_LABELS 补全新增嫌疑人字段（formerName/ethnicity/education等30+字段）",
   // ===== V2.9.10 =====
   "V2.9.10 修复 - package.json 中文乱码导致安装包名缺少中文前缀（bump-version 编码兼容）",
   "V2.9.10 修复 - 强制措施登记 flatMode 不分步/案件编号名称历史记录正常工作",

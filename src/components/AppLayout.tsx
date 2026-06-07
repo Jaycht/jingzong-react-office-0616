@@ -88,14 +88,14 @@ export default function AppLayout() {
       {isElectron && (
         <div
           style={{
-            height: 28, flexShrink: 0, display: 'flex', alignItems: 'center',
+            height: 34, flexShrink: 0, display: 'flex', alignItems: 'center',
             WebkitAppRegion: 'drag' as any,
             background: darkMode ? '#0a1a2e' : '#F0F2F5',
-            paddingLeft: 12,
+            paddingLeft: 14,
             borderBottom: darkMode ? 'none' : '1px solid #E5E7EB',
           }}
         >
-          <span style={{ fontSize: 11, color: darkMode ? 'rgba(255,255,255,0.35)' : '#9CA3AF', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
+          <span style={{ fontSize: 12, color: darkMode ? 'rgba(255,255,255,0.35)' : '#9CA3AF', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
             经侦大队工作记录管理系统
           </span>
           {/* 窗口控制按钮（不可拖拽） */}

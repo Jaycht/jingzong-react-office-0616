@@ -1258,6 +1258,8 @@ function fieldsFor(moduleId: string, tab: string): FieldDefinition[] {
       f('bankCardNo', '银行卡号'),
       f('ownedVehiclesProperties', '名下车辆/房产'),
       f('frozenAssetsInfo', '已冻结资产信息', 'textarea'),
+      f('investmentFinance', '投资理财'),
+      f('insuranceStatus', '参保情况'),
       // 【补充信息】
       f('accomplice', '同案人员'),
       f('appearance', '体貌特征'),
