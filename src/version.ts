@@ -10,6 +10,8 @@ export const CHANGELOG: string[] = [
   "V2.9.10 修复 - 案件时间轴补充经费保障模块 30+ 字段中文标签",
   "V2.9.10 修复 - version.ts 和 package.json 版本号同步（此前多版本未更新 version.ts）",
   "V2.9.10 修复 - CI Release 冲突（跳过缓存标签 v2.9.9，使用 v2.9.10）",
+  "V2.9.10 修复 - flatMode 中 DynamicField 的 listName 错误传递（stepListName 全局变量取步骤0，改为 step.listName 取当前步骤）",
+  "V2.9.10 构建 - 提交前增加 typecheck + build 双重验证",
   // ===== V2.9.8 =====
   "V2.9.8 修复 - 案件时间轴展示字段过少，改为动态扫描所有有值字段展示前8项",
   "V2.9.8 修复 - 案件名称/编号点删除后文字仍在、删除按钮消失（改用 hideFieldSuggestion 隐藏建议项机制）",

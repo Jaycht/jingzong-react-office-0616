@@ -444,7 +444,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                                           : { gridColumn: 'span 3' }
                                       }
                                     >
-                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} listName={stepListName} form={form} pendingAttachments={pendingAttachments} editRecord={editRecord} />
+                                      <DynamicField field={field} moduleId={selectedModuleId} subName={idx} listName={step.listName} form={form} pendingAttachments={pendingAttachments} editRecord={editRecord} />
                                     </div>
                                   ))}
                                 </div>
