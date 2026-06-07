@@ -1,14 +1,15 @@
-export const APP_VERSION = "V2.9.9";
+export const APP_VERSION = "V2.9.10";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 9;
-export const VERSION_PATCH = 9;
+export const VERSION_PATCH = 10;
 
 export const CHANGELOG: string[] = [
-  // ===== V2.9.9 =====
-  "V2.9.9 修复 - package.json 中文乱码导致安装包名缺少中文前缀（bump-version 编码兼容）",
-  "V2.9.9 修复 - 强制措施登记分两步合并为单步+自动展开首行",
-  "V2.9.9 修复 - 案件时间轴补充经费保障模块 30+ 字段中文标签",
-  "V2.9.9 修复 - version.ts 和 package.json 版本号同步回 V2.9.9（此前多个版本未更新 version.ts）",
+  // ===== V2.9.10 =====
+  "V2.9.10 修复 - package.json 中文乱码导致安装包名缺少中文前缀（bump-version 编码兼容）",
+  "V2.9.10 修复 - 强制措施登记 flatMode 不分步/案件编号名称历史记录正常工作",
+  "V2.9.10 修复 - 案件时间轴补充经费保障模块 30+ 字段中文标签",
+  "V2.9.10 修复 - version.ts 和 package.json 版本号同步（此前多版本未更新 version.ts）",
+  "V2.9.10 修复 - CI Release 冲突（跳过缓存标签 v2.9.9，使用 v2.9.10）",
   // ===== V2.9.8 =====
   "V2.9.8 修复 - 案件时间轴展示字段过少，改为动态扫描所有有值字段展示前8项",
   "V2.9.8 修复 - 案件名称/编号点删除后文字仍在、删除按钮消失（改用 hideFieldSuggestion 隐藏建议项机制）",
