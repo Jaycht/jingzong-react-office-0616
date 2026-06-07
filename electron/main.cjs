@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, dialog, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const fsp = require("fs/promises");
@@ -142,6 +142,17 @@ ipcMain.handle("delete-attachment-file", async (_event, filePath) => {
 // 获取附件目录路径
 ipcMain.handle("get-attachments-dir", () => {
   return ATTACHMENTS_DIR;
+});
+
+// 检查附件文件是否存在
+ipcMain.handle("check-attachment-file", async (_event, filePath) => {
+  try {
+    const resolved = safePath(filePath);
+    const exists = fs.existsSync(resolved);
+    return { success: true, exists };
+  } catch (err) {
+    return { success: false, exists: false, error: err.message };
+  }
 });
 
 // 弹出保存文件对话框（下载附件时使用）

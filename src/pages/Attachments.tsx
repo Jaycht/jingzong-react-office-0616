@@ -29,11 +29,31 @@ function getFileIcon(filename: string) {
   return <Icon size={16} color="#6B7280" />;
 }
 
+/** 格式化文件大小 */
+function fmtSize(bytes: number): string {
+  if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+  if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return bytes + ' B';
+}
+
+/** 格式化上传时间 */
+function fmtTime(iso: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
 interface AttachmentDisplayItem {
   id: string;
   moduleLabel: string;
   fileName: string;
   recordDate: string;
+  fileSize: string;
+  /** Electron 模式下附件在硬盘上的存储路径，空表示仅存储在 IndexedDB */
+  filePath?: string;
+  /** 本地文件是否存在（异步检查后填充） */
+  fileExists?: boolean;
 }
 
 export default function Attachments() {
@@ -50,19 +70,40 @@ export default function Attachments() {
 
   useEffect(() => { loadAttachments(); }, [loadAttachments]);
 
+  const [integrityMap, setIntegrityMap] = useState<Record<string, boolean>>({});
+
+  // 异步检查 Electron 附件文件的本地完整性
+  useEffect(() => {
+    if (!(window as any).electronAPI?.checkAttachmentFile) return;
+    const checkAll = async () => {
+      const map: Record<string, boolean> = {};
+      for (const att of dbAttachments) {
+        if (att.filePath) {
+          try {
+            const result = await (window as any).electronAPI.checkAttachmentFile(att.filePath);
+            map[att.id] = result.exists;
+          } catch { map[att.id] = false; }
+        }
+      }
+      setIntegrityMap(map);
+    };
+    checkAll();
+  }, [dbAttachments]);
+
   const attachmentItems: AttachmentDisplayItem[] = useMemo(() => {
     return dbAttachments.map((att) => {
       const mod = modules.find((m) => m.id === att.moduleId);
-      const d = new Date(att.uploadedAt);
-      const pad = (n: number) => String(n).padStart(2, '0');
       return {
         id: att.id,
         moduleLabel: mod?.label || att.moduleId || '未知模块',
         fileName: att.fileName || '未命名文件',
-        recordDate: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        recordDate: fmtTime(att.uploadedAt),
+        fileSize: fmtSize(att.fileSize || 0),
+        filePath: att.filePath,
+        fileExists: att.filePath ? integrityMap[att.id] : undefined,
       };
     });
-  }, [dbAttachments, modules]);
+  }, [dbAttachments, modules, integrityMap]);
 
   const filtered = useMemo(() => {
     if (!searchVal) return attachmentItems;
@@ -311,8 +352,19 @@ export default function Attachments() {
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {att.fileName}
                       </div>
-                      <div style={{ fontSize: 11.5, color: '#9CA3AF', marginTop: 1 }}>
-                        {att.moduleLabel} · {att.recordDate}
+                      <div style={{ fontSize: 11.5, color: '#9CA3AF', marginTop: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span>{att.moduleLabel}</span>
+                        <span>·</span>
+                        <span>{att.fileSize}</span>
+                        <span>·</span>
+                        <span>{att.recordDate}</span>
+                        {att.filePath !== undefined && (
+                          att.fileExists === true
+                            ? <span style={{ color: '#0E7C4B', fontSize: 10 }}>✓ 本地</span>
+                            : att.fileExists === false
+                              ? <span style={{ color: '#DC2626', fontSize: 10 }}>⚠ 文件缺失</span>
+                              : null
+                        )}
                       </div>
                     </div>
                     {/* 下载按钮 */}
