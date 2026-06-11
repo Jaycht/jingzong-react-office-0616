@@ -601,65 +601,76 @@ export default function ModulePage() {
         destroyOnClose
       >
         {viewRecord && (
-          <Descriptions column={2} size="small" bordered style={{ marginTop: 16 }}>
-            {fields.filter((f) => f.type !== 'section').map((f) => {
-              // 优先从扁平 data 取值，取不到则从 repeatable section 数据中取
-              let val = viewRecord.data?.[f.id];
-              if (val === undefined || val === null) {
-                for (const sf of fields) {
-                  if (sf.type === 'section' && sf.repeatable && sf.listName) {
-                    const listData = viewRecord.data?.[sf.listName];
-                    if (Array.isArray(listData) && listData.length > 0) {
-                      const itemVal = listData[0][f.id];
-                      if (itemVal !== undefined && itemVal !== null) {
-                        val = itemVal;
-                        break;
-                      }
-                    }
-                  }
-                }
-              }
-              return (
-                <Descriptions.Item key={f.id} label={f.label} span={f.type === 'textarea' ? 2 : 1}>
-                  {displayValue(val)}
-                </Descriptions.Item>
-              );
-            })}
-            {/* 附件字段：从扁平 data 的 fileList 数组中读取文件名 */}
-            {fields.filter((f) => f.type === 'attachment').map((f) => {
-              const fileData = viewRecord.data?.[f.id];
-              const fileList = Array.isArray(fileData)
-                ? fileData
-                : (fileData?.fileList as any[]) || [];
-              const fileRefs: { uid: string; name: string }[] = fileList
-                .map((fl: any) => ({ uid: fl.uid || fl.id, name: fl.name || fl.fileName }))
-                .filter((x: any) => x.uid && x.name);
-              return fileRefs.length > 0 ? (
-                <Descriptions.Item key={f.id} label={f.label} span={2}>
-                  {fileRefs.map((ref: { uid: string; name: string }) => (
-                    <div key={ref.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#155A8A', marginBottom: 4 }}>
-                      <span>📎 {ref.name}</span>
-                      <span
-                        onClick={async () => {
-                          try {
-                            await downloadAttachment(ref.uid);
-                          } catch (err) {
+          <>
+            <Descriptions column={2} size="small" bordered style={{ marginTop: 16 }}>
+              {fields.filter((f) => f.type !== 'section' && f.type !== 'attachment').map((f) => {
+                let val = viewRecord.data?.[f.id];
+                return (
+                  <Descriptions.Item key={f.id} label={f.label} span={f.type === 'textarea' ? 2 : 1}>
+                    {displayValue(val)}
+                  </Descriptions.Item>
+                );
+              })}
+              {/* 附件字段 */}
+              {fields.filter((f) => f.type === 'attachment').map((f) => {
+                const fileData = viewRecord.data?.[f.id];
+                const fileList = Array.isArray(fileData)
+                  ? fileData
+                  : (fileData?.fileList as any[]) || [];
+                const fileRefs: { uid: string; name: string }[] = fileList
+                  .map((fl: any) => ({ uid: fl.uid || fl.id, name: fl.name || fl.fileName }))
+                  .filter((x: any) => x.uid && x.name);
+                return fileRefs.length > 0 ? (
+                  <Descriptions.Item key={f.id} label={f.label} span={2}>
+                    {fileRefs.map((ref: { uid: string; name: string }) => (
+                      <div key={ref.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#155A8A', marginBottom: 4 }}>
+                        <span>📎 {ref.name}</span>
+                        <span onClick={async () => {
+                          try { await downloadAttachment(ref.uid); }
+                          catch (err) {
                             const msg = err instanceof Error ? err.message : '未知错误';
                             showToast('下载失败: ' + msg, 'error');
                           }
-                        }}
-                        style={{ cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}
-                      >
-                        下载
-                      </span>
+                        }} style={{ cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}>下载</span>
+                      </div>
+                    ))}
+                  </Descriptions.Item>
+                ) : null;
+              })}
+              <Descriptions.Item label="创建时间">{fmtTime(viewRecord.createdAt)}</Descriptions.Item>
+              <Descriptions.Item label="更新时间">{fmtTime(viewRecord.updatedAt)}</Descriptions.Item>
+            </Descriptions>
+            {/* 重复 section 数据：每个条目一张独立卡片 */}
+            {fields.filter((sf) => sf.type === 'section' && sf.repeatable && sf.listName).map((sf) => {
+              const listData: Record<string, unknown>[] = (viewRecord.data?.[sf.listName!] as Record<string, unknown>[]) || [];
+              if (listData.length === 0) return null;
+              const sectionFields = fields.filter((f) => f.id !== sf.id && fields.indexOf(sf) < fields.indexOf(f) && (fields.indexOf(f) < fields.findIndex((x) => x.type === 'section' && x.id !== sf.id) || -1 === -1));
+              // 获取属于这个 section 的字段：介于当前 section 和下一个 section 之间
+              const allSecIdx = fields.reduce((acc: number[], f, i) => { if (f.type === 'section') acc.push(i); return acc; }, []);
+              const secPos = allSecIdx.indexOf(fields.indexOf(sf));
+              const startPos = fields.indexOf(sf) + 1;
+              const endPos = secPos < allSecIdx.length - 1 ? allSecIdx[secPos + 1] : fields.length;
+              const childFields = fields.slice(startPos, endPos).filter((f) => f.type !== 'attachment');
+              return (
+                <div key={sf.id} style={{ marginTop: 20 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#155A8A', marginBottom: 10, borderBottom: '2px solid #155A8A', paddingBottom: 4 }}>{sf.label}</div>
+                  {listData.map((item, idx) => (
+                    <div key={idx} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: 12, marginBottom: 10, background: '#FAFBFC' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 8 }}>{sf.label} #{idx + 1}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px' }}>
+                        {childFields.map((cf) => (
+                          <div key={cf.id} style={{ fontSize: 12, lineHeight: 1.8 }}>
+                            <span style={{ color: '#6B7280' }}>{cf.label}：</span>
+                            <span style={{ color: '#1F2937' }}>{displayValue(item[cf.id])}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
-                </Descriptions.Item>
-              ) : null;
+                </div>
+              );
             })}
-            <Descriptions.Item label="创建时间">{fmtTime(viewRecord.createdAt)}</Descriptions.Item>
-            <Descriptions.Item label="更新时间">{fmtTime(viewRecord.updatedAt)}</Descriptions.Item>
-          </Descriptions>
+          </>
         )}
       </Modal>
     </div>
