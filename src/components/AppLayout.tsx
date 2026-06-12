@@ -138,17 +138,21 @@ export default function AppLayout() {
           <div
             onClick={() => setCmdOpen(true)}
             style={{
-              position: 'fixed', bottom: 24, right: 24, zIndex: 100,
-              width: 48, height: 48, borderRadius: '50%',
-              background: 'var(--color-primary)', color: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', boxShadow: 'var(--shadow-lg)',
+              position: 'fixed', top: '50%', right: 16, transform: 'translateY(-50%)', zIndex: 100,
+              height: 40, paddingInline: 12, borderRadius: 20,
+              background: 'var(--color-surface)', color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border)',
+              display: 'flex', alignItems: 'center', gap: 6,
+              cursor: 'pointer', boxShadow: 'var(--shadow-md)',
               transition: 'all 0.2s var(--ease-out)',
+              fontSize: 12, fontWeight: 500,
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = 'var(--shadow-xl)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
           >
-            <Search size={20} />
+            <Search size={14} />
+            <span>搜索</span>
+            <kbd style={{ padding: '1px 5px', borderRadius: 3, fontSize: 10, background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', fontFamily: 'var(--font-mono)' }}>⌘K</kbd>
           </div>
           <motion.div
             key={currentPage}

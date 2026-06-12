@@ -1,10 +1,10 @@
 /**
- * 案件关系图谱
- * 使用 ECharts 力导向图展示嫌疑人、案件、证据之间的关联关系
+ * 案件关系图谱 — 现代化设计
+ * 使用 ECharts 力导向图展示案件-嫌疑人-证据关联
  */
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GitBranch, Search, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { GitBranch, RefreshCw, Maximize2, Minimize2, Info } from 'lucide-react';
 import * as echarts from 'echarts';
 import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
@@ -21,14 +21,12 @@ interface GraphNode {
 interface GraphLink {
   source: string;
   target: string;
-  lineStyle: { width: number };
 }
 
 const CATEGORIES = [
-  { name: '案件', itemStyle: { color: '#2563EB' } },
-  { name: '嫌疑人', itemStyle: { color: '#DC2626' } },
-  { name: '证据/线索', itemStyle: { color: '#059669' } },
-  { name: '模块', itemStyle: { color: '#7C3AED' } },
+  { name: '案件', itemStyle: { color: '#3B82F6', shadowBlur: 12, shadowColor: 'rgba(59,130,246,0.3)' } },
+  { name: '嫌疑人', itemStyle: { color: '#EF4444', shadowBlur: 12, shadowColor: 'rgba(239,68,68,0.3)' } },
+  { name: '证据/线索', itemStyle: { color: '#10B981', shadowBlur: 12, shadowColor: 'rgba(16,185,129,0.3)' } },
 ];
 
 export default function CaseGraph() {
@@ -36,26 +34,28 @@ export default function CaseGraph() {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartInstance = useRef<echarts.ECharts>();
   const [searchText, setSearchText] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const records = useMemo(() => {
-    void refreshKey;
-    return getMassRecords();
-  }, [refreshKey]);
+  const records = useMemo(() => { void refreshKey; return getMassRecords(); }, [refreshKey]);
 
   // 构建图谱数据
-  const { nodes, links } = useMemo(() => {
+  const { nodes, links, stats } = useMemo(() => {
     const nodeMap = new Map<string, GraphNode>();
     const linkSet = new Set<string>();
     const linkList: GraphLink[] = [];
+    let caseCount = 0, suspectCount = 0, clueCount = 0;
 
     const addNode = (id: string, name: string, category: number, size: number) => {
       if (nodeMap.has(id)) {
         const existing = nodeMap.get(id)!;
         existing.value += 1;
-        existing.symbolSize = Math.min(existing.symbolSize + 2, 60);
+        existing.symbolSize = Math.min(existing.symbolSize + 3, 60);
       } else {
         nodeMap.set(id, { id, name, category, symbolSize: size, value: 1 });
+        if (category === 0) caseCount++;
+        else if (category === 1) suspectCount++;
+        else clueCount++;
       }
     };
 
@@ -63,58 +63,33 @@ export default function CaseGraph() {
       const key = `${source}->${target}`;
       if (!linkSet.has(key) && source !== target) {
         linkSet.add(key);
-        linkList.push({ source, target, lineStyle: { width: 1 } });
+        linkList.push({ source, target });
       }
     };
 
-    // 模块节点
-    const moduleCounts: Record<string, number> = {};
-    for (const r of records) {
-      moduleCounts[r.moduleId] = (moduleCounts[r.moduleId] || 0) + 1;
-    }
-    for (const [mid, count] of Object.entries(moduleCounts)) {
-      addNode(`mod-${mid}`, MODULE_NAMES[mid] || mid, 3, Math.min(15 + count * 2, 50));
-    }
-
-    // 提取案件和嫌疑人
     for (const rec of records) {
       const data = rec.data || {};
       const caseName = String(data.caseName || '').trim();
-      const caseNo = String(data.caseNo || '').trim();
       const suspect = String(data.suspect || data.suspectName || '').trim();
+      const clueName = String(data.clueName || data.projectName || '').trim();
 
-      // 案件节点
       if (caseName) {
         const caseId = `case-${caseName}`;
-        addNode(caseId, caseName.length > 10 ? caseName.slice(0, 10) + '…' : caseName, 0, 30);
-        addLink(`mod-${rec.moduleId}`, caseId);
-
-        if (caseNo) {
-          addLink(caseId, `case-${caseNo}`);
-        }
+        addNode(caseId, caseName.length > 8 ? caseName.slice(0, 8) + '…' : caseName, 0, 35);
       }
-
-      // 嫌疑人节点
       if (suspect) {
         const suspectId = `suspect-${suspect}`;
-        addNode(suspectId, suspect.length > 6 ? suspect.slice(0, 6) + '…' : suspect, 1, 22);
-        if (caseName) {
-          addLink(`case-${caseName}`, suspectId);
-        }
+        addNode(suspectId, suspect.length > 6 ? suspect.slice(0, 6) + '…' : suspect, 1, 25);
+        if (caseName) addLink(`case-${caseName}`, suspectId);
       }
-
-      // 证据/线索
-      const clueName = String(data.clueName || data.projectName || '').trim();
       if (clueName) {
         const clueId = `clue-${clueName}`;
-        addNode(clueId, clueName.length > 8 ? clueName.slice(0, 8) + '…' : clueName, 2, 18);
-        if (caseName) {
-          addLink(`case-${caseName}`, clueId);
-        }
+        addNode(clueId, clueName.length > 8 ? clueName.slice(0, 8) + '…' : clueName, 2, 20);
+        if (caseName) addLink(`case-${caseName}`, clueId);
       }
     }
 
-    return { nodes: Array.from(nodeMap.values()), links: linkList };
+    return { nodes: Array.from(nodeMap.values()), links: linkList, stats: { cases: caseCount, suspects: suspectCount, clues: clueCount } };
   }, [records]);
 
   // 初始化图表
@@ -122,170 +97,171 @@ export default function CaseGraph() {
     if (!chartRef.current) return;
     const chart = echarts.init(chartRef.current);
     chartInstance.current = chart;
-
     const handler = () => chart.resize();
     window.addEventListener('resize', handler);
-    return () => {
-      window.removeEventListener('resize', handler);
-      chart.dispose();
-    };
+    return () => { window.removeEventListener('resize', handler); chart.dispose(); };
   }, []);
 
-  // 更新图表数据
+  // 更新图表
   useEffect(() => {
     const chart = chartInstance.current;
     if (!chart) return;
 
-    const textColor = darkMode ? '#8c919a' : '#6B7280';
+    const isDark = darkMode;
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const bgColor = 'transparent';
 
     chart.setOption({
       tooltip: {
         trigger: 'item',
-        backgroundColor: darkMode ? '#1a1d25' : '#fff',
-        borderColor: darkMode ? '#374151' : '#E5E7EB',
-        textStyle: { color: darkMode ? '#e2e2e6' : '#1F2937', fontSize: 12 },
+        backgroundColor: isDark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)',
+        borderColor: isDark ? '#334155' : '#e2e8f0',
+        borderWidth: 1,
+        padding: [12, 16],
+        textStyle: { color: isDark ? '#e2e8f0' : '#1e293b', fontSize: 13 },
+        extraCssText: 'backdrop-filter: blur(8px); border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);',
         formatter: (params: any) => {
           if (params.dataType === 'node') {
-            return `<b>${params.name}</b><br/>类型: ${CATEGORIES[params.data.category]?.name || '未知'}<br/>关联数: ${params.data.value}`;
+            const cat = CATEGORIES[params.data.category];
+            return `<div style="margin-bottom:6px;font-weight:600;font-size:14px">${params.name}</div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                      <span style="width:8px;height:8px;border-radius:50%;background:${cat?.itemStyle?.color || '#999'}"></span>
+                      <span style="font-size:12px;color:${textColor}">${cat?.name || '未知'}</span>
+                    </div>
+                    <div style="font-size:12px;color:${textColor}">关联 ${params.data.value} 条记录</div>`;
           }
           return '';
         },
       },
       legend: {
-        data: CATEGORIES.map((c) => c.name),
-        bottom: 10,
-        textStyle: { color: textColor, fontSize: 11 },
+        data: CATEGORIES.map(c => c.name),
+        bottom: 16,
+        textStyle: { color: textColor, fontSize: 12 },
+        itemWidth: 12, itemHeight: 12, itemGap: 20,
+        icon: 'circle',
       },
-      animationDuration: 1500,
+      animationDuration: 1200,
       animationEasingUpdate: 'quinticInOut',
       series: [{
         type: 'graph',
         layout: 'force',
-        data: nodes.map((n) => ({
+        data: nodes.map(n => ({
           ...n,
           label: {
             show: true,
-            fontSize: 10,
-            color: darkMode ? '#e2e2e6' : '#1F2937',
+            fontSize: 11,
+            fontWeight: 500,
+            color: isDark ? '#e2e8f0' : '#1e293b',
+            distance: 8,
+          },
+          itemStyle: {
+            ...CATEGORIES[n.category]?.itemStyle,
+            borderWidth: 2,
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
           },
         })),
-        links: links.map((l) => ({
+        links: links.map(l => ({
           ...l,
           lineStyle: {
-            ...l.lineStyle,
-            color: darkMode ? 'rgba(163, 201, 255, 0.2)' : 'rgba(37, 99, 235, 0.15)',
+            color: isDark ? 'rgba(148,163,184,0.15)' : 'rgba(100,116,139,0.12)',
+            width: 1.5,
+            curveness: 0.2,
           },
         })),
         categories: CATEGORIES,
         roam: true,
         draggable: true,
-        force: {
-          repulsion: 200,
-          edgeLength: [80, 200],
-          gravity: 0.1,
-        },
+        force: { repulsion: 250, edgeLength: [100, 220], gravity: 0.08 },
         emphasis: {
           focus: 'adjacency',
-          lineStyle: { width: 3 },
+          lineStyle: { width: 3, color: isDark ? 'rgba(148,163,184,0.4)' : 'rgba(100,116,139,0.3)' },
+          itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,0,0,0.15)' },
         },
-        blur: {
-          itemStyle: { opacity: 0.2 },
-        },
+        blur: { itemStyle: { opacity: 0.15 }, label: { opacity: 0.3 } },
       }],
     }, true);
 
     // 搜索高亮
     if (searchText) {
-      const matchedIds = new Set(
-        nodes
-          .filter((n) => n.name.toLowerCase().includes(searchText.toLowerCase()))
-          .map((n) => n.id)
-      );
-      chart.setOption({
-        series: [{
-          data: nodes.map((n) => ({
-            ...n,
-            itemStyle: matchedIds.size > 0 && !matchedIds.has(n.id)
-              ? { opacity: 0.15 }
-              : undefined,
-          })),
-        }],
-      });
+      const matchedIds = new Set(nodes.filter(n => n.name.toLowerCase().includes(searchText.toLowerCase())).map(n => n.id));
+      if (matchedIds.size > 0) {
+        chart.setOption({
+          series: [{ data: nodes.map(n => ({ ...n, itemStyle: { opacity: matchedIds.has(n.id) ? 1 : 0.1 } })) }],
+        });
+      }
     }
   }, [nodes, links, darkMode, searchText]);
 
   return (
-    <div>
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 8, background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 12px rgba(124,58,237,.24)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* 头部 */}
+      <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex-between">
+        <div className="flex items-center gap-3">
+          <div style={{ width: 42, height: 42, borderRadius: 10, background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(99,102,241,0.3)' }}>
             <GitBranch size={20} color="#fff" />
           </div>
           <div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: darkMode ? '#e2e2e6' : '#172033' }}>案件关系图谱</div>
-            <div style={{ fontSize: 12, color: darkMode ? '#8c919a' : '#64748B', marginTop: 2 }}>
-              展示案件、嫌疑人、证据之间的关联关系 · {nodes.length} 个节点 · {links.length} 条关系
-            </div>
+            <div className="text-xl font-bold">案件关系图谱</div>
+            <div className="text-sm text-secondary" style={{ marginTop: 2 }}>可视化案件、嫌疑人、证据之间的关联关系</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="flex gap-2">
           <input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="搜索节点..."
-            style={{
-              height: 34, padding: '0 12px', borderRadius: 6, border: `1px solid ${darkMode ? '#374151' : '#D8E1EA'}`,
-              background: darkMode ? '#1F2937' : '#fff', color: darkMode ? '#e2e2e6' : '#1F2937',
-              fontSize: 13, width: 180, outline: 'none',
-            }}
+            className="btn btn-ghost"
+            style={{ width: 180, textAlign: 'left', paddingLeft: 12 }}
           />
-          <button
-            onClick={() => { setSearchText(''); setRefreshKey((k) => k + 1); }}
-            style={{
-              height: 34, padding: '0 12px', borderRadius: 6, border: `1px solid ${darkMode ? '#374151' : '#D8E1EA'}`,
-              background: darkMode ? '#1F2937' : '#fff', color: darkMode ? '#e2e2e6' : '#1F2937',
-              fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-            }}
-          >
-            <RotateCcw size={13} /> 刷新
+          <button className="btn btn-ghost" onClick={() => setRefreshKey(k => k + 1)} title="刷新">
+            <RefreshCw size={14} />
+          </button>
+          <button className="btn btn-ghost" onClick={() => setIsFullscreen(v => !v)} title="全屏">
+            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
         </div>
       </motion.div>
 
+      {/* 统计卡片 */}
+      <div className="flex gap-3">
+        {[
+          { label: '案件', value: stats.cases, color: '#3B82F6' },
+          { label: '嫌疑人', value: stats.suspects, color: '#EF4444' },
+          { label: '证据/线索', value: stats.clues, color: '#10B981' },
+        ].map(s => (
+          <div key={s.label} className="card" style={{ padding: '12px 20px', flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: s.color, boxShadow: `0 0 8px ${s.color}40` }} />
+            <div>
+              <div className="stat-value" style={{ fontSize: 20, color: s.color }}>{s.value}</div>
+              <div className="stat-label">{s.label}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 图表容器 */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        style={{
-          background: darkMode ? 'rgba(28, 31, 38, 0.75)' : '#fff',
-          borderRadius: 12,
-          border: `1px solid ${darkMode ? 'rgba(163, 201, 255, 0.12)' : '#E5E7EB'}`,
-          boxShadow: darkMode ? '0 2px 12px rgba(0,0,0,.25)' : '0 1px 4px rgba(0,0,0,.04)',
-          overflow: 'hidden',
-        }}
+        transition={{ delay: 0.1 }}
+        className="panel"
+        style={{ overflow: 'hidden', transition: 'all 0.3s var(--ease-out)' }}
       >
         {nodes.length === 0 ? (
-          <div style={{ padding: 60, textAlign: 'center', color: darkMode ? '#8c919a' : '#9CA3AF' }}>
-            <GitBranch size={40} style={{ marginBottom: 12, opacity: 0.5 }} />
-            <div style={{ fontSize: 14, fontWeight: 500 }}>暂无关联数据</div>
-            <div style={{ fontSize: 12, marginTop: 4 }}>录入案件和嫌疑人信息后将自动生成关系图谱</div>
+          <div style={{ padding: 80, textAlign: 'center' }}>
+            <GitBranch size={48} color="var(--color-text-muted)" style={{ marginBottom: 16, opacity: 0.3 }} />
+            <div className="text-lg font-semibold" style={{ marginBottom: 8 }}>暂无关联数据</div>
+            <div className="text-sm text-muted">录入案件和嫌疑人信息后将自动生成关系图谱</div>
           </div>
         ) : (
-          <div ref={chartRef} style={{ width: '100%', height: 600 }} />
+          <div ref={chartRef} style={{ width: '100%', height: isFullscreen ? 'calc(100vh - 300px)' : 520, transition: 'height 0.3s' }} />
         )}
       </motion.div>
 
-      {/* 图例说明 */}
-      <div style={{ display: 'flex', gap: 16, marginTop: 12, justifyContent: 'center' }}>
-        {CATEGORIES.map((cat) => (
-          <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: darkMode ? '#8c919a' : '#6B7280' }}>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: cat.itemStyle.color }} />
-            {cat.name}
-          </div>
-        ))}
+      {/* 使用提示 */}
+      <div className="flex items-center gap-2 text-sm text-muted" style={{ padding: '0 4px' }}>
+        <Info size={14} />
+        <span>拖拽节点调整布局 · 滚轮缩放 · 悬停查看关联 · 搜索高亮节点</span>
       </div>
     </div>
   );

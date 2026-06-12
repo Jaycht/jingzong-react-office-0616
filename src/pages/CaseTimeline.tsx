@@ -608,7 +608,19 @@ export default function CaseTimeline() {
 
   const [selectedCase, setSelectedCase] = useState<string>('');
 
-  const allCaseNames = useMemo(() => getAllCaseNames(), []);
+  // 从索引获取案件名，如果索引为空则直接从记录中提取
+  const indexCaseNames = useMemo(() => getAllCaseNames(), []);
+  const allCaseNames = useMemo(() => {
+    if (indexCaseNames.length > 0) return indexCaseNames;
+    // 索引为空时，从所有记录中直接提取案件名
+    const records = getMassRecords();
+    const names = new Set<string>();
+    for (const rec of records) {
+      const name = String(rec.data?.caseName || '').trim();
+      if (name) names.add(name);
+    }
+    return Array.from(names).sort();
+  }, [indexCaseNames]);
 
   const timelineRecords = useMemo(() => {
     if (!selectedCase) return [];
