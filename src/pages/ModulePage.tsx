@@ -110,6 +110,7 @@ export default function ModulePage() {
   const [filterDateRange, setFilterDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [filterHandler, setFilterHandler] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
 
   const activeTab = module
     ? activeTabs[module.id] && module.tabs.some((tab) => tab.id === activeTabs[module.id])
@@ -577,8 +578,31 @@ export default function ModulePage() {
           </div>
         )}
         <div style={{ padding: 16, borderTop: '1px solid #EDF2F7' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+          {/* 视图切换 + 字段数 */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <Tag color="blue">{dataFields.length} 个字段</Tag>
+            <div style={{ display: 'flex', gap: 4, background: 'var(--color-surface-hover)', borderRadius: 6, padding: 2 }}>
+              <button
+                className="btn btn-sm"
+                onClick={() => setViewMode('table')}
+                style={{
+                  background: viewMode === 'table' ? 'var(--color-surface)' : 'transparent',
+                  boxShadow: viewMode === 'table' ? 'var(--shadow-sm)' : 'none',
+                  color: viewMode === 'table' ? 'var(--color-text)' : 'var(--color-text-muted)',
+                  border: 'none', height: 26, paddingInline: 10,
+                }}
+              >表格</button>
+              <button
+                className="btn btn-sm"
+                onClick={() => setViewMode('card')}
+                style={{
+                  background: viewMode === 'card' ? 'var(--color-surface)' : 'transparent',
+                  boxShadow: viewMode === 'card' ? 'var(--shadow-sm)' : 'none',
+                  color: viewMode === 'card' ? 'var(--color-text)' : 'var(--color-text-muted)',
+                  border: 'none', height: 26, paddingInline: 10,
+                }}
+              >卡片</button>
+            </div>
           </div>
           {/* 批量操作栏 */}
           {selectedRowKeys.length > 0 && (
@@ -601,17 +625,75 @@ export default function ModulePage() {
               </Button>
             </div>
           )}
-          <Table<DynamicRow>
-            size="middle"
-            columns={dynamicColumns}
-            dataSource={rows}
-            pagination={{ pageSize: 10 }}
-            scroll={{ x: 'max-content' }}
-            rowSelection={{
-              selectedRowKeys,
-              onChange: (keys) => setSelectedRowKeys(keys),
-            }}
-          />
+          {/* 空状态引导 */}
+          {rows.length === 0 ? (
+            <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+              <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.4 }}>📋</div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)', marginBottom: 8 }}>暂无数据</div>
+              <div style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 20 }}>
+                点击上方「新建{active?.label || module.label}」开始录入
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  if (module && activeTab) setCurrentTabId(activeTab);
+                  openModal('newRecord');
+                }}
+                style={{ height: 40, paddingInline: 20 }}
+              >
+                <Plus size={15} /> 立即新建
+              </button>
+            </div>
+          ) : viewMode === 'card' ? (
+            /* 卡片视图 */
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+              {rows.map((row) => (
+                <motion.div
+                  key={row.key}
+                  className="card hover-lift"
+                  style={{ padding: 16, cursor: 'pointer' }}
+                  onClick={() => setViewRecord(row._record)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)', flex: 1, minWidth: 0 }} className="truncate">
+                      {dataFields.slice(0, 2).map(f => row[f.id]).filter(Boolean).join(' · ') || `#${row.code}`}
+                    </div>
+                    <span className={`badge ${row._status === '已完成' ? 'badge-success' : row._status === '待补充' ? 'badge-warning' : 'badge-info'}`}>
+                      {row._status}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
+                    {dataFields.slice(0, 4).map(f => (
+                      <div key={f.id} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+                        <span className="text-muted flex-shrink-0" style={{ width: 60 }}>{f.label}</span>
+                        <span className="truncate" style={{ color: 'var(--color-text)' }}>{row[f.id] || '—'}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-border-light)', paddingTop: 8 }}>
+                    <span className="text-sm text-muted">{row._updatedAt}</span>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setViewRecord(row._record); }}>查看</button>
+                      <button className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setEditRecord(row._record); openModal('newRecord'); }}>编辑</button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            /* 表格视图 */
+            <Table<DynamicRow>
+              size="middle"
+              columns={dynamicColumns}
+              dataSource={rows}
+              pagination={{ pageSize: 10 }}
+              scroll={{ x: 'max-content' }}
+              rowSelection={{
+                selectedRowKeys,
+                onChange: (keys) => setSelectedRowKeys(keys),
+              }}
+            />
+          )}
         </div>
       </div>
 

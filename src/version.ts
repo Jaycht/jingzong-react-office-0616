@@ -1,9 +1,23 @@
-export const APP_VERSION = "V2.10.0";
+export const APP_VERSION = "V2.11.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 10;
+export const VERSION_MINOR = 11;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.11.0 =====
+  "V2.11.0 新增 - 全局命令面板 (Ctrl+K)，搜索记录/模块/快捷命令，键盘导航",
+  "V2.11.0 新增 - Dashboard 改为待办驱动工作台，显示预警列表+统计+最近动态",
+  "V2.11.0 新增 - 侧边栏快速新建按钮，一键打开新建表单",
+  "V2.11.0 新增 - 模块页支持表格/卡片双视图切换，空状态引导按钮",
+  "V2.11.0 新增 - Deadline 预警侧边通知面板，任何页面可查看即将到期案件",
+  "V2.11.0 新增 - CSS 设计令牌系统（颜色/间距/圆角/阴影/字体/过渡）",
+  "V2.11.0 新增 - 深色模式 CSS 变量覆盖，Ant Design darkAlgorithm 支持",
+  "V2.11.0 新增 - 悬浮效果 CSS 工具类 (hover-bg/hover-lift)，替代 JS onMouseEnter",
+  "V2.11.0 新增 - 按钮变体系统 (.btn-primary/.btn-ghost/.btn-danger/.btn-sm)",
+  "V2.11.0 新增 - 骨架屏/加载状态 CSS 动画",
+  "V2.11.0 增强 - 侧边栏键盘可访问性 (role/tabIndex/aria-expanded/onKeyDown)",
+  "V2.11.0 增强 - 页面加载从纯文字改为 Ant Design Spin 组件",
+  "V2.11.0 增强 - Ant Design 主题 token 统一（Button/Input/Select/Table/Tabs/Modal 等）",
   // ===== V2.10.0 =====
   "V2.10.0 新增 - 数据存储迁移到 IndexedDB，突破 localStorage 5MB 限制，支持更大数据量",
   "V2.10.0 新增 - 表单自动保存草稿功能，填写中断后重新打开可恢复未提交数据",

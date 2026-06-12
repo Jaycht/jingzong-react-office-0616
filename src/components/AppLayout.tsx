@@ -1,6 +1,7 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Modal } from "antd";
+import { Modal, Spin } from "antd";
+import { Search } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
 import Sidebar from "./Sidebar";
@@ -11,6 +12,8 @@ import ModalNewUser from "./ModalNewUser";
 import Drawer from "./Drawer";
 import Breadcrumb from "./Breadcrumb";
 import ErrorBoundary from "./ErrorBoundary";
+import CommandPalette from "./CommandPalette";
+import NotificationPanel from "./NotificationPanel";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Statistics = lazy(() => import("../pages/Statistics"));
@@ -81,6 +84,19 @@ export default function AppLayout() {
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
+
+  // Ctrl+K 全局快捷键
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const Page = PAGES[currentPage] || ModulePage;
 
@@ -116,18 +132,42 @@ export default function AppLayout() {
       <div className="content-area" style={{
         flex: 1, overflow: 'auto', padding: '16px 20px',
         background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5',
+        display: 'flex', gap: 0,
       }}>
+          {/* 全局搜索触发按钮 */}
+          <div
+            onClick={() => setCmdOpen(true)}
+            style={{
+              position: 'fixed', bottom: 24, right: 24, zIndex: 100,
+              width: 48, height: 48, borderRadius: '50%',
+              background: 'var(--color-primary)', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', boxShadow: 'var(--shadow-lg)',
+              transition: 'all 0.2s var(--ease-out)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = 'var(--shadow-xl)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
+          >
+            <Search size={20} />
+          </div>
           <motion.div
             key={currentPage}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
+            style={{ flex: 1, minWidth: 0 }}
           >
             <Breadcrumb />
-            <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: "#9CA3AF" }}>加载中...</div>}>
+            <Suspense fallback={
+              <div style={{ padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                <Spin size="large" />
+                <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>页面加载中...</div>
+              </div>
+            }>
               <Page />
             </Suspense>
           </motion.div>
+          <NotificationPanel />
       </div>
       </div>
 
@@ -150,6 +190,7 @@ export default function AppLayout() {
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       <PasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
+      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
     </div>
   );
 }

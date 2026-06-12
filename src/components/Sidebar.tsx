@@ -118,12 +118,16 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
     return (
       <motion.div
         key={item.id}
+        role="button"
+        tabIndex={0}
+        aria-current={active ? 'page' : undefined}
         whileHover={{ background: darkMode ? '#374151' : '#F9FAFB' }}
         whileTap={{ scale: 0.99 }}
         onClick={() => setCurrentPage(item.id)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCurrentPage(item.id); } }}
         style={{
           display: 'flex', alignItems: 'center', gap: 9,
-          padding: '10px 14px', cursor: 'pointer',
+          padding: '10px 14px', cursor: 'pointer', outline: 'none',
           borderLeft: '3px solid',
           borderLeftColor: active ? '#2563EB' : 'transparent',
           background: active ? (darkMode ? '#1E3A5F' : '#EFF6FF') : 'transparent',
@@ -237,12 +241,16 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           return (
             <div key={dept.id}>
               <motion.div
+                role="button"
+                tabIndex={0}
+                aria-expanded={isExpanded}
                 whileHover={{ background: darkMode ? '#374151' : '#F9FAFB' }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => toggleExpand(dept.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(dept.id); } }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 9,
-                  padding: '10px 14px', cursor: 'pointer',
+                  padding: '10px 14px', cursor: 'pointer', outline: 'none',
                   borderLeft: '3px solid',
                   borderLeftColor: childActive || isExpanded ? '#2563EB' : 'transparent',
                   background: childActive || isExpanded ? (darkMode ? '#1E3A5F' : '#EFF6FF') : 'transparent',
@@ -275,19 +283,23 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
                       return (
                         <motion.div
                           key={module.id}
-                          whileHover={{ background: '#F9FAFB' }}
+                          role="button"
+                          tabIndex={0}
+                          aria-current={active ? 'page' : undefined}
+                          whileHover={{ background: darkMode ? '#374151' : '#F9FAFB' }}
                           whileTap={{ scale: 0.99 }}
                           onClick={() => setCurrentPage(module.id)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCurrentPage(module.id); } }}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 9,
                             padding: '9px 14px 9px 42px',
-                            cursor: 'pointer', position: 'relative',
-                            background: active ? '#EFF6FF' : 'transparent',
+                            cursor: 'pointer', outline: 'none', position: 'relative',
+                            background: active ? (darkMode ? '#1E3A5F' : '#EFF6FF') : 'transparent',
                           }}
                         >
-                          <div style={{ position: 'absolute', left: 24, top: 0, bottom: 0, width: 1, background: '#E5E7EB' }} />
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: active ? '#2563EB' : '#D1D5DB', flexShrink: 0 }} />
-                          <span style={{ fontSize: 12.5, color: active ? '#2563EB' : '#4B5563', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ position: 'absolute', left: 24, top: 0, bottom: 0, width: 1, background: darkMode ? '#374151' : '#E5E7EB' }} />
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: active ? '#2563EB' : (darkMode ? '#6B7280' : '#D1D5DB'), flexShrink: 0 }} />
+                          <span style={{ fontSize: 12.5, color: active ? '#2563EB' : (darkMode ? '#D1D5DB' : '#4B5563'), whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {module.label}
                           </span>
                         </motion.div>
@@ -314,6 +326,23 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         
         {/* 版权信息入口 */}
         {renderPlatformItem({ id: 'version', label: '版权信息', icon: ShieldCheck })}
+
+        {/* 快速新建按钮 */}
+        {!collapsed && (
+          <div style={{ padding: '8px 14px', flexShrink: 0 }}>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                useAppStore.getState().openModal('newRecord');
+              }}
+              className="btn btn-primary"
+              style={{ width: '100%', height: 38, fontSize: 13, fontWeight: 600, boxShadow: 'var(--shadow-md)' }}
+            >
+              + 新建记录
+            </motion.button>
+          </div>
+        )}
       </div>
 
       {/* 底部版权 */}

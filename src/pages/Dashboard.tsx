@@ -1,377 +1,218 @@
+/**
+ * 工作台 Dashboard — 待办驱动
+ * 核心区域：待办列表 + 快捷统计 + 最近动态
+ */
 import { useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, ArrowUp, ArrowDown,
-  Zap, Activity,
-  Gavel, FileText, Users, Shield, Database, ClipboardList, Scale, Search
+  TrendingUp, ArrowUp, ArrowDown, Clock, AlertTriangle, CheckCircle2,
+  FileText, Gavel, Activity, Zap, FolderOpen
 } from "lucide-react";
 import * as echarts from 'echarts';
 import { getMassRecords } from "../store/massStore";
 import type { MassRecord } from "../store/massStore";
 import { useAppStore } from "../store/appStore";
-import { MODULE_NAMES } from "../moduleConfig";
-import GlobalSearch from "../components/GlobalSearch";
-import DataVolumeGauge from "../components/DataVolumeGauge";
+import { MODULE_NAMES, findModule } from "../moduleConfig";
 
-const KPI_COLORS = [
-  { bg: "linear-gradient(135deg,#1B5E9B,#2E7DCA)" },
-  { bg: "linear-gradient(135deg,#0E7C4B,#38A169)" },
-  { bg: "linear-gradient(135deg,#C2410C,#E67E22)" },
-  { bg: "linear-gradient(135deg,#6D28D9,#8B5CF6)" },
-];
+/* ===================== 到期预警计算 ===================== */
 
-const TOP_MODULES = [
-  { id: "mass-clue",      label: "涉众线索",    icon: Search,      color: "#2563EB" },
-  { id: "squad-case",     label: "中队案件",    icon: Gavel,       color: "#7C3AED" },
-  { id: "legal-case-ledger", label: "案件台账", icon: FileText,    color: "#0891B2" },
-  { id: "squad-coercive", label: "强制措施",    icon: Shield,      color: "#DC2626" },
-  { id: "legal-report-case", label: "报案登记",  icon: ClipboardList, color: "#D97706" },
-  { id: "evidence-freeze", label: "资金查控",  icon: Database,    color: "#059669" },
-  { id: "office-finance-assets", label: "经费保障", icon: Scale,       color: "#6D28D9" },
-  { id: "mass-petition",  label: "信访反馈",    icon: Users,       color: "#E11D48" },
-];
-
-/* ===================== 数据计算 ===================== */
-
-function calcKpi(records: MassRecord[]) {
-  const total = records.length;
-  const completed = records.filter((r) => r.data?.status === "已完成" || r.data?.status === "已办结").length;
-  const ongoing = records.filter((r) => {
-    const s = r.data?.status;
-    return s && s !== "已完成" && s !== "已办结";
-  }).length;
-  return [
-    { label: "总记录数", value: total, unit: "条", trend: total > 0 ? Math.round((total / Math.max(total, 10)) * 100) : 0 },
-    { label: "已完成", value: completed, unit: "条", trend: total > 0 ? Math.round((completed / total) * 100) : 0 },
-    { label: "进行中", value: ongoing, unit: "条", trend: ongoing > 0 ? Math.round((ongoing / Math.max(total, 1)) * 100) : 0 },
-    { label: "完成率", value: total > 0 ? Math.round((completed / total) * 100) : 0, unit: "%", trend: total > 0 ? Math.round((completed / total) * 100) - 5 : 0 },
-  ];
+interface WarnItem {
+  id: string;
+  recordId: string;
+  moduleId: string;
+  caseName: string;
+  type: string;
+  deadline: string;
+  remainingDays: number;
+  severity: 'overdue' | 'critical' | 'warning';
 }
 
-function caseTypeStats(records: MassRecord[]) {
-  const targets = new Set([
-    'mass-statistics', 'legal-report-case', 'legal-case-ledger',
-    'squad-case', 'squad-daily', 'evidence-request'
-  ]);
-  const map: Record<string, number> = {};
-  for (const r of records) {
-    if (!r.data || !targets.has(r.moduleId)) continue;
-    const val = r.data.caseType;
-    if (typeof val === "string" && val.trim()) {
-      map[val.trim()] = (map[val.trim()] || 0) + 1;
+function addDays(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function addMonths(d: Date, n: number) { const r = new Date(d); r.setMonth(r.getMonth() + n); return r; }
+function toStr(d: Date) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function calcRemaining(deadline: Date) { const t = new Date(); t.setHours(0, 0, 0, 0); return Math.floor((deadline.getTime() - t.getTime()) / 86400000); }
+
+function calcWarnings(records: MassRecord[]): WarnItem[] {
+  const rules = [
+    { mids: ['legal-report-case', 'legal-case-ledger', 'squad-case'], f: 'receiveDate', t: '受案→立案（7日）', calc: (d: string) => toStr(addDays(new Date(d), 7)) },
+    { mids: ['squad-coercive', 'legal-case-ledger'], f: 'criminalDetentionDate', t: '刑事拘留（30日）', calc: (d: string) => toStr(addDays(new Date(d), 30)) },
+    { mids: ['squad-coercive', 'legal-case-ledger', 'squad-case'], f: 'arrestDate', t: '侦查羁押（2个月）', calc: (d: string) => toStr(addMonths(new Date(d), 2)) },
+    { mids: ['squad-coercive', 'legal-case-ledger'], f: 'bailDate', t: '取保候审（12个月）', calc: (d: string) => toStr(addMonths(new Date(d), 12)) },
+    { mids: ['squad-coercive', 'legal-case-ledger'], f: 'residentialSurveillanceDate', t: '监视居住（6个月）', calc: (d: string) => toStr(addMonths(new Date(d), 6)) },
+    { mids: ['squad-case', 'legal-case-ledger'], f: 'filingDate', t: '立案侦查（2个月）', calc: (d: string) => toStr(addMonths(new Date(d), 2)) },
+  ];
+  const items: WarnItem[] = [];
+  for (const rule of rules) {
+    for (const rec of records.filter(r => rule.mids.includes(r.moduleId))) {
+      const raw = rec.data?.[rule.f];
+      if (typeof raw !== 'string') continue;
+      try {
+        const deadline = rule.calc(raw);
+        const remaining = calcRemaining(new Date(deadline));
+        if (remaining > 30) continue;
+        const severity: WarnItem['severity'] = remaining <= 0 ? 'overdue' : remaining <= 3 ? 'critical' : 'warning';
+        items.push({
+          id: rec.id + rule.f + rule.t, recordId: rec.id, moduleId: rec.moduleId,
+          caseName: String(rec.data?.caseName || rec.data?.suspect || '未命名').slice(0, 14),
+          type: rule.t, deadline, remainingDays: remaining, severity,
+        });
+      } catch { /* ignore */ }
     }
   }
-  return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  const order: Record<string, number> = { overdue: 0, critical: 1, warning: 2 };
+  items.sort((a, b) => order[a.severity] - order[b.severity] || a.remainingDays - b.remainingDays);
+  return items;
 }
 
-function recentActivity(records: MassRecord[]) {
-  return records.slice(0, 10).map((r) => ({
-    moduleName: MODULE_NAMES[r.moduleId] || r.moduleId,
-    date: r.createdAt?.slice(0, 10) || "",
-    title: r.data?.title || r.data?.name || r.data?.caseName || r.data?.summary || MODULE_NAMES[r.moduleId] || r.moduleId,
-  }));
-}
+/* ===================== KPI 卡片 ===================== */
 
-/* ===================== 子组件 ===================== */
-
-function KpiCard({ item, index }: { item: ReturnType<typeof calcKpi>[number]; index: number }) {
-  const rising = item.trend >= 0;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.06 }}
-      style={{
-        flex: 1, color: "#fff",
-        background: KPI_COLORS[index].bg,
-        borderRadius: 12, padding: "16px 18px",
-        boxShadow: "0 2px 8px rgba(0,0,0,.08)",
-      }}
-    >
-      <div style={{ fontSize: 11.5, opacity: 0.85, fontWeight: 500, marginBottom: 4 }}>{item.label}</div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-        <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>{item.value}</span>
-        <span style={{ fontSize: 13, opacity: 0.75, fontWeight: 500 }}>{item.unit}</span>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, fontSize: 11.5, opacity: 0.9 }}>
-        {rising ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-        <span>{Math.abs(item.trend)}%</span>
-        <span style={{ opacity: 0.7, marginLeft: 4 }}>较上月</span>
-      </div>
-    </motion.div>
-  );
-}
-
-function PanelShell({ icon, title, badge, children, darkMode, delay = 0, style }: {
-  icon: React.ReactNode; title: string; badge?: string;
-  children: React.ReactNode; darkMode: boolean; delay?: number; style?: React.CSSProperties;
+function KpiCard({ label, value, unit, icon: Icon, color, delay }: {
+  label: string; value: string | number; unit: string;
+  icon: React.ComponentType<{ size?: number; color?: string }>; color: string; delay: number;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      style={{
-        background: darkMode ? 'rgba(28, 31, 38, 0.75)' : '#fff',
-        borderRadius: 12,
-        border: darkMode ? '1px solid rgba(163, 201, 255, 0.12)' : '1px solid #E5E7EB',
-        boxShadow: darkMode ? '0 2px 12px rgba(0,0,0,.25)' : '0 1px 4px rgba(0,0,0,.04)',
-        backdropFilter: darkMode ? 'blur(14px)' : 'none',
-        WebkitBackdropFilter: darkMode ? 'blur(14px)' : 'none',
-        overflow: 'hidden', ...style,
-      }}
+      className="card"
+      style={{ padding: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}
     >
-      <div style={{
-        padding: '14px 18px',
-        borderBottom: darkMode ? '1px solid rgba(66, 71, 79, 0.4)' : '1px solid #F3F4F6',
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}>
-        {icon}
-        <span style={{ fontSize: 13, fontWeight: 600, color: darkMode ? '#e2e2e6' : '#1F2937' }}>{title}</span>
-        {badge && (
-          <span style={{
-            marginLeft: 'auto', fontSize: 10.5, fontWeight: 600,
-            padding: '2px 10px', borderRadius: 10,
-            background: darkMode ? 'rgba(0, 219, 231, 0.12)' : '#F3F4F6',
-            color: darkMode ? '#00dbe7' : '#6B7280',
-          }}>{badge}</span>
-        )}
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={18} color={color} />
       </div>
-      {children}
+      <div>
+        <div className="stat-label">{label}</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+          <span className="stat-value" style={{ color }}>{value}</span>
+          <span className="text-sm text-secondary">{unit}</span>
+        </div>
+      </div>
     </motion.div>
   );
 }
 
-/* ===================== ECharts 渲染组件 ===================== */
+/* ===================== ECharts ===================== */
 
-function EChartsWrapper({ option, style }: { option: Record<string, unknown>; style?: React.CSSProperties }) {
+function EChartBox({ option, style }: { option: Record<string, unknown>; style?: React.CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null);
   const darkMode = useAppStore((s) => s.darkMode);
-
   useEffect(() => {
     if (!ref.current) return;
     const chart = echarts.init(ref.current);
     chart.setOption(option, true);
-    const handler = () => chart.resize();
-    window.addEventListener('resize', handler);
-    return () => {
-      window.removeEventListener('resize', handler);
-      chart.dispose();
-    };
+    const h = () => chart.resize();
+    window.addEventListener('resize', h);
+    return () => { window.removeEventListener('resize', h); chart.dispose(); };
   }, [option, darkMode]);
-
   return <div ref={ref} style={{ width: '100%', ...style }} />;
-}
-
-/* ===================== 到期预警摘要组件 ===================== */
-
-interface WarnItem {
-  id: string; recordId: string; moduleId: string;
-  caseName: string; type: string; deadline: string; remainingDays: number;
-  severity: 'overdue' | 'critical' | 'warning' | 'normal';
-}
-
-function addDays(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
-function addMonths(d: Date, n: number) { const r = new Date(d); r.setMonth(r.getMonth() + n); return r; }
-function toStr(d: Date) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function calcRemaining(deadline: Date) { const t = new Date(); t.setHours(0,0,0,0); return Math.floor((deadline.getTime()-t.getTime())/(86400000)); }
-
-function WarningSummary() {
-  const darkMode = useAppStore((s) => s.darkMode);
-  const setEditRecord = useAppStore((s) => s.setEditRecord);
-  const setCurrentPage = useAppStore((s) => s.setCurrentPage);
-  const openModal = useAppStore((s) => s.openModal);
-
-  const warnings = useMemo(() => {
-    const rules = [
-      { mids: ['legal-report-case','legal-case-ledger','squad-case'], f: 'receiveDate', t: '受案→立案（7日）', calc: (d:string)=>toStr(addDays(new Date(d),7)) },
-      { mids: ['squad-coercive','legal-case-ledger'], f: 'criminalDetentionDate', t: '刑事拘留（30日）', calc: (d:string)=>toStr(addDays(new Date(d),30)) },
-      { mids: ['squad-coercive','legal-case-ledger','squad-case'], f: 'arrestDate', t: '侦查羁押（2个月）', calc: (d:string)=>toStr(addMonths(new Date(d),2)) },
-      { mids: ['squad-coercive','legal-case-ledger'], f: 'bailDate', t: '取保候审（12个月）', calc: (d:string)=>toStr(addMonths(new Date(d),12)) },
-      { mids: ['squad-coercive','legal-case-ledger'], f: 'residentialSurveillanceDate', t: '监视居住（6个月）', calc: (d:string)=>toStr(addMonths(new Date(d),6)) },
-      { mids: ['squad-case','legal-case-ledger'], f: 'filingDate', t: '立案侦查（2个月）', calc: (d:string)=>toStr(addMonths(new Date(d),2)) },
-    ];
-    const all = getMassRecords();
-    const items: WarnItem[] = [];
-    for (const rule of rules) {
-      for (const rec of all.filter(r => rule.mids.includes(r.moduleId))) {
-        const raw = rec.data?.[rule.f];
-        if (typeof raw !== 'string') continue;
-        try {
-          const deadline = rule.calc(raw);
-          const remaining = calcRemaining(new Date(deadline));
-          if (remaining > 30) continue;
-          const severity: WarnItem['severity'] = remaining <= 0 ? 'overdue' : remaining <= 3 ? 'critical' : remaining <= 7 ? 'warning' : 'normal';
-          items.push({
-            id: rec.id+rule.f+rule.t, recordId: rec.id, moduleId: rec.moduleId,
-            caseName: String(rec.data?.caseName||rec.data?.suspect||'未命名').slice(0,14)+(String(rec.data?.caseName||'').length>14?'…':''),
-            type: rule.t, deadline, remainingDays: remaining, severity,
-          });
-        } catch {}
-      }
-    }
-    const order: Record<string,number> = {overdue:0,critical:1,warning:2,normal:3};
-    items.sort((a,b) => order[a.severity]-order[b.severity] || a.remainingDays-b.remainingDays);
-    return { items, counts: { overdue: items.filter(w=>w.severity==='overdue').length, critical: items.filter(w=>w.severity==='critical').length, warning: items.filter(w=>w.severity==='warning').length } };
-  }, []);
-
-  const total = warnings.counts.overdue + warnings.counts.critical + warnings.counts.warning;
-
-  const handleClick = (item: WarnItem) => {
-    const rec = getMassRecords().find(r => r.id === item.recordId);
-    if (!rec) return;
-    setEditRecord(rec); setCurrentPage(item.moduleId); openModal('newRecord');
-  };
-
-  if (warnings.items.length === 0) {
-    return <div style={{ padding: '28px 14px', textAlign: 'center', color: darkMode ? '#8c919a' : '#9CA3AF', fontSize: 12 }}>暂无到期预警</div>;
-  }
-
-  const txtColor = darkMode ? '#e2e2e6' : '#1F2937';
-
-  return (
-    <div style={{ padding: '8px 14px 12px' }}>
-      {/* 三列数字摘要 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
-        {[
-          { label: '已过期', count: warnings.counts.overdue, color: '#DC2626', bg: darkMode ? 'rgba(220,38,38,0.12)' : '#FEF2F2' },
-          { label: '3天内', count: warnings.counts.critical, color: '#EA580C', bg: darkMode ? 'rgba(234,88,12,0.12)' : '#FFF7ED' },
-          { label: '7天内', count: warnings.counts.warning, color: '#CA8A04', bg: darkMode ? 'rgba(234,179,8,0.12)' : '#FFFBEB' },
-        ].map((item) => (
-          <motion.div
-            key={item.label}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            style={{
-              background: item.bg,
-              borderRadius: 10, padding: '10px 8px',
-              textAlign: 'center',
-              border: `1px solid ${item.color}22`,
-            }}
-          >
-            <motion.div
-              key={item.count}
-              initial={{ scale: 1.4, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.4, ease: [0.22,1,0.36,1] }}
-              style={{ fontSize: 26, fontWeight: 800, color: item.color, lineHeight: 1 }}
-            >
-              {item.count}
-            </motion.div>
-            <div style={{ fontSize: 10.5, color: darkMode ? '#8c919a' : '#6B7280', marginTop: 4 }}>{item.label}</div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* 预警列表（最多6条） */}
-      <div style={{ maxHeight: 170, overflow: 'auto' }}>
-        {warnings.items.slice(0, 6).map((item, i) => {
-          const colors = {
-            overdue: { bg: darkMode ? 'rgba(220,38,38,0.08)' : '#FEF2F2', dot: '#DC2626', label: '已过期' },
-            critical: { bg: darkMode ? 'rgba(234,88,12,0.08)' : '#FFF7ED', dot: '#EA580C', label: `剩${item.remainingDays}天` },
-            warning: { bg: darkMode ? 'rgba(234,179,8,0.08)' : '#FFFBEB', dot: '#CA8A04', label: `剩${item.remainingDays}天` },
-            normal: { bg: 'transparent', dot: darkMode ? '#8c919a' : '#9CA3AF', label: `剩${item.remainingDays}天` },
-          };
-          const c = colors[item.severity];
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.04 }}
-              onClick={() => handleClick(item)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '7px 10px', marginBottom: 4,
-                borderRadius: 6, cursor: 'pointer',
-                background: c.bg,
-                transition: 'background 0.1s',
-              }}
-              onMouseEnter={e => { if (item.severity === 'normal') e.currentTarget.style.background = darkMode ? 'rgba(46,125,202,0.05)' : '#FAFBFC'; }}
-              onMouseLeave={e => { if (item.severity === 'normal') e.currentTarget.style.background = 'transparent'; }}
-            >
-              <motion.div
-                animate={item.severity === 'overdue' ? { scale: [1, 1.3, 1] } : {}}
-                transition={{ repeat: item.severity === 'overdue' ? Infinity : 0, duration: 2 }}
-                style={{ width: 6, height: 6, borderRadius: '50%', background: c.dot, flexShrink: 0 }}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 500, color: txtColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {item.caseName}
-                  <span style={{ fontSize: 10, fontWeight: 400, color: darkMode ? '#8c919a' : '#6B7280', marginLeft: 4 }}>{item.type}</span>
-                </div>
-              </div>
-              <span style={{ fontSize: 10, fontWeight: 600, color: c.dot, flexShrink: 0 }}>{c.label}</span>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* 底部提示 */}
-      <div style={{ fontSize: 10, color: darkMode ? '#8c919a' : '#9CA3AF', textAlign: 'center', marginTop: 6 }}>
-        共 {total} 项预警 · 点击查看详情
-      </div>
-    </div>
-  );
 }
 
 /* ===================== 主组件 ===================== */
 
 export default function Dashboard() {
-  const { setCurrentPage } = useAppStore();
   const darkMode = useAppStore((s) => s.darkMode);
-  const lowPerfMode = useAppStore((s) => s.lowPerfMode);
-  const records = getMassRecords();
-  const hasData = records.length > 0;
+  const setCurrentPage = useAppStore((s) => s.setCurrentPage);
+  const openModal = useAppStore((s) => s.openModal);
+  const setEditRecord = useAppStore((s) => s.setEditRecord);
+  const records = useMemo(() => getMassRecords(), []);
 
-  const kpiData = useMemo(() => calcKpi(records), [records]);
-  const caseTypes = useMemo(() => caseTypeStats(records), [records]);
-  const activities = useMemo(() => recentActivity(records), [records]);
+  const warnings = useMemo(() => calcWarnings(records), [records]);
+  const overdue = warnings.filter(w => w.severity === 'overdue').length;
+  const critical = warnings.filter(w => w.severity === 'critical').length;
+  const warningCount = warnings.filter(w => w.severity === 'warning').length;
 
-  const textColor = darkMode ? '#e2e2e6' : '#1F2937';
-  const mutedColor = darkMode ? '#8c919a' : '#9CA3AF';
-  const borderColor = darkMode ? 'rgba(66,71,79,0.4)' : '#E5E7EB';
+  const total = records.length;
+  const completed = records.filter(r => r.data?.status === '已完成' || r.data?.status === '已办结').length;
+  const ongoing = total - completed;
+  const thisMonth = records.filter(r => r.createdAt?.startsWith(new Date().toISOString().slice(0, 7))).length;
 
-  /* ---------- ECharts 主题色 ---------- */
-  const CHART_PALETTE = ['#2563EB', '#7C3AED', '#0891B2', '#059669', '#D97706', '#DC2626', '#6D28D9', '#E11D48', '#0284C7', '#9333EA'];
-  const chartTextColor = darkMode ? '#8c919a' : '#6B7280';
+  const textColor = 'var(--color-text)';
+  const mutedColor = 'var(--color-text-secondary)';
 
-  /* 案件类型分布 — 玫瑰图 */
+  // 模块记录统计
+  const moduleRecords: Record<string, number> = {};
+  for (const r of records) moduleRecords[r.moduleId] = (moduleRecords[r.moduleId] || 0) + 1;
+
+  // 最近 8 条动态
+  const recentActivity = useMemo(() =>
+    records.slice(0, 8).map(r => ({
+      moduleId: r.moduleId,
+      moduleName: MODULE_NAMES[r.moduleId] || r.moduleId,
+      title: String(r.data?.caseName || r.data?.suspect || r.data?.title || ''),
+      date: r.createdAt?.slice(0, 10) || '',
+    })),
+    [records]
+  );
+
+  // 最近案件（去重）
+  const recentCases = useMemo(() => {
+    const seen = new Set<string>();
+    return records
+      .filter(r => {
+        const name = String(r.data?.caseName || '');
+        if (!name || seen.has(name)) return false;
+        seen.add(name);
+        return true;
+      })
+      .slice(0, 6)
+      .map(r => ({
+        name: String(r.data?.caseName || ''),
+        moduleId: r.moduleId,
+        moduleName: MODULE_NAMES[r.moduleId] || r.moduleId,
+        status: r.data?.status || '办理中',
+        date: r.updatedAt?.slice(0, 10) || '',
+      }));
+  }, [records]);
+
+  const handleWarnClick = (item: WarnItem) => {
+    const rec = getMassRecords().find(r => r.id === item.recordId);
+    if (rec) { setEditRecord(rec); setCurrentPage(item.moduleId); openModal('newRecord'); }
+  };
+
+  const severityColors = {
+    overdue: { bg: 'var(--color-danger-bg)', dot: 'var(--color-danger)', label: '已过期' },
+    critical: { bg: 'var(--color-warning-bg)', dot: 'var(--color-warning)', label: '紧急' },
+    warning: { bg: 'var(--color-info-bg)', dot: 'var(--color-info)', label: '注意' },
+  };
+
+  // 案件类型分布图表
+  const caseTypes = useMemo(() => {
+    const targets = new Set(['mass-statistics', 'legal-report-case', 'legal-case-ledger', 'squad-case']);
+    const map: Record<string, number> = {};
+    for (const r of records) {
+      if (!targets.has(r.moduleId)) continue;
+      const val = r.data?.caseType;
+      if (typeof val === 'string' && val.trim()) map[val.trim()] = (map[val.trim()] || 0) + 1;
+    }
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [records]);
+
   const pieOption = useMemo(() => ({
-    tooltip: { trigger: 'item' as const, backgroundColor: darkMode ? '#1a1d25' : '#fff', borderColor, textStyle: { color: textColor } },
-    legend: {
-      bottom: 0, textStyle: { color: chartTextColor, fontSize: 10 },
-      type: 'scroll' as const,
-    },
+    tooltip: { trigger: 'item' as const, backgroundColor: darkMode ? '#1a1d25' : '#fff', borderColor: darkMode ? '#374151' : '#E5E7EB', textStyle: { color: textColor } },
+    legend: { bottom: 0, textStyle: { color: mutedColor, fontSize: 10 }, type: 'scroll' as const },
     series: [{
-      type: 'pie' as const,
-      radius: ['30%', '65%'],
-      center: ['50%', '45%'],
-      avoidLabelOverlap: true,
-      padAngle: 1,
+      type: 'pie' as const, radius: ['30%', '65%'], center: ['50%', '45%'],
+      avoidLabelOverlap: true, padAngle: 1,
       itemStyle: { borderRadius: 4, borderColor: darkMode ? '#1a1d25' : '#fff', borderWidth: 2 },
-      label: { show: true, formatter: '{b}\n{c}', fontSize: 10, color: chartTextColor, lineHeight: 14 },
-      labelLine: { length: 8, length2: 10, smooth: true },
+      label: { show: true, formatter: '{b}\n{c}', fontSize: 10, color: mutedColor, lineHeight: 14 },
       data: caseTypes.length > 0
-        ? caseTypes.slice(0, 8).map(([name, value], i) => ({ name: name.length > 6 ? name.slice(0, 6) + '…' : name, value, itemStyle: { color: CHART_PALETTE[i % CHART_PALETTE.length] } }))
-        : [{ name: '暂无数据', value: 1, itemStyle: { color: '#E5E7EB' } }],
+        ? caseTypes.slice(0, 8).map(([name, value], i) => ({ name: name.length > 6 ? name.slice(0, 6) + '…' : name, value, itemStyle: { color: ['#2563EB', '#7C3AED', '#0891B2', '#059669', '#D97706', '#DC2626', '#6D28D9', '#E11D48'][i % 8] } }))
+        : [{ name: '暂无数据', value: 1, itemStyle: { color: darkMode ? '#374151' : '#E5E7EB' } }],
       animationDuration: 800,
-      animationEasing: 'cubicOut' as const,
     }],
-  }), [caseTypes, darkMode, textColor, chartTextColor, borderColor]);
+  }), [caseTypes, darkMode, textColor, mutedColor]);
 
-  /* ---------- 无数据状态 ---------- */
-  if (!hasData) {
+  if (total === 0) {
     return (
-      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <GlobalSearch />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '40vh' }}>
-          <div style={{ textAlign: 'center' }}>
-            <TrendingUp size={40} color={darkMode ? '#8c919a' : '#D1D5DB'} style={{ marginBottom: 12 }} />
-            <div style={{ fontSize: 16, fontWeight: 600, color: textColor }}>暂无数据</div>
-            <div style={{ fontSize: 12, color: mutedColor, marginTop: 4 }}>开始录入工作记录后将在这里展示可视化统计</div>
-          </div>
+      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <TrendingUp size={40} color="var(--color-text-muted)" style={{ marginBottom: 12 }} />
+          <div style={{ fontSize: 18, fontWeight: 600, color: textColor, marginBottom: 8 }}>欢迎使用经侦工作台</div>
+          <div style={{ fontSize: 13, color: mutedColor, marginBottom: 20 }}>开始录入工作记录后将在这里展示待办和统计</div>
+          <button className="btn btn-primary" onClick={() => openModal('newRecord')} style={{ height: 42, paddingInline: 24, fontSize: 14 }}>
+            + 新建第一条记录
+          </button>
         </div>
       </div>
     );
@@ -379,175 +220,162 @@ export default function Dashboard() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1200, margin: '0 auto' }}>
-      {/* 全局搜索 */}
-      <GlobalSearch />
 
-      {/* KPI */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ display: 'flex', gap: 14 }}
-      >
-        {kpiData.map((item, index) => <KpiCard key={item.label} item={item} index={index} />)}
-      </motion.div>
-
-      {/* 图表行 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        {/* 案件类型分布 - 玫瑰图 */}
-        <PanelShell
-          darkMode={darkMode}
-          icon={<TrendingUp size={15} color={darkMode ? '#a3c9ff' : '#2E7DCA'}/>}
-          title="案件类型分布"
-          badge={`${caseTypes.length} 类`}
-          delay={0.1}
-        >
-          <div style={{ padding: '6px 4px 4px' }}>
-            <EChartsWrapper
-              option={pieOption}
-              style={{ height: 230 }}
-            />
-          </div>
-        </PanelShell>
-
-        {/* 到期预警 - 动态摘要 */}
-        <PanelShell
-          darkMode={darkMode}
-          icon={<Activity size={15} color={darkMode ? '#e9c349' : '#DC2626'}/>}
-          title="到期预警"
-          delay={0.14}
-        >
-          <WarningSummary />
-        </PanelShell>
+      {/* ── KPI 概览 ── */}
+      <div style={{ display: 'flex', gap: 12 }}>
+        <KpiCard label="待录入" value={ongoing} unit="条" icon={FileText} color="#D97706" delay={0} />
+        <KpiCard label="办理中" value={ongoing} unit="条" icon={Activity} color="#2563EB" delay={0.05} />
+        <KpiCard label="即将到期" value={overdue + critical} unit="件" icon={AlertTriangle} color={overdue > 0 ? '#DC2626' : '#D97706'} delay={0.1} />
+        <KpiCard label="本月新增" value={thisMonth} unit="条" icon={TrendingUp} color="#059669" delay={0.15} />
       </div>
 
-      {/* 底部行 */}
+      {/* ── 主内容区：待办 + 统计 ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        {/* 数据量概览 */}
-        <DataVolumeGauge />
 
-        {/* 最近动态 - 时间线风格 */}
-        <PanelShell
-          darkMode={darkMode}
-          icon={<Zap size={15} color={darkMode ? '#a3c9ff' : '#2E7DCA'}/>}
-          title="最近动态"
-          badge={activities.length > 0 ? `${activities.length} 条` : undefined}
-          delay={0.18}
+        {/* 左侧：今日待办列表 */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="panel"
         >
-          <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-            {activities.length === 0 ? (
+          <div className="panel-header">
+            <AlertTriangle size={15} color="var(--color-warning)" />
+            <span className="font-semibold" style={{ fontSize: 14 }}>待办预警</span>
+            {warnings.length > 0 && (
+              <span className="badge badge-danger" style={{ marginLeft: 'auto' }}>{warnings.length} 项</span>
+            )}
+          </div>
+          <div style={{ maxHeight: 340, overflowY: 'auto' }}>
+            {warnings.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center', color: mutedColor, fontSize: 13 }}>
+                <CheckCircle2 size={32} style={{ marginBottom: 8, opacity: 0.5 }} />
+                <div>暂无到期预警，一切正常</div>
+              </div>
+            ) : (
+              <div style={{ padding: '8px 12px' }}>
+                {warnings.slice(0, 8).map((item, i) => {
+                  const c = severityColors[item.severity];
+                  return (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.25 + i * 0.03 }}
+                      className="hover-bg"
+                      onClick={() => handleWarnClick(item)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 12px', marginBottom: 4, borderRadius: 6, cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="truncate" style={{ fontSize: 13, fontWeight: 500 }}>{item.caseName}</div>
+                        <div style={{ fontSize: 11, color: mutedColor, marginTop: 2 }}>{item.type}</div>
+                      </div>
+                      <span className={`badge ${item.severity === 'overdue' ? 'badge-danger' : item.severity === 'critical' ? 'badge-warning' : 'badge-info'}`}>
+                        {item.remainingDays <= 0 ? '已过期' : `剩${item.remainingDays}天`}
+                      </span>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* 右侧：快速统计 + 图表 */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="panel"
+        >
+          <div className="panel-header">
+            <Activity size={15} color="var(--color-primary)" />
+            <span className="font-semibold" style={{ fontSize: 14 }}>数据概览</span>
+          </div>
+          <div style={{ padding: '8px 16px' }}>
+            {/* 统计数字行 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+              {[
+                { label: '总记录', value: total, color: 'var(--color-primary)' },
+                { label: '已完成', value: completed, color: 'var(--color-success)' },
+                { label: '完成率', value: total > 0 ? Math.round(completed / total * 100) + '%' : '0%', color: 'var(--color-info)' },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: 'center', padding: '10px 0', borderRadius: 8, background: 'var(--color-surface-hover)' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
+                  <div className="stat-label">{s.label}</div>
+                </div>
+              ))}
+            </div>
+            {/* 玫瑰图 */}
+            <EChartBox option={pieOption} style={{ height: 200 }} />
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ── 底部：最近动态 + 最近案件 ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+        {/* 最近动态 */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="panel">
+          <div className="panel-header">
+            <Zap size={15} color="var(--color-primary)" />
+            <span className="font-semibold" style={{ fontSize: 14 }}>最近动态</span>
+          </div>
+          <div style={{ maxHeight: 260, overflowY: 'auto', padding: '4px 0' }}>
+            {recentActivity.length === 0 ? (
               <div style={{ padding: 24, textAlign: 'center', color: mutedColor, fontSize: 12 }}>暂无动态</div>
             ) : (
-              <div style={{ position: 'relative', padding: '8px 0 8px 28px' }}>
-                {/* 竖线 */}
-                <div style={{
-                  position: 'absolute', left: 12, top: 12, bottom: 12, width: 1.5,
-                  background: `linear-gradient(to bottom, ${darkMode ? '#4B9EFF' : '#2563EB'}, transparent)`,
-                  opacity: 0.3,
-                }} />
-                {activities.map((a, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -6 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.04 }}
-                    style={{
-                      position: 'relative', paddingBottom: 12,
-                      borderBottom: i < activities.length - 1 ? `1px solid ${darkMode ? 'rgba(66,71,79,0.15)' : '#F9FAFB'}` : 'none',
-                    }}
-                  >
-                    {/* 圆点 */}
-                    <div style={{
-                      position: 'absolute', left: -20, top: 5,
-                      width: 8, height: 8, borderRadius: '50%',
-                      background: i < 3 ? '#2563EB' : (darkMode ? '#8c919a' : '#D1D5DB'),
-                      border: `2px solid ${darkMode ? '#1a1d25' : '#fff'}`,
-                    }} />
-                    <div style={{ fontSize: 11, color: mutedColor, marginBottom: 2 }}>
-                      <span style={{ fontWeight: 600, color: darkMode ? '#a3c9ff' : '#4B9EFF' }}>{a.moduleName}</span>
+              <div style={{ position: 'relative', padding: '8px 16px 8px 32px' }}>
+                <div style={{ position: 'absolute', left: 16, top: 12, bottom: 12, width: 1.5, background: `linear-gradient(to bottom, var(--color-primary), transparent)`, opacity: 0.3 }} />
+                {recentActivity.map((a, i) => (
+                  <div key={i} style={{ position: 'relative', paddingBottom: i < recentActivity.length - 1 ? 12 : 0, borderBottom: i < recentActivity.length - 1 ? '1px solid var(--color-border-light)' : 'none' }}>
+                    <div style={{ position: 'absolute', left: -20, top: 5, width: 8, height: 8, borderRadius: '50%', background: i < 3 ? 'var(--color-primary)' : 'var(--color-border)', border: '2px solid var(--color-surface)' }} />
+                    <div style={{ fontSize: 11, color: mutedColor }}>
+                      <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>{a.moduleName}</span>
                       <span style={{ margin: '0 6px', opacity: 0.4 }}>·</span>
                       <span>{a.date}</span>
                     </div>
-                    <div style={{
-                      fontSize: 12.5, color: textColor, fontWeight: 500,
-                      lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {String(a.title)}
-                    </div>
-                  </motion.div>
+                    <div className="truncate font-medium" style={{ fontSize: 13, color: textColor, marginTop: 2 }}>{a.title || a.moduleName}</div>
+                  </div>
                 ))}
               </div>
             )}
           </div>
-        </PanelShell>
-      </div>
+        </motion.div>
 
-      {/* 快捷入口 */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        <div style={{
-          background: darkMode ? 'rgba(28, 31, 38, 0.75)' : '#fff',
-          borderRadius: 12,
-          border: `1px solid ${borderColor}`,
-          boxShadow: darkMode ? '0 2px 12px rgba(0,0,0,.25)' : '0 1px 4px rgba(0,0,0,.04)',
-          backdropFilter: darkMode ? 'blur(14px)' : 'none',
-          WebkitBackdropFilter: darkMode ? 'blur(14px)' : 'none',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '14px 18px',
-            borderBottom: darkMode ? '1px solid rgba(66, 71, 79, 0.4)' : '1px solid #F3F4F6',
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <Zap size={15} color={darkMode ? '#a3c9ff' : '#F59E0B'} />
-            <span style={{ fontSize: 14, fontWeight: 600, color: textColor }}>快捷入口</span>
+        {/* 最近案件 */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="panel">
+          <div className="panel-header">
+            <FolderOpen size={15} color="var(--color-success)" />
+            <span className="font-semibold" style={{ fontSize: 14 }}>最近案件</span>
           </div>
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14,
-            padding: '18px 18px 20px',
-          }}>
-            {TOP_MODULES.map((m) => {
-              const IconComp = m.icon;
-              return (
-                <motion.div
-                  key={m.id}
-                  whileHover={{ y: -3 }}
-                  onClick={() => setCurrentPage(m.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    cursor: 'pointer', borderRadius: 10,
-                    padding: '14px 16px',
-                    background: darkMode ? 'rgba(28, 31, 38, 0.6)' : '#fff',
-                    border: `1px solid ${borderColor}`,
-                    transition: 'all .2s',
-                    boxShadow: darkMode ? '0 1px 6px rgba(0,0,0,.2)' : '0 1px 3px rgba(0,0,0,.04)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `0 4px 16px ${darkMode ? 'rgba(46,125,202,0.15)' : 'rgba(37,99,235,0.1)'}`;
-                    e.currentTarget.style.borderColor = m.color;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = darkMode ? '0 1px 6px rgba(0,0,0,.2)' : '0 1px 3px rgba(0,0,0,.04)';
-                    e.currentTarget.style.borderColor = borderColor;
-                  }}
+          <div style={{ maxHeight: 260, overflowY: 'auto', padding: '8px 12px' }}>
+            {recentCases.length === 0 ? (
+              <div style={{ padding: 24, textAlign: 'center', color: mutedColor, fontSize: 12 }}>暂无案件</div>
+            ) : (
+              recentCases.map((c, i) => (
+                <div
+                  key={i}
+                  className="hover-bg"
+                  onClick={() => setCurrentPage(c.moduleId)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', marginBottom: 4, borderRadius: 6, cursor: 'pointer' }}
                 >
-                  <div style={{
-                    width: 34, height: 34, borderRadius: 8,
-                    background: darkMode ? 'rgba(163, 201, 255, 0.1)' : `${m.color}15`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    <IconComp size={17} color={darkMode ? '#a3c9ff' : m.color} />
+                  <Gavel size={14} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="truncate" style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</div>
+                    <div style={{ fontSize: 11, color: mutedColor }}>{c.moduleName} · {c.date}</div>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: textColor }}>{m.label}</span>
-                </motion.div>
-              );
-            })}
+                  <span className={`badge ${c.status === '已完成' ? 'badge-success' : 'badge-info'}`}>{c.status}</span>
+                </div>
+              ))
+            )}
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }

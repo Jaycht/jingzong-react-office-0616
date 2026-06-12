@@ -205,6 +205,9 @@ function AppContent() {
 
 export default function App() {
   const darkMode = useAppStore((s) => s.darkMode);
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
   return (
     <ConfigProvider locale={zhCN} theme={darkMode ? DARK_THEME : LIGHT_THEME}>
       <HashRouter>
