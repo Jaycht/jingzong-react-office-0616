@@ -28,6 +28,7 @@ function EChartBox({ option, style }: { option: Record<string, unknown>; style?:
 export default function Statistics() {
   const showToast = useAppStore((s) => s.showToast);
   const darkMode = useAppStore((s) => s.darkMode);
+  const dk = darkMode;
 
   const [refreshKey, setRefreshKey] = useState(0);
   useEffect(() => { setRefreshKey(k => k + 1); }, []);
@@ -68,35 +69,54 @@ export default function Statistics() {
   const mutedColor = '#6B7280';
   const CHART_PALETTE = ['#2563EB', '#7C3AED', '#0891B2', '#059669', '#D97706', '#DC2626', '#6D28D9', '#E11D48', '#0284C7', '#9333EA'];
 
-  // 各模块记录对比 — ECharts 渐变柱状图
+  // 各模块记录对比 — dataset-encode0 风格柱状图
   const barData = moduleStats.slice(0, 10);
   const barOption = useMemo(() => ({
-    tooltip: { trigger: 'axis' as const, axisPointer: { type: 'shadow' as const }, backgroundColor: '#fff', borderColor: '#E5E7EB', textStyle: { color: textColor } },
-    grid: { left: 10, right: 20, top: 15, bottom: 30, containLabel: true },
-    xAxis: { type: 'value' as const, splitLine: { lineStyle: { color: '#F3F4F6' } }, axisLabel: { color: mutedColor, fontSize: 10 }, show: true },
+    tooltip: {
+      trigger: 'axis' as const, axisPointer: { type: 'shadow' as const },
+      backgroundColor: dk ? '#1a1d25' : '#fff',
+      borderColor: dk ? '#374151' : '#E5E7EB',
+      textStyle: { color: dk ? '#e2e2e6' : textColor },
+    },
+    grid: { left: 8, right: 30, top: 20, bottom: 8, containLabel: true },
+    dataset: {
+      source: barData.map((d, i) => ({
+        module: d.type,
+        dept: d.dept,
+        count: d.count,
+        color: CHART_PALETTE[i % CHART_PALETTE.length],
+      })).reverse(),
+    },
+    xAxis: {
+      type: 'value' as const,
+      splitLine: { lineStyle: { color: dk ? '#2a2e38' : '#F3F4F6' } },
+      axisLabel: { color: dk ? '#6b7280' : mutedColor, fontSize: 10 },
+    },
     yAxis: {
-      type: 'category' as const, data: barData.map(d => d.type).reverse(),
+      type: 'category' as const,
       axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: mutedColor, fontSize: 10 },
+      axisLabel: { color: dk ? '#9ca3af' : mutedColor, fontSize: 11, width: 80, overflow: 'truncate' },
     },
     series: [{
       type: 'bar' as const,
-      data: barData.map((d, i) => ({
-        value: d.count,
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: CHART_PALETTE[(barData.length - 1 - i) % CHART_PALETTE.length] },
-            { offset: 1, color: CHART_PALETTE[(barData.length - 1 - i) % CHART_PALETTE.length] + '33' },
-          ]),
-          borderRadius: [0, 6, 6, 0],
+      encode: { x: 'count', y: 'module' },
+      barWidth: 18,
+      itemStyle: {
+        borderRadius: [0, 6, 6, 0],
+        color: (params: any) => {
+          const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'];
+          return colors[params.dataIndex % colors.length];
         },
-      })).reverse(),
-      barWidth: 20,
-      animationDuration: 700,
+      },
+      label: {
+        show: true, position: 'right' as const, fontSize: 12, fontWeight: 700,
+        color: dk ? '#e2e2e6' : textColor,
+        formatter: (p: { value: { count: number } }) => String(p.value?.count ?? ''),
+      },
+      animationDuration: 800,
       animationEasing: 'cubicOut' as const,
-      label: { show: true, position: 'right' as const, fontSize: 11, fontWeight: 700, color: textColor, formatter: (p: { value: number }) => String(p.value) },
     }],
-  }), [barData]);
+  }), [barData, darkMode]);
 
   // 记录类型分布 — ECharts 玫瑰图
   const pieOption = useMemo(() => ({
