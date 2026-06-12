@@ -40,11 +40,25 @@ export default function CaseGraph() {
     for (const r of records) {
       const d = r.data || {};
       const cn = String(d.caseName || '').trim();
-      const sn = String(d.suspect || d.suspectName || '').trim();
       const cl = String(d.clueName || d.projectName || '').trim();
       if (cn) addN(`c-${cn}`, cn.length > 10 ? cn.slice(0, 10) + '…' : cn, 0, 40);
-      if (sn) { addN(`s-${sn}`, sn, 1, 30); if (cn) addL(`c-${cn}`, `s-${sn}`); }
       if (cl) { addN(`e-${cl}`, cl.length > 10 ? cl.slice(0, 10) + '…' : cl, 2, 24); if (cn) addL(`c-${cn}`, `e-${cl}`); }
+
+      // 提取嫌疑人：支持顶层字段 + repeatable section (suspects数组)
+      const suspectNames = new Set<string>();
+      const topSuspect = String(d.suspect || d.suspectName || '').trim();
+      if (topSuspect) suspectNames.add(topSuspect);
+      // repeatable section: suspects 是数组，每个元素有 suspectName
+      if (Array.isArray(d.suspects)) {
+        for (const item of d.suspects) {
+          const name = String(item?.suspectName || item?.suspect || '').trim();
+          if (name) suspectNames.add(name);
+        }
+      }
+      for (const sn of suspectNames) {
+        addN(`s-${sn}`, sn.length > 10 ? sn.slice(0, 10) + '…' : sn, 1, 30);
+        if (cn) addL(`c-${cn}`, `s-${sn}`);
+      }
     }
     return { nodes: Array.from(nm.values()), links: ll, stats: { cases: c, suspects: s, clues: e } };
   }, [records]);

@@ -152,7 +152,6 @@ export default function AppLayout() {
       </div>
       <NotificationPanel />
       </div>
-      </div>
 
       <AnimatePresence>
         {modalId === 'newRecord' && (
