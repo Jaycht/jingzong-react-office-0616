@@ -1,7 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal, Spin } from "antd";
-import { Search } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
 import Sidebar from "./Sidebar";
@@ -14,6 +13,7 @@ import Breadcrumb from "./Breadcrumb";
 import ErrorBoundary from "./ErrorBoundary";
 import CommandPalette from "./CommandPalette";
 import NotificationPanel from "./NotificationPanel";
+import FloatingSearch from "./FloatingSearch";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Statistics = lazy(() => import("../pages/Statistics"));
@@ -132,28 +132,7 @@ export default function AppLayout() {
       <div className="content-area" style={{
         flex: 1, overflow: 'auto', padding: '16px 20px',
         background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5',
-        display: 'flex', gap: 0,
       }}>
-          {/* 全局搜索触发按钮 */}
-          <div
-            onClick={() => setCmdOpen(true)}
-            style={{
-              position: 'fixed', top: '50%', right: 16, transform: 'translateY(-50%)', zIndex: 100,
-              height: 40, paddingInline: 12, borderRadius: 20,
-              background: 'var(--color-surface)', color: 'var(--color-text-secondary)',
-              border: '1px solid var(--color-border)',
-              display: 'flex', alignItems: 'center', gap: 6,
-              cursor: 'pointer', boxShadow: 'var(--shadow-md)',
-              transition: 'all 0.2s var(--ease-out)',
-              fontSize: 12, fontWeight: 500,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)'; }}
-          >
-            <Search size={14} />
-            <span>搜索</span>
-            <kbd style={{ padding: '1px 5px', borderRadius: 3, fontSize: 10, background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', fontFamily: 'var(--font-mono)' }}>⌘K</kbd>
-          </div>
           <motion.div
             key={currentPage}
             initial={{ opacity: 0, y: 8 }}
@@ -195,6 +174,7 @@ export default function AppLayout() {
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       <PasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
+      <FloatingSearch onClick={() => setCmdOpen(true)} />
     </div>
   );
 }
