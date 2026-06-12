@@ -32,7 +32,6 @@ declare global {
       downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
       installUpdate: () => void;
     };
-    };
   }
 }
 
