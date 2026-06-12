@@ -138,7 +138,6 @@ export default function AppLayout() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
-            style={{ flex: 1, minWidth: 0 }}
           >
             <Breadcrumb />
             <Suspense fallback={
@@ -150,7 +149,8 @@ export default function AppLayout() {
               <Page />
             </Suspense>
           </motion.div>
-          <NotificationPanel />
+      </div>
+      <NotificationPanel />
       </div>
       </div>
 
