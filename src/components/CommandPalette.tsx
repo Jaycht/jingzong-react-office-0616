@@ -4,10 +4,10 @@
  */
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, BarChart3, Download, Upload, Database, Clock, ArrowRight, FileText, Hash } from 'lucide-react';
+import { Search, Plus, BarChart3, Download, Upload, Database, Clock, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
-import { MODULE_NAMES, DEPARTMENTS, PLATFORM_NAV } from '../moduleConfig';
+import { MODULE_NAMES, DEPARTMENTS } from '../moduleConfig';
 
 interface CommandItem {
   id: string;

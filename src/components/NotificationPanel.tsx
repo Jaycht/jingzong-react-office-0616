@@ -4,10 +4,9 @@
  */
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, ChevronLeft, ChevronRight, Clock, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
-import { MODULE_NAMES } from '../moduleConfig';
 
 function addDays(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 function addMonths(d: Date, n: number) { const r = new Date(d); r.setMonth(r.getMonth() + n); return r; }
