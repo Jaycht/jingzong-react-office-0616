@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Button, DatePicker, Descriptions, Dropdown, Empty, Input, Modal, Select, Space, Table, Tabs, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { Download, Eye, FileText, Pen, Plus, Search, Trash2, Upload, Filter } from 'lucide-react';
+import { Download, Eye, FileText, Pen, Plus, Search, Trash2, Upload, Filter, LayoutGrid, List } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { findModule, filterVisibleFields, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
@@ -580,29 +580,42 @@ export default function ModulePage() {
         <div style={{ padding: 16, borderTop: '1px solid #EDF2F7' }}>
           {/* 视图切换 + 字段数 */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Tag color="blue">{dataFields.length} 个字段</Tag>
-            <div style={{ display: 'flex', gap: 4, background: 'var(--color-surface-hover)', borderRadius: 6, padding: 2 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <button
-                className="btn btn-sm"
                 onClick={() => setViewMode('table')}
                 style={{
-                  background: viewMode === 'table' ? 'var(--color-surface)' : 'transparent',
-                  boxShadow: viewMode === 'table' ? 'var(--shadow-sm)' : 'none',
-                  color: viewMode === 'table' ? 'var(--color-text)' : 'var(--color-text-muted)',
-                  border: 'none', height: 26, paddingInline: 10,
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  height: 32, paddingInline: 14, borderRadius: 8,
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  border: 'none', fontFamily: 'inherit',
+                  background: viewMode === 'table' ? 'var(--color-primary)' : 'var(--color-surface-hover)',
+                  color: viewMode === 'table' ? '#fff' : 'var(--color-text-secondary)',
+                  boxShadow: viewMode === 'table' ? '0 2px 8px rgba(21,90,138,0.25)' : 'none',
+                  transition: 'all 0.2s var(--ease-out)',
                 }}
-              >表格</button>
+              >
+                <List size={14} /> 表格
+              </button>
               <button
-                className="btn btn-sm"
                 onClick={() => setViewMode('card')}
                 style={{
-                  background: viewMode === 'card' ? 'var(--color-surface)' : 'transparent',
-                  boxShadow: viewMode === 'card' ? 'var(--shadow-sm)' : 'none',
-                  color: viewMode === 'card' ? 'var(--color-text)' : 'var(--color-text-muted)',
-                  border: 'none', height: 26, paddingInline: 10,
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  height: 32, paddingInline: 14, borderRadius: 8,
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  border: 'none', fontFamily: 'inherit',
+                  background: viewMode === 'card' ? 'var(--color-primary)' : 'var(--color-surface-hover)',
+                  color: viewMode === 'card' ? '#fff' : 'var(--color-text-secondary)',
+                  boxShadow: viewMode === 'card' ? '0 2px 8px rgba(21,90,138,0.25)' : 'none',
+                  transition: 'all 0.2s var(--ease-out)',
                 }}
-              >卡片</button>
+              >
+                <LayoutGrid size={14} /> 卡片
+              </button>
+              <span style={{ fontSize: 12, color: 'var(--color-text-muted)', marginLeft: 4 }}>
+                共 {rows.length} 条
+              </span>
             </div>
+            <Tag color="blue">{dataFields.length} 个字段</Tag>
           </div>
           {/* 批量操作栏 */}
           {selectedRowKeys.length > 0 && (

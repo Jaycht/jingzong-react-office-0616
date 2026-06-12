@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut, Plus } from 'lucide-react';
 import { Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
@@ -148,9 +148,9 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       animate={{ width: collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        background: darkMode ? '#1F2937' : '#ffffff', display: 'flex', flexDirection: 'column',
+        background: 'var(--sidebar-bg)', display: 'flex', flexDirection: 'column',
         overflow: 'hidden', flexShrink: 0, position: 'relative',
-        borderRight: darkMode ? '1px solid #374151' : '1px solid #E5E7EB',
+        borderRight: '1px solid var(--sidebar-border)',
       }}>
       {/* Electron 无边框窗口拖拽区域 */}
       {/* @ts-expect-error WebkitAppRegion is Electron-only CSS property */}
@@ -176,35 +176,51 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
 
       {/* 用户信息区域 */}
       {!collapsed && (
-        <div style={{ padding: "14px 14px 8px" }}>
-          {/* 第1行：头像 + 名称 + 退出 */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <div style={{ padding: "16px 14px 12px" }}>
+          {/* 用户卡片 */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 12, marginBottom: 12,
+            padding: "12px", borderRadius: 10,
+            background: darkMode ? 'rgba(163,201,255,0.05)' : 'linear-gradient(135deg, #EFF6FF, #F0F9FF)',
+            border: darkMode ? '1px solid rgba(163,201,255,0.1)' : '1px solid #DBEAFE',
+          }}>
             {customAvatar ? (
-              <img src={customAvatar} alt="avatar" style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0, boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }} />
+              <img src={customAvatar} alt="avatar" style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover", flexShrink: 0, boxShadow: "0 2px 12px rgba(37,99,235,0.2)" }} />
             ) : (
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,#4B9EFF,#2563EB)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", flexShrink: 0, boxShadow: "0 2px 8px rgba(37,99,235,0.3)" }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: "linear-gradient(135deg, #3B82F6, #2563EB)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 18, fontWeight: 700, color: "#fff", flexShrink: 0,
+                boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
+              }}>
                 {(userName || "用")[0]}
               </div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: darkMode ? "#F3F4F6" : "#1F2937", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div style={{
+                fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                color: darkMode ? "#e2e2e6" : "#1e293b",
+              }}>
                 {userName || "用户"}
               </div>
-              <div style={{ fontSize: 11, color: darkMode ? "#9CA3AF" : "#9CA3AF", marginTop: 2 }}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                marginTop: 3, padding: '2px 8px', borderRadius: 4,
+                fontSize: 10.5, fontWeight: 600,
+                background: darkMode ? 'rgba(163,201,255,0.12)' : '#DBEAFE',
+                color: darkMode ? '#93c5fd' : '#2563EB',
+              }}>
                 {userRole || "普通用户"}
               </div>
             </div>
-            <ActionBtn icon={LogOut} label="退出" onClick={handleLogout} />
           </div>
-          {/* 第2行：个人信息 + 修改密码 */}
+          {/* 操作按钮行 */}
           <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
-            <ActionBtn icon={User} label="个人信息" onClick={onOpenProfile} />
-            <ActionBtn icon={KeyRound} label="修改密码" onClick={onOpenPassword} />
-          </div>
-          {/* 第3行：深色模式 + 性能模式 */}
-          <div style={{ display: "flex", gap: 4 }}>
-            <ActionBtn icon={() => <span style={{fontSize:13}}>{darkMode ? "☀️" : "🌙"}</span>} label={darkMode ? "浅色" : "深色"} onClick={toggleDarkMode} />
-            <ActionBtn icon={() => <span style={{fontSize:13}}>{lowPerfMode ? "⚡" : "🐢"}</span>} label={lowPerfMode ? "高性能" : "低性能"} onClick={toggleLowPerfMode} />
+            <ActionBtn icon={User} label="信息" onClick={onOpenProfile} />
+            <ActionBtn icon={KeyRound} label="密码" onClick={onOpenPassword} />
+            <ActionBtn icon={() => <span style={{fontSize:12}}>{darkMode ? "☀️" : "🌙"}</span>} label={darkMode ? "浅色" : "深色"} onClick={toggleDarkMode} />
+            <ActionBtn icon={LogOut} label="退出" onClick={handleLogout} />
           </div>
         </div>
       )}
@@ -331,15 +347,22 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         {!collapsed && (
           <div style={{ padding: '8px 14px', flexShrink: 0 }}>
             <motion.button
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.02, boxShadow: '0 4px 16px rgba(21,90,138,0.3)' }}
               whileTap={{ scale: 0.98 }}
               onClick={() => {
                 useAppStore.getState().openModal('newRecord');
               }}
-              className="btn btn-primary"
-              style={{ width: '100%', height: 38, fontSize: 13, fontWeight: 600, boxShadow: 'var(--shadow-md)' }}
+              style={{
+                width: '100%', height: 40, borderRadius: 10,
+                background: 'linear-gradient(135deg, #155A8A, #2E7DCA)',
+                color: '#fff', border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                boxShadow: '0 2px 12px rgba(21,90,138,0.25)',
+                transition: 'all 0.2s var(--ease-out)',
+              }}
             >
-              + 新建记录
+              <Plus size={15} /> 新建记录
             </motion.button>
           </div>
         )}
@@ -367,16 +390,16 @@ function ActionBtn({ icon: Icon, label, onClick }: { icon: IconComponent; label:
     <div
       onClick={onClick}
       title={label}
+      className="hover-bg"
       style={{
-        display: 'flex', alignItems: 'center', gap: 5,
-        padding: '5px 8px', borderRadius: 6, cursor: 'pointer',
-        color: darkMode ? '#D1D5DB' : '#6B7280', fontSize: 11,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+        flex: 1, padding: '6px 4px', borderRadius: 6, cursor: 'pointer',
+        color: darkMode ? '#94a3b8' : '#64748b', fontSize: 11, fontWeight: 500,
         whiteSpace: 'nowrap', transition: 'all .15s',
+        background: 'transparent',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = darkMode ? '#374151' : '#F3F4F6'; e.currentTarget.style.color = darkMode ? '#F9FAFB' : '#111827'; }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = darkMode ? '#D1D5DB' : '#6B7280'; }}
     >
-      <Icon size={14} /><span>{label}</span>
+      <Icon size={13} /><span>{label}</span>
     </div>
   );
 }
