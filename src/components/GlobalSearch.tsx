@@ -9,6 +9,7 @@ import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import { getAllAttachments } from '../store/attachmentStore';
+import { MODULE_INFO } from '../moduleConfig';
 
 interface SearchResult {
   moduleId: string;
@@ -19,33 +20,6 @@ interface SearchResult {
     matchFields: Array<{ label: string; value: string }>;
   }>;
 }
-
-const MODULE_LABEL_MAP: Record<string, { label: string; dept: string }> = {
-  'office-finance-assets': { label: '经费保障', dept: '大队办公室' },
-  'office-party-attendance': { label: '党建与考勤', dept: '大队办公室' },
-  'office-doc-report': { label: '文件与报表', dept: '大队办公室' },
-  'office-cluster': { label: '集群协查', dept: '大队办公室' },
-  'office-other': { label: '其他事项', dept: '大队办公室' },
-  'mass-clue': { label: '涉众线索', dept: '涉众办' },
-  'mass-statistics': { label: '涉众统计', dept: '涉众办' },
-  'mass-petition': { label: '信访反馈', dept: '涉众办' },
-  'mass-interview': { label: '约谈管理', dept: '涉众办' },
-  'mass-publicity': { label: '宣传工作', dept: '涉众办' },
-  'legal-report-case': { label: '接报案', dept: '法制室' },
-  'legal-case-ledger': { label: '案件台账', dept: '法制室' },
-  'legal-special-action': { label: '专项行动', dept: '法制室' },
-  'legal-assessment': { label: '考核管理', dept: '法制室' },
-  'squad-case': { label: '中队案件', dept: '案件中队' },
-  'squad-daily': { label: '中队日报', dept: '案件中队' },
-  'squad-coercive': { label: '强制措施', dept: '案件中队' },
-  'squad-property': { label: '涉案财物', dept: '案件中队' },
-  'evidence-clue': { label: '线索登记', dept: '调证分析' },
-  'evidence-request': { label: '调证登记', dept: '调证分析' },
-  'evidence-freeze': { label: '资金查控', dept: '调证分析' },
-  'evidence-phone-collection': { label: '设备采集', dept: '调证分析' },
-  'evidence-report': { label: '资金分析', dept: '调证分析' },
-  'legal-process': { label: '流程监督', dept: '法制室' },
-};
 
 /** 优先展示的字段（匹配到这些字段时排前面） */
 const PRIORITY_FIELDS = new Set([
@@ -224,7 +198,7 @@ export default function GlobalSearch() {
       }
       if (matches.length === 0) continue;
 
-      const info = MODULE_LABEL_MAP[record.moduleId] || { label: record.moduleId, dept: '' };
+      const info = MODULE_INFO[record.moduleId] || { label: record.moduleId, dept: '' };
       if (!grouped.has(record.moduleId)) {
         grouped.set(record.moduleId, {
           moduleId: record.moduleId,

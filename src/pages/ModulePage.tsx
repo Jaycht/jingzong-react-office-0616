@@ -1,11 +1,11 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button, DatePicker, Descriptions, Dropdown, Empty, Input, Modal, Select, Space, Table, Tabs, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { Download, Eye, FileText, Pen, Plus, Search, Trash2, Upload, Filter } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
-import { findModule, type FieldDefinition } from '../moduleConfig';
+import { findModule, filterVisibleFields, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { deleteMassRecord, deleteMassRecords, getMassRecords } from '../store/massStore';
 import { getAttachment, downloadAttachment } from '../store/attachmentStore';
@@ -93,6 +93,7 @@ export default function ModulePage() {
   const editRecord = useAppStore((s) => s.editRecord);
   const setEditRecord = useAppStore((s) => s.setEditRecord);
   const setCurrentTabId = useAppStore((s) => s.setCurrentTabId);
+  const userRole = useAppStore((s) => s.userRole);
   const { allModules } = useCustomModules();
   const module = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
@@ -108,6 +109,7 @@ export default function ModulePage() {
   const [filterText, setFilterText] = useState('');
   const [filterDateRange, setFilterDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [filterHandler, setFilterHandler] = useState<string | null>(null);
 
   const activeTab = module
     ? activeTabs[module.id] && module.tabs.some((tab) => tab.id === activeTabs[module.id])
@@ -179,12 +181,19 @@ export default function ModulePage() {
         return s === filterStatus;
       });
     }
+    if (filterHandler) {
+      list = list.filter((r) => {
+        const h = String(r.data?.handler || r.data?.handlerName || '');
+        return h === filterHandler;
+      });
+    }
     return list;
-  }, [activeRecords, filterText, filterDateRange, filterStatus]);
+  }, [activeRecords, filterText, filterDateRange, filterStatus, filterHandler]);
 
   // ─── 动态生成列 ──────────────────────────────
   const fields = active?.fields || [];
-  const dataFields = getDataFields(fields, 6);
+  const visibleFields = useMemo(() => filterVisibleFields(fields, userRole), [fields, userRole]);
+  const dataFields = getDataFields(visibleFields, 6);
 
   interface DynamicRow {
     key: string;
@@ -218,12 +227,23 @@ export default function ModulePage() {
       dataIndex: f.id,
       width: 120,
       ellipsis: true,
+      sorter: f.type === 'number' || f.type === 'date' ? (a: DynamicRow, b: DynamicRow) => {
+        const va = a[f.id];
+        const vb = b[f.id];
+        if (va == null && vb == null) return 0;
+        if (va == null) return -1;
+        if (vb == null) return 1;
+        if (f.type === 'number') return Number(va) - Number(vb);
+        return String(va).localeCompare(String(vb));
+      } : undefined,
+      defaultSortOrder: f.type === 'date' ? ('descend' as const) : undefined,
     })),
     // 除大队办公室（office）外，涉众办、法制室、案件中队、调证分析不显示经办人列
     ...(module.departmentId === 'office'
-      ? [{ title: '经办人' as const, dataIndex: '_handler' as const, width: 80, ellipsis: true }]
+      ? [{ title: '经办人' as const, dataIndex: '_handler' as const, width: 80, ellipsis: true,
+          sorter: (a: DynamicRow, b: DynamicRow) => a._handler.localeCompare(b._handler) }]
       : []),
-    { title: '更新时间', dataIndex: '_updatedAt', width: 130 },
+    { title: '更新时间', dataIndex: '_updatedAt', width: 130, sorter: (a: DynamicRow, b: DynamicRow) => a._updatedAt.localeCompare(b._updatedAt), defaultSortOrder: 'descend' as const },
     {
       title: '操作',
       dataIndex: '_action',
@@ -500,8 +520,25 @@ export default function ModulePage() {
             { label: '已完成', value: '已完成' },
           ]}
         />
-        {(filterText || filterDateRange || filterStatus) && (
-          <Button size="small" onClick={() => { setFilterText(''); setFilterDateRange(null); setFilterStatus(null); }}>
+        {(() => {
+          const handlers = Array.from(new Set(
+            activeRecords
+              .map((r) => String(r.data?.handler || r.data?.handlerName || '').trim())
+              .filter(Boolean)
+          )).sort();
+          return handlers.length > 0 ? (
+            <Select
+              value={filterHandler}
+              onChange={(v) => setFilterHandler(v)}
+              allowClear
+              placeholder="经办人筛选"
+              style={{ width: 130, height: 34 }}
+              options={handlers.map((h) => ({ label: h, value: h }))}
+            />
+          ) : null;
+        })()}
+        {(filterText || filterDateRange || filterStatus || filterHandler) && (
+          <Button size="small" onClick={() => { setFilterText(''); setFilterDateRange(null); setFilterStatus(null); setFilterHandler(null); }}>
             清除筛选
           </Button>
         )}

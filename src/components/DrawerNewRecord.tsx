@@ -9,7 +9,7 @@ import { InboxOutlined, PlusOutlined, LeftOutlined, RightOutlined } from '@ant-d
 
 import { useUnsavedChanges } from '../utils/useUnsavedChanges';
 import { useAppStore } from '../store/appStore';
-import { findModule, type FieldDefinition } from '../moduleConfig';
+import { findModule, filterVisibleFields, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { saveMassRecord, updateMassRecord, getMassRecords } from '../store/massStore';
 import ErrorBoundary from './ErrorBoundary';
@@ -21,6 +21,7 @@ import {
   IdNoField,
 } from './SharedFormFields';
 import { saveAttachment, relinkAttachment, getAttachment } from '../store/attachmentStore';
+import { saveDraft, getDraft, deleteDraft } from '../store/draftStore';
 
 interface Props { onClose: () => void; editRecord?: import('../store/massStore').MassRecord | null; }
 
@@ -30,6 +31,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     const currentPage = useAppStore((s) => s.currentPage);
   const showToast = useAppStore((s) => s.showToast);
   const currentTabId = useAppStore((s) => s.currentTabId);
+  const userRole = useAppStore((s) => s.userRole);
   const { allModules } = useCustomModules();
   const currentModule = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [selectedModuleId, setSelectedModuleId] = useState(
@@ -57,7 +59,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
   const selectedModule = findModule(selectedModuleId, allModules) || allModules[0];
   const selectedTab = selectedModule?.tabs.find((tab) => tab.id === selectedTabId) || selectedModule?.tabs[0];
-  const allFields = useMemo(() => selectedTab?.fields ?? [], [selectedTab]);
+  const allFields = useMemo(() => filterVisibleFields(selectedTab?.fields ?? [], userRole), [selectedTab, userRole]);
 
   // Build steps from section fields
   const steps = useMemo(() => {
@@ -147,6 +149,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           setTimeout(() => {
             safeSetSaving(false);
             safeSetDirty(false);
+            deleteDraft(selectedModuleId, selectedTabId);
             showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已更新`, 'success');
             // 重建案件索引
             rebuildCaseIndex(getMassRecords());
@@ -162,6 +165,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           setTimeout(() => {
             safeSetSaving(false);
             safeSetDirty(false);
+            deleteDraft(selectedModuleId, selectedTabId);
             showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已创建`, 'success');
             // 重建案件索引
             rebuildCaseIndex(getMassRecords());
@@ -277,6 +281,56 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     }, 50);
     return () => clearTimeout(timer);
   }, [selectedModuleId, selectedTabId, editRecord]);
+
+  // 自动保存草稿：表单变化后 2 秒自动保存到 IndexedDB
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const changeCountRef = useRef(0);
+  useEffect(() => {
+    if (isEditing) return;
+    const count = changeCountRef.current;
+    if (count === 0) return;
+    const checkAndSave = () => {
+      if (!mountedRef.current) return;
+      const values = form.getFieldsValue();
+      const hasContent = Object.values(values).some((v) =>
+        v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0)
+      );
+      if (hasContent) {
+        saveDraft(selectedModuleId, selectedTabId, currentStep, values);
+      }
+    };
+    clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = setTimeout(checkAndSave, 2000);
+    return () => clearTimeout(draftTimerRef.current);
+  }, [changeCountRef.current, selectedModuleId, selectedTabId, currentStep, isEditing, form]);
+
+  // 恢复草稿提示
+  useEffect(() => {
+    if (isEditing) return;
+    const timer = setTimeout(() => {
+      if (!mountedRef.current) return;
+      const draft = getDraft(selectedModuleId, selectedTabId);
+      if (draft && Object.keys(draft.data).length > 0) {
+        Modal.confirm({
+          title: '发现未保存的草稿',
+          content: `上次在 ${new Date(draft.savedAt).toLocaleString('zh-CN')} 自动保存了草稿，是否恢复？`,
+          okText: '恢复草稿',
+          cancelText: '新建空白',
+          onOk: () => {
+            form.setFieldsValue(draft.data);
+            if (draft.step > 0 && draft.step < totalSteps) {
+              setCurrentStep(draft.step);
+            }
+            showToast('已恢复草稿', 'success');
+          },
+          onCancel: () => {
+            deleteDraft(selectedModuleId, selectedTabId);
+          },
+        });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [selectedModuleId, selectedTabId, isEditing]);
 
   const showTemplateSelector = Boolean(selectedModule && !selectedModule.hideTemplateSelector && selectedModule.tabs.length > 1);
   const scopedModules = currentModule
@@ -408,7 +462,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               form={form}
               layout="vertical"
               requiredMark="optional"
-              onValuesChange={() => { if (mountedRef.current) setIsDirty(true); }}
+              onValuesChange={() => { if (mountedRef.current) { setIsDirty(true); changeCountRef.current++; } }}
             >
               {/* 所有步骤字段同时渲染、用 display 切换可见性，保证 antd Form.Item / Form.List 永不卸载 */}
               {steps.map((step, si) => {

@@ -23,4 +23,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('get-attachments-dir'),
   showSaveDialog: (defaultName, buffer) =>
     ipcRenderer.invoke('show-save-dialog', { defaultName, buffer }),
+  checkAttachmentFile: (filePath) =>
+    ipcRenderer.invoke('check-attachment-file', filePath),
+
+  // 自动更新
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (_event, data) => callback(data)),
+  onUpdateProgress: (callback) => ipcRenderer.on('update-progress', (_event, data) => callback(data)),
+  onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', () => callback()),
 });

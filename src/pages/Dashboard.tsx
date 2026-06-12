@@ -9,23 +9,9 @@ import * as echarts from 'echarts';
 import { getMassRecords } from "../store/massStore";
 import type { MassRecord } from "../store/massStore";
 import { useAppStore } from "../store/appStore";
+import { MODULE_NAMES } from "../moduleConfig";
 import GlobalSearch from "../components/GlobalSearch";
 import DataVolumeGauge from "../components/DataVolumeGauge";
-
-const MODULE_NAMES: Record<string, string> = {
-  "office-finance-assets": "经费保障", "office-party-attendance": "党建考勤",
-  "office-doc-report": "文件报表", "office-cluster": "集群协查",
-  "office-other": "其他事项", "mass-clue": "涉众线索",
-  "mass-statistics": "涉众统计", "mass-petition": "信访反馈",
-  "mass-interview": "约谈管理", "mass-publicity": "宣传工作",
-  "legal-report-case": "接报案", "legal-case-ledger": "案件台账",
-  "legal-special-action": "专项行动", "legal-assessment": "考核管理",
-  "squad-case": "中队案件", "squad-daily": "中队日报",
-  "squad-coercive": "强制措施", "squad-property": "涉案财物",
-  "evidence-clue": "线索登记", "evidence-request": "调证登记",
-  "evidence-freeze": "资金查控", "evidence-phone-collection": "设备采集",
-  "evidence-report": "资金分析",
-};
 
 const KPI_COLORS = [
   { bg: "linear-gradient(135deg,#1B5E9B,#2E7DCA)" },

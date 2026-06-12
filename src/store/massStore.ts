@@ -1,14 +1,15 @@
 /**
  * 涉众模块数据存储
- * 使用 localStorage 持久化涉众模块记录，并写入操作日志。
+ * 使用 IndexedDB 持久化涉众模块记录（自动迁移旧 localStorage 数据），并写入操作日志。
  */
 
-import { localStorageAdapter } from './adapter';
+import { indexedDBAdapter } from './adapter';
 import { addOperationLog } from './operationLogStore';
 import { useAppStore } from './appStore';
 import { rebuildCaseIndex, rebuildSuspectIndex } from './inputHistoryStore';
 
 const STORAGE_KEY = 'jingzong.mass.records';
+const MIGRATION_KEY = 'jingzong.mass.migratedToIDB.v1';
 
 export type MassRecordData = Record<string, unknown>;
 
@@ -30,7 +31,7 @@ function currentUser(): string {
 }
 
 export function getMassRecords(moduleId?: string): MassRecord[] {
-  const all = localStorageAdapter.getItem<MassRecord[]>(STORAGE_KEY, []);
+  const all = indexedDBAdapter.getItem<MassRecord[]>(STORAGE_KEY, []);
   return moduleId ? all.filter((record) => record.moduleId === moduleId) : all;
 }
 
@@ -47,7 +48,7 @@ export function saveMassRecord(moduleId: string, tabId: string, data: MassRecord
   };
 
   records.unshift(record);
-  localStorageAdapter.setItem(STORAGE_KEY, records);
+  indexedDBAdapter.setItem(STORAGE_KEY, records);
   addOperationLog({
     user: currentUser(),
     action: '新建',
@@ -70,7 +71,7 @@ export function updateMassRecord(id: string, data: MassRecordData): MassRecord |
     updatedAt: new Date().toISOString(),
   };
 
-  localStorageAdapter.setItem(STORAGE_KEY, records);
+  indexedDBAdapter.setItem(STORAGE_KEY, records);
   addOperationLog({
     user: currentUser(),
     action: '更新',
@@ -84,7 +85,7 @@ export function updateMassRecord(id: string, data: MassRecordData): MassRecord |
 
 export function deleteMassRecord(id: string): void {
   const records = getMassRecords().filter((record) => record.id !== id);
-  localStorageAdapter.setItem(STORAGE_KEY, records);
+  indexedDBAdapter.setItem(STORAGE_KEY, records);
   rebuildCaseIndex(records);
   rebuildSuspectIndex(records);
   addOperationLog({
@@ -99,7 +100,7 @@ export function deleteMassRecord(id: string): void {
 export function deleteMassRecords(ids: string[]): void {
   const idSet = new Set(ids);
   const records = getMassRecords().filter((record) => !idSet.has(record.id));
-  localStorageAdapter.setItem(STORAGE_KEY, records);
+  indexedDBAdapter.setItem(STORAGE_KEY, records);
   rebuildCaseIndex(records);
   rebuildSuspectIndex(records);
   addOperationLog({
@@ -113,51 +114,54 @@ export function deleteMassRecords(ids: string[]): void {
 
 /**
  * 从所有记录中移除指定附件 ID 的引用
- * 直接序列化成 JSON 字符串后用正则逐条替换，再反序列化写回
- * 避免深拷贝/递归/引用等复杂问题
+ * 通过适配器读取/写入，兼容 IndexedDB 存储
  */
 export function removeAttachmentRefsFromAllRecords(attachmentIds: Set<string>): number {
   if (attachmentIds.size === 0) return 0;
 
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return 0;
+  const records = getMassRecords();
+  if (records.length === 0) return 0;
 
-  let result = raw;
   let totalRemoved = 0;
+  let anyModified = false;
 
-  for (const id of attachmentIds) {
-    if (!id) continue;
-    // 转义特殊字符以便安全嵌入正则
-    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // 匹配形如 ,{ "uid":"att-xxx","name":"...","status":"done",... }
-    // 以及形如 { "uid":"att-xxx",... }, 两种情况
-    const patterns = [
-      new RegExp(`,\\s*\\{[^}]*"uid"\\s*:\\s*"${escaped}"[^}]*\\}`, 'g'),
-      new RegExp(`\\{[^}]*"uid"\\s*:\\s*"${escaped}"[^}]*\\}\\s*,`, 'g'),
-    ];
-    for (const re of patterns) {
-      const before = result.length;
-      result = result.replace(re, '');
-      if (result.length !== before) totalRemoved++;
+  for (const record of records) {
+    const dataStr = JSON.stringify(record.data);
+    let modified = dataStr;
+    let removedForRecord = 0;
+    for (const id of attachmentIds) {
+      if (!id) continue;
+      const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const patterns = [
+        new RegExp(`,\\s*\\{[^}]*"uid"\\s*:\\s*"${escaped}"[^}]*\\}`, 'g'),
+        new RegExp(`\\{[^}]*"uid"\\s*:\\s*"${escaped}"[^}]*\\}\\s*,`, 'g'),
+      ];
+      for (const re of patterns) {
+        const before = modified.length;
+        modified = modified.replace(re, '');
+        if (modified.length !== before) removedForRecord++;
+      }
+    }
+    if (modified !== dataStr) {
+      try {
+        const cleaned = modified
+          .replace(/,\s*\}/g, '}')
+          .replace(/,\s*\]/g, ']');
+        JSON.parse(cleaned); // 验证 JSON 合法性
+        record.data = JSON.parse(cleaned);
+        totalRemoved += removedForRecord;
+        anyModified = true;
+      } catch {
+        // JSON 解析失败，跳过该条记录，不计入移除数
+      }
     }
   }
 
-  // 清理空数组和残留逗号
-  result = result.replace(/\[\s*\]/g, '[]');
-  result = result.replace(/,\s*\}/g, '}');
-  result = result.replace(/,\s*\]/g, ']');
-
-  if (totalRemoved === 0) return 0;
-
-  // 验证 JSON 合法性后再写回
-  try {
-    const parsed = JSON.parse(result);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
-    return totalRemoved;
-  } catch (err) {
-    console.error('[removeAttachmentRefs] JSON 解析失败，数据未修改:', err);
-    return 0;
+  if (anyModified) {
+    indexedDBAdapter.setItem(STORAGE_KEY, records);
   }
+
+  return totalRemoved;
 }
 
 function collectUniqueStringValues(moduleId: string, key: string): string[] {
@@ -234,10 +238,33 @@ export function migrateOldCasesToMassStore(): void {
       });
       count++;
     }
-    if (count > 0) localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    if (count > 0) indexedDBAdapter.setItem(STORAGE_KEY, records);
     localStorage.setItem(SQUAD_CASE_MIGRATED_KEY, '1');
     console.log(`[migration] 已迁移 ${count} 条旧案件数据到 massStore`);
   } catch (err) {
     console.warn('[migration] 案件数据迁移失败:', err);
+  }
+}
+
+/**
+ * 从 localStorage 迁移旧版 mass records 到 IndexedDB
+ * 幂等：迁移后设置标记，不会重复执行
+ */
+export function migrateLocalStorageToIndexedDB(): void {
+  try {
+    if (localStorage.getItem(MIGRATION_KEY)) return;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(MIGRATION_KEY, '1');
+      return;
+    }
+    const records = JSON.parse(raw);
+    if (Array.isArray(records) && records.length > 0) {
+      indexedDBAdapter.setItem(STORAGE_KEY, records);
+      console.log(`[migration] 已迁移 ${records.length} 条记录从 localStorage 到 IndexedDB`);
+    }
+    localStorage.setItem(MIGRATION_KEY, '1');
+  } catch (err) {
+    console.warn('[migration] localStorage → IndexedDB 迁移失败:', err);
   }
 }

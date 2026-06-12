@@ -120,9 +120,14 @@ export const useAppStore = create<AppState>((set) => ({
   searchQuery: "",
   setSearchQuery: (searchQuery) => set({ searchQuery }),
 
-  // 已锁定为浅色模式，不再支持暗色切换
-  darkMode: false,
-  toggleDarkMode: () => {},
+  // 深色模式
+  darkMode: localStorageAdapter.getItem("jingzong.darkMode", false),
+  toggleDarkMode: () =>
+    set((s) => {
+      const next = !s.darkMode;
+      localStorageAdapter.setItem("jingzong.darkMode", next);
+      return { darkMode: next };
+    }),
 
   lowPerfMode: localStorageAdapter.getItem("jingzong.lowPerfMode", false),
   toggleLowPerfMode: () =>

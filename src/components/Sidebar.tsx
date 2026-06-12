@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut } from 'lucide-react';
@@ -27,6 +27,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
   const userName = useAppStore((s) => s.userName);
   const userRole = useAppStore((s) => s.userRole);
   const darkMode = useAppStore((s) => s.darkMode);
+  const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
   const toggleLowPerfMode = useAppStore((s) => s.toggleLowPerfMode);
   const customAvatar = (() => { try { return localStorage.getItem("jingzong.avatar"); } catch { return null; } })();
@@ -198,7 +199,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           </div>
           {/* 第3行：深色模式 + 性能模式 */}
           <div style={{ display: "flex", gap: 4 }}>
-
+            <ActionBtn icon={() => <span style={{fontSize:13}}>{darkMode ? "☀️" : "🌙"}</span>} label={darkMode ? "浅色" : "深色"} onClick={toggleDarkMode} />
             <ActionBtn icon={() => <span style={{fontSize:13}}>{lowPerfMode ? "⚡" : "🐢"}</span>} label={lowPerfMode ? "高性能" : "低性能"} onClick={toggleLowPerfMode} />
           </div>
         </div>
@@ -216,6 +217,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           <ToolbarIcon icon={User} title="个人信息" onClick={onOpenProfile} />
           <ToolbarIcon icon={KeyRound} title="修改密码" onClick={onOpenPassword} />
 
+          <ToolbarIcon icon={() => <span style={{fontSize:11}}>{darkMode ? "☀️" : "🌙"}</span>} title={darkMode ? "浅色模式" : "深色模式"} onClick={toggleDarkMode} />
           <ToolbarIcon icon={() => <span style={{fontSize:11}}>{lowPerfMode ? "⚡" : "🐢"}</span>} title={lowPerfMode ? "高性能" : "低性能"} onClick={toggleLowPerfMode} />
           <ToolbarIcon icon={LogOut} title="退出" onClick={handleLogout} />
         </div>
@@ -235,7 +237,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           return (
             <div key={dept.id}>
               <motion.div
-                whileHover={{ background: '#F9FAFB' }}
+                whileHover={{ background: darkMode ? '#374151' : '#F9FAFB' }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => toggleExpand(dept.id)}
                 style={{
@@ -243,12 +245,12 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
                   padding: '10px 14px', cursor: 'pointer',
                   borderLeft: '3px solid',
                   borderLeftColor: childActive || isExpanded ? '#2563EB' : 'transparent',
-                  background: childActive || isExpanded ? '#EFF6FF' : 'transparent',
+                  background: childActive || isExpanded ? (darkMode ? '#1E3A5F' : '#EFF6FF') : 'transparent',
                 }}
               >
-                <Icon size={15} color={childActive || isExpanded ? '#2563EB' : '#6B7280'} style={{ flexShrink: 0 }} />
+                <Icon size={15} color={childActive || isExpanded ? '#2563EB' : (darkMode ? '#9CA3AF' : '#6B7280')} style={{ flexShrink: 0 }} />
                 {!collapsed && (
-                  <span style={{ fontSize: 13, color: childActive || isExpanded ? '#2563EB' : '#374151', flex: 1, whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 13, color: childActive || isExpanded ? '#2563EB' : (darkMode ? '#D1D5DB' : '#374151'), flex: 1, whiteSpace: 'nowrap' }}>
                     {dept.label}
                   </span>
                 )}

@@ -1,9 +1,23 @@
-export const APP_VERSION = "V2.9.12";
+export const APP_VERSION = "V2.10.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 9;
-export const VERSION_PATCH = 12;
+export const VERSION_MINOR = 10;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.10.0 =====
+  "V2.10.0 新增 - 数据存储迁移到 IndexedDB，突破 localStorage 5MB 限制，支持更大数据量",
+  "V2.10.0 新增 - 表单自动保存草稿功能，填写中断后重新打开可恢复未提交数据",
+  "V2.10.0 新增 - 案件关系图谱（力导向图），可视化展示案件-嫌疑人-证据关联关系",
+  "V2.10.0 新增 - 字段级权限控制，可对指定角色隐藏敏感字段",
+  "V2.10.0 新增 - 深色模式支持，侧边栏可一键切换浅色/深色主题",
+  "V2.10.0 新增 - Electron 自动更新支持（可选，需配置更新服务器）",
+  "V2.10.0 增强 - ModulePage 表格支持列排序（数字/日期/经办人/时间）",
+  "V2.10.0 增强 - ModulePage 新增经办人下拉筛选，多维度数据过滤",
+  "V2.10.0 重构 - 统一模块名称映射为单一数据源，消除 Dashboard/GlobalSearch/theme 中的重复定义",
+  "V2.10.0 修复 - 草稿自动保存仅触发一次的问题（改用变化计数器）",
+  "V2.10.0 修复 - 强制措施数据迁移写入错误存储（localStorage→IndexedDB）",
+  "V2.10.0 修复 - 附件引用移除计数虚报问题（JSON 解析失败时不再计入）",
+  "V2.10.0 测试 - 新增 17 个单元测试（draftStore、moduleConfig、字段可见性）",
   // ===== V2.9.12 =====
   "V2.9.12 修复 - 中队案件管理 flatMode 排除 squad-case，恢复步骤1/步骤2分步显示",
   "V2.9.12 新增 - 身份证号输入自动提取出生日期（suspectIdNo→birthDate）",

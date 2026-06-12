@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "antd";
 import { useLocation } from "react-router-dom";
@@ -24,6 +24,7 @@ const PlaceholderPage = lazy(() => import("../pages/PlaceholderPage"));
 const ModulePage = lazy(() => import("../pages/ModulePage"));
 
 const CaseTimeline = lazy(() => import("../pages/CaseTimeline"));
+const CaseGraph = lazy(() => import("../pages/CaseGraph"));
 
 const PAGES: Record<string, React.FC> = {
   dashboard: Dashboard, statistics: Statistics,
@@ -31,6 +32,7 @@ const PAGES: Record<string, React.FC> = {
   importExport: ImportExport, backup: Backup, version: Version,
   attachments: Attachments,
   timeline: CaseTimeline,
+  graph: CaseGraph,
   interview: PlaceholderPage, meeting: PlaceholderPage, victim: PlaceholderPage,
   clue: PlaceholderPage, fund: PlaceholderPage, daily: PlaceholderPage,
   party: PlaceholderPage, report: PlaceholderPage, userSettings: PlaceholderPage,

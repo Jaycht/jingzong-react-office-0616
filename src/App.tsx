@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { ConfigProvider } from "antd";
+import { useEffect } from "react";
+import { ConfigProvider, Modal } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { motion, MotionConfig } from "framer-motion";
 import { HashRouter, Route, Routes, useNavigate } from "react-router-dom";
@@ -7,11 +7,11 @@ import AppLayout from "./components/AppLayout";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
 import { Toaster } from "./components/Toaster";
-import { LIGHT_THEME } from "./constants/theme";
+import { LIGHT_THEME, DARK_THEME } from "./constants/theme";
 import { useAppStore, loadUserFromStorage } from "./store/appStore";
 import { migrateOldCasesToMassStore, getMassRecords } from "./store/massStore";
 import { rebuildCaseIndex } from "./store/inputHistoryStore";
-import { localStorageAdapter } from "./store/adapter";
+import { indexedDBAdapter } from "./store/adapter";
 
 declare global {
   interface Window {
@@ -28,6 +28,10 @@ declare global {
       checkAttachmentFile: (filePath: string) => Promise<{ success: boolean; exists: boolean; error?: string }>;
       getAttachmentsDir: () => Promise<string>;
       showSaveDialog: (defaultName: string, buffer: number[]) => Promise<{ success: boolean; canceled?: boolean; filePath?: string; error?: string }>;
+      checkForUpdates: () => Promise<{ available: boolean; version?: string; error?: string }>;
+      downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
+      installUpdate: () => void;
+    };
     };
   }
 }
@@ -62,7 +66,7 @@ function AppContent() {
       }
     }
     if (migrated) {
-      localStorageAdapter.setItem('jingzong.mass.records', allRecords);
+      indexedDBAdapter.setItem('jingzong.mass.records', allRecords);
     }
     rebuildCaseIndex(allRecords);
   }, []);
@@ -95,6 +99,31 @@ function AppContent() {
   const removeToast = useAppStore((s) => s.removeToast);
   const darkMode = useAppStore((s) => s.darkMode);
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
+
+  // Electron 自动更新检查
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI?.checkForUpdates) return;
+    const timer = setTimeout(async () => {
+      try {
+        const result = await window.electronAPI.checkForUpdates();
+        if (result?.available) {
+          Modal.confirm({
+            title: `发现新版本 v${result.version}`,
+            content: '是否下载并安装更新？',
+            okText: '更新',
+            cancelText: '稍后',
+            onOk: async () => {
+              await window.electronAPI.downloadUpdate();
+              window.electronAPI.installUpdate();
+            },
+          });
+        }
+      } catch {
+        // 静默失败，不影响正常使用
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [isElectron]);
 
   const handleLogin = (name: string, role: string) => {
     setUser(name, role);
@@ -176,8 +205,9 @@ function AppContent() {
 }
 
 export default function App() {
+  const darkMode = useAppStore((s) => s.darkMode);
   return (
-    <ConfigProvider locale={zhCN} theme={LIGHT_THEME}>
+    <ConfigProvider locale={zhCN} theme={darkMode ? DARK_THEME : LIGHT_THEME}>
       <HashRouter>
         <AppContent />
       </HashRouter>
