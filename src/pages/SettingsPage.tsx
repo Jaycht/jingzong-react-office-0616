@@ -200,7 +200,7 @@ export default function SettingsPage() {
           </Button>
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, padding: 18 }}>
+        <div className="panel" style={{ padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: '#172033' }}>已保存的自定义模块</div>
@@ -217,7 +217,7 @@ export default function SettingsPage() {
       </div>
 
       {/* 数据重置区域 */}
-      <div style={{ marginTop: 24, background: '#fff', border: '1px solid #FECACA', borderRadius: 8, padding: 18 }}>
+      <div style={{ marginTop: 24, background: 'var(--color-surface)', border: '1px solid #FECACA', borderRadius: 8, padding: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
           <AlertTriangle size={18} color="#DC2626" />
           <span style={{ fontSize: 15, fontWeight: 700, color: '#DC2626' }}>危险操作</span>

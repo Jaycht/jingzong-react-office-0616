@@ -190,7 +190,7 @@ export default function Backup() {
 
           {/* 自动备份状态 */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-            style={{ background: '#fff', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
+            className="card" style={{ padding: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>自动备份设置</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, padding: '12px 14px', background: '#E8F5E9', borderRadius: 8, border: '1px solid #A5D6A7' }}>
               <CheckCircle size={18} color="#388E3C" />
@@ -265,7 +265,7 @@ export default function Backup() {
 
         {/* 右侧：备份记录列表 */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-          style={{ background: '#fff', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '13px 16px', borderBottom: '1px solid #E5E7EB', fontSize: 13, fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>历史备份记录</span>
             <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>

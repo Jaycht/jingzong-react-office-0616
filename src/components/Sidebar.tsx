@@ -147,23 +147,50 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
     <motion.div
       animate={{ width: collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="sidebar-container"
+      style={{
+        background: darkMode ? 'var(--color-surface)' : '#ffffff',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'visible',
+        flexShrink: 0,
+        position: 'relative',
+        borderRight: 'none',
+        boxShadow: darkMode
+          ? '1px 0 8px rgba(0,0,0,.3), 1px 0 0 rgba(255,255,255,0.03)'
+          : '1px 0 12px rgba(0,0,0,.04), 1px 0 0 rgba(0,0,0,0.03)',
+      }}
     >
       {/* Electron 无边框窗口拖拽区域 */}
       {/* @ts-expect-error WebkitAppRegion is Electron-only CSS property */}
       <div style={{ WebkitAppRegion: 'drag' as any, height: 30, flexShrink: 0 }} />
 
       {/* 折叠按钮 */}
-      <motion.button
-        className="sidebar-collapse-btn"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+      <button
+        type="button"
         onClick={toggleCollapsed}
+        style={{
+          position: 'absolute',
+          top: 32,
+          right: -14,
+          zIndex: 10,
+          width: 28,
+          height: 28,
+          borderRadius: '50%',
+          background: darkMode ? '#374151' : '#fff',
+          border: `1px solid ${darkMode ? '#4b5563' : '#D8E1EA'}`,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,.4)' : '0 2px 8px rgba(0,0,0,.16)',
+          color: darkMode ? '#9ca3af' : '#64748B',
+          transition: 'all 0.2s',
+        }}
       >
         <motion.div animate={{ rotate: collapsed ? 0 : 180 }} transition={{ duration: 0.3 }}>
           <ChevronLeft size={14} />
         </motion.div>
-      </motion.button>
+      </button>
 
       {/* 用户信息区域 */}
       {!collapsed && (
@@ -237,7 +264,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       <div style={{ height: 1, background: darkMode ? "#374151" : "#E5E7EB", margin: "0 14px" }} />
 
       {/* 侧边栏主导航区域 */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 2 }}>
+      <div className="sidebar-scroll" style={{ paddingTop: 2 }}>
         {PLATFORM_NAV.top.map(renderPlatformItem)}
 
         {departments.map((dept) => {

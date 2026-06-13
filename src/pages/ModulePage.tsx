@@ -482,7 +482,7 @@ export default function ModulePage() {
               ['办理中', String(ongoing), '#D97706'],
               ['待补充', String(pending), '#DC2626'],
             ].map(([label, value, color]) => (
-              <div key={label} style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, padding: 16 }}>
+              <div key={label} className="card" style={{ padding: 16 }}>
                 <div style={{ fontSize: 12, color: '#64748B', marginBottom: 6 }}>{label}</div>
                 <div style={{ fontSize: 24, fontWeight: 700, color }}>{value}</div>
               </div>
@@ -493,7 +493,7 @@ export default function ModulePage() {
 
       {/* 筛选栏 */}
       <div style={{
-        background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8,
+      <div className="panel" style={{ overflow: 'hidden', marginTop: 16 }}>
         padding: '10px 14px', marginBottom: 12,
         display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
       }}>

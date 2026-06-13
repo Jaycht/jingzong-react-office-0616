@@ -246,7 +246,7 @@ export default function ImportExport() {
 
         {/* 导出区 */}
         <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }}
-          style={{ background: '#fff', borderRadius: 10, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
+          className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <div style={{ width: 44, height: 44, borderRadius: 11, background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Download size={22} color="#388E3C" />
@@ -337,7 +337,7 @@ function ExportItem({
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       style={{
-        padding: '11px 14px', background: '#fff', border: '1px solid #E5E7EB',
+        padding: '11px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)',
         borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center',
         gap: 10, fontFamily: 'inherit', textAlign: 'left',
       }}

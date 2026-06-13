@@ -124,7 +124,7 @@ export default function Version() {
       <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
         {statData.map((c, i) => (
           <motion.div key={c.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.08 }}
-            style={{ flex: 1, background: "#fff", borderRadius: 9, padding: 14, boxShadow: "0 1px 3px rgba(0,0,0,.08)", border: "1px solid #E5E7EB", display: "flex", alignItems: "center", gap: 10 }}>
+            className="card" style={{ flex: 1, padding: 14, display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 44, height: 44, borderRadius: 10, background: c.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <c.icon size={20} color={c.color} />
             </div>
@@ -137,7 +137,7 @@ export default function Version() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-        style={{ background: "#fff", borderRadius: 10, border: "1px solid #E5E7EB", overflow: "hidden" }}>
+        className="panel" style={{ overflow: "hidden" }}>
         <div style={{ padding: "13px 16px", borderBottom: "1px solid #E5E7EB", fontSize: 13, fontWeight: 700 }}>{"更新日志"}</div>
         <div>
           {versionGroups.map((g, i) => (

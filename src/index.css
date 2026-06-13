@@ -216,6 +216,14 @@ body {
 .card:hover::before {
   opacity: 1;
 }
+.card-static {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
 .card-accent-blue::before { background: linear-gradient(180deg, #3B82F6, #60A5FA); opacity: 0.6; }
 .card-accent-green::before { background: linear-gradient(180deg, #10B981, #34D399); opacity: 0.6; }
 .card-accent-orange::before { background: linear-gradient(180deg, #F59E0B, #FBBF24); opacity: 0.6; }
@@ -582,11 +590,22 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
   background: #ffffff;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   flex-shrink: 0;
   position: relative;
   border-right: none;
   box-shadow: 1px 0 12px rgba(0,0,0,.04), 1px 0 0 rgba(0,0,0,0.03);
+}
+.dark .sidebar-container {
+  background: var(--color-surface);
+  box-shadow: 1px 0 8px rgba(0,0,0,.3), 1px 0 0 rgba(255,255,255,0.03);
+}
+
+/* ── 侧边栏内部滚动区域（单独限制 overflow） ── */
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 .dark .sidebar-container {
   background: var(--color-surface);

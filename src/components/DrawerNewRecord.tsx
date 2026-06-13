@@ -218,7 +218,13 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             const raw = editRecord.data?.[f.id];
             if (raw === undefined || raw === null) continue;
             if (f.type === 'attachment') {
-              formData[f.id] = Array.isArray(raw) ? raw : [];
+              // 附件字段：只保留 uid/name/status，避免 AntD Upload 调用 clone 报错
+              const rawArr = Array.isArray(raw) ? raw : [];
+              formData[f.id] = rawArr.map((item: any) => ({
+                uid: item?.uid || item?.id || String(Math.random()),
+                name: item?.name || item?.fileName || '附件',
+                status: 'done',
+              }));
               continue;
             }
             if (f.type === 'date' && typeof raw === 'string') {

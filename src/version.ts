@@ -1,9 +1,15 @@
-export const APP_VERSION = "V2.12.4";
+export const APP_VERSION = "V2.12.5";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 4;
+export const VERSION_PATCH = 5;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.5 =====
+  "V2.12.5 修复 - 侧边栏折叠按钮改用内联样式+darkMode条件，确保深色/浅色模式都正确显示",
+  "V2.12.5 修复 - 侧边栏容器改用内联样式+darkMode条件，边界柔和阴影过渡",
+  "V2.12.5 修复 - 子页面白色背景全面改用CSS变量（ModulePage/UserManage/Version/Settings/Backup/ImportExport/Statistics）",
+  "V2.12.5 修复 - 编辑记录时附件字段clone报错（只保留uid/name/status避免AntD Upload调用clone）",
+  "V2.12.5 修复 - 工作台四个KPI卡片移除hover动画效果（改用card-static类）",
   // ===== V2.12.4 =====
   "V2.12.4 修复 - 侧边栏折叠按钮改用CSS类(.sidebar-collapse-btn)，深色模式自动适配",
   "V2.12.4 修复 - 侧边栏容器改用CSS类(.sidebar-container)，边界柔和阴影",

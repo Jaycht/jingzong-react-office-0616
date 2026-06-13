@@ -75,7 +75,7 @@ function KpiCard({ label, value, unit, icon: Icon, color, delay }: {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="card"
+      className="card-static"
       style={{
         padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 16, flex: 1,
         borderLeft: `3px solid ${color}`,
