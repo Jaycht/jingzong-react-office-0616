@@ -4,7 +4,7 @@
  */
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, Link2, Clock, Paperclip, BarChart3, Gavel, Users, Shield, Database, Download } from 'lucide-react';
+import { ArrowLeft, FileText, Link2, Clock, Paperclip, Pen, Download } from 'lucide-react';
 import { Descriptions, Tag, Button, Empty } from 'antd';
 import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
@@ -140,16 +140,45 @@ export default function CaseDetail({ record, onClose }: Props) {
         borderBottom: '1px solid var(--color-border)',
         flexShrink: 0,
       }}>
-        <button className="btn btn-ghost" onClick={onClose} style={{ gap: 6 }}>
-          <ArrowLeft size={16} /> 返回
-        </button>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: textColor }}>{caseName}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: textColor, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{caseName}</div>
           <div style={{ fontSize: 12, color: mutedColor, marginTop: 2 }}>{moduleName} · {fmtDate(record.updatedAt)}</div>
         </div>
-        <button className="btn btn-primary" onClick={() => { setEditRecord(record); setCurrentPage(record.moduleId); openModal('newRecord'); onClose(); }}>
-          编辑
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
+            style={{
+              height: 36, paddingInline: 16, borderRadius: 8,
+              background: darkMode ? '#374151' : '#F3F4F6',
+              color: darkMode ? '#e2e2e6' : '#374151',
+              border: `1px solid ${darkMode ? '#4b5563' : '#D1D5DB'}`,
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontFamily: 'inherit',
+              transition: 'all 0.15s',
+            }}
+          >
+            <ArrowLeft size={15} /> 返回
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); setEditRecord(record); setCurrentPage(record.moduleId); openModal('newRecord'); onClose(); }}
+            style={{
+              height: 36, paddingInline: 16, borderRadius: 8,
+              background: 'linear-gradient(135deg, #155A8A, #2E7DCA)',
+              color: '#fff',
+              border: 'none',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontFamily: 'inherit',
+              boxShadow: '0 2px 8px rgba(21,90,138,0.25)',
+              transition: 'all 0.15s',
+            }}
+          >
+            <Pen size={15} /> 编辑
+          </button>
+        </div>
       </div>
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
