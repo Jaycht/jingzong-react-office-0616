@@ -593,10 +593,20 @@ function recordSummary(rec: MassRecord): { label: string; value: string }[] {
   return items.slice(0, 10);
 }
 
-/** 获取记录的最佳时间戳 */
+/** 获取记录的最佳时间戳（中文格式） */
 function recordDate(rec: MassRecord): string {
   const d = rec.data || {};
-  return String(d.collectDate || d.receiveDate || d.filingDate || d.recordDate || d.criminalDetentionDate || d.arrestDate || d.bailDate || d.visitDate || d.createdAt || '').slice(0, 10);
+  const raw = String(d.collectDate || d.receiveDate || d.filingDate || d.recordDate || d.criminalDetentionDate || d.arrestDate || d.bailDate || d.visitDate || d.createdAt || '');
+  if (!raw) return '';
+  return fmtDateStr(raw);
+}
+
+/** ISO日期字符串转中文格式 */
+function fmtDateStr(raw: string): string {
+  if (!raw) return '';
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[1]}年${parseInt(match[2])}月${parseInt(match[3])}日`;
+  return raw.slice(0, 10);
 }
 
 export default function CaseTimeline() {
@@ -735,7 +745,7 @@ export default function CaseTimeline() {
             timelineRecords.map((rec, i) => {
               const meta = MODULE_META[rec.moduleId] || { label: rec.moduleId, dept: '', icon: FileText, color: '#6B7280' };
               const Icon = meta.icon;
-              const date = recordDate(rec) || rec.createdAt?.slice(0, 10) || '日期未知';
+              const date = recordDate(rec) || fmtDateStr(rec.createdAt) || '日期未知';
               const title = recordTitle(rec);
               const summary = recordSummary(rec);
 

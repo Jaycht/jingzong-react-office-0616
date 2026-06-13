@@ -235,6 +235,31 @@ export default function CaseDetail({ record, onClose }: Props) {
                   </Descriptions.Item>
                 ))}
               </Descriptions>
+              {/* 显示 repeatable section 数据（如嫌疑人信息） */}
+              {Object.entries(record.data || {}).map(([key, val]) => {
+                if (!Array.isArray(val) || val.length === 0 || typeof val[0] !== 'object') return null;
+                const sectionLabel = key === 'suspects' ? '嫌疑人信息' : key === 'coerciveMeasures' ? '强制措施' : key === 'items' ? '详细信息' : key;
+                return (
+                  <div key={key} style={{ marginTop: 20 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 10, borderBottom: '2px solid var(--color-primary)', paddingBottom: 4 }}>
+                      {sectionLabel}（{val.length} 条）
+                    </div>
+                    {val.map((item: Record<string, unknown>, idx: number) => (
+                      <div key={idx} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: 12, marginBottom: 10, background: 'var(--color-surface-hover)' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: mutedColor, marginBottom: 8 }}>#{idx + 1}</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px' }}>
+                          {Object.entries(item).map(([k, v]) => (
+                            <div key={k} style={{ fontSize: 12, lineHeight: 1.8 }}>
+                              <span style={{ color: mutedColor }}>{FIELD_LABELS[k] || k}：</span>
+                              <span style={{ color: textColor }}>{fmtValue(v)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </motion.div>
           )}
 

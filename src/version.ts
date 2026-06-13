@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.12.2";
+export const APP_VERSION = "V2.12.3";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 2;
+export const VERSION_PATCH = 3;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.3 =====
+  "V2.12.3 修复 - 案件360视图现在显示repeatable section数据（嫌疑人信息等）",
+  "V2.12.3 修复 - 案件时间轴日期改为中文格式（2026年6月13日）",
+  "V2.12.3 修复 - CaseDetail基本信息tab展示嫌疑人数组、强制措施等嵌套数据",
   // ===== V2.12.2 =====
   "V2.12.2 修复 - 侧边栏折叠按钮深色模式适配（背景/边框/图标颜色跟随主题）",
   "V2.12.2 修复 - 侧边栏折叠按钮尺寸增大(24→28px)，位置调整避免被裁切",
