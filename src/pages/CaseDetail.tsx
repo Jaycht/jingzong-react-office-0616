@@ -39,7 +39,15 @@ function fmtDate(iso: string): string {
 function fmtValue(val: unknown): string {
   if (val === null || val === undefined) return '—';
   if (Array.isArray(val)) return val.join('、');
-  if (typeof val === 'object') return JSON.stringify(val).slice(0, 30);
+  if (typeof val === 'object') {
+    // 检测 dayjs 对象
+    const obj = val as Record<string, unknown>;
+    if (obj.$L && obj.$d) {
+      // dayjs 对象 → 格式化为中文日期
+      try { return fmtDate(String(obj.$d)); } catch { return String(obj.$d); }
+    }
+    return JSON.stringify(val).slice(0, 30);
+  }
   if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) return fmtDate(val);
   return String(val);
 }
@@ -149,34 +157,34 @@ export default function CaseDetail({ record, onClose }: Props) {
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
             style={{
-              height: 36, paddingInline: 16, borderRadius: 8,
+              height: 38, paddingInline: 18, borderRadius: 8,
               background: darkMode ? '#374151' : '#F3F4F6',
               color: darkMode ? '#e2e2e6' : '#374151',
               border: `1px solid ${darkMode ? '#4b5563' : '#D1D5DB'}`,
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              fontSize: 14, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 6,
               fontFamily: 'inherit',
               transition: 'all 0.15s',
             }}
           >
-            <ArrowLeft size={15} /> 返回
+            <ArrowLeft size={16} /> 返回
           </button>
           <button
             type="button"
             onClick={(e) => { e.preventDefault(); setEditRecord(record); setCurrentPage(record.moduleId); openModal('newRecord'); onClose(); }}
             style={{
-              height: 36, paddingInline: 16, borderRadius: 8,
-              background: 'linear-gradient(135deg, #155A8A, #2E7DCA)',
+              height: 38, paddingInline: 18, borderRadius: 8,
+              background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
               color: '#fff',
               border: 'none',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              fontSize: 14, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 6,
               fontFamily: 'inherit',
-              boxShadow: '0 2px 8px rgba(21,90,138,0.25)',
+              boxShadow: '0 2px 8px rgba(37,99,235,0.3)',
               transition: 'all 0.15s',
             }}
           >
-            <Pen size={15} /> 编辑
+            <Pen size={16} /> 编辑
           </button>
         </div>
       </div>

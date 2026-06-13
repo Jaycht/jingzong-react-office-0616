@@ -176,9 +176,9 @@ export default function Backup() {
               onClick={handleRestore}
               disabled={restoring}
               style={{
-                flex: 1, height: 40, background: restoring ? '#F3F4F6' : '#fff',
-                color: restoring ? '#9CA3AF' : '#1B5E9B',
-                border: restoring ? '1px solid #E5E7EB' : '1.5px solid #1B5E9B',
+                flex: 1, height: 40, background: restoring ? 'var(--color-surface-hover)' : 'var(--color-surface)',
+                color: restoring ? 'var(--color-text-muted)' : '#1B5E9B',
+                border: restoring ? '1px solid var(--color-border)' : '1.5px solid #1B5E9B',
                 borderRadius: 8, fontSize: 13, fontWeight: 600,
                 cursor: restoring ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center',

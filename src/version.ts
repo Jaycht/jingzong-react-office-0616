@@ -1,9 +1,18 @@
-export const APP_VERSION = "V2.12.5";
+export const APP_VERSION = "V2.12.6";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 5;
+export const VERSION_PATCH = 6;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.6 =====
+  "V2.12.6 修复 - fmtValue检测dayjs对象($L/$d属性)，正确格式化为中文日期",
+  "V2.12.6 修复 - CaseDetail返回/编辑按钮尺寸增大(36→38px)，可点击范围增大",
+  "V2.12.6 修复 - 子页面深色模式白色背景全面修复(新建提示条/tabs/Statistics/ImportExport/OperationLog/Backup等)",
+  "V2.12.6 修复 - ModulePage tabs样式改用CSS变量，深色模式自动适配",
+  "V2.12.6 修复 - 统计分析空状态面板改用CSS变量",
+  "V2.12.6 修复 - ImportExport下拉菜单/输入框改用CSS变量",
+  "V2.12.6 修复 - OperationLog按钮改用CSS变量",
+  "V2.12.6 修复 - Backup恢复按钮改用CSS变量",
   // ===== V2.12.5 =====
   "V2.12.5 修复 - 侧边栏折叠按钮改用内联样式+darkMode条件，确保深色/浅色模式都正确显示",
   "V2.12.5 修复 - 侧边栏容器改用内联样式+darkMode条件，边界柔和阴影过渡",

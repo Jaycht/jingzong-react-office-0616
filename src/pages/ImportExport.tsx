@@ -133,8 +133,8 @@ export default function ImportExport() {
               onChange={(e) => setImportModuleId(e.target.value)}
               style={{
                 flex: 1, height: 36, padding: '0 10px', borderRadius: 6,
-                border: '1.5px solid #D8E1EA', fontSize: 13, fontFamily: 'inherit',
-                outline: 'none', background: '#fff',
+                border: '1.5px solid var(--color-border)', fontSize: 13, fontFamily: 'inherit',
+                outline: 'none', background: 'var(--color-surface)', color: 'var(--color-text)',
               }}
             >
               <option value="">— 选择目标模块 —</option>

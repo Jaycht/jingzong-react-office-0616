@@ -259,10 +259,10 @@ export default function Statistics() {
       )}
 
       {!hasData && (
-        <div style={{ textAlign: 'center', padding: 60, color: '#94A3B8', background: '#fff', borderRadius: 10, border: '1px solid #E5E7EB' }}>
-          <BarChart3 size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#6B7280', marginBottom: 8 }}>暂无统计数据</div>
-          <div style={{ fontSize: 13 }}>请先在各个工作模块中新建记录，统计数据将自动生成。</div>
+        <div className="panel" style={{ textAlign: 'center', padding: 60 }}>
+          <BarChart3 size={48} color="var(--color-text-muted)" style={{ marginBottom: 16 }} />
+          <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 8 }}>暂无统计数据</div>
+          <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>请先在各个工作模块中新建记录，统计数据将自动生成。</div>
         </div>
       )}
     </div>

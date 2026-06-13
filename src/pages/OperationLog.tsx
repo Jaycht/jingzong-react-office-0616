@@ -64,12 +64,12 @@ export default function OperationLog() {
               setRefreshKey(k => k + 1);
               showToast('操作日志已清空', 'success');
             }}
-            style={{ height: 34, padding: '0 14px', background: '#fff', color: '#DC2626', border: '1.5px solid #DC2626', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+            style={{ height: 34, padding: '0 14px', background: 'var(--color-surface)', color: '#DC2626', border: '1.5px solid #DC2626', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
             清空日志
           </motion.button>
           <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
             onClick={() => { showToast('正在导出日志...', 'info'); exportOperationLog(); }}
-            style={{ height: 34, padding: '0 14px', background: '#fff', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+            style={{ height: 34, padding: '0 14px', background: 'var(--color-surface)', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
             <Download size={14} />导出日志
           </motion.button>
         </div>

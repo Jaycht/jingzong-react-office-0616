@@ -389,9 +389,9 @@ export default function ModulePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
         style={{
-          background: 'linear-gradient(135deg, #E6F1F8, #F8FBFD)',
-          border: '1px solid #B9D4E6',
-          borderLeft: '4px solid #155A8A',
+          background: 'var(--color-primary-bg)',
+          border: '1px solid var(--color-primary-border)',
+          borderLeft: '4px solid var(--color-primary)',
           borderRadius: 8,
           padding: '14px 16px',
           marginBottom: 16,
@@ -551,17 +551,20 @@ export default function ModulePage() {
               .work-template-tabs .ant-tabs-nav { margin: 0; }
               .work-template-tabs .ant-tabs-tab {
                 border-radius: 7px 7px 0 0 !important;
-                background: #EAF1F6 !important;
-                border-color: #C8D9E6 !important;
+                background: var(--color-surface-hover) !important;
+                border-color: var(--color-border) !important;
                 padding: 8px 16px !important;
                 font-weight: 700;
+                color: var(--color-text-secondary) !important;
               }
               .work-template-tabs .ant-tabs-tab-active {
-                background: #155A8A !important;
-                border-color: #155A8A !important;
+                background: var(--color-primary-bg) !important;
+                border-color: var(--color-primary) !important;
                 box-shadow: 0 -2px 10px rgba(21,90,138,.16);
               }
-              .work-template-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: #fff !important; }
+              .work-template-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: var(--color-primary) !important; }
+              .dark .work-template-tabs .ant-tabs-tab { color: var(--color-text-secondary) !important; }
+              .dark .work-template-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: var(--color-primary) !important; }
             `}</style>
             <div style={{ fontSize: 12, color: '#64748B', fontWeight: 700, marginBottom: 8 }}>请选择记录类型</div>
             <Tabs
