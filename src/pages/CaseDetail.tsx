@@ -29,11 +29,34 @@ const FIELD_LABELS: Record<string, string> = {
   leadOfficer: '主办民警', assistOfficer: '协办民警',
 };
 
-function fmtDate(iso: string): string {
+function fmtDate(iso: string | Date): string {
   if (!iso) return '—';
-  const d = new Date(iso);
+  const d = typeof iso === 'string' ? new Date(iso) : iso;
+  if (isNaN(d.getTime())) return '—';
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fmtValue(val: unknown): string {
+  if (val === null || val === undefined) return '—';
+  if (Array.isArray(val)) return val.join('、');
+  if (typeof val === 'object') {
+    const obj = val as Record<string, unknown>;
+    // dayjs 对象：$L 是 locale，$d 是底层 Date/string
+    if (obj.$L && obj.$d) {
+      try {
+        const dateVal = obj.$d instanceof Date ? obj.$d : new Date(String(obj.$d));
+        return isNaN(dateVal.getTime()) ? '—' : `${dateVal.getFullYear()}-${String(dateVal.getMonth() + 1).padStart(2, '0')}-${String(dateVal.getDate()).padStart(2, '0')}`;
+      } catch { return '—'; }
+    }
+    // 附件对象：只显示文件名
+    if (obj.name && obj.uid) {
+      return String(obj.name);
+    }
+    return JSON.stringify(val).slice(0, 30);
+  }
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) return fmtDate(val);
+  return String(val);
 }
 
 function fmtValue(val: unknown): string {
@@ -157,7 +180,7 @@ export default function CaseDetail({ record, onClose }: Props) {
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
             style={{
-              height: 38, paddingInline: 18, borderRadius: 8,
+              height: 40, paddingInline: 20, borderRadius: 8,
               background: darkMode ? '#374151' : '#F3F4F6',
               color: darkMode ? '#e2e2e6' : '#374151',
               border: `1px solid ${darkMode ? '#4b5563' : '#D1D5DB'}`,
@@ -173,7 +196,7 @@ export default function CaseDetail({ record, onClose }: Props) {
             type="button"
             onClick={(e) => { e.preventDefault(); setEditRecord(record); setCurrentPage(record.moduleId); openModal('newRecord'); onClose(); }}
             style={{
-              height: 38, paddingInline: 18, borderRadius: 8,
+              height: 40, paddingInline: 20, borderRadius: 8,
               background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
               color: '#fff',
               border: 'none',
@@ -256,12 +279,17 @@ export default function CaseDetail({ record, onClose }: Props) {
                       <div key={idx} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: 12, marginBottom: 10, background: 'var(--color-surface-hover)' }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: mutedColor, marginBottom: 8 }}>#{idx + 1}</div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 16px' }}>
-                          {Object.entries(item).map(([k, v]) => (
-                            <div key={k} style={{ fontSize: 12, lineHeight: 1.8 }}>
-                              <span style={{ color: mutedColor }}>{FIELD_LABELS[k] || k}：</span>
-                              <span style={{ color: textColor }}>{fmtValue(v)}</span>
-                            </div>
-                          ))}
+                          {Object.entries(item).map(([k, v]) => {
+                            if (v === null || v === undefined || v === '') return null;
+                            // 跳过内部字段
+                            if (k.startsWith('__') || k === 'uid' || k === 'lastModified' || k === 'percent' || k === 'status' || k === 'size') return null;
+                            return (
+                              <div key={k} style={{ fontSize: 12, lineHeight: 1.8 }}>
+                                <span style={{ color: mutedColor }}>{FIELD_LABELS[k] || k}：</span>
+                                <span style={{ color: textColor, fontWeight: 500 }}>{fmtValue(v)}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}

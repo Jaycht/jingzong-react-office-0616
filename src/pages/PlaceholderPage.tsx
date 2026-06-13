@@ -38,7 +38,7 @@ export default function PlaceholderPage() {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => showToast('感谢您的耐心等待！', 'info')}
-            style={{ height: 38, padding: '0 20px', background: '#fff', color: '#6B7280', border: '1.5px solid #E5E7EB', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ height: 38, padding: '0 20px', background: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1.5px solid var(--color-border)', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
           >
             返回工作台
           </motion.button>

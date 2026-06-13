@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.12.6";
+export const APP_VERSION = "V2.12.7";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 6;
+export const VERSION_PATCH = 7;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.7 =====
+  "V2.12.7 修复 - fmtValue全面修复：dayjs对象(Date类型$d)、附件对象(只显示name)、内部字段过滤",
+  "V2.12.7 修复 - repeatable section显示：跳过uid/lastModified/percent等内部字段",
+  "V2.12.7 修复 - CaseDetail返回/编辑按钮尺寸增大至40px，全范围可点击",
+  "V2.12.7 修复 - 统计分析/占位页按钮改用CSS变量深色模式适配",
   // ===== V2.12.6 =====
   "V2.12.6 修复 - fmtValue检测dayjs对象($L/$d属性)，正确格式化为中文日期",
   "V2.12.6 修复 - CaseDetail返回/编辑按钮尺寸增大(36→38px)，可点击范围增大",

@@ -163,7 +163,7 @@ export default function Statistics() {
             saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `模块统计明细_${new Date().toISOString().slice(0,10)}.xlsx`);
             showToast('已导出 Excel', 'success');
           }}
-          style={{ height: 34, padding: '0 16px', background: '#fff', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+          style={{ height: 34, padding: '0 16px', background: 'var(--color-surface)', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
           <Download size={14} />导出报告
         </motion.button>
       </motion.div>
@@ -226,7 +226,7 @@ export default function Statistics() {
                 saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `模块统计明细_${new Date().toISOString().slice(0,10)}.xlsx`);
                 showToast('已导出 Excel', 'success');
               }}
-                style={{ height: 30, padding: '0 12px', background: '#fff', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 7, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit' }}>
+                style={{ height: 30, padding: '0 12px', background: 'var(--color-surface)', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 7, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit' }}>
                 <Download size={13} />导出
               </motion.button>
             </div>
