@@ -7,7 +7,8 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, Link2, Clock, Paperclip, BarChart3, Gavel, Users, Shield, Database, Download } from 'lucide-react';
 import { Descriptions, Tag, Button, Empty } from 'antd';
 import { useAppStore } from '../store/appStore';
-import { getMassRecords, downloadAttachment } from '../store/massStore';
+import { getMassRecords } from '../store/massStore';
+import { downloadAttachment } from '../store/attachmentStore';
 import { MODULE_NAMES, findModule } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 
