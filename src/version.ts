@@ -1,9 +1,12 @@
-export const APP_VERSION = "V2.12.7";
+export const APP_VERSION = "V2.12.8";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 7;
+export const VERSION_PATCH = 8;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.8 =====
+  "V2.12.8 修复 - Framer Motion 从 v11 升级到 v12，修复 React 19 兼容性导致的 'e.clone is not a function' 崩溃",
+  "V2.12.8 修复 - 点击案件时间轴记录不再崩溃，页面正常跳转",
   // ===== V2.12.7 =====
   "V2.12.7 修复 - fmtValue全面修复：dayjs对象(Date类型$d)、附件对象(只显示name)、内部字段过滤",
   "V2.12.7 修复 - repeatable section显示：跳过uid/lastModified/percent等内部字段",

@@ -1,7 +1,7 @@
 {
   "name": "jingzong-work-log",
   "private": true,
-  "version": "2.12.7",
+  "version": "2.12.8",
   "description": "经侦大队工作记录管理系统",
   "author": "陈洪涛",
   "license": "MIT",
@@ -61,7 +61,7 @@
     "echarts-for-react": "^3.0.6",
     "electron-updater": "^6.8.9",
     "file-saver": "^2.0.5",
-    "framer-motion": "^11.18.2",
+    "framer-motion": "^12.40.0",
     "jszip": "^3.10.1",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
