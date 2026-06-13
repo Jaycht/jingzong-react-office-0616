@@ -1,9 +1,15 @@
-export const APP_VERSION = "V2.12.1";
+export const APP_VERSION = "V2.12.2";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 1;
+export const VERSION_PATCH = 2;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.2 =====
+  "V2.12.2 修复 - 侧边栏折叠按钮深色模式适配（背景/边框/图标颜色跟随主题）",
+  "V2.12.2 修复 - 侧边栏折叠按钮尺寸增大(24→28px)，位置调整避免被裁切",
+  "V2.12.2 修复 - 侧边栏与主页面边界改为柔和阴影过渡，替代生硬的实线边框",
+  "V2.12.2 修复 - 案件名称/编号/嫌疑人全局共享功能恢复（IndexedDB异步加载竞态问题）",
+  "V2.12.2 修复 - App.tsx等待IndexedDB就绪后再重建案件索引和嫌疑人索引",
   // ===== V2.12.1 =====
   "V2.12.1 修复 - 深色模式全面覆盖：45处硬编码白色背景改为CSS变量，Ant Design组件深色适配",
   "V2.12.1 修复 - 深色模式边框/文字/阴影全局覆盖，不再出现白色卡片和刺眼边框",

@@ -150,7 +150,10 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
       style={{
         background: 'var(--sidebar-bg)', display: 'flex', flexDirection: 'column',
         overflow: 'hidden', flexShrink: 0, position: 'relative',
-        borderRight: '1px solid var(--sidebar-border)',
+        borderRight: 'none',
+        boxShadow: darkMode
+          ? '1px 0 8px rgba(0,0,0,.3), 1px 0 0 rgba(255,255,255,0.03)'
+          : '1px 0 12px rgba(0,0,0,.04), 1px 0 0 rgba(0,0,0,0.03)',
       }}>
       {/* Electron 无边框窗口拖拽区域 */}
       {/* @ts-expect-error WebkitAppRegion is Electron-only CSS property */}
@@ -162,15 +165,17 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
         whileTap={{ scale: 0.9 }}
         onClick={toggleCollapsed}
         style={{
-          position: 'absolute', top: 32, right: -12, zIndex: 10,
-          width: 24, height: 24, borderRadius: '50%', background: '#fff',
-          border: '1px solid #D8E1EA', cursor: 'pointer', display: 'flex',
+          position: 'absolute', top: 32, right: -14, zIndex: 10,
+          width: 28, height: 28, borderRadius: '50%',
+          background: darkMode ? '#374151' : '#fff',
+          border: `1px solid ${darkMode ? '#4b5563' : '#D8E1EA'}`,
+          cursor: 'pointer', display: 'flex',
           alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,.16)',
+          boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,.4)' : '0 2px 8px rgba(0,0,0,.16)',
         }}
       >
         <motion.div animate={{ rotate: collapsed ? 0 : 180 }} transition={{ duration: 0.3 }}>
-          <ChevronLeft size={13} color="#64748B" />
+          <ChevronLeft size={14} color={darkMode ? '#9ca3af' : '#64748B'} />
         </motion.div>
       </motion.button>
 

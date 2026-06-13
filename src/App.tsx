@@ -10,7 +10,7 @@ import { Toaster } from "./components/Toaster";
 import { LIGHT_THEME, DARK_THEME } from "./constants/theme";
 import { useAppStore, loadUserFromStorage } from "./store/appStore";
 import { migrateOldCasesToMassStore, getMassRecords } from "./store/massStore";
-import { rebuildCaseIndex } from "./store/inputHistoryStore";
+import { rebuildCaseIndex, rebuildSuspectIndex } from "./store/inputHistoryStore";
 import { indexedDBAdapter } from "./store/adapter";
 
 declare global {
@@ -42,32 +42,34 @@ function AppContent() {
   // 数据迁移 + 重建案件索引
   useEffect(() => {
     migrateOldCasesToMassStore();
-    // 迁移强制措施旧数据：coerciveMeasures[0].caseNo/caseName → 顶层
-    const allRecords = getMassRecords();
-    let migrated = false;
-    for (const rec of allRecords) {
-      if (rec.moduleId !== 'squad-coercive') continue;
-      const data = rec.data || {};
-      // 检查旧结构：caseNo/caseName 在 coerciveMeasures 内而非顶层
-      if (!data.caseNo && !data.caseName) {
-        const list = data.coerciveMeasures;
-        if (Array.isArray(list) && list.length > 0 && (list[0].caseNo || list[0].caseName)) {
-          const item = list[0];
-          if (item.caseNo) data.caseNo = item.caseNo;
-          if (item.caseName) data.caseName = item.caseName;
-          // 从重复段中移除已提升到顶层的字段，避免冗余
-          for (const entry of list) {
-            delete entry.caseNo;
-            delete entry.caseName;
+    // 等待 IndexedDB 加载完成后再重建索引
+    indexedDBAdapter.whenReady().then(() => {
+      const allRecords = getMassRecords();
+      // 迁移强制措施旧数据
+      let migrated = false;
+      for (const rec of allRecords) {
+        if (rec.moduleId !== 'squad-coercive') continue;
+        const data = rec.data || {};
+        if (!data.caseNo && !data.caseName) {
+          const list = data.coerciveMeasures;
+          if (Array.isArray(list) && list.length > 0 && (list[0].caseNo || list[0].caseName)) {
+            const item = list[0];
+            if (item.caseNo) data.caseNo = item.caseNo;
+            if (item.caseName) data.caseName = item.caseName;
+            for (const entry of list) {
+              delete entry.caseNo;
+              delete entry.caseName;
+            }
+            migrated = true;
           }
-          migrated = true;
         }
       }
-    }
-    if (migrated) {
-      indexedDBAdapter.setItem('jingzong.mass.records', allRecords);
-    }
-    rebuildCaseIndex(allRecords);
+      if (migrated) {
+        indexedDBAdapter.setItem('jingzong.mass.records', allRecords);
+      }
+      rebuildCaseIndex(allRecords);
+      rebuildSuspectIndex(allRecords);
+    });
   }, []);
 
   // 恢复持久化的用户登录状态（跨窗口/跨应用重启）

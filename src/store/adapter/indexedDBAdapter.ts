@@ -19,6 +19,11 @@ class IndexedDBAdapter implements StorageAdapter {
     this.ready = this.initDB();
   }
 
+  /** 等待 IndexedDB 加载完成后再执行操作 */
+  async whenReady(): Promise<void> {
+    return this.ready;
+  }
+
   private initDB(): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
