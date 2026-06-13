@@ -7,7 +7,8 @@ import { AutoComplete, Button, Divider, Form, Input, Select, Space } from 'antd'
 import dayjs from 'dayjs';
 import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
-import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames, getSquadCaseNames, getSquadCaseNos } from '../store/massStore';
+import { MODULE_NAMES } from '../moduleConfig';
+import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames, getSquadCaseNames, getSquadCaseNos, getMassRecords } from '../store/massStore';
 import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName, getCaseDetail, type CaseDetail, getAllSuspectNames, getSuspectInfo, deleteFieldHistoryEntry, getHiddenSuggestions, hideFieldSuggestion } from '../store/inputHistoryStore';
 
 type SelectValue = string | string[] | undefined;
@@ -959,6 +960,43 @@ export function GlobalSuspectField({ field, subName, listName }: {
     }
     fillSuspectRelated(selectedValue);
     setOpen(false);
+    // 触发关联查询
+    queryRelatedRecords(selectedValue);
+  };
+
+  // 关联记录查询状态
+  const [relatedRecords, setRelatedRecords] = useState<Array<{ moduleName: string; title: string; date: string }>>([]);
+
+  const queryRelatedRecords = useCallback((suspectName: string) => {
+    if (!suspectName || suspectName.trim().length < 2) {
+      setRelatedRecords([]);
+      return;
+    }
+    const all = getMassRecords();
+    const kw = suspectName.trim().toLowerCase();
+    const matches: Array<{ moduleName: string; title: string; date: string }> = [];
+    for (const rec of all) {
+      const d = rec.data || {};
+      // 检查所有字段值是否包含嫌疑人姓名
+      const found = Object.values(d).some(v => {
+        if (typeof v === 'string') return v.toLowerCase().includes(kw);
+        if (Array.isArray(v)) return v.some(item => typeof item === 'object' && item !== null && Object.values(item).some(sv => typeof sv === 'string' && sv.toLowerCase().includes(kw)));
+        return false;
+      });
+      if (found) {
+        const modName = MODULE_NAMES[rec.moduleId] || rec.moduleId;
+        const title = String(d.caseName || d.suspect || d.title || d.projectName || '').slice(0, 16);
+        const date = rec.updatedAt ? new Date(rec.updatedAt).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }) : '';
+        matches.push({ moduleName: modName, title, date });
+      }
+    }
+    setRelatedRecords(matches.slice(0, 5)); // 最多显示5条
+  }, []);
+
+  // 输入变化时清除关联提示
+  const handleChangeLocal = (val: string) => {
+    setLocalValue(val);
+    if (val.trim().length < 2) setRelatedRecords([]);
   };
 
   const filteredOptions = useMemo(() => {
@@ -976,7 +1014,7 @@ export function GlobalSuspectField({ field, subName, listName }: {
       <div style={{ position: 'relative' }}>
         <input
           value={localValue}
-          onChange={(e) => handleChange(e.target.value)}
+          onChange={(e) => handleChangeLocal(e.target.value)}
           onBlur={handleBlurSync}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           placeholder="请输入嫌疑人姓名（可匹配历史记录）"
@@ -1045,6 +1083,24 @@ export function GlobalSuspectField({ field, subName, listName }: {
                 </div>
               );
             })}
+          </div>
+        )}
+        {/* 智能关联提示卡片 */}
+        {relatedRecords.length > 0 && !open && (
+          <div style={{
+            marginTop: 6, padding: '8px 10px', borderRadius: 6,
+            background: 'linear-gradient(135deg, #EFF6FF, #F0F9FF)',
+            border: '1px solid #BFDBFE', fontSize: 12, lineHeight: 1.6,
+          }}>
+            <div style={{ fontWeight: 600, color: '#1D4ED8', marginBottom: 4 }}>
+              🔗 发现 {relatedRecords.length} 条关联记录
+            </div>
+            {relatedRecords.map((r, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: '#475569', padding: '1px 0' }}>
+                <span><span style={{ fontWeight: 500 }}>{r.moduleName}</span>{r.title ? ` · ${r.title}` : ''}</span>
+                <span style={{ color: '#94A3B8', flexShrink: 0 }}>{r.date}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>

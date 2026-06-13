@@ -13,6 +13,7 @@ import type { MassRecord } from '../store/massStore';
 import { exportModuleToExcel, exportSelectedRecords, importExcelToModule } from '../utils/excelUtils';
 import { exportModuleReport } from '../utils/reportGenerator';
 import { generateFundReport } from '../utils/reportUtils';
+import CaseDetail from './CaseDetail';
 
 type FieldValue = string | number | boolean | null | undefined | string[] | Record<string, unknown>;
 
@@ -101,6 +102,8 @@ export default function ModulePage() {
 
   // 详情弹窗
   const [viewRecord, setViewRecord] = useState<MassRecord | null>(null);
+  // 案件360°全屏视图
+  const [caseDetail, setCaseDetail] = useState<MassRecord | null>(null);
   // 多选
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [reporting, setReporting] = useState(false);
@@ -255,7 +258,7 @@ export default function ModulePage() {
           <Button
             type="link" size="small"
             icon={<Eye size={13} />}
-            onClick={() => setViewRecord(record._record)}
+            onClick={() => setCaseDetail(record._record)}
           >
             查看
           </Button>
@@ -665,7 +668,7 @@ export default function ModulePage() {
                   key={row.key}
                   className="card hover-lift"
                   style={{ padding: 16, cursor: 'pointer' }}
-                  onClick={() => setViewRecord(row._record)}
+                  onClick={() => setCaseDetail(row._record)}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)', flex: 1, minWidth: 0 }} className="truncate">
@@ -686,7 +689,7 @@ export default function ModulePage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-border-light)', paddingTop: 8 }}>
                     <span className="text-sm text-muted">{row._updatedAt}</span>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setViewRecord(row._record); }}>查看</button>
+                      <button className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setCaseDetail(row._record); }}>查看</button>
                       <button className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setEditRecord(row._record); openModal('newRecord'); }}>编辑</button>
                     </div>
                   </div>
@@ -805,6 +808,11 @@ export default function ModulePage() {
           </>
         )}
       </Modal>
+
+      {/* 案件 360° 全屏视图 */}
+      {caseDetail && (
+        <CaseDetail record={caseDetail} onClose={() => setCaseDetail(null)} />
+      )}
     </div>
   );
 }
