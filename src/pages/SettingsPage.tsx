@@ -145,7 +145,7 @@ export default function SettingsPage() {
       </motion.div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: 16, alignItems: 'start' }}>
-        <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, padding: 18 }}>
+        <div className="panel" style={{ padding: 18 }}>
           <Form form={form} layout="vertical">
             <Form.Item name="departmentId" label="所属一级菜单" rules={[{ required: true, message: '请选择所属部门' }]}>
               <Select placeholder="请选择部门">

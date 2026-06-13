@@ -547,48 +547,66 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
 .dark *::-webkit-scrollbar-thumb { background: var(--stitch-outline-variant); }
 .dark *::-webkit-scrollbar-thumb:hover { background: var(--stitch-outline); }
 
-/* 深色模式全局覆盖：硬编码白色背景 */
-.dark [style*="background: #fff"],
-.dark [style*="background:#fff"],
-.dark [style*="background: white"] {
-  background: var(--color-surface) !important;
+/* ── 侧边栏折叠按钮 ── */
+.sidebar-collapse-btn {
+  position: absolute;
+  top: 32px;
+  right: -14px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #D8E1EA;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,.16);
+  color: #64748B;
+  transition: all 0.2s var(--ease-out);
 }
-.dark [style*="background: #FAFBFC"] { background: var(--color-surface-hover) !important; }
-.dark [style*="background: #F8FAFC"] { background: var(--color-surface-hover) !important; }
-.dark [style*="background: #F6F8FB"] { background: var(--color-surface-hover) !important; }
-.dark [style*="background: #F0F2F5"] { background: var(--color-bg) !important; }
-.dark [style*="background: #EFF6FF"] { background: var(--color-primary-bg) !important; }
-.dark [style*="background: #F0F7FF"] { background: var(--color-primary-bg) !important; }
-.dark [style*="background: #EBF5FF"] { background: var(--color-primary-bg) !important; }
+.sidebar-collapse-btn:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+  transform: scale(1.1);
+}
+.dark .sidebar-collapse-btn {
+  background: #374151;
+  border-color: #4b5563;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  color: #9ca3af;
+}
 
-/* 深色模式：边框颜色 */
-.dark [style*="border: 1px solid #D8E1EA"],
-.dark [style*="border:1px solid #D8E1EA"] {
-  border-color: var(--color-border) !important;
+/* ── 侧边栏容器 ── */
+.sidebar-container {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  border-right: none;
+  box-shadow: 1px 0 12px rgba(0,0,0,.04), 1px 0 0 rgba(0,0,0,0.03);
 }
-.dark [style*="border: 1px solid #E5E7EB"],
-.dark [style*="border:1px solid #E5E7EB"] {
-  border-color: var(--color-border) !important;
-}
-.dark [style*="border: 1px solid #E2E8F0"] {
-  border-color: var(--color-border) !important;
+.dark .sidebar-container {
+  background: var(--color-surface);
+  box-shadow: 1px 0 8px rgba(0,0,0,.3), 1px 0 0 rgba(255,255,255,0.03);
 }
 
-/* 深色模式：文字颜色 */
-.dark [style*="color: #1F2937"] { color: var(--color-text) !important; }
-.dark [style*="color: #172033"] { color: var(--color-text) !important; }
-.dark [style*="color: #1e293b"] { color: var(--color-text) !important; }
-.dark [style*="color: #333"] { color: var(--color-text) !important; }
-.dark [style*="color: #334155"] { color: var(--color-text) !important; }
-.dark [style*="color: #6B7280"] { color: var(--color-text-secondary) !important; }
-.dark [style*="color: #64748B"] { color: var(--color-text-secondary) !important; }
-.dark [style*="color: #94A3B8"] { color: var(--color-text-muted) !important; }
-.dark [style*="color: #9CA3AF"] { color: var(--color-text-muted) !important; }
+/* ── 子页面通用深色覆盖 ── */
+.dark .page-surface { background: var(--color-surface) !important; border-color: var(--color-border) !important; }
+.dark .page-surface-hover { background: var(--color-surface-hover) !important; border-color: var(--color-border) !important; }
+.dark .page-bg { background: var(--color-bg) !important; }
+.dark .page-text { color: var(--color-text) !important; }
+.dark .page-text-secondary { color: var(--color-text-secondary) !important; }
+.dark .page-text-muted { color: var(--color-text-muted) !important; }
+.dark .page-border { border-color: var(--color-border) !important; }
+.dark .page-shadow { box-shadow: 0 2px 8px rgba(0,0,0,.3) !important; }
 
-/* 深色模式：阴影 */
-.dark [style*="box-shadow: 0 1px 3px rgba(0,0,0,.08)"] { box-shadow: 0 2px 8px rgba(0,0,0,.3) !important; }
-.dark [style*="box-shadow: 0 1px 4px rgba(0,0,0,.06)"] { box-shadow: 0 2px 8px rgba(0,0,0,.3) !important; }
-.dark [style*="box-shadow: 0 2px 8px rgba(0,0,0,.08)"] { box-shadow: 0 4px 16px rgba(0,0,0,.35) !important; }
+/* ── 面板深色覆盖 ── */
+.dark .panel { background: var(--color-surface) !important; border-color: var(--color-border) !important; }
+.dark .panel-header { border-color: var(--color-border-light) !important; }
+.dark .card { background: var(--color-surface) !important; border-color: var(--color-border) !important; }
 
 /* 深色模式：Ant Design 组件覆盖 */
 .dark .ant-table { background: var(--color-surface) !important; }

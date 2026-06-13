@@ -226,7 +226,7 @@ export default function Attachments() {
         </div>
       </motion.div>
 
-      <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, padding: 16 }}>
+      <div className="panel" style={{ padding: 16 }}>
         {/* 搜索栏 */}
         <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ position: 'relative', maxWidth: 400, flex: 1 }}>

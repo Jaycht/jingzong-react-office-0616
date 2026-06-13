@@ -173,7 +173,7 @@ export default function Statistics() {
         style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
         {STATS.map((s, i) => (
           <motion.div key={s.label} variants={item} whileHover={{ y: -3 }}
-            style={{ background: '#fff', borderRadius: 10, padding: 18, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 13 }}>
+            className="card" style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 13 }}>
             <div style={{ width: 44, height: 44, borderRadius: 11, background: s.color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {i === 0 && <FileText size={19} color={s.color} />}
               {i === 1 && <Check size={19} color={s.color} />}
@@ -198,7 +198,7 @@ export default function Statistics() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 18 }}>
             {/* 各模块记录对比 */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              style={{ background: '#fff', borderRadius: 10, padding: '14px 14px 6px', boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
+              className="card" style={{ padding: '14px 14px 6px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 各模块记录对比 <span style={{ fontSize: 11, color: mutedColor, fontWeight: 400 }}>单位：条记录</span>
               </div>
@@ -207,7 +207,7 @@ export default function Statistics() {
 
             {/* 记录类型分布 */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-              style={{ background: '#fff', borderRadius: 10, padding: '14px 14px 6px', boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
+              className="card" style={{ padding: '14px 14px 6px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 记录类型分布 <span style={{ fontSize: 11, color: mutedColor, fontWeight: 400 }}>按数量占比</span>
               </div>

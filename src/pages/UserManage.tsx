@@ -53,7 +53,7 @@ export default function UserManage() {
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}
             whileHover={{ y: -3 }}
-            style={{ background: '#fff', borderRadius: 10, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 12 }}>
+            className="card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 44, height: 44, borderRadius: 11, background: s.color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {i === 0 && <UserCog size={19} color={s.color} />}
               {i === 1 && <UserCheck size={19} color={s.color} />}

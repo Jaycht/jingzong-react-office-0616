@@ -150,7 +150,7 @@ export default function ModulePage() {
 
   if (!module) {
     return (
-      <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, minHeight: 420, display: 'grid', placeItems: 'center' }}>
+      <div className="panel" style={{ minHeight: 420, display: 'grid', placeItems: 'center' }}>
         <Empty description="当前模块不存在或已被删除" />
       </div>
     );
@@ -548,9 +548,9 @@ export default function ModulePage() {
         )}
       </div>
 
-      <div style={{ background: '#fff', border: '1px solid #D8E1EA', borderRadius: 8, overflow: 'hidden' }}>
+      <div className="panel" style={{ overflow: 'hidden' }}>
         {module.tabs.length > 1 && (
-          <div style={{ padding: '14px 16px 0', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+          <div style={{ padding: '14px 16px 0', background: 'var(--color-surface-hover)', borderBottom: '1px solid var(--color-border-light)' }}>
             <style>{`
               .work-template-tabs .ant-tabs-nav { margin: 0; }
               .work-template-tabs .ant-tabs-tab {

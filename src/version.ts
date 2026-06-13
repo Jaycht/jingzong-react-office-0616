@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.12.3";
+export const APP_VERSION = "V2.12.4";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 3;
+export const VERSION_PATCH = 4;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.4 =====
+  "V2.12.4 修复 - 侧边栏折叠按钮改用CSS类(.sidebar-collapse-btn)，深色模式自动适配",
+  "V2.12.4 修复 - 侧边栏容器改用CSS类(.sidebar-container)，边界柔和阴影",
+  "V2.12.4 修复 - 子页面全面改用CSS类(.card/.panel/.page-surface)，深色模式自动覆盖",
+  "V2.12.4 修复 - 移除不可靠的[style*]CSS选择器，改用语义化CSS类确保深色模式生效",
   // ===== V2.12.3 =====
   "V2.12.3 修复 - 案件360视图现在显示repeatable section数据（嫌疑人信息等）",
   "V2.12.3 修复 - 案件时间轴日期改为中文格式（2026年6月13日）",

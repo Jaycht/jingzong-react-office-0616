@@ -101,10 +101,10 @@ export default function OperationLog() {
       {/* Timeline */}
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-        style={{ background: '#fff', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 13, color: '#6B7280' }}>共 <strong style={{ color: '#1F2937' }}>{logs.length}</strong> 条操作记录</div>
-          <div style={{ fontSize: 12, color: '#9CA3AF' }}>日志保留期限：最近 5000 条</div>
+        className="panel" style={{ overflow: 'hidden' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>共 <strong style={{ color: 'var(--color-text)' }}>{logs.length}</strong> 条操作记录</div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>日志保留期限：最近 5000 条</div>
         </div>
         <div>
           {logs.length === 0 ? (

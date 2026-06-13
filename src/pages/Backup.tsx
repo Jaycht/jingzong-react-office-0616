@@ -131,7 +131,7 @@ export default function Backup() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* 数据概览 */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            style={{ background: '#fff', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
+            className="card" style={{ padding: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>数据概览</div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
               <div style={{ flex: 1, padding: '10px 12px', background: '#EBF5FF', borderRadius: 8, textAlign: 'center' }}>

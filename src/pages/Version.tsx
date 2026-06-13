@@ -1,4 +1,4 @@
-﻿import { useMemo } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle, Sparkles, RefreshCw, Wrench } from "lucide-react";
 import { getCurrentVersion } from "../store/versionStore";
@@ -105,7 +105,7 @@ export default function Version() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        style={{ background: "#fff", borderRadius: 12, border: "1px solid #E5E7EB", boxShadow: "0 1px 4px rgba(0,0,0,.06)", padding: "40px 24px 32px", marginBottom: 22, textAlign: "center" }}
+        style={{ background: "var(--color-surface)", borderRadius: 12, border: "1px solid var(--color-border)", boxShadow: "var(--shadow-sm)", padding: "40px 24px 32px", marginBottom: 22, textAlign: "center" }}
       >
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }} style={{ marginBottom: 20 }}>
           <img src="./logo.png" alt="" style={{ width: 360, height: 360, objectFit: "contain" }} />

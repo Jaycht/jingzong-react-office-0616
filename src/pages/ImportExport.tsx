@@ -115,7 +115,7 @@ export default function ImportExport() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
         {/* 导入区 */}
         <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
-          style={{ background: '#fff', borderRadius: 10, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
+          className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <div style={{ width: 44, height: 44, borderRadius: 11, background: '#EBF5FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Upload size={22} color="#1B5E9B" />
