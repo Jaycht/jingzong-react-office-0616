@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.12.0";
+export const APP_VERSION = "V2.12.1";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 0;
+export const VERSION_PATCH = 1;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.1 =====
+  "V2.12.1 修复 - 深色模式全面覆盖：45处硬编码白色背景改为CSS变量，Ant Design组件深色适配",
+  "V2.12.1 修复 - 深色模式边框/文字/阴影全局覆盖，不再出现白色卡片和刺眼边框",
+  "V2.12.1 增强 - 品牌色升级为更鲜活的蓝色(#2563EB)，配色更现代",
+  "V2.12.1 增强 - 卡片设计升级：左侧渐变色条+hover上浮+发光效果，card-accent变体",
   // ===== V2.12.0 =====
   "V2.12.0 新增 - 案件360°全屏视图：左侧tab切换（基本信息/关联记录/时间线/附件），右侧内容展示",
   "V2.12.0 新增 - 表单智能关联提示：输入嫌疑人姓名时自动查询其他模块关联记录并显示卡片",

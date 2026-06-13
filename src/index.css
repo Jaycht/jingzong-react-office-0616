@@ -1,19 +1,19 @@
-﻿*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ============================================================
    设计令牌系统 — Design Tokens
    ============================================================ */
 :root {
   /* ── 品牌色 ── */
-  --color-primary: #155A8A;
-  --color-primary-light: #2E7DCA;
-  --color-primary-dark: #0F3A5F;
-  --color-primary-bg: #E6F1F8;
-  --color-primary-border: #B9D4E6;
-  --color-success: #138A63;
-  --color-success-bg: #E8F5E9;
+  --color-primary: #2563EB;
+  --color-primary-light: #3B82F6;
+  --color-primary-dark: #1D4ED8;
+  --color-primary-bg: #EFF6FF;
+  --color-primary-border: #BFDBFE;
+  --color-success: #059669;
+  --color-success-bg: #ECFDF5;
   --color-warning: #D97706;
-  --color-warning-bg: #FFF7ED;
+  --color-warning-bg: #FFFBEB;
   --color-danger: #DC2626;
   --color-danger-bg: #FEF2F2;
   --color-info: #0284C7;
@@ -191,13 +191,65 @@ body {
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+  transition: all var(--duration-normal) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--color-primary), transparent);
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-out);
 }
 .card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   border-color: var(--color-primary-border);
+  transform: translateY(-2px);
+}
+.card:hover::before {
+  opacity: 1;
+}
+.card-accent-blue::before { background: linear-gradient(180deg, #3B82F6, #60A5FA); opacity: 0.6; }
+.card-accent-green::before { background: linear-gradient(180deg, #10B981, #34D399); opacity: 0.6; }
+.card-accent-orange::before { background: linear-gradient(180deg, #F59E0B, #FBBF24); opacity: 0.6; }
+.card-accent-red::before { background: linear-gradient(180deg, #EF4444, #F87171); opacity: 0.6; }
+.card-accent-purple::before { background: linear-gradient(180deg, #8B5CF6, #A78BFA); opacity: 0.6; }
+
+/* ── 卡片（浅色渐变背景版） ── */
+.card-gradient {
+  background: linear-gradient(135deg, var(--color-surface), var(--color-surface-hover));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--duration-normal) var(--ease-out);
+}
+.card-gradient::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, var(--color-primary-bg) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-out);
+  pointer-events: none;
+}
+.card-gradient:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+.card-gradient:hover::after {
+  opacity: 0.5;
 }
 
 /* ── 按钮变体 ── */
@@ -494,6 +546,64 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
 .dark * { scrollbar-color: var(--stitch-outline-variant) transparent; }
 .dark *::-webkit-scrollbar-thumb { background: var(--stitch-outline-variant); }
 .dark *::-webkit-scrollbar-thumb:hover { background: var(--stitch-outline); }
+
+/* 深色模式全局覆盖：硬编码白色背景 */
+.dark [style*="background: #fff"],
+.dark [style*="background:#fff"],
+.dark [style*="background: white"] {
+  background: var(--color-surface) !important;
+}
+.dark [style*="background: #FAFBFC"] { background: var(--color-surface-hover) !important; }
+.dark [style*="background: #F8FAFC"] { background: var(--color-surface-hover) !important; }
+.dark [style*="background: #F6F8FB"] { background: var(--color-surface-hover) !important; }
+.dark [style*="background: #F0F2F5"] { background: var(--color-bg) !important; }
+.dark [style*="background: #EFF6FF"] { background: var(--color-primary-bg) !important; }
+.dark [style*="background: #F0F7FF"] { background: var(--color-primary-bg) !important; }
+.dark [style*="background: #EBF5FF"] { background: var(--color-primary-bg) !important; }
+
+/* 深色模式：边框颜色 */
+.dark [style*="border: 1px solid #D8E1EA"],
+.dark [style*="border:1px solid #D8E1EA"] {
+  border-color: var(--color-border) !important;
+}
+.dark [style*="border: 1px solid #E5E7EB"],
+.dark [style*="border:1px solid #E5E7EB"] {
+  border-color: var(--color-border) !important;
+}
+.dark [style*="border: 1px solid #E2E8F0"] {
+  border-color: var(--color-border) !important;
+}
+
+/* 深色模式：文字颜色 */
+.dark [style*="color: #1F2937"] { color: var(--color-text) !important; }
+.dark [style*="color: #172033"] { color: var(--color-text) !important; }
+.dark [style*="color: #1e293b"] { color: var(--color-text) !important; }
+.dark [style*="color: #333"] { color: var(--color-text) !important; }
+.dark [style*="color: #334155"] { color: var(--color-text) !important; }
+.dark [style*="color: #6B7280"] { color: var(--color-text-secondary) !important; }
+.dark [style*="color: #64748B"] { color: var(--color-text-secondary) !important; }
+.dark [style*="color: #94A3B8"] { color: var(--color-text-muted) !important; }
+.dark [style*="color: #9CA3AF"] { color: var(--color-text-muted) !important; }
+
+/* 深色模式：阴影 */
+.dark [style*="box-shadow: 0 1px 3px rgba(0,0,0,.08)"] { box-shadow: 0 2px 8px rgba(0,0,0,.3) !important; }
+.dark [style*="box-shadow: 0 1px 4px rgba(0,0,0,.06)"] { box-shadow: 0 2px 8px rgba(0,0,0,.3) !important; }
+.dark [style*="box-shadow: 0 2px 8px rgba(0,0,0,.08)"] { box-shadow: 0 4px 16px rgba(0,0,0,.35) !important; }
+
+/* 深色模式：Ant Design 组件覆盖 */
+.dark .ant-table { background: var(--color-surface) !important; }
+.dark .ant-table-thead > tr > th { background: #1E2023 !important; color: var(--color-text-secondary) !important; border-color: var(--color-border) !important; }
+.dark .ant-table-tbody > tr > td { background: var(--color-surface) !important; color: var(--color-text) !important; border-color: var(--color-border) !important; }
+.dark .ant-table-tbody > tr:hover > td { background: var(--color-surface-hover) !important; }
+.dark .ant-modal-content { background: var(--color-surface) !important; }
+.dark .ant-modal-header { background: var(--color-surface) !important; border-color: var(--color-border) !important; }
+.dark .ant-modal-title { color: var(--color-text) !important; }
+.dark .ant-descriptions-item-label { background: #1E2023 !important; color: var(--color-text-secondary) !important; }
+.dark .ant-descriptions-item-content { background: var(--color-surface) !important; color: var(--color-text) !important; }
+.dark .ant-empty-description { color: var(--color-text-muted) !important; }
+.dark .ant-tag { border-color: var(--color-border) !important; }
+.dark .ant-tabs-tab { color: var(--color-text-secondary) !important; }
+.dark .ant-tabs-tab-active .ant-tabs-tab-btn { color: var(--color-primary) !important; }
 
 /* ============================================================
    低性能模式 — 禁用所有动画和特效

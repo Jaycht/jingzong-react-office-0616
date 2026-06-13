@@ -2,16 +2,16 @@ import { theme } from "antd";
 import type { ThemeConfig } from "antd";
 
 /* ============================================================
-   品牌色 - 经侦蓝
+   品牌色 - 更鲜活的经侦蓝
    ============================================================ */
 export const BRAND = {
-  primary: "#155A8A",
-  primaryLight: "#2E7DCA",
-  primaryDark: "#0F3A5F",
-  success: "#138A63",
+  primary: "#2563EB",
+  primaryLight: "#3B82F6",
+  primaryDark: "#1D4ED8",
+  success: "#059669",
   warning: "#D97706",
   error: "#DC2626",
-  info: "#155A8A",
+  info: "#0284C7",
 } as const;
 
 /* ============================================================

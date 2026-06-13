@@ -76,10 +76,17 @@ function KpiCard({ label, value, unit, icon: Icon, color, delay }: {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
       className="card"
-      style={{ padding: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}
+      style={{
+        padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 16, flex: 1,
+        borderLeft: `3px solid ${color}`,
+      }}
     >
-      <div style={{ width: 40, height: 40, borderRadius: 10, background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon size={18} color={color} />
+      <div style={{
+        width: 48, height: 48, borderRadius: 12,
+        background: `linear-gradient(135deg, ${color}18, ${color}08)`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>
+        <Icon size={20} color={color} />
       </div>
       <div>
         <div className="stat-label">{label}</div>

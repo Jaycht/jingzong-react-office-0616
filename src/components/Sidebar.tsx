@@ -354,7 +354,7 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
               }}
               style={{
                 width: '100%', height: 40, borderRadius: 10,
-                background: 'linear-gradient(135deg, #155A8A, #2E7DCA)',
+                background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
                 color: '#fff', border: 'none', cursor: 'pointer',
                 fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
