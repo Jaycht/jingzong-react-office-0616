@@ -492,11 +492,7 @@ export default function ModulePage() {
       })()}
 
       {/* 筛选栏 */}
-      <div style={{
-      <div className="panel" style={{ overflow: 'hidden', marginTop: 16 }}>
-        padding: '10px 14px', marginBottom: 12,
-        display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-      }}>
+      <div className="panel" style={{ padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <Filter size={15} color="#64748B" style={{ flexShrink: 0 }} />
         <Input
           allowClear
