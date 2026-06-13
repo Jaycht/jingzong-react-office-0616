@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   Button, DatePicker, Form, Input, InputNumber,
   Modal, Select, Space, Upload,
@@ -522,10 +521,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                         )}
                       </Form.List>
                     ) : (
-                      <motion.div
-                        initial={false}
-                        animate={{ opacity: isVisible ? 1 : 0 }}
-                        transition={{ duration: 0.15 }}
+                      <div
+                        style={{ opacity: isVisible ? 1 : 0, transition: 'opacity 0.15s' }}
                       >
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14 }}>
                       {step.fields.map((field) => (
@@ -543,7 +540,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                         </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 )}
               </div>
             );

@@ -153,22 +153,18 @@ export default function AppLayout() {
       <NotificationPanel />
       </div>
 
-      <AnimatePresence>
-        {modalId === 'newRecord' && (
-          <ErrorBoundary>
-          <DrawerNewRecord
-            key={editRecord?.id || 'new'}
-            onClose={() => { closeModal(); setEditRecord(null); }}
-            editRecord={editRecord}
-          />
-          </ErrorBoundary>
-        )}
-        {modalId === 'newUser' && <ErrorBoundary><ModalNewUser onClose={closeModal} /></ErrorBoundary>}
-      </AnimatePresence>
+      {modalId === 'newRecord' && (
+        <ErrorBoundary>
+        <DrawerNewRecord
+          key={editRecord?.id || 'new'}
+          onClose={() => { closeModal(); setEditRecord(null); }}
+          editRecord={editRecord}
+        />
+        </ErrorBoundary>
+      )}
+      {modalId === 'newUser' && <ErrorBoundary><ModalNewUser onClose={closeModal} /></ErrorBoundary>}
 
-      <AnimatePresence>
-        {drawerOpen && <Drawer onClose={closeDrawer} />}
-      </AnimatePresence>
+      {drawerOpen && <Drawer onClose={closeDrawer} />}
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       <PasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
