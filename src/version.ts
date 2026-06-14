@@ -5,6 +5,11 @@ export const VERSION_PATCH = 2;
 
 export const CHANGELOG: string[] = [
       // ===== V2.13.2 =====
+  "V2.13.2 修复 - sanitizeDayjsDeep 递归清洗 Date 对象→toISOString，修复 $d 为 Date 时 String() 输出非 ISO 格式",
+  "V2.13.2 修复 - SharedFormFields parseBirthFromIdNo 加 typeof d.isValid 守卫",
+  "V2.13.2 修复 - CaseDetail sectionLabelMap 覆盖全部 listName 的中文映射（如 involvedSubjects→涉案主体统计）",
+  "V2.13.2 修复 - 按钮加 position:relative zIndex:1 避免被 fixed 容器遮挡",
+  "V2.13.2 修复 - form.setFieldsValue 改为逐字段 setFieldValue + try-catch，单个字段异常不崩全局",
   "V2.13.2 修复 - 编辑模式加载时递归清洗 dayjs 序列化对象($L/$d→ISO字符串)，根治时间轴打开旧记录崩溃",
   "V2.13.2 修复 - CaseDetail 查看页面字段标签全局兜底(fieldLabelMap)，解决所有模块重复节数据英文标签问题",
   "V2.13.2 修复 - CaseDetail 查看页面返回/编辑按钮改用 antd Button，统一按钮样式",

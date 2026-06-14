@@ -281,7 +281,14 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               safeData[key] = sanitizeDayjsDeep(formData[key]);
             }
           }
-          form.setFieldsValue(safeData);
+          // 逐字段设置，单个字段出错不影响其他字段
+          for (const [fieldKey, fieldVal] of Object.entries(safeData)) {
+            try {
+              form.setFieldValue(fieldKey, fieldVal);
+            } catch (e) {
+              console.warn("[DrawerNewRecord] 跳过字段 " + fieldKey + ": " + (e instanceof Error ? e.message : String(e)));
+            }
+          }
         } else {
           // ── 新建模式：repeatable section 自动展开第一行 ──
           for (const step of steps) {
