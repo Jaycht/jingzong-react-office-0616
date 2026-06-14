@@ -482,7 +482,7 @@ export function IdNoField({ field, subName, listName }: {
         placeholder="请输入身份证号（自动提取出生日期）"
         style={{
           width: '100%', height: 32, padding: '0 11px',
-          border: '1px solid var(--color-border)'ius: 6,
+          border: '1px solid var(--color-border)', borderRadius: 6,
           fontSize: 14, color: 'var(--color-text)', outline: 'none',
           fontFamily: 'inherit', boxSizing: 'border-box',
         }}
