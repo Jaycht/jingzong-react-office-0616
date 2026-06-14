@@ -202,7 +202,7 @@ export default function CaseDetail({ record, onClose }: Props) {
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <Button
             onClick={() => onClose()}
-            style={{ height: 42, paddingInline: 22, borderRadius: 8 }}
+            style={{ height: 42, paddingInline: 22, borderRadius: 8, position: 'relative', zIndex: 1 }}
           >
             <ArrowLeft size={16} /> 返回
           </Button>
@@ -211,7 +211,7 @@ export default function CaseDetail({ record, onClose }: Props) {
             size="large"
             icon={<Pen size={16} />}
             onClick={() => { setEditRecord(record); setCurrentPage(record.moduleId); openModal('newRecord'); onClose(); }}
-            style={{ height: 42, paddingInline: 22, boxShadow: '0 8px 20px rgba(21,90,138,.25)' }}
+            style={{ height: 42, paddingInline: 22, boxShadow: '0 8px 20px rgba(21,90,138,.25)', position: 'relative', zIndex: 1 }}
           >
             编辑
           </Button>
@@ -276,7 +276,15 @@ export default function CaseDetail({ record, onClose }: Props) {
               {Object.entries(record.data || {}).map(([key, val]) => {
                 if (!Array.isArray(val) || val.length === 0 || typeof val[0] !== 'object') return null;
                 if (key === 'attachment' || key === 'fileList') return null;
-                const sectionLabel = key === 'suspects' ? '嫌疑人信息' : key === 'coerciveMeasures' ? '强制措施' : key === 'items' ? '详细信息' : key;
+                const SECTION_LABELS = {
+    suspects: '嫌疑人信息', coerciveMeasures: '强制措施', items: '详细信息',
+    involvedSubjects: '涉案主体统计', involvedEntities: '涉案主体', involvedParties: '涉案主体情况',
+    reporters: '报案人信息', clueSources: '线索来源', interviewees: '被约谈人信息',
+    requestItems: '调证信息', enterpriseSubjects: '涉案企业情况', personalSubjects: '涉案个人情况',
+    investigationItems: '调证情况', fundSources: '资金来源分析', penetrationItems: '资金去向分析',
+    properties: '基本信息',
+  };
+                const sectionLabel = SECTION_LABELS[key] || key;
                 return (
                   <div key={key} style={{ marginTop: 20 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 10, borderBottom: '2px solid var(--color-primary)', paddingBottom: 4 }}>

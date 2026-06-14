@@ -437,7 +437,7 @@ function parseBirthFromIdNo(idNo: string): string | null {
   }
   if (birth) {
     const d = dayjs(birth);
-    return d.isValid() ? birth : null;
+    return (typeof d.isValid === 'function' && d.isValid()) ? birth : null;
   }
   return null;
 }
