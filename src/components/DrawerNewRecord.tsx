@@ -294,7 +294,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                   var __cl={};
                   for(var __k in __it){
                     var __iv=__it[__k];
-                    if(__iv&&typeof __iv==="object"){
+                    if(__iv&&typeof __iv==="object"&&__iv.$d!==undefined){
                       __cl[__k]=undefined;
                     }else{
                       __cl[__k]=__iv;
