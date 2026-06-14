@@ -415,10 +415,10 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                 style={{
                   flex: 1, padding: '8px 12px', borderRadius: 6, cursor: 'pointer',
                   textAlign: 'center', fontSize: 13,
-                  background: active ? '#E6F1F8' : done ? '#E8F5E9' : '#F8FAFC',
-                  color: active ? '#155A8A' : done ? '#138A63' : '#94A3B8',
+                  background: active ? 'var(--color-primary-bg)' : done ? 'var(--color-surface-active)' : 'var(--color-surface)',
+                  color: active ? 'var(--color-primary)' : done ? 'var(--color-success)' : 'var(--color-text-muted)',
                   fontWeight: active ? 700 : 400,
-                  border: active ? '1px solid #155A8A' : '1px solid transparent',
+                  border: active ? '1px solid var(--color-primary)' : '1px solid transparent',
                   transition: 'all .15s',
                 }}
               >
@@ -434,13 +434,13 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       <div style={{ overflow: 'auto', padding: '0 24px 16px' }}>
         {/* Module/Template selector */}
             <div style={{
-              background: '#F6F8FB', border: '1px solid #D8E1EA', borderRadius: 8,
+              background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8,
               padding: 14, marginBottom: 20,
             }}>
-              <div style={{ fontSize: 13, color: '#64748B', marginBottom: 6 }}>
+              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
                 {selectedModule?.departmentLabel} · {selectedModule?.label} · {selectedTab?.label}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#172033', marginBottom: 8 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', marginBottom: 8 }}>
                 {flatMode ? `${steps[0]?.label} · ${steps[1]?.label}` : (hasSections ? steps[currentStep]?.label : '基本信息')}
               </div>
               <div style={{ display: 'flex', gap: 14 }}>
@@ -463,7 +463,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                   </Form.Item>
                 )}
                 {hasSections && !flatMode && (
-                  <div style={{ marginLeft: 'auto', fontSize: 12, color: '#94A3B8', alignSelf: 'flex-end', paddingBottom: 4 }}>
+                  <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-muted)', alignSelf: 'flex-end', paddingBottom: 4 }}>
                     {stepFields.length} 个字段 · 第 {currentStep + 1}/{totalSteps} 步
                   </div>
                 )}
@@ -493,11 +493,11 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                             )}
                             {subFields.map(({ key, name: idx }) => (
                               <div key={key} style={{
-                                border: '1px solid #E2E8F0', borderRadius: 8, padding: 16,
-                                marginBottom: 16, background: '#FAFBFC',
+                                border: '1px solid var(--color-border)', borderRadius: 8, padding: 16,
+                                marginBottom: 16, background: 'var(--color-surface)',
                               }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                  <span style={{ fontSize: 14, fontWeight: 700, color: '#155A8A' }}>
+                                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>
                                     {step.label} #{idx + 1}
                                   </span>
                                   {subFields.length > 1 && (
@@ -609,10 +609,10 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '14px 0 4px', marginTop: 8,
-        borderBottom: '1px solid #D8E1EA',
+        borderBottom: '1px solid var(--color-border)',
       }}>
-        <div style={{ width: 3, height: 18, background: '#155A8A', borderRadius: 2, flexShrink: 0 }} />
-        <span style={{ fontSize: 14, fontWeight: 700, color: '#172033' }}>{field.label}</span>
+        <div style={{ width: 3, height: 18, background: 'var(--color-primary)', borderRadius: 2, flexShrink: 0 }} />
+        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>{field.label}</span>
       </div>
     );
   }
