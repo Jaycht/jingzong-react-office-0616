@@ -1,10 +1,13 @@
-export const APP_VERSION = "V2.13.3";
+export const APP_VERSION = "V2.13.4";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 3;
+export const VERSION_PATCH = 4;
 
 export const CHANGELOG: string[] = [
-        // ===== V2.13.3 =====
+          // ===== V2.13.4 =====
+  "V2.13.4 修复 - 案件时间轴点击记录改为打开 CaseDetail 只读查看，不再弹出编辑表单，彻底避免 DatePicker 崩溃",
+  "V2.13.4 修复 - 时间轴卡片美化：悬浮抬起、左侧彩色色条、节点光晕、加大圆角",
+// ===== V2.13.3 =====
   "V2.13.3 修复 - sanitizeDayjsDeep 放宽检测条件(存在即清洗),防止仅有无的序列化对象漏网",
   "V2.13.3 修复 - handleSubmit 改用 dayjs.isDayjs() 替代手工 / 检测",
   "V2.13.3 修复 - fillCaseDetail/IdNoField 停止写入 dayjs 对象，直接传 ISO 字符串",
