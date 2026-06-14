@@ -279,7 +279,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               safeData[key] = formData[key];
             }
           }
-          form.setFieldsValue(safeData);
+          form.setFieldsValue(sanitizeDayjsDeep(safeData) as Record<string, unknown>);
         } else {
           // ── 新建模式：repeatable section 自动展开第一行 ──
           for (const step of steps) {
@@ -350,7 +350,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           okText: '恢复草稿',
           cancelText: '新建空白',
           onOk: () => {
-            form.setFieldsValue(draft.data);
+            form.setFieldsValue(sanitizeDayjsDeep(draft.data) as Record<string, unknown>);
             if (draft.step > 0 && draft.step < totalSteps) {
               setCurrentStep(draft.step);
             }
