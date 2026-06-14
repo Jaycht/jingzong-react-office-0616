@@ -284,26 +284,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           // 逐字段设置，单个字段出错不影响其他字段
           for (const [fieldKey, fieldVal] of Object.entries(safeData)) {
             try {
-              try { (window as any).__EDIT_LOAD_DIAG = ((window as any).__EDIT_LOAD_DIAG || "") + fieldKey + "=" + typeof fieldVal + " "; } catch(e){}
-              const __isDate = allFields.some(f => f.id === fieldKey && f.type === 'date');
-              // 如果字段值是数组（repeatable section），递归清洗 item 中 date 类型字段为非对象
-              var __finalVal = fieldVal;
-              if (Array.isArray(fieldVal)) {
-                __finalVal = fieldVal.map(function(__it){
-                  if(!__it||typeof __it!=="object")return __it;
-                  var __cl={};
-                  for(var __k in __it){
-                    var __iv=__it[__k];
-                    if(__iv&&typeof __iv==="object"&&__iv.$d!==undefined){
-                      __cl[__k]=undefined;
-                    }else{
-                      __cl[__k]=__iv;
-                    }
-                  }
-                  return __cl;
-                });
-              }
-              form.setFieldValue(fieldKey, __isDate && typeof __finalVal !== 'string' ? undefined : __finalVal);
+              form.setFieldValue(fieldKey, fieldVal);
             } catch (e) {
               console.warn("[DrawerNewRecord] 跳过字段 " + fieldKey + ": " + (e instanceof Error ? e.message : String(e)));
             }
