@@ -55,28 +55,28 @@ export default function Statistics() {
   const lastMonth = records.filter(r => { const d = new Date(); d.setMonth(d.getMonth() - 1); return r.createdAt?.startsWith(d.toISOString().slice(0, 7)); }).length;
 
   const STATS = [
-    { label: '总记录数', value: String(totalRecords + totalCases), change: `本月+${thisMonth}`, up: true, color: '#1B5E9B' },
-    { label: '案件总数', value: String(totalCases), change: '累计案件', up: true, color: '#38A169' },
+    { label: '总记录数', value: String(totalRecords + totalCases), change: `本月+${thisMonth}`, up: true, color: 'var(--color-primary)' },
+    { label: '案件总数', value: String(totalCases), change: '累计案件', up: true, color: 'var(--color-success)' },
     { label: '本月新增', value: String(thisMonth), change: `上月${lastMonth}`, up: thisMonth >= lastMonth, color: '#00ACC1' },
-    { label: '活跃模块', value: String(Object.keys(moduleRecords).length), change: '有数据模块', up: false, color: '#E67E22' },
+    { label: '活跃模块', value: String(Object.keys(moduleRecords).length), change: '有数据模块', up: false, color: 'var(--color-warning)' },
   ];
 
   const rawModuleStats = modules.map(mod => ({ dept: mod.departmentLabel, type: mod.label, count: moduleRecords[mod.id] || 0 }));
   const moduleStats = rawModuleStats.filter(m => m.count > 0);
   const hasData = totalRecords > 0;
 
-  const textColor = '#1F2937';
-  const mutedColor = '#6B7280';
-  const CHART_PALETTE = ['#2563EB', '#7C3AED', '#0891B2', '#059669', '#D97706', '#DC2626', '#6D28D9', '#E11D48', '#0284C7', '#9333EA'];
+  const textColor = 'var(--color-text)';
+  const mutedColor = 'var(--color-text-secondary)';
+  const CHART_PALETTE = ['var(--color-primary)', '#7C3AED', '#0891B2', '#059669', 'var(--color-warning)', 'var(--color-danger)', '#6D28D9', '#E11D48', '#0284C7', '#9333EA'];
 
   // 各模块记录对比 — dataset-encode0 风格柱状图
   const barData = moduleStats.slice(0, 10);
   const barOption = useMemo(() => ({
     tooltip: {
       trigger: 'axis' as const, axisPointer: { type: 'shadow' as const },
-      backgroundColor: dk ? '#1a1d25' : '#fff',
-      borderColor: dk ? '#374151' : '#E5E7EB',
-      textStyle: { color: dk ? '#e2e2e6' : textColor },
+      backgroundColor: dk ? '#1a1d25' : 'var(--color-surface)',
+      borderColor: dk ? 'var(--color-text-secondary)' : 'var(--color-border)',
+      textStyle: { color: dk ? 'var(--color-text-muted)' : textColor },
     },
     grid: { left: 8, right: 30, top: 20, bottom: 8, containLabel: true },
     dataset: {
@@ -89,13 +89,13 @@ export default function Statistics() {
     },
     xAxis: {
       type: 'value' as const,
-      splitLine: { lineStyle: { color: dk ? '#2a2e38' : '#F3F4F6' } },
-      axisLabel: { color: dk ? '#6b7280' : mutedColor, fontSize: 10 },
+      splitLine: { lineStyle: { color: dk ? '#2a2e38' : 'var(--color-surface-hover)' } },
+      axisLabel: { color: dk ? 'var(--color-text-secondary)' : mutedColor, fontSize: 10 },
     },
     yAxis: {
       type: 'category' as const,
       axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: dk ? '#9ca3af' : mutedColor, fontSize: 11, width: 80, overflow: 'truncate' },
+      axisLabel: { color: dk ? 'var(--color-text-muted)' : mutedColor, fontSize: 11, width: 80, overflow: 'truncate' },
     },
     series: [{
       type: 'bar' as const,
@@ -110,7 +110,7 @@ export default function Statistics() {
       },
       label: {
         show: true, position: 'right' as const, fontSize: 12, fontWeight: 700,
-        color: dk ? '#e2e2e6' : textColor,
+        color: dk ? 'var(--color-text-muted)' : textColor,
         formatter: (p: { value: { count: number } }) => String(p.value?.count ?? ''),
       },
       animationDuration: 800,
@@ -120,7 +120,7 @@ export default function Statistics() {
 
   // 记录类型分布 — ECharts 玫瑰图
   const pieOption = useMemo(() => ({
-    tooltip: { trigger: 'item' as const, backgroundColor: '#fff', borderColor: '#E5E7EB', textStyle: { color: textColor } },
+    tooltip: { trigger: 'item' as const, backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', textStyle: { color: textColor } },
     legend: { bottom: 0, textStyle: { color: mutedColor, fontSize: 10 }, type: 'scroll' as const },
     series: [{
       type: 'pie' as const,
@@ -129,12 +129,12 @@ export default function Statistics() {
       roseType: 'area' as const,
       avoidLabelOverlap: true,
       padAngle: 2,
-      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      itemStyle: { borderRadius: 6, borderColor: 'var(--color-surface)', borderWidth: 2 },
       label: { show: true, formatter: '{b}\n{d}%', fontSize: 10, color: mutedColor, lineHeight: 14 },
       labelLine: { length: 10, length2: 12, smooth: true },
       data: barData.length > 0
         ? barData.map((d, i) => ({ name: d.type, value: d.count, itemStyle: { color: CHART_PALETTE[i % CHART_PALETTE.length] } }))
-        : [{ name: '暂无数据', value: 1, itemStyle: { color: '#E5E7EB' } }],
+        : [{ name: '暂无数据', value: 1, itemStyle: { color: 'var(--color-border)' } }],
       animationDuration: 900,
       animationEasing: 'cubicOut' as const,
     }],
@@ -163,7 +163,7 @@ export default function Statistics() {
             saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `模块统计明细_${new Date().toISOString().slice(0,10)}.xlsx`);
             showToast('已导出 Excel', 'success');
           }}
-          style={{ height: 34, padding: '0 16px', background: 'var(--color-surface)', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+          style={{ height: 34, padding: '0 16px', background: 'var(--color-surface)', color: 'var(--color-primary)', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
           <Download size={14} />导出报告
         </motion.button>
       </motion.div>
@@ -183,7 +183,7 @@ export default function Statistics() {
             <div>
               <div style={{ fontSize: 11.5, color: mutedColor, marginBottom: 4 }}>{s.label}</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: textColor }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: s.up ? '#388E3C' : '#9CA3AF', marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
+              <div style={{ fontSize: 11, color: s.up ? 'var(--color-success)' : 'var(--color-text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
                 {s.up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
                 {s.change}
               </div>
@@ -226,14 +226,14 @@ export default function Statistics() {
                 saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `模块统计明细_${new Date().toISOString().slice(0,10)}.xlsx`);
                 showToast('已导出 Excel', 'success');
               }}
-                style={{ height: 30, padding: '0 12px', background: 'var(--color-surface)', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 7, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit' }}>
+                style={{ height: 30, padding: '0 12px', background: 'var(--color-surface)', color: 'var(--color-primary)', border: '1.5px solid #1B5E9B', borderRadius: 7, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit' }}>
                 <Download size={13} />导出
               </motion.button>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: '#F8FAFC' }}>
+                  <tr style={{ background: 'var(--color-bg)' }}>
                     {['部门', '模块', '记录数', '操作'].map(h => (
                       <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: mutedColor, borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
@@ -242,14 +242,14 @@ export default function Statistics() {
                 <tbody>
                   {moduleStats.length > 0 ? moduleStats.map((row, i) => (
                     <motion.tr key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 + i * 0.04 }}
-                      whileHover={{ background: '#F8FAFC' }} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      whileHover={{ background: 'var(--color-bg)' }} style={{ borderBottom: '1px solid #F3F4F6' }}>
                       <td style={{ padding: '11px 14px', fontSize: 12.5 }}>{row.dept}</td>
                       <td style={{ padding: '11px 14px', fontSize: 12.5 }}>{row.type}</td>
                       <td style={{ padding: '11px 14px', fontSize: 12.5, fontWeight: 600 }}>{row.count}</td>
-                      <td style={{ padding: '11px 14px', fontSize: 12.5, color: '#9CA3AF' }}>{row.count > 0 ? '有数据' : '无数据'}</td>
+                      <td style={{ padding: '11px 14px', fontSize: 12.5, color: 'var(--color-text-muted)' }}>{row.count > 0 ? '有数据' : '无数据'}</td>
                     </motion.tr>
                   )) : (
-                    <tr><td colSpan={4} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>暂无数据，请先在工作模块中新建记录</td></tr>
+                    <tr><td colSpan={4} style={{ padding: 40, textAlign: 'center', color: 'var(--color-text-muted)' }}>暂无数据，请先在工作模块中新建记录</td></tr>
                   )}
                 </tbody>
               </table>

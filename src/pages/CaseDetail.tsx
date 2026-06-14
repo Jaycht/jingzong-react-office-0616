@@ -157,6 +157,19 @@ export default function CaseDetail({ record, onClose }: Props) {
     return (tab?.fields || []).filter(f => f.type !== 'section' && f.type !== 'attachment');
   }, [record, allModules]);
 
+  // 从字段定义构建 label 映射，作为 FIELD_LABELS 的兜底（cover 所有模块的字段）
+  const fieldLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    const mod = findModule(record.moduleId, allModules);
+    const tab = mod?.tabs.find(t => t.id === record.tabId) || mod?.tabs[0];
+    for (const f of tab?.fields || []) {
+      if (f.type !== 'section' && f.type !== 'attachment' && f.label) {
+        map[f.id] = f.label;
+      }
+    }
+    return map;
+  }, [record, allModules]);
+
   const textColor = 'var(--color-text)';
   const mutedColor = 'var(--color-text-secondary)';
 
@@ -187,39 +200,21 @@ export default function CaseDetail({ record, onClose }: Props) {
           <div style={{ fontSize: 12, color: mutedColor, marginTop: 2 }}>{moduleName} · {fmtDate(record.updatedAt)}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button
-            type="button"
+          <Button
             onClick={() => onClose()}
-            style={{
-              height: 40, paddingInline: 20, borderRadius: 8,
-              background: darkMode ? '#374151' : '#F3F4F6',
-              color: darkMode ? '#e2e2e6' : '#374151',
-              border: `1px solid ${darkMode ? '#4b5563' : '#D1D5DB'}`,
-              fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6,
-              fontFamily: 'inherit',
-              transition: 'all 0.15s',
-            }}
+            style={{ height: 42, paddingInline: 22, borderRadius: 8, position: 'relative', zIndex: 1 }}
           >
             <ArrowLeft size={16} /> 返回
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            type="primary"
+            size="large"
+            icon={<Pen size={16} />}
             onClick={() => { setEditRecord(record); setCurrentPage(record.moduleId); openModal('newRecord'); onClose(); }}
-            style={{
-              height: 40, paddingInline: 20, borderRadius: 8,
-              background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
-              color: '#fff',
-              border: 'none',
-              fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6,
-              fontFamily: 'inherit',
-              boxShadow: '0 2px 8px rgba(37,99,235,0.3)',
-              transition: 'all 0.15s',
-            }}
+            style={{ height: 42, paddingInline: 22, boxShadow: '0 8px 20px rgba(21,90,138,.25)', position: 'relative', zIndex: 1 }}
           >
-            <Pen size={16} /> 编辑
-          </button>
+            编辑
+          </Button>
         </div>
       </div>
 
@@ -280,7 +275,16 @@ export default function CaseDetail({ record, onClose }: Props) {
               {/* 显示 repeatable section 数据（如嫌疑人信息） */}
               {Object.entries(record.data || {}).map(([key, val]) => {
                 if (!Array.isArray(val) || val.length === 0 || typeof val[0] !== 'object') return null;
-                const sectionLabel = key === 'suspects' ? '嫌疑人信息' : key === 'coerciveMeasures' ? '强制措施' : key === 'items' ? '详细信息' : key;
+                if (key === 'attachment' || key === 'fileList') return null;
+                const SECTION_LABELS = {
+    suspects: '嫌疑人信息', coerciveMeasures: '强制措施', items: '详细信息',
+    involvedSubjects: '涉案主体统计', involvedEntities: '涉案主体', involvedParties: '涉案主体情况',
+    reporters: '报案人信息', clueSources: '线索来源', interviewees: '被约谈人信息',
+    requestItems: '调证信息', enterpriseSubjects: '涉案企业情况', personalSubjects: '涉案个人情况',
+    investigationItems: '调证情况', fundSources: '资金来源分析', penetrationItems: '资金去向分析',
+    properties: '基本信息',
+  };
+                const sectionLabel = SECTION_LABELS[key] || key;
                 return (
                   <div key={key} style={{ marginTop: 20 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 10, borderBottom: '2px solid var(--color-primary)', paddingBottom: 4 }}>
@@ -293,10 +297,10 @@ export default function CaseDetail({ record, onClose }: Props) {
                           {Object.entries(item).map(([k, v]) => {
                             if (v === null || v === undefined || v === '') return null;
                             // 跳过内部字段
-                            if (k.startsWith('__') || k === 'uid' || k === 'lastModified' || k === 'percent' || k === 'status' || k === 'size') return null;
+                            if (k.startsWith('__') || k === 'uid' || k === 'lastModified' || k === 'lastModifiedDate' || k === 'percent' || k === 'status' || k === 'size' || k === 'type' || k === 'originFileObj') return null;
                             return (
                               <div key={k} style={{ fontSize: 12, lineHeight: 1.8 }}>
-                                <span style={{ color: mutedColor }}>{FIELD_LABELS[k] || k}：</span>
+                                <span style={{ color: mutedColor }}>{FIELD_LABELS[k] || fieldLabelMap[k] || k}：</span>
                                 <span style={{ color: textColor, fontWeight: 500 }}>{fmtValue(v)}</span>
                               </div>
                             );

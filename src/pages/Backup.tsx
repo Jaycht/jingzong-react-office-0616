@@ -122,7 +122,7 @@ export default function Backup() {
         </motion.div>
         <div>
           <div style={{ fontSize: 19, fontWeight: 700 }}>备份与恢复</div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>数据备份 · 恢复点管理 · 自动备份计划</div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>数据备份 · 恢复点管理 · 自动备份计划</div>
         </div>
       </motion.div>
 
@@ -134,24 +134,24 @@ export default function Backup() {
             className="card" style={{ padding: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>数据概览</div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-              <div style={{ flex: 1, padding: '10px 12px', background: '#EBF5FF', borderRadius: 8, textAlign: 'center' }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#1B5E9B' }}>{stats['总记录数'] ?? 0}</div>
-                <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>总记录数</div>
+              <div style={{ flex: 1, padding: '10px 12px', background: 'var(--color-primary-bg)', borderRadius: 8, textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-primary)' }}>{stats['总记录数'] ?? 0}</div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>总记录数</div>
               </div>
-              <div style={{ flex: 1, padding: '10px 12px', background: '#E8F5E9', borderRadius: 8, textAlign: 'center' }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#388E3C' }}>{estimateDataSize()}</div>
-                <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>数据大小</div>
+              <div style={{ flex: 1, padding: '10px 12px', background: 'var(--color-success-bg)', borderRadius: 8, textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-success)' }}>{estimateDataSize()}</div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>数据大小</div>
               </div>
-              <div style={{ flex: 1, padding: '10px 12px', background: '#FFF3E0', borderRadius: 8, textAlign: 'center' }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#E67E22' }}>{backups.length}</div>
-                <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>备份次数</div>
+              <div style={{ flex: 1, padding: '10px 12px', background: 'var(--color-warning-bg)', borderRadius: 8, textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-warning)' }}>{backups.length}</div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>备份次数</div>
               </div>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
               {Object.entries(stats).filter(([k]) => k !== '总记录数').map(([modId, count]) => (
                 <span key={modId} style={{
                   fontSize: 10.5, padding: '1px 8px', borderRadius: 10,
-                  background: '#F3F4F6', color: '#6B7280',
+                  background: 'var(--color-surface-hover)', color: 'var(--color-text-secondary)',
                 }}>
                   {modId.slice(0, 16)}: {count}
                 </span>
@@ -165,7 +165,7 @@ export default function Backup() {
             <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               onClick={handleBackup}
               style={{
-                flex: 1, height: 40, background: '#2E7DCA', color: '#fff',
+                flex: 1, height: 40, background: 'var(--color-primary)', color: 'var(--color-surface)',
                 border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
                 cursor: 'pointer', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', gap: 6, fontFamily: 'inherit',
@@ -177,7 +177,7 @@ export default function Backup() {
               disabled={restoring}
               style={{
                 flex: 1, height: 40, background: restoring ? 'var(--color-surface-hover)' : 'var(--color-surface)',
-                color: restoring ? 'var(--color-text-muted)' : '#1B5E9B',
+                color: restoring ? 'var(--color-text-muted)' : 'var(--color-primary)',
                 border: restoring ? '1px solid var(--color-border)' : '1.5px solid #1B5E9B',
                 borderRadius: 8, fontSize: 13, fontWeight: 600,
                 cursor: restoring ? 'not-allowed' : 'pointer',
@@ -192,11 +192,11 @@ export default function Backup() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
             className="card" style={{ padding: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>自动备份设置</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, padding: '12px 14px', background: '#E8F5E9', borderRadius: 8, border: '1px solid #A5D6A7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, padding: '12px 14px', background: 'var(--color-success-bg)', borderRadius: 8, border: '1px solid #A5D6A7' }}>
               <CheckCircle size={18} color="#388E3C" />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#388E3C' }}>自动备份已启用</div>
-                <div style={{ fontSize: 11.5, color: '#6B7280' }}>刷新页面或关闭浏览器前建议手动备份</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-success)' }}>自动备份已启用</div>
+                <div style={{ fontSize: 11.5, color: 'var(--color-text-secondary)' }}>刷新页面或关闭浏览器前建议手动备份</div>
               </div>
             </div>
             {[
@@ -209,11 +209,11 @@ export default function Backup() {
                 display: 'flex', justifyContent: 'space-between',
                 padding: '8px 0', borderBottom: '1px solid #F3F4F6', fontSize: 12.5,
               }}>
-                <span style={{ color: '#6B7280' }}>{item.label}</span>
+                <span style={{ color: 'var(--color-text-secondary)' }}>{item.label}</span>
                 <span style={{ fontWeight: 600 }}>{item.value}</span>
               </div>
             ))}
-            <div style={{ marginTop: 10, padding: '8px 12px', background: '#FFF8E1', borderRadius: 6, fontSize: 11.5, color: '#E67E22', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+            <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--color-warning-bg)', borderRadius: 6, fontSize: 11.5, color: 'var(--color-warning)', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
               <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
               <span>前端原型仅使用浏览器本地存储，清除浏览器数据会丢失所有记录。请定期手动备份。</span>
             </div>
@@ -228,8 +228,8 @@ export default function Backup() {
                 exit={{ opacity: 0, y: -8 }}
                 style={{
                   padding: '12px 14px', borderRadius: 8,
-                  background: restoreResult.success ? '#E8F5E9' : '#FFEBEE',
-                  border: `1px solid ${restoreResult.success ? '#A5D6A7' : '#EF9A9A'}`,
+                  background: restoreResult.success ? 'var(--color-success-bg)' : 'var(--color-danger-bg)',
+                  border: `1px solid ${restoreResult.success ? 'var(--color-success)' : 'var(--color-danger)'}`,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -239,12 +239,12 @@ export default function Backup() {
                   }
                   <span style={{
                     fontSize: 13, fontWeight: 600,
-                    color: restoreResult.success ? '#388E3C' : '#DC2626',
+                    color: restoreResult.success ? 'var(--color-success)' : 'var(--color-danger)',
                   }}>
                     {restoreResult.success ? '恢复成功' : '恢复失败'}
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 4 }}>
                   {restoreResult.message}
                 </div>
                 <motion.button
@@ -268,13 +268,13 @@ export default function Backup() {
           className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '13px 16px', borderBottom: '1px solid #E5E7EB', fontSize: 13, fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>历史备份记录</span>
-            <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400 }}>
+            <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontWeight: 400 }}>
               {backups.length > 0 ? `共 ${backups.length} 条` : '暂无备份'}
             </span>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', minHeight: 200 }}>
             {backups.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 13 }}>
                 <Database size={32} color="#D1D5DB" style={{ marginBottom: 8 }} />
                 <div>暂无备份记录</div>
                 <div style={{ fontSize: 11, marginTop: 4 }}>点击「立即备份」创建第一个备份</div>
@@ -286,7 +286,7 @@ export default function Backup() {
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 + i * 0.05 }}
-                  whileHover={{ background: '#F8FAFC' }}
+                  whileHover={{ background: 'var(--color-bg)' }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 12,
                     padding: '11px 16px',
@@ -295,32 +295,32 @@ export default function Backup() {
                 >
                   <div style={{
                     width: 34, height: 34, borderRadius: 8,
-                    background: b.type === 'auto' ? '#EBF5FF' : '#FFF3E0',
+                    background: b.type === 'auto' ? 'var(--color-primary-bg)' : 'var(--color-warning-bg)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                   }}>
-                    <Clock size={14} color={b.type === 'auto' ? '#1B5E9B' : '#E67E22'} />
+                    <Clock size={14} color={b.type === 'auto' ? 'var(--color-primary)' : 'var(--color-warning)'} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1F2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {b.name}
                     </div>
-                    <div style={{ fontSize: 11, color: '#9CA3AF' }}>{b.time} · {b.type === 'auto' ? '自动备份' : '手动备份'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{b.time} · {b.type === 'auto' ? '自动备份' : '手动备份'}</div>
                   </div>
                   <span style={{
                     fontSize: 10.5, padding: '1px 7px', borderRadius: 8,
-                    background: '#E8F5E9', color: '#388E3C', fontWeight: 600, flexShrink: 0,
+                    background: 'var(--color-success-bg)', color: 'var(--color-success)', fontWeight: 600, flexShrink: 0,
                   }}>
                     成功
                   </span>
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                     <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                       onClick={handleDownloadBackup}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: 4 }}>
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', padding: 4 }}>
                       <Download size={13} />
                     </motion.button>
                     <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                       onClick={() => handleDelete(b.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D32F2F', padding: 4 }}>
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)', padding: 4 }}>
                       <Trash2 size={13} />
                     </motion.button>
                   </div>
