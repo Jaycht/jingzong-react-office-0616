@@ -9,6 +9,7 @@ import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import { getAllCaseNames } from '../store/inputHistoryStore';
+import CaseDetail from './CaseDetail';
 
 /** 字段中文标签映射（自动生成，覆盖全部字段） */
 const FIELD_LABELS: Record<string, string> = {
@@ -611,12 +612,10 @@ function fmtDateStr(raw: string): string {
 
 export default function CaseTimeline() {
   const darkMode = useAppStore((s) => s.darkMode);
-  const setCurrentPage = useAppStore((s) => s.setCurrentPage);
-  const openModal = useAppStore((s) => s.openModal);
-  const setEditRecord = useAppStore((s) => s.setEditRecord);
-  const currentPage = useAppStore((s) => s.currentPage);
+  // 不再需要 setCurrentPage/openModal/setEditRecord——点击直接打开只读 CaseDetail
 
   const [selectedCase, setSelectedCase] = useState<string>('');
+  const [viewRecord, setViewRecord] = useState<MassRecord | null>(null);
 
   // 从索引获取案件名，如果索引为空则直接从记录中提取
   const indexCaseNames = useMemo(() => getAllCaseNames(), []);
@@ -649,9 +648,7 @@ export default function CaseTimeline() {
   }, [selectedCase]);
 
   const handleNavigate = (record: MassRecord) => {
-    setEditRecord(record);
-    setCurrentPage(record.moduleId);
-    openModal('newRecord');
+    setViewRecord(record);
   };
 
   const bg = darkMode ? '#1a1d25' : '#fff';
@@ -752,48 +749,56 @@ export default function CaseTimeline() {
               return (
                 <motion.div
                   key={rec.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.03 }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
                   onClick={() => handleNavigate(rec)}
                   style={{
                     position: 'relative',
-                    marginBottom: 16,
+                    marginBottom: 18,
                     cursor: 'pointer',
-                    padding: '14px 18px',
-                    borderRadius: 10,
+                    marginLeft: 36,
+                    padding: '16px 20px',
+                    borderRadius: 12,
                     background: bg,
                     border: `1px solid ${borderColor}`,
-                    boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,.15)' : '0 1px 3px rgba(0,0,0,.04)',
-                    transition: 'all .2s',
+                    boxShadow: darkMode ? '0 4px 16px rgba(0,0,0,.2)' : '0 2px 8px rgba(0,0,0,.06)',
+                    transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `0 4px 16px ${darkMode ? 'rgba(46,125,202,0.15)' : 'rgba(37,99,235,0.1)'}`;
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = `0 8px 24px ${darkMode ? 'rgba(59,130,246,0.15)' : 'rgba(37,99,235,0.1)'}`;
                     e.currentTarget.style.borderColor = meta.color;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = darkMode ? '0 2px 8px rgba(0,0,0,.15)' : '0 1px 3px rgba(0,0,0,.04)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = darkMode ? '0 4px 16px rgba(0,0,0,.2)' : '0 2px 8px rgba(0,0,0,.06)';
                     e.currentTarget.style.borderColor = borderColor;
                   }}
                 >
-                  {/* 时间轴节点 */}
+                  {/* 左侧色条 */}
                   <div style={{
-                    position: 'absolute', left: -31, top: 18,
-                    width: 14, height: 14, borderRadius: '50%',
+                    position: 'absolute', left: 0, top: 8, bottom: 8, width: 4,
+                    borderRadius: 2, background: meta.color,
+                  }} />
+                  {/* 时间轴节点 - 带光晕 */}
+                  <div style={{
+                    position: 'absolute', left: -46, top: 20,
+                    width: 16, height: 16, borderRadius: '50%',
                     background: meta.color,
-                    border: `3px solid ${darkMode ? '#1a1d25' : '#F0F2F5'}`,
-                    boxShadow: `0 0 0 2px ${meta.color}44`,
-                    zIndex: 1,
+                    border: `3px solid ${darkMode ? '#1a1d25' : '#fff'}`,
+                    boxShadow: `0 0 12px ${meta.color}66`,
+                    zIndex: 2,
                   }} />
 
                   {/* 内容 */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{
-                      width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-                      background: `${meta.color}15`,
+                      width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                      background: `${meta.color}18`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <Icon size={16} color={meta.color} />
+                      <Icon size={18} color={meta.color} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -843,6 +848,9 @@ export default function CaseTimeline() {
           <div style={{ fontSize: 14 }}>请从上方选择一个案件</div>
           <div style={{ fontSize: 12, marginTop: 4 }}>系统将自动汇总该案件在所有模块中的办理记录</div>
         </div>
+      )}
+      {viewRecord && (
+        <CaseDetail record={viewRecord} onClose={() => setViewRecord(null)} />
       )}
     </div>
   );
