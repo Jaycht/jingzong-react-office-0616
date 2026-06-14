@@ -108,7 +108,7 @@ export default function ImportExport() {
         </motion.div>
         <div>
           <div style={{ fontSize: 19, fontWeight: 700 }}>导入导出</div>
-          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>支持 Excel / CSV / JSON 格式</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>支持 Excel / CSV / JSON 格式</div>
         </div>
       </motion.div>
 
@@ -117,12 +117,12 @@ export default function ImportExport() {
         <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
           className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 11, background: 'var(--color-primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 11, background: '#EBF5FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Upload size={22} color="#1B5E9B" />
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700 }}>数据导入</div>
-              <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>批量导入工作记录 · 先选模块再选文件</div>
+              <div style={{ fontSize: 12, color: '#9CA3AF' }}>批量导入工作记录 · 先选模块再选文件</div>
             </div>
           </div>
 
@@ -163,7 +163,7 @@ export default function ImportExport() {
                 fileInputRef.current?.click();
               }}
               style={{
-                height: 36, padding: '0 16px', background: 'var(--color-primary)', color: 'var(--color-surface)',
+                height: 36, padding: '0 16px', background: '#2E7DCA', color: '#fff',
                 border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit',
               }}
@@ -179,8 +179,8 @@ export default function ImportExport() {
               animate={{ opacity: 1, height: 'auto' }}
               style={{
                 padding: 12, borderRadius: 8, marginBottom: 12,
-                background: importResult.failed === 0 ? 'var(--color-success-bg)' : 'var(--color-warning-bg)',
-                border: `1px solid ${importResult.failed === 0 ? 'var(--color-success)' : 'var(--color-warning)'}`,
+                background: importResult.failed === 0 ? '#E8F5E9' : '#FFF3E0',
+                border: `1px solid ${importResult.failed === 0 ? '#A5D6A7' : '#FFCC80'}`,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -188,16 +188,16 @@ export default function ImportExport() {
                   ? <CheckCircle size={16} color="#388E3C" />
                   : <XCircle size={16} color="#E67E22" />
                 }
-                <span style={{ fontSize: 13, fontWeight: 600, color: importResult.failed === 0 ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: importResult.failed === 0 ? '#388E3C' : '#E67E22' }}>
                   导入完成
                 </span>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+              <div style={{ fontSize: 12, color: '#6B7280' }}>
                 成功 {importResult.success} 条
                 {importResult.failed > 0 && `，失败 ${importResult.failed} 条`}
               </div>
               {importResult.errors.length > 0 && (
-                <div style={{ marginTop: 6, fontSize: 11, color: 'var(--color-danger)' }}>
+                <div style={{ marginTop: 6, fontSize: 11, color: '#DC2626' }}>
                   {importResult.errors.slice(0, 3).map((e, i) => (
                     <div key={i}>{e}</div>
                   ))}
@@ -219,7 +219,7 @@ export default function ImportExport() {
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: 2 }}>
+            <div style={{ fontSize: 12, color: '#6B7280', fontWeight: 600, marginBottom: 2 }}>
               下载导入模板 →
             </div>
             {allModules.slice(0, 8).map((mod) => (
@@ -229,16 +229,16 @@ export default function ImportExport() {
                   showToast(`正在下载「${mod.label}」模板`, 'info');
                 }}
                 style={{
-                  padding: '8px 14px', background: 'var(--color-bg)',
+                  padding: '8px 14px', background: '#F8FAFC',
                   border: '1px solid #E5E7EB', borderRadius: 8, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'inherit', textAlign: 'left',
                 }}>
                 <FileText size={14} color="#1B5E9B" />
-                <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{mod.label} 导入模板</span>
-                <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--color-text-muted)' }}>下载</span>
+                <span style={{ fontSize: 13, color: '#4B5563' }}>{mod.label} 导入模板</span>
+                <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9CA3AF' }}>下载</span>
               </motion.button>
             ))}
-            <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
+            <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
               点击模块名称下载对应导入模板（Excel 格式）
             </div>
           </div>
@@ -248,12 +248,12 @@ export default function ImportExport() {
         <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 }}
           className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 11, background: 'var(--color-success-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 11, background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Download size={22} color="#388E3C" />
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700 }}>数据导出</div>
-              <div style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>导出工作记录与案件台账</div>
+              <div style={{ fontSize: 12, color: '#9CA3AF' }}>导出工作记录与案件台账</div>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -291,15 +291,15 @@ export default function ImportExport() {
               }}
             />
             <div style={{
-              padding: '11px 14px', background: 'var(--color-surface-hover)',
+              padding: '11px 14px', background: '#F9FAFB',
               border: '1px solid #E5E7EB', borderRadius: 8,
               display: 'flex', alignItems: 'center', gap: 10,
               opacity: 0.6,
             }}>
-              <div style={{ fontSize: 9.5, padding: '1px 6px', borderRadius: 4, background: 'var(--color-surface-hover)', color: 'var(--color-text-muted)', fontWeight: 700, fontFamily: 'monospace' }}>pdf</div>
+              <div style={{ fontSize: 9.5, padding: '1px 6px', borderRadius: 4, background: '#F3F4F6', color: '#9CA3AF', fontWeight: 700, fontFamily: 'monospace' }}>pdf</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-muted)' }}>数据统计报告（PDF）</div>
-                <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>需要后端支持 · 待实现</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#9CA3AF' }}>数据统计报告（PDF）</div>
+                <div style={{ fontSize: 11, color: '#B0BEC5' }}>需要后端支持 · 待实现</div>
               </div>
             </div>
           </div>
@@ -319,17 +319,17 @@ function ExportItem({
   onClick: () => void;
 }) {
   const formatColors: Record<string, string> = {
-    xlsx: 'var(--color-success-bg)',
-    csv: 'var(--color-warning-bg)',
-    json: 'var(--color-primary-bg)',
+    xlsx: '#E8F5E9',
+    csv: '#FFF3E0',
+    json: '#EBF5FF',
   };
   const formatTextColors: Record<string, string> = {
-    xlsx: 'var(--color-success)',
-    csv: 'var(--color-warning)',
-    json: 'var(--color-primary)',
+    xlsx: '#388E3C',
+    csv: '#E67E22',
+    json: '#1B5E9B',
   };
-  const bg = formatColors[format] || 'var(--color-surface-hover)';
-  const tc = formatTextColors[format] || 'var(--color-text-secondary)';
+  const bg = formatColors[format] || '#F3F4F6';
+  const tc = formatTextColors[format] || '#6B7280';
 
   return (
     <motion.button
@@ -349,8 +349,8 @@ function ExportItem({
         {format}
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>{label}</div>
-        <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>{desc}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>{label}</div>
+        <div style={{ fontSize: 11, color: '#9CA3AF' }}>{desc}</div>
       </div>
       <Download size={14} color="#9CA3AF" />
     </motion.button>

@@ -220,8 +220,8 @@ export default function Attachments() {
             <FileArchive size={20} color="#fff" />
           </motion.div>
           <div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: 'var(--color-text)' }}>附件档案</div>
-            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>所有工作记录中的附件材料 · 集中查看</div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: '#1F2937' }}>附件档案</div>
+            <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>所有工作记录中的附件材料 · 集中查看</div>
           </div>
         </div>
       </motion.div>
@@ -247,11 +247,11 @@ export default function Attachments() {
         {/* 批量操作栏 */}
         {selectedIds.size > 0 && (
           <div style={{
-            background: 'var(--color-primary-bg)', border: '1px solid #B9D4E6', borderRadius: 8,
+            background: '#F0F7FF', border: '1px solid #B9D4E6', borderRadius: 8,
             padding: '8px 14px', marginBottom: 12,
             display: 'flex', alignItems: 'center', gap: 12,
           }}>
-            <span style={{ fontSize: 13, color: 'var(--color-primary)', fontWeight: 600 }}>
+            <span style={{ fontSize: 13, color: '#155A8A', fontWeight: 600 }}>
               已选 {selectedIds.size} 项
             </span>
             <div
@@ -259,7 +259,7 @@ export default function Attachments() {
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
-                fontSize: 12, color: 'var(--color-primary)', background: 'rgba(21,90,138,0.08)',
+                fontSize: 12, color: '#155A8A', background: 'rgba(21,90,138,0.08)',
                 transition: 'all .15s',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(21,90,138,0.15)'; }}
@@ -272,7 +272,7 @@ export default function Attachments() {
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
-                fontSize: 12, color: 'var(--color-danger)', background: 'rgba(220,38,38,0.08)',
+                fontSize: 12, color: '#DC2626', background: 'rgba(220,38,38,0.08)',
                 transition: 'all .15s',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.15)'; }}
@@ -282,7 +282,7 @@ export default function Attachments() {
             </div>
             <div
               onClick={() => setSelectedIds(new Set())}
-              style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--color-text-secondary)', cursor: 'pointer', textDecoration: 'underline' }}
+              style={{ marginLeft: 'auto', fontSize: 12, color: '#64748B', cursor: 'pointer', textDecoration: 'underline' }}
             >
               取消选择
             </div>
@@ -292,10 +292,10 @@ export default function Attachments() {
         {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60 }}>
             <FileArchive size={48} color="#D1D5DB" style={{ marginBottom: 16 }} />
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#6B7280', marginBottom: 8 }}>
               {attachmentItems.length === 0 ? '暂无附件材料' : '未找到匹配的附件'}
             </div>
-            <div style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
+            <div style={{ fontSize: 13, color: '#9CA3AF' }}>
               {attachmentItems.length === 0
                 ? '在各个工作模块中新建记录时上传附件，附件将自动归档到此处。'
                 : '请尝试其他搜索关键词'}
@@ -303,7 +303,7 @@ export default function Attachments() {
           </div>
         ) : (
           <>
-            <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 12 }}>
               共 {filtered.length} 个附件文件
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -313,7 +313,7 @@ export default function Attachments() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '6px 14px', cursor: 'pointer', userSelect: 'none',
-                  fontSize: 12, color: 'var(--color-text-secondary)',
+                  fontSize: 12, color: '#64748B',
                 }}
               >
                 {allSelected ? <CheckSquare size={14} color="#155A8A" /> : <Square size={14} color="#94A3B8" />}
@@ -331,7 +331,7 @@ export default function Attachments() {
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '10px 14px', borderRadius: 6,
                       border: '1px solid #EDF2F7',
-                      background: checked ? 'var(--color-primary-bg)' : (i % 2 === 0 ? 'var(--color-surface)' : 'var(--color-surface)'),
+                      background: checked ? '#F0F7FF' : (i % 2 === 0 ? '#FAFBFC' : '#fff'),
                       transition: 'background .15s',
                     }}
                   >
@@ -345,14 +345,14 @@ export default function Attachments() {
                         : <Square size={16} color="#CBD5E1" />
                       }
                     </div>
-                    <div style={{ width: 32, height: 32, borderRadius: 6, background: 'var(--color-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 6, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {getFileIcon(att.fileName)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {att.fileName}
                       </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--color-text-muted)', marginTop: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ fontSize: 11.5, color: '#9CA3AF', marginTop: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span>{att.moduleLabel}</span>
                         <span>·</span>
                         <span>{att.fileSize}</span>
@@ -360,9 +360,9 @@ export default function Attachments() {
                         <span>{att.recordDate}</span>
                         {att.filePath !== undefined && (
                           att.fileExists === true
-                            ? <span style={{ color: 'var(--color-success)', fontSize: 10 }}>✓ 本地</span>
+                            ? <span style={{ color: '#0E7C4B', fontSize: 10 }}>✓ 本地</span>
                             : att.fileExists === false
-                              ? <span style={{ color: 'var(--color-danger)', fontSize: 10 }}>⚠ 文件缺失</span>
+                              ? <span style={{ color: '#DC2626', fontSize: 10 }}>⚠ 文件缺失</span>
                               : null
                         )}
                       </div>
@@ -373,11 +373,11 @@ export default function Attachments() {
                       style={{
                         width: 30, height: 30, borderRadius: 6,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', color: 'var(--color-text-muted)',
+                        cursor: 'pointer', color: '#9CA3AF',
                         transition: 'all .15s',
                       }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-surface-hover)'; e.currentTarget.style.color = 'var(--color-primary)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6'; e.currentTarget.style.color = '#1B5E9B'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF'; }}
                       title="下载附件"
                     >
                       <Download size={14} />
@@ -388,11 +388,11 @@ export default function Attachments() {
                       style={{
                         width: 30, height: 30, borderRadius: 6,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', color: 'var(--color-text-muted)',
+                        cursor: 'pointer', color: '#9CA3AF',
                         transition: 'all .15s',
                       }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--color-danger-bg)'; e.currentTarget.style.color = 'var(--color-danger)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--color-text-muted)'; }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#FEE2E2'; e.currentTarget.style.color = '#DC2626'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF'; }}
                       title="删除附件"
                     >
                       <Trash2 size={14} />

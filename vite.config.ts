@@ -15,7 +15,7 @@ export default defineConfig({
     },
   ],
   resolve: {
-    dedupe: ['react', 'react-dom', 'dayjs'],
+    dedupe: ['react', 'react-dom'],
   },
   build: {
     cssCodeSplit: false,

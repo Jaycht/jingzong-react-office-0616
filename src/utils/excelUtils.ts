@@ -13,7 +13,6 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { findModule, getBaseModules } from '../moduleConfig';
 import { getMassRecords, saveMassRecord } from '../store/massStore';
-import { rebuildCaseIndex, rebuildSuspectIndex } from '../store/inputHistoryStore';
 import { getOperationLogs } from '../store/operationLogStore';
 import type { FieldDefinition } from '../moduleConfig';
 import { localStorageAdapter } from "../store/adapter";
@@ -444,14 +443,6 @@ export async function importExcelToModule(
     } catch (err: any) {
       result.errors.push(err.message || '导入 squad-case 失败');
     }
-    // 导入 squad-case 后重建索引
-    if (result.success > 0) {
-      try {
-        const records = getMassRecords();
-        rebuildCaseIndex(records);
-        rebuildSuspectIndex(records);
-      } catch { /* ignore */ }
-    }
     return result;
   }
 
@@ -543,15 +534,6 @@ export async function importExcelToModule(
     }
   } catch (err) {
     result.errors.push(`文件解析失败: ${getErrorMessage(err)}`);
-  }
-
-  // 导入成功后重建案件/嫌疑人索引
-  if (result.success > 0) {
-    try {
-      const records = getMassRecords();
-      rebuildCaseIndex(records);
-      rebuildSuspectIndex(records);
-    } catch { /* ignore index rebuild errors */ }
   }
 
   return result;

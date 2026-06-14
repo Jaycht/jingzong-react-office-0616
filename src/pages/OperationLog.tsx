@@ -7,14 +7,14 @@ import { exportOperationLog } from '../utils/excelUtils';
 import type { OperationLog as OpLog } from '../store/operationLogStore';
 
 const TYPE_COLORS: Record<string, { bg: string; color: string; label: string }> = {
-  create: { bg: 'var(--color-success-bg)', color: 'var(--color-success)', label: '创建' },
-  edit: { bg: 'var(--color-primary-bg)', color: 'var(--color-primary)', label: '编辑' },
-  export: { bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', label: '导出' },
-  delete: { bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', label: '删除' },
+  create: { bg: '#E8F5E9', color: '#388E3C', label: '创建' },
+  edit: { bg: '#EBF5FF', color: '#1B5E9B', label: '编辑' },
+  export: { bg: '#FFF3E0', color: '#E67E22', label: '导出' },
+  delete: { bg: '#FFEBEE', color: '#D32F2F', label: '删除' },
   login: { bg: '#F3E5F5', color: '#9C27B0', label: '登录' },
   logout: { bg: '#F3E5F5', color: '#9C27B0', label: '退出' },
   system: { bg: '#E0F7FA', color: '#00ACC1', label: '系统' },
-  import: { bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', label: '导入' },
+  import: { bg: '#FFF3E0', color: '#E67E22', label: '导入' },
   backup: { bg: '#E0F7FA', color: '#00ACC1', label: '备份' },
 };
 
@@ -54,7 +54,7 @@ export default function OperationLog() {
           </motion.div>
           <div>
             <div style={{ fontSize: 19, fontWeight: 700 }}>操作日志</div>
-            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>用户操作全程留痕 · 可追溯审计 · 数据安全保障</div>
+            <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>用户操作全程留痕 · 可追溯审计 · 数据安全保障</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -64,12 +64,12 @@ export default function OperationLog() {
               setRefreshKey(k => k + 1);
               showToast('操作日志已清空', 'success');
             }}
-            style={{ height: 34, padding: '0 14px', background: 'var(--color-surface)', color: 'var(--color-danger)', border: '1.5px solid #DC2626', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+            style={{ height: 34, padding: '0 14px', background: 'var(--color-surface)', color: '#DC2626', border: '1.5px solid #DC2626', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
             清空日志
           </motion.button>
           <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
             onClick={() => { showToast('正在导出日志...', 'info'); exportOperationLog(); }}
-            style={{ height: 34, padding: '0 14px', background: 'var(--color-surface)', color: 'var(--color-primary)', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+            style={{ height: 34, padding: '0 14px', background: 'var(--color-surface)', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
             <Download size={14} />导出日志
           </motion.button>
         </div>
@@ -82,9 +82,9 @@ export default function OperationLog() {
             onClick={() => setFilterType(f)}
             style={{
               height: 30, padding: '0 14px',
-              border: '1.5px solid ' + (f === filterType ? 'var(--color-primary)' : 'var(--color-border)'),
-              background: f === filterType ? 'var(--color-primary-bg)' : 'var(--color-surface)',
-              color: f === filterType ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+              border: '1.5px solid ' + (f === filterType ? '#1B5E9B' : '#E5E7EB'),
+              background: f === filterType ? '#EBF5FF' : '#fff',
+              color: f === filterType ? '#1B5E9B' : '#6B7280',
               borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
             }}>
             {f}
@@ -108,14 +108,14 @@ export default function OperationLog() {
         </div>
         <div>
           {logs.length === 0 ? (
-            <div style={{ padding: 60, textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 13 }}>
+            <div style={{ padding: 60, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
               暂无操作日志。开始使用系统后，操作记录将自动生成。
             </div>
           ) : logs.map((log, i) => (
             <motion.div
               key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 + i * 0.06 }}
-              whileHover={{ background: 'var(--color-bg)' }}
+              whileHover={{ background: '#F8FAFC' }}
               style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', borderBottom: i < logs.length - 1 ? '1px solid #F3F4F6' : 'none' }}
             >
               {/* Timeline dot */}
@@ -125,24 +125,24 @@ export default function OperationLog() {
                     {TYPE_COLORS[log.type as keyof typeof TYPE_COLORS].label}
                   </span>
                 </div>
-                {i < logs.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--color-border)', minHeight: 20 }} />}
+                {i < logs.length - 1 && <div style={{ width: 1, flex: 1, background: '#E5E7EB', minHeight: 20 }} />}
               </div>
 
               {/* Content */}
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                   <User size={12} color="#9CA3AF" />
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-text)' }}>{log.user}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1F2937' }}>{log.user}</span>
                   <FileText size={12} color="#9CA3AF" />
-                  <span style={{ fontSize: 12.5, color: 'var(--color-text-secondary)' }}>{log.action}</span>
+                  <span style={{ fontSize: 12.5, color: '#4B5563' }}>{log.action}</span>
                 </div>
-                <div style={{ fontSize: 11.5, color: 'var(--color-text-muted)', marginLeft: 20 }}>{log.detail}</div>
+                <div style={{ fontSize: 11.5, color: '#9CA3AF', marginLeft: 20 }}>{log.detail}</div>
               </div>
 
               {/* Meta */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
-                <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{log.time}</span>
-                <span style={{ fontSize: 10.5, color: 'var(--color-text-muted)' }}>IP: {log.ip}</span>
+                <span style={{ fontSize: 11, color: '#6B7280' }}>{log.time}</span>
+                <span style={{ fontSize: 10.5, color: '#D1D5DB' }}>IP: {log.ip}</span>
               </div>
             </motion.div>
           ))}

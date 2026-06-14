@@ -181,7 +181,7 @@ function MultiPersonInput({ value, onChange, compact }: { value?: string; onChan
               style={{
                 width: 20, height: 20, borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'var(--color-danger-bg)', color: 'var(--color-danger)',
+                background: '#FEE2E2', color: '#DC2626',
                 fontSize: 14, fontWeight: 700, cursor: 'pointer',
                 lineHeight: 1, flexShrink: 0,
               }}
@@ -197,13 +197,13 @@ function MultiPersonInput({ value, onChange, compact }: { value?: string; onChan
         style={{
           width: 32, height: 32, borderRadius: 6,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: '1.5px dashed #CBD5E1', color: 'var(--color-text-secondary)',
+          border: '1.5px dashed #CBD5E1', color: '#64748B',
           fontSize: 20, fontWeight: 400, cursor: 'pointer',
           transition: 'all .15s', userSelect: 'none', flexShrink: 0,
           alignSelf: compact ? 'center' : 'flex-start',
         }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-primary)'; (e.currentTarget as HTMLDivElement).style.color = 'var(--color-primary)'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-text-muted)'; (e.currentTarget as HTMLDivElement).style.color = 'var(--color-text-secondary)'; }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = '#155A8A'; (e.currentTarget as HTMLDivElement).style.color = '#155A8A'; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = '#CBD5E1'; (e.currentTarget as HTMLDivElement).style.color = '#64748B'; }}
         title="添加一项"
       >
         +
@@ -355,17 +355,17 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
         placeholder={placeholder || `请输入${field.label}`}
         style={{
           width: '100%', height: 32, padding: '0 11px',
-          border: '1px solid var(--color-border)', borderRadius: 6,
-          fontSize: 14, color: 'var(--color-text)', outline: 'none',
+          border: '1px solid #D9D9D9', borderRadius: 6,
+          fontSize: 14, color: '#333', outline: 'none',
           fontFamily: 'inherit', boxSizing: 'border-box',
           transition: 'border-color .2s, box-shadow .2s',
         }}
         onFocusCapture={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-primary)';
+          e.currentTarget.style.borderColor = '#1677ff';
           e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
         }}
         onBlurCapture={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-border)';
+          e.currentTarget.style.borderColor = '#D9D9D9';
           e.currentTarget.style.boxShadow = 'none';
         }}
       />
@@ -373,8 +373,8 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
         <div
           style={{
             position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
-            marginTop: 2, background: 'var(--color-surface)', borderRadius: 6,
-            border: '1px solid var(--color-border)', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+            marginTop: 2, background: '#fff', borderRadius: 6,
+            border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
             maxHeight: 240, overflow: 'auto',
           }}
         >
@@ -385,10 +385,10 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
                 key={item}
                 style={{
                   display: 'flex', alignItems: 'center', padding: '6px 12px',
-                  fontSize: 13, color: 'var(--color-text)',
+                  fontSize: 13, color: '#1F2937',
                   transition: 'background .1s',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-hover)'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <span
@@ -407,11 +407,11 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
                     }}
                     style={{
                       cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
-                      fontSize: 14, lineHeight: 1, color: 'var(--color-text-muted)',
+                      fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                       borderRadius: 3, userSelect: 'none', flexShrink: 0,
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger)'; e.currentTarget.style.background = 'var(--color-danger-bg)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
                   >×</span>
                 )}
               </div>
@@ -437,7 +437,7 @@ function parseBirthFromIdNo(idNo: string): string | null {
   }
   if (birth) {
     const d = dayjs(birth);
-    return (typeof d.isValid === 'function' && d.isValid()) ? birth : null;
+    return d.isValid() ? birth : null;
   }
   return null;
 }
@@ -466,7 +466,7 @@ export function IdNoField({ field, subName, listName }: {
     if (val.length === 18 || val.length === 15) {
       const birth = parseBirthFromIdNo(val);
       if (birth) {
-        form.setFieldsValue({ [birthDateName as any]: birth });
+        form.setFieldsValue({ [birthDateName as any]: dayjs(birth) });
       }
     }
   };
@@ -482,16 +482,16 @@ export function IdNoField({ field, subName, listName }: {
         placeholder="请输入身份证号（自动提取出生日期）"
         style={{
           width: '100%', height: 32, padding: '0 11px',
-          border: '1px solid var(--color-border)', borderRadius: 6,
-          fontSize: 14, color: 'var(--color-text)', outline: 'none',
+          border: '1px solid #D9D9D9', borderRadius: 6,
+          fontSize: 14, color: '#333', outline: 'none',
           fontFamily: 'inherit', boxSizing: 'border-box',
         }}
         onFocusCapture={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-primary)';
+          e.currentTarget.style.borderColor = '#1677ff';
           e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
         }}
         onBlurCapture={(e) => {
-          e.currentTarget.style.borderColor = 'var(--color-border)';
+          e.currentTarget.style.borderColor = '#D9D9D9';
           e.currentTarget.style.boxShadow = 'none';
         }}
       />
@@ -509,8 +509,8 @@ function fillCaseDetail(form: any, detail: CaseDetail): void {
   const kv: Record<string, unknown> = {};
   if (detail.leadOfficer) kv.leadOfficer = detail.leadOfficer;
   if (detail.assistOfficer) kv.assistOfficer = detail.assistOfficer;
-  if (detail.receiveDate) kv.receiveDate = detail.receiveDate;
-  if (detail.filingDate) kv.filingDate = detail.filingDate;
+  if (detail.receiveDate) kv.receiveDate = dayjs(detail.receiveDate);
+  if (detail.filingDate) kv.filingDate = dayjs(detail.filingDate);
   if (detail.caseType) kv.caseType = detail.caseType;
   if (detail.caseSource) kv.caseSource = detail.caseSource;
   if (detail.totalAmount !== undefined) kv.totalAmount = detail.totalAmount;
@@ -602,17 +602,17 @@ export function GlobalCaseNameField({ field, subName }: {
           placeholder="请输入案件名称（全软件数据共享）"
           style={{
             width: '100%', height: 32, padding: '0 11px',
-            border: '1px solid var(--color-border)', borderRadius: 6,
-            fontSize: 14, color: 'var(--color-text)', outline: 'none',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
             fontFamily: 'inherit', boxSizing: 'border-box',
             transition: 'border-color .2s, box-shadow .2s',
           }}
           onFocusCapture={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-primary)';
-            e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-primary)';
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
           }}
           onBlurCapture={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-border)';
+            e.currentTarget.style.borderColor = '#D9D9D9';
             e.currentTarget.style.boxShadow = 'none';
           }}
         />
@@ -620,7 +620,8 @@ export function GlobalCaseNameField({ field, subName }: {
           <div
             style={{
               position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
-              marginTop: 2, background: 'var(--color-surface)', borderRadius: 6,      border: '1px solid var(--color-border)', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              marginTop: 2, background: '#fff', borderRadius: 6,
+              border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
               maxHeight: 240, overflow: 'auto',
             }}
           >
@@ -631,10 +632,10 @@ export function GlobalCaseNameField({ field, subName }: {
                   key={item}
                   style={{
                     display: 'flex', alignItems: 'center', padding: '6px 12px',
-                    fontSize: 13, color: 'var(--color-text)',
+                    fontSize: 13, color: '#1F2937',
                     transition: 'background .1s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-hover)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
@@ -657,11 +658,11 @@ export function GlobalCaseNameField({ field, subName }: {
                       }}
                       style={{
                         cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
-                        fontSize: 14, lineHeight: 1, color: 'var(--color-text-muted)',
+                        fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                         borderRadius: 3, userSelect: 'none', flexShrink: 0,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger)'; e.currentTarget.style.background = 'var(--color-danger-bg)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
                     >×</span>
                   )}
                 </div>
@@ -751,17 +752,17 @@ export function GlobalCaseNoField({ field, subName }: {
           placeholder="请输入案件编号（全软件数据共享）"
           style={{
             width: '100%', height: 32, padding: '0 11px',
-            border: '1px solid var(--color-border)', borderRadius: 6,
-            fontSize: 14, color: 'var(--color-text)', outline: 'none',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
             fontFamily: 'inherit', boxSizing: 'border-box',
             transition: 'border-color .2s, box-shadow .2s',
           }}
           onFocusCapture={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-primary)';
-            e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-primary)';
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
           }}
           onBlurCapture={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-border)';
+            e.currentTarget.style.borderColor = '#D9D9D9';
             e.currentTarget.style.boxShadow = 'none';
           }}
         />
@@ -769,7 +770,8 @@ export function GlobalCaseNoField({ field, subName }: {
           <div
             style={{
               position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
-              marginTop: 2, background: 'var(--color-surface)', borderRadius: 6,      border: '1px solid var(--color-border)', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              marginTop: 2, background: '#fff', borderRadius: 6,
+              border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
               maxHeight: 240, overflow: 'auto',
             }}
           >
@@ -780,10 +782,10 @@ export function GlobalCaseNoField({ field, subName }: {
                   key={item}
                   style={{
                     display: 'flex', alignItems: 'center', padding: '6px 12px',
-                    fontSize: 13, color: 'var(--color-text)',
+                    fontSize: 13, color: '#1F2937',
                     transition: 'background .1s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-hover)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
@@ -806,11 +808,11 @@ export function GlobalCaseNoField({ field, subName }: {
                       }}
                       style={{
                         cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
-                        fontSize: 14, lineHeight: 1, color: 'var(--color-text-muted)',
+                        fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                         borderRadius: 3, userSelect: 'none', flexShrink: 0,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger)'; e.currentTarget.style.background = 'var(--color-danger-bg)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
                     >×</span>
                   )}
                 </div>
@@ -933,7 +935,10 @@ export function GlobalSuspectField({ field, subName, listName }: {
     }
   };
 
-  // 同步到 form（已内联到 onChange，此函数不再使用）
+  // 输入时只更新本地 state，不写 form（避免 IME 中断）
+  const handleChange = (val: string) => {
+    setLocalValue(val);
+  };
 
   // 失焦时同步到 form，并关闭下拉
   const handleBlurSync = () => {
@@ -988,7 +993,11 @@ export function GlobalSuspectField({ field, subName, listName }: {
     setRelatedRecords(matches.slice(0, 5)); // 最多显示5条
   }, []);
 
-  // 输入变化时清除关联提示（已内联到 onChange）
+  // 输入变化时清除关联提示
+  const handleChangeLocal = (val: string) => {
+    setLocalValue(val);
+    if (val.trim().length < 2) setRelatedRecords([]);
+  };
 
   const filteredOptions = useMemo(() => {
     if (!syncedValue) return getAllSuspectNames();
@@ -1005,28 +1014,23 @@ export function GlobalSuspectField({ field, subName, listName }: {
       <div style={{ position: 'relative' }}>
         <input
           value={localValue}
-          onChange={(e) => {
-            const val = e.target.value;
-            setLocalValue(val);
-            if (form) form.setFieldValue(fullName, val); // 实时同步到 form，确保提交时值已写入
-            if (val.trim().length < 2) setRelatedRecords([]);
-          }}
+          onChange={(e) => handleChangeLocal(e.target.value)}
           onBlur={handleBlurSync}
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           placeholder="请输入嫌疑人姓名（可匹配历史记录）"
           style={{
             width: '100%', height: 32, padding: '0 11px',
-            border: '1px solid var(--color-border)', borderRadius: 6,
-            fontSize: 14, color: 'var(--color-text)', outline: 'none',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
             fontFamily: 'inherit', boxSizing: 'border-box',
             transition: 'border-color .2s, box-shadow .2s',
           }}
           onFocusCapture={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-primary)';
-            e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-primary)';
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
           }}
           onBlurCapture={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-border)';
+            e.currentTarget.style.borderColor = '#D9D9D9';
             e.currentTarget.style.boxShadow = 'none';
           }}
         />
@@ -1034,7 +1038,8 @@ export function GlobalSuspectField({ field, subName, listName }: {
           <div
             style={{
               position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
-              marginTop: 2, background: 'var(--color-surface)', borderRadius: 6,      border: '1px solid var(--color-border)', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              marginTop: 2, background: '#fff', borderRadius: 6,
+              border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
               maxHeight: 240, overflow: 'auto',
             }}
           >
@@ -1045,10 +1050,10 @@ export function GlobalSuspectField({ field, subName, listName }: {
                   key={item}
                   style={{
                     display: 'flex', alignItems: 'center', padding: '6px 12px',
-                    fontSize: 13, color: 'var(--color-text)',
+                    fontSize: 13, color: '#1F2937',
                     transition: 'background .1s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-hover)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
@@ -1068,11 +1073,11 @@ export function GlobalSuspectField({ field, subName, listName }: {
                       }}
                       style={{
                         cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
-                        fontSize: 14, lineHeight: 1, color: 'var(--color-text-muted)',
+                        fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                         borderRadius: 3, userSelect: 'none', flexShrink: 0,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger)'; e.currentTarget.style.background = 'var(--color-danger-bg)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
                     >×</span>
                   )}
                 </div>
@@ -1084,16 +1089,16 @@ export function GlobalSuspectField({ field, subName, listName }: {
         {relatedRecords.length > 0 && !open && (
           <div style={{
             marginTop: 6, padding: '8px 10px', borderRadius: 6,
-            background: 'var(--color-primary-bg)',
-            border: '1px solid var(--color-primary-border)', fontSize: 12, lineHeight: 1.6,
+            background: 'linear-gradient(135deg, #EFF6FF, #F0F9FF)',
+            border: '1px solid #BFDBFE', fontSize: 12, lineHeight: 1.6,
           }}>
-            <div style={{ fontWeight: 600, color: 'var(--color-primary-dark)', marginBottom: 4 }}>
+            <div style={{ fontWeight: 600, color: '#1D4ED8', marginBottom: 4 }}>
               🔗 发现 {relatedRecords.length} 条关联记录
             </div>
             {relatedRecords.map((r, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text)', padding: '1px 0' }}>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: '#475569', padding: '1px 0' }}>
                 <span><span style={{ fontWeight: 500 }}>{r.moduleName}</span>{r.title ? ` · ${r.title}` : ''}</span>
-                <span style={{ color: 'var(--color-text-muted)', flexShrink: 0 }}>{r.date}</span>
+                <span style={{ color: '#94A3B8', flexShrink: 0 }}>{r.date}</span>
               </div>
             ))}
           </div>
@@ -1172,17 +1177,17 @@ export function HolderAutoComplete({ field, subName }: {
           placeholder="请输入持有人姓名（可匹配嫌疑人）"
           style={{
             width: '100%', height: 32, padding: '0 11px',
-            border: '1px solid var(--color-border)', borderRadius: 6,
-            fontSize: 14, color: 'var(--color-text)', outline: 'none',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
             fontFamily: 'inherit', boxSizing: 'border-box',
             transition: 'border-color .2s, box-shadow .2s',
           }}
           onFocusCapture={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-primary)';
-            e.currentTarget.style.boxShadow = '0 0 0 2px var(--color-primary)';
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
           }}
           onBlurCapture={(e) => {
-            e.currentTarget.style.borderColor = 'var(--color-border)';
+            e.currentTarget.style.borderColor = '#D9D9D9';
             e.currentTarget.style.boxShadow = 'none';
           }}
         />
@@ -1190,7 +1195,8 @@ export function HolderAutoComplete({ field, subName }: {
           <div
             style={{
               position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
-              marginTop: 2, background: 'var(--color-surface)', borderRadius: 6,      border: '1px solid var(--color-border)', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              marginTop: 2, background: '#fff', borderRadius: 6,
+              border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
               maxHeight: 240, overflow: 'auto',
             }}
           >
@@ -1201,10 +1207,10 @@ export function HolderAutoComplete({ field, subName }: {
                   key={item}
                   style={{
                     display: 'flex', alignItems: 'center', padding: '6px 12px',
-                    fontSize: 13, color: 'var(--color-text)',
+                    fontSize: 13, color: '#1F2937',
                     transition: 'background .1s',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-surface-hover)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span
@@ -1223,11 +1229,11 @@ export function HolderAutoComplete({ field, subName }: {
                       }}
                       style={{
                         cursor: 'pointer', padding: '2px 6px', marginLeft: 4,
-                        fontSize: 14, lineHeight: 1, color: 'var(--color-text-muted)',
+                        fontSize: 14, lineHeight: 1, color: '#D1D5DB',
                         borderRadius: 3, userSelect: 'none', flexShrink: 0,
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger)'; e.currentTarget.style.background = 'var(--color-danger-bg)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEE2E2'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#D1D5DB'; e.currentTarget.style.background = 'transparent'; }}
                     >×</span>
                   )}
                 </div>
