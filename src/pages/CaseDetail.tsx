@@ -89,28 +89,6 @@ function fmtValue(val: unknown): string {
   return String(val);
 }
 
-function fmtValue(val: unknown): string {
-  if (val === null || val === undefined) return '—';
-  if (Array.isArray(val)) return val.join('、');
-  if (typeof val === 'object') {
-    const obj = val as Record<string, unknown>;
-    // dayjs 对象：$L 是 locale，$d 是底层 Date/string
-    if (obj.$L && obj.$d) {
-      try {
-        const dateVal = obj.$d instanceof Date ? obj.$d : new Date(String(obj.$d));
-        return isNaN(dateVal.getTime()) ? '—' : `${dateVal.getFullYear()}-${String(dateVal.getMonth() + 1).padStart(2, '0')}-${String(dateVal.getDate()).padStart(2, '0')}`;
-      } catch { return '—'; }
-    }
-    // 附件对象：只显示文件名
-    if (obj.name && obj.uid) {
-      return String(obj.name);
-    }
-    return JSON.stringify(val).slice(0, 30);
-  }
-  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) return fmtDate(val);
-  return String(val);
-}
-
 const TABS = [
   { id: 'info', label: '基本信息', icon: FileText },
   { id: 'related', label: '关联记录', icon: Link2 },
