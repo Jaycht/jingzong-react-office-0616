@@ -27,6 +27,27 @@ const FIELD_LABELS: Record<string, string> = {
   filingDate: '立案日期', receiveDate: '受理日期', crimeDate: '案发时间',
   caseLocation: '案发地', crimeLocation: '案发地',
   leadOfficer: '主办民警', assistOfficer: '协办民警',
+  formerName: '曾用名', gender: '性别', ethnicity: '民族',
+  birthDate: '出生日期', suspectIdNo: '身份证号', registeredAddress: '户籍地址',
+  currentAddress: '现住址', education: '学历', occupation: '职业',
+  suspectPhone: '手机号', landline: '座机', socialAccount: '社交账号',
+  emergencyContact: '紧急联系人', hasCriminalRecord: '有无前科', isFugitive: '是否在逃',
+  captureDate: '抓获时间', suspectRole: '涉案身份', personalIllegalIncome: '个人违法所得',
+  arrestMethod: '归案方式', summonDate: '传唤时间',
+  reporterName: '报案人', reporterGender: '性别', reporterIdNo: '身份证号',
+  reporterPhone: '电话', reporterWechat: '微信', reporterAddress: '地址',
+  reporterWorkplace: '工作单位', reporterRelationship: '与案件关系',
+  reporterConfidential: '是否保密', reporterCooperate: '是否配合',
+  reporterIdentity: '报案人身份',
+  measure: '强制措施类型', isNotified: '是否告知/通知', notifyDate: '告知/通知时间',
+  approvalDate: '审批时间', executeDate: '执行时间', deadline: '期限',
+  approver: '审批人', executeResult: '执行结果',
+  clueSources: '线索来源', interviewees: '约谈对象',
+  intervieweeName: '姓名', intervieweeGender: '性别', intervieweeAge: '年龄',
+  intervieweeIdNo: '身份证号', intervieweePhone: '电话', intervieweeAddress: '地址',
+  intervieweeIdentity: '身份', riskLevel: '风险等级',
+  isElderly: '是否 elderly', isHardship: '是否困难户',
+  involvedEntities: '涉案主体', attachment: '附件',
 };
 
 function fmtDate(iso: string | Date): string {
@@ -34,7 +55,38 @@ function fmtDate(iso: string | Date): string {
   const d = typeof iso === 'string' ? new Date(iso) : iso;
   if (isNaN(d.getTime())) return '—';
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+/** 将任意值转为安全的字符串显示 */
+function fmtValue(val: unknown): string {
+  if (val === null || val === undefined) return '—';
+  if (Array.isArray(val)) {
+    // 附件数组：只显示文件名
+    if (val.length > 0 && val[0] && typeof val[0] === 'object' && (val[0] as any).uid) {
+      return val.map((f: any) => f.name || '附件').join('、');
+    }
+    return val.map(v => fmtValue(v)).join('、');
+  }
+  if (typeof val === 'object') {
+    const obj = val as Record<string, unknown>;
+    // dayjs 对象
+    if (obj.$L !== undefined && obj.$d !== undefined) {
+      try {
+        const dateVal = obj.$d instanceof Date ? obj.$d : new Date(String(obj.$d));
+        if (!isNaN(dateVal.getTime())) {
+          return `${dateVal.getFullYear()}年${dateVal.getMonth() + 1}月${dateVal.getDate()}日`;
+        }
+      } catch {}
+      return '—';
+    }
+    // 附件对象：只显示文件名
+    if (obj.name && obj.uid) return String(obj.name);
+    // 其他对象
+    return JSON.stringify(val).slice(0, 30);
+  }
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) return fmtDate(val);
+  return String(val);
 }
 
 function fmtValue(val: unknown): string {
