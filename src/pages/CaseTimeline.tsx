@@ -4,7 +4,7 @@
  */
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, ArrowLeft, CalendarDays, FileText, Gavel, SearchCheck, Users, Shield, Database, Landmark, BriefcaseBusiness, ChevronRight } from 'lucide-react';
+import { Clock, CalendarDays, FileText, Gavel, SearchCheck, Users, Shield, Database, Landmark, BriefcaseBusiness, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
