@@ -46,6 +46,28 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  
+  /** 递归清洗 formData 中残留的 dayjs 序列化对象（$L/$d），转为 ISO 字符串
+   *  防止旧版本保存的 dayjs 对象被 antd DatePicker 解析时崩溃 */
+  function sanitizeDayjsDeep(obj: unknown): unknown {
+    if (obj === null || obj === undefined) return obj;
+    // dayjs 序列化对象：{$L: 'zh-cn', $d: '2024-01-01T00:00:00Z'}
+    if (typeof obj === 'object' && !Array.isArray(obj) && (obj as Record<string, unknown>).$L !== undefined && (obj as Record<string, unknown>).$d !== undefined) {
+      const d = (obj as Record<string, unknown>).$d;
+      return typeof d === 'string' ? d : String(d);
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => sanitizeDayjsDeep(item));
+    }
+    if (typeof obj === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+        result[k] = sanitizeDayjsDeep(v);
+      }
+      return result;
+    }
+    return obj;
+  }
   const [form] = Form.useForm();
   // 组件挂载跟踪，防止卸载后 setState
   const mountedRef = useRef(true);
@@ -256,7 +278,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           const safeData: Record<string, unknown> = {};
           for (const key of Object.keys(formData)) {
             if (validFieldIds.has(key) || sectionListNames.has(key)) {
-              safeData[key] = formData[key];
+              safeData[key] = sanitizeDayjsDeep(formData[key]);
             }
           }
           form.setFieldsValue(safeData);
@@ -330,7 +352,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           okText: '恢复草稿',
           cancelText: '新建空白',
           onOk: () => {
-            form.setFieldsValue(draft.data);
+            form.setFieldsValue(sanitizeDayjsDeep(draft.data) as Record<string, unknown>);
             if (draft.step > 0 && draft.step < totalSteps) {
               setCurrentStep(draft.step);
             }

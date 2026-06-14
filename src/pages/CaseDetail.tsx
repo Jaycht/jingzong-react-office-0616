@@ -157,6 +157,19 @@ export default function CaseDetail({ record, onClose }: Props) {
     return (tab?.fields || []).filter(f => f.type !== 'section' && f.type !== 'attachment');
   }, [record, allModules]);
 
+  // 从字段定义构建 label 映射，作为 FIELD_LABELS 的兜底（cover 所有模块的字段）
+  const fieldLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    const mod = findModule(record.moduleId, allModules);
+    const tab = mod?.tabs.find(t => t.id === record.tabId) || mod?.tabs[0];
+    for (const f of tab?.fields || []) {
+      if (f.type !== 'section' && f.type !== 'attachment' && f.label) {
+        map[f.id] = f.label;
+      }
+    }
+    return map;
+  }, [record, allModules]);
+
   const textColor = 'var(--color-text)';
   const mutedColor = 'var(--color-text-secondary)';
 
@@ -296,7 +309,7 @@ export default function CaseDetail({ record, onClose }: Props) {
                             if (k.startsWith('__') || k === 'uid' || k === 'lastModified' || k === 'percent' || k === 'status' || k === 'size') return null;
                             return (
                               <div key={k} style={{ fontSize: 12, lineHeight: 1.8 }}>
-                                <span style={{ color: mutedColor }}>{FIELD_LABELS[k] || k}：</span>
+                                <span style={{ color: mutedColor }}>{FIELD_LABELS[k] || fieldLabelMap[k] || k}：</span>
                                 <span style={{ color: textColor, fontWeight: 500 }}>{fmtValue(v)}</span>
                               </div>
                             );

@@ -1,10 +1,16 @@
-export const APP_VERSION = "V2.13.1";
+export const APP_VERSION = "V2.13.2";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 1;
+export const VERSION_PATCH = 2;
 
 export const CHANGELOG: string[] = [
-    // ===== V2.13.1 =====
+      // ===== V2.13.2 =====
+  "V2.13.2 修复 - 编辑模式加载时递归清洗 dayjs 序列化对象($L/$d→ISO字符串)，根治时间轴打开旧记录崩溃",
+  "V2.13.2 修复 - CaseDetail 查看页面字段标签全局兜底(fieldLabelMap)，解决所有模块重复节数据英文标签问题",
+  "V2.13.2 修复 - CaseDetail 查看页面返回/编辑按钮改用 antd Button，统一按钮样式",
+  "V2.13.2 修复 - 8 个页面深色模式全面适配：Statistics/ImportExport/Attachments/OperationLog/Backup/SettingsPage/UserManage/Version",
+  "V2.13.2 修复 - 全局排查深色模式白色背景和文字颜色问题，所有硬编码颜色替换为CSS变量",
+// ===== V2.13.1 =====
   "V2.13.1 修复 - DrawerNewRecord/SharedFormFields 硬编码颜色全面替换为 CSS 变量，深色模式不再有白色背景",
   "V2.13.1 修复 - GlobalSuspectField onChange 实时同步 form 值，解决提交时值丢失问题",
   "V2.13.1 修复 - Excel 批量导入后自动重建案件/嫌疑人索引，新数据立即可用于自动补全",
