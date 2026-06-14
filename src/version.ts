@@ -1,10 +1,14 @@
-export const APP_VERSION = "V2.12.11";
+export const APP_VERSION = "V2.13.1";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 11;
+export const VERSION_PATCH = 1;
 
 export const CHANGELOG: string[] = [
-  // ===== V2.12.11 =====
+    // ===== V2.13.1 =====
+  "V2.13.1 修复 - DrawerNewRecord/SharedFormFields 硬编码颜色全面替换为 CSS 变量，深色模式不再有白色背景",
+  "V2.13.1 修复 - GlobalSuspectField onChange 实时同步 form 值，解决提交时值丢失问题",
+  "V2.13.1 修复 - Excel 批量导入后自动重建案件/嫌疑人索引，新数据立即可用于自动补全",
+// ===== V2.12.11 =====
   "V2.12.11 修复 - 关系图谱添加 useEffect 自动刷新，进入页面时加载最新数据",
   "V2.12.11 修复 - CaseDetail 去掉 motion.div 改用普通 div，修复按钮点击区域不完整问题",
   "V2.12.11 修复 - 编辑模式日期字段不再转回 dayjs 对象，保持 ISO 字符串避免 antd clone 崩溃",
