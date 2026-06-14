@@ -340,41 +340,38 @@ export function rebuildSuspectIndex(records: Array<{ moduleId: string; data: Rec
     const moduleId = rec.moduleId;
     const data = rec.data || {};
 
-    // 1) squad-case：嫌疑人 section 数组
-    if (moduleId === 'squad-case') {
-      const suspects = data.suspects;
-      if (Array.isArray(suspects)) {
-        for (const s of suspects) {
-          const name = typeof s.suspectName === 'string' ? s.suspectName.trim() : '';
-          if (!name) continue;
-          map[name] = {
-            idNo: typeof s.suspectIdNo === 'string' ? s.suspectIdNo.trim() : '',
-            phone: typeof s.suspectPhone === 'string' ? s.suspectPhone.trim() : '',
-            address: typeof s.suspectAddress === 'string' ? s.suspectAddress.trim() : '',
-            caseName: typeof data.caseName === 'string' ? data.caseName.trim() : '',
-          };
-        }
+    // 1) 所有模块的 suspects repeatable section 数组
+    const suspects = data.suspects;
+    if (Array.isArray(suspects)) {
+      for (const s of suspects) {
+        const name = typeof s.suspectName === 'string' ? s.suspectName.trim() : '';
+        if (!name) continue;
+        map[name] = {
+          idNo: typeof s.suspectIdNo === 'string' ? s.suspectIdNo.trim() : '',
+          phone: typeof s.suspectPhone === 'string' ? s.suspectPhone.trim() : '',
+          address: typeof s.currentAddress === 'string' ? s.currentAddress.trim()
+            : typeof s.registeredAddress === 'string' ? s.registeredAddress.trim()
+            : typeof s.suspectAddress === 'string' ? s.suspectAddress.trim() : '',
+          caseName: typeof data.caseName === 'string' ? data.caseName.trim() : '',
+        };
       }
     }
 
-    // 2) evidence-freeze / squad-coercive：扁平 suspect 字段
-    if (moduleId === 'evidence-freeze' || moduleId === 'squad-coercive') {
-      const name = typeof data.suspect === 'string' ? data.suspect.trim() : '';
-      if (!name) continue;
+    // 2) 扁平 suspect 字段
+    const name = typeof data.suspect === 'string' ? data.suspect.trim() : '';
+    if (name) {
       if (!map[name]) {
         map[name] = { idNo: '', phone: '', address: '', caseName: typeof data.caseName === 'string' ? data.caseName.trim() : '' };
       } else if (data.caseName) {
-        // 已有信息则补充案件名称
         map[name].caseName = map[name].caseName || (typeof data.caseName === 'string' ? data.caseName.trim() : '');
       }
     }
 
     // 3) 持有人字段（可能是嫌疑人）
     if (moduleId === 'evidence-phone-collection' || moduleId === 'squad-property') {
-      const name = typeof data.holder === 'string' ? data.holder.trim() : '';
-      if (!name) continue;
-      if (!map[name]) {
-        map[name] = {
+      const hname = typeof data.holder === 'string' ? data.holder.trim() : '';
+      if (hname && !map[hname]) {
+        map[hname] = {
           idNo: typeof data.idNo === 'string' ? data.idNo.trim() : '',
           phone: typeof data.phone === 'string' ? data.phone.trim() : '',
           address: '',
