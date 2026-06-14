@@ -189,7 +189,7 @@ export default function CaseDetail({ record, onClose }: Props) {
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <button
             type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
+            onClick={() => onClose()}
             style={{
               height: 40, paddingInline: 20, borderRadius: 8,
               background: darkMode ? '#374151' : '#F3F4F6',
@@ -205,7 +205,7 @@ export default function CaseDetail({ record, onClose }: Props) {
           </button>
           <button
             type="button"
-            onClick={(e) => { e.preventDefault(); setEditRecord(record); setCurrentPage(record.moduleId); openModal('newRecord'); onClose(); }}
+            onClick={() => { setEditRecord(record); setCurrentPage(record.moduleId); openModal('newRecord'); onClose(); }}
             style={{
               height: 40, paddingInline: 20, borderRadius: 8,
               background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
@@ -269,7 +269,7 @@ export default function CaseDetail({ record, onClose }: Props) {
         <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
           {/* 基本信息 */}
           {activeTab === 'info' && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <div style={{ opacity: 1, transition: 'opacity 0.2s' }}>
               <Descriptions bordered column={2} size="small">
                 {fields.map(f => (
                   <Descriptions.Item key={f.id} label={FIELD_LABELS[f.id] || f.label} span={f.type === 'textarea' ? 2 : 1}>
@@ -307,12 +307,12 @@ export default function CaseDetail({ record, onClose }: Props) {
                   </div>
                 );
               })}
-            </motion.div>
+            </div>
           )}
 
           {/* 关联记录 */}
           {activeTab === 'related' && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <div style={{ opacity: 1, transition: 'opacity 0.2s' }}>
               {relatedRecords.length === 0 ? (
                 <Empty description="暂无关联记录" />
               ) : (
@@ -337,12 +337,12 @@ export default function CaseDetail({ record, onClose }: Props) {
                   ))}
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
 
           {/* 时间线 */}
           {activeTab === 'timeline' && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <div style={{ opacity: 1, transition: 'opacity 0.2s' }}>
               {timeline.length === 0 ? (
                 <Empty description="暂无时间线" />
               ) : (
@@ -363,12 +363,12 @@ export default function CaseDetail({ record, onClose }: Props) {
                   ))}
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
 
           {/* 附件 */}
           {activeTab === 'attachments' && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <div style={{ opacity: 1, transition: 'opacity 0.2s' }}>
               {attachments.length === 0 ? (
                 <Empty description="暂无附件" />
               ) : (
@@ -385,7 +385,7 @@ export default function CaseDetail({ record, onClose }: Props) {
                   ))}
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
         </div>
       </div>
