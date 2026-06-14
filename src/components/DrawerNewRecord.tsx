@@ -54,7 +54,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     // dayjs 序列化对象：{$L: 'zh-cn', $d: '2024-01-01T00:00:00Z'}
     if (typeof obj === 'object' && !Array.isArray(obj) && (obj as Record<string, unknown>).$L !== undefined && (obj as Record<string, unknown>).$d !== undefined) {
       const d = (obj as Record<string, unknown>).$d;
-      return typeof d === 'string' ? d : String(d);
+      return typeof d === 'string' ? d : (typeof d.toISOString === 'function' ? d.toISOString() : String(d));
     }
     if (Array.isArray(obj)) {
       return obj.map(item => sanitizeDayjsDeep(item));

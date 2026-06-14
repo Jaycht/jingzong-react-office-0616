@@ -200,39 +200,21 @@ export default function CaseDetail({ record, onClose }: Props) {
           <div style={{ fontSize: 12, color: mutedColor, marginTop: 2 }}>{moduleName} · {fmtDate(record.updatedAt)}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button
-            type="button"
+          <Button
             onClick={() => onClose()}
-            style={{
-              height: 40, paddingInline: 20, borderRadius: 8,
-              background: darkMode ? '#374151' : '#F3F4F6',
-              color: darkMode ? '#e2e2e6' : '#374151',
-              border: `1px solid ${darkMode ? '#4b5563' : '#D1D5DB'}`,
-              fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6,
-              fontFamily: 'inherit',
-              transition: 'all 0.15s',
-            }}
+            style={{ height: 42, paddingInline: 22, borderRadius: 8 }}
           >
             <ArrowLeft size={16} /> 返回
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            type="primary"
+            size="large"
+            icon={<Pen size={16} />}
             onClick={() => { setEditRecord(record); setCurrentPage(record.moduleId); openModal('newRecord'); onClose(); }}
-            style={{
-              height: 40, paddingInline: 20, borderRadius: 8,
-              background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
-              color: '#fff',
-              border: 'none',
-              fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 6,
-              fontFamily: 'inherit',
-              boxShadow: '0 2px 8px rgba(37,99,235,0.3)',
-              transition: 'all 0.15s',
-            }}
+            style={{ height: 42, paddingInline: 22, boxShadow: '0 8px 20px rgba(21,90,138,.25)' }}
           >
-            <Pen size={16} /> 编辑
-          </button>
+            编辑
+          </Button>
         </div>
       </div>
 
@@ -293,6 +275,7 @@ export default function CaseDetail({ record, onClose }: Props) {
               {/* 显示 repeatable section 数据（如嫌疑人信息） */}
               {Object.entries(record.data || {}).map(([key, val]) => {
                 if (!Array.isArray(val) || val.length === 0 || typeof val[0] !== 'object') return null;
+                if (key === 'attachment' || key === 'fileList') return null;
                 const sectionLabel = key === 'suspects' ? '嫌疑人信息' : key === 'coerciveMeasures' ? '强制措施' : key === 'items' ? '详细信息' : key;
                 return (
                   <div key={key} style={{ marginTop: 20 }}>
@@ -306,7 +289,7 @@ export default function CaseDetail({ record, onClose }: Props) {
                           {Object.entries(item).map(([k, v]) => {
                             if (v === null || v === undefined || v === '') return null;
                             // 跳过内部字段
-                            if (k.startsWith('__') || k === 'uid' || k === 'lastModified' || k === 'percent' || k === 'status' || k === 'size') return null;
+                            if (k.startsWith('__') || k === 'uid' || k === 'lastModified' || k === 'lastModifiedDate' || k === 'percent' || k === 'status' || k === 'size' || k === 'type' || k === 'originFileObj') return null;
                             return (
                               <div key={k} style={{ fontSize: 12, lineHeight: 1.8 }}>
                                 <span style={{ color: mutedColor }}>{FIELD_LABELS[k] || fieldLabelMap[k] || k}：</span>
