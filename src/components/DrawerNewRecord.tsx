@@ -51,8 +51,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
    *  防止旧版本保存的 dayjs 对象被 antd DatePicker 解析时崩溃 */
   function sanitizeDayjsDeep(obj: unknown): unknown {
     if (obj === null || obj === undefined) return obj;
-    // dayjs 序列化对象：{$L: 'zh-cn', $d: '2024-01-01T00:00:00Z'}
-    if (typeof obj === 'object' && !Array.isArray(obj) && (obj as Record<string, unknown>).$L !== undefined && (obj as Record<string, unknown>).$d !== undefined) {
+    // dayjs 序列化对象：{$L, $d} 或仅 {$d}，只要存在 $d 就当作 dayjs 序列化处理
+    if (typeof obj === 'object' && !Array.isArray(obj) && (obj as Record<string, unknown>).$d !== undefined) {
       const d = (obj as Record<string, unknown>).$d;
       return typeof d === 'string' ? d : (typeof d.toISOString === 'function' ? d.toISOString() : String(d));
     }
@@ -148,8 +148,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       // 序列化 dayjs 对象为 ISO 字符串，避免传入 IndexedDB 后触发 antd clone 崩溃
       for (const key of Object.keys(values)) {
         const v = values[key];
-        if (v && typeof v === 'object' && v.$L !== undefined && v.$d !== undefined) {
-          values[key] = (typeof v.isValid === 'function' && v.isValid()) ? v.toISOString() : String(v.$d);
+        if (dayjs.isDayjs(v)) {
+          values[key] = v.toISOString();
         }
         // 处理 repeatable section 中的 dayjs 对象
         if (Array.isArray(v)) {
@@ -157,8 +157,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             if (item && typeof item === 'object') {
               for (const k of Object.keys(item)) {
                 const val = item[k];
-                if (val && typeof val === 'object' && val.$L !== undefined && val.$d !== undefined) {
-                  item[k] = (typeof val.isValid === 'function' && val.isValid()) ? val.toISOString() : String(val.$d);
+                if (dayjs.isDayjs(val)) {
+                  item[k] = val.toISOString();
                 }
               }
             }

@@ -466,7 +466,7 @@ export function IdNoField({ field, subName, listName }: {
     if (val.length === 18 || val.length === 15) {
       const birth = parseBirthFromIdNo(val);
       if (birth) {
-        form.setFieldsValue({ [birthDateName as any]: dayjs(birth) });
+        form.setFieldsValue({ [birthDateName as any]: birth });
       }
     }
   };
@@ -509,8 +509,8 @@ function fillCaseDetail(form: any, detail: CaseDetail): void {
   const kv: Record<string, unknown> = {};
   if (detail.leadOfficer) kv.leadOfficer = detail.leadOfficer;
   if (detail.assistOfficer) kv.assistOfficer = detail.assistOfficer;
-  if (detail.receiveDate) kv.receiveDate = dayjs(detail.receiveDate);
-  if (detail.filingDate) kv.filingDate = dayjs(detail.filingDate);
+  if (detail.receiveDate) kv.receiveDate = detail.receiveDate;
+  if (detail.filingDate) kv.filingDate = detail.filingDate;
   if (detail.caseType) kv.caseType = detail.caseType;
   if (detail.caseSource) kv.caseSource = detail.caseSource;
   if (detail.totalAmount !== undefined) kv.totalAmount = detail.totalAmount;

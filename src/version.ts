@@ -1,10 +1,14 @@
-export const APP_VERSION = "V2.13.2";
+export const APP_VERSION = "V2.13.3";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 2;
+export const VERSION_PATCH = 3;
 
 export const CHANGELOG: string[] = [
-      // ===== V2.13.2 =====
+        // ===== V2.13.3 =====
+  "V2.13.3 修复 - sanitizeDayjsDeep 放宽检测条件(存在即清洗),防止仅有无的序列化对象漏网",
+  "V2.13.3 修复 - handleSubmit 改用 dayjs.isDayjs() 替代手工 / 检测",
+  "V2.13.3 修复 - fillCaseDetail/IdNoField 停止写入 dayjs 对象，直接传 ISO 字符串",
+// ===== V2.13.2 =====
   "V2.13.2 修复 - sanitizeDayjsDeep 递归清洗 Date 对象→toISOString，修复 $d 为 Date 时 String() 输出非 ISO 格式",
   "V2.13.2 修复 - SharedFormFields parseBirthFromIdNo 加 typeof d.isValid 守卫",
   "V2.13.2 修复 - CaseDetail sectionLabelMap 覆盖全部 listName 的中文映射（如 involvedSubjects→涉案主体统计）",
