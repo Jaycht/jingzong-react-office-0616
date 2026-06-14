@@ -36,6 +36,9 @@ export default class ErrorBoundary extends Component<Props, State> {
           <div style={{ fontSize: 12, color: '#9CA3AF', maxWidth: 400, textAlign: 'center' }}>
             {this.state.error?.message}
           </div>
+          <div style={{ fontSize: 11, color: '#ccc', maxWidth: 600, textAlign: 'center', wordBreak: 'break-all', marginTop: -8 }}>
+            堆栈: {this.state.error?.stack?.split('\n').slice(0, 2).join(' | ')}
+          </div>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
             style={{

@@ -284,7 +284,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           // 逐字段设置，单个字段出错不影响其他字段
           for (const [fieldKey, fieldVal] of Object.entries(safeData)) {
             try {
-              form.setFieldValue(fieldKey, fieldVal);
+              const __isDate = allFields.some(f => f.id === fieldKey && f.type === 'date');
+              form.setFieldValue(fieldKey, __isDate && typeof fieldVal !== 'string' ? undefined : fieldVal);
             } catch (e) {
               console.warn("[DrawerNewRecord] 跳过字段 " + fieldKey + ": " + (e instanceof Error ? e.message : String(e)));
             }
