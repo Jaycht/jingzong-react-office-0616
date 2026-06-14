@@ -109,17 +109,20 @@ export function recordFormFields(
   fieldsIds: string[],
   data: Record<string, unknown>,
 ): void {
+  // 内部字段白名单：不记录这些 antd 内部属性
+  const SKIP_KEYS = new Set(['uid', 'status', 'size', 'type', 'percent', 'lastModified', 'lastModifiedDate', 'originFileObj', 'response', 'error']);
+  
   for (const id of fieldsIds) {
     const raw = data[id];
     if (typeof raw === 'string') {
       recordFieldValue(id, raw);
     } else if (Array.isArray(raw)) {
-      // select multiple 或 repeatable section 内的字段
       for (const item of raw) {
         if (typeof item === 'string') {
           recordFieldValue(id, item);
         } else if (typeof item === 'object' && item !== null) {
           for (const key of Object.keys(item as Record<string, unknown>)) {
+            if (SKIP_KEYS.has(key)) continue;
             const val = (item as Record<string, unknown>)[key];
             if (typeof val === 'string') {
               recordFieldValue(key, val);

@@ -142,7 +142,10 @@ export default function CaseGraph() {
 
     if (search) {
       const mid = new Set(nodes.filter(n => n.name.toLowerCase().includes(search.toLowerCase())).map(n => n.id));
-      if (mid.size > 0) ch.setOption({ series: [{ data: nodes.map(n => ({ ...n, itemStyle: { opacity: mid.has(n.id) ? 1 : 0.08 } })) }] });
+      if (mid.size > 0) ch.setOption({ series: [{ data: nodes.map(n => ({
+        ...n,
+        itemStyle: { ...n.itemStyle as any, opacity: mid.has(n.id) ? 1 : 0.08 }
+      })) }] });
     }
   }, [nodes, links, darkMode, search]);
 

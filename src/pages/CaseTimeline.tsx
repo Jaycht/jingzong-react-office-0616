@@ -640,10 +640,10 @@ export default function CaseTimeline() {
       const d = r.data || {};
       return Object.values(d).some((v) => String(v || '').toLowerCase().includes(kw));
     });
-    // 按日期排序
+    // 按日期排序（用 createdAt 时间戳，确保正确排序）
     return matched.sort((a, b) => {
-      const da = recordDate(a) || a.createdAt;
-      const db = recordDate(b) || b.createdAt;
+      const da = a.createdAt || '';
+      const db = b.createdAt || '';
       return da.localeCompare(db);
     });
   }, [selectedCase]);

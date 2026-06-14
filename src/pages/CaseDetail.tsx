@@ -46,7 +46,7 @@ const FIELD_LABELS: Record<string, string> = {
   intervieweeName: '姓名', intervieweeGender: '性别', intervieweeAge: '年龄',
   intervieweeIdNo: '身份证号', intervieweePhone: '电话', intervieweeAddress: '地址',
   intervieweeIdentity: '身份', riskLevel: '风险等级',
-  isElderly: '是否 elderly', isHardship: '是否困难户',
+  isElderly: '是否老年人', isHardship: '是否困难户',
   involvedEntities: '涉案主体', attachment: '附件',
 };
 
