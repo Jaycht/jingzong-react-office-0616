@@ -112,6 +112,7 @@ export function recordFormFields(
   // 内部字段白名单：不记录这些 antd 内部属性
   const SKIP_KEYS = new Set(['uid', 'status', 'size', 'type', 'percent', 'lastModified', 'lastModifiedDate', 'originFileObj', 'response', 'error']);
   
+  // 1) 扁平字段
   for (const id of fieldsIds) {
     const raw = data[id];
     if (typeof raw === 'string') {
@@ -127,6 +128,23 @@ export function recordFormFields(
             if (typeof val === 'string') {
               recordFieldValue(key, val);
             }
+          }
+        }
+      }
+    }
+  }
+
+  // 2) 递归扫描所有 repeatable section 数组（coerciveMeasures、suspects 等）
+  for (const key of Object.keys(data)) {
+    const val = data[key];
+    if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+      for (const item of val) {
+        if (typeof item !== 'object' || item === null) continue;
+        for (const k of Object.keys(item as Record<string, unknown>)) {
+          if (SKIP_KEYS.has(k)) continue;
+          const v = (item as Record<string, unknown>)[k];
+          if (typeof v === 'string' && v.trim()) {
+            recordFieldValue(k, v);
           }
         }
       }
@@ -357,6 +375,39 @@ export function rebuildSuspectIndex(records: Array<{ moduleId: string; data: Rec
             : typeof s.suspectAddress === 'string' ? s.suspectAddress.trim() : '',
           caseName: typeof data.caseName === 'string' ? data.caseName.trim() : '',
         };
+      }
+    }
+
+    // 1b) coerciveMeasures repeatable section（强制措施模块的嫌疑人）
+    const coercive = data.coerciveMeasures;
+    if (Array.isArray(coercive)) {
+      for (const c of coercive) {
+        const cname = typeof c.suspect === 'string' ? c.suspect.trim()
+          : typeof c.suspectName === 'string' ? c.suspectName.trim() : '';
+        if (!cname) continue;
+        map[cname] = {
+          idNo: typeof c.suspectIdNo === 'string' ? c.suspectIdNo.trim() : '',
+          phone: typeof c.suspectPhone === 'string' ? c.suspectPhone.trim() : '',
+          address: typeof c.suspectAddress === 'string' ? c.suspectAddress.trim() : '',
+          caseName: typeof data.caseName === 'string' ? data.caseName.trim() : '',
+        };
+      }
+    }
+
+    // 1c) 其他可能包含嫌疑人的 repeatable section
+    for (const key of Object.keys(data)) {
+      if (key === 'suspects' || key === 'coerciveMeasures') continue;
+      const val = data[key];
+      if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+        for (const item of val) {
+          const itemObj = item as Record<string, unknown>;
+          const sname = typeof itemObj.suspectName === 'string' ? itemObj.suspectName.trim()
+            : typeof itemObj.suspect === 'string' ? itemObj.suspect.trim() : '';
+          if (!sname) continue;
+          if (!map[sname]) {
+            map[sname] = { idNo: '', phone: '', address: '', caseName: typeof data.caseName === 'string' ? data.caseName.trim() : '' };
+          }
+        }
       }
     }
 

@@ -47,15 +47,33 @@ export default function CaseGraph() {
       if (cn) addN(`c-${cn}`, cn.length > 10 ? cn.slice(0, 10) + '…' : cn, 0, 40);
       if (cl) { addN(`e-${cl}`, cl.length > 10 ? cl.slice(0, 10) + '…' : cl, 2, 24); if (cn) addL(`c-${cn}`, `e-${cl}`); }
 
-      // 提取嫌疑人：支持顶层字段 + repeatable section (suspects数组)
+      // 提取嫌疑人：支持所有可能的数据位置
       const suspectNames = new Set<string>();
       const topSuspect = String(d.suspect || d.suspectName || '').trim();
       if (topSuspect) suspectNames.add(topSuspect);
-      // repeatable section: suspects 是数组，每个元素有 suspectName
+      // suspects repeatable section
       if (Array.isArray(d.suspects)) {
         for (const item of d.suspects) {
           const name = String(item?.suspectName || item?.suspect || '').trim();
           if (name) suspectNames.add(name);
+        }
+      }
+      // coerciveMeasures repeatable section（强制措施模块的嫌疑人）
+      if (Array.isArray(d.coerciveMeasures)) {
+        for (const item of d.coerciveMeasures) {
+          const name = String(item?.suspect || item?.suspectName || '').trim();
+          if (name) suspectNames.add(name);
+        }
+      }
+      // involvementInfo / involvedEntities 等其他可能包含嫌疑人的 repeatable section
+      for (const key of Object.keys(d)) {
+        if (key === 'suspects' || key === 'coerciveMeasures') continue;
+        const val = d[key];
+        if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+          for (const item of val) {
+            const name = String((item as any)?.suspectName || (item as any)?.suspect || '').trim();
+            if (name) suspectNames.add(name);
+          }
         }
       }
       for (const sn of suspectNames) {

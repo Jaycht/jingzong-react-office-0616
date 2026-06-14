@@ -49,6 +49,8 @@ export function saveMassRecord(moduleId: string, tabId: string, data: MassRecord
 
   records.unshift(record);
   indexedDBAdapter.setItem(STORAGE_KEY, records);
+  rebuildCaseIndex(records);
+  rebuildSuspectIndex(records);
   addOperationLog({
     user: currentUser(),
     action: '新建',
@@ -72,6 +74,8 @@ export function updateMassRecord(id: string, data: MassRecordData): MassRecord |
   };
 
   indexedDBAdapter.setItem(STORAGE_KEY, records);
+  rebuildCaseIndex(records);
+  rebuildSuspectIndex(records);
   addOperationLog({
     user: currentUser(),
     action: '更新',
