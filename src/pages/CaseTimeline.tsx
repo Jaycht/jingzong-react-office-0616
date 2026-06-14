@@ -579,6 +579,7 @@ function recordSummary(rec: MassRecord): { label: string; value: string }[] {
     for (const [key, raw] of Object.entries(first)) {
       if (raw === null || raw === undefined) continue;
       const str = String(raw).trim();
+      if (typeof raw === 'object') continue;
       if (!str || str === '—') continue;
       if (/^\d{4}-\d{2}-\d{2}T/.test(str)) continue;
       const label = FIELD_LABELS[key] || key;

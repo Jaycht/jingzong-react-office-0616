@@ -70,7 +70,14 @@ function getFieldValue(rec: MassRecord, fieldId: string, fields: FieldDefinition
 function displayValue(val: unknown): string {
   if (val === null || val === undefined) return '—';
   if (Array.isArray(val)) return val.join('、');
-  if (typeof val === 'object') return JSON.stringify(val).slice(0, 30);
+  if (typeof val === 'object') {
+    if ((val as any).$d) {
+      const d = (val as any).$d;
+      const s = typeof d === 'string' ? d : String(d);
+      return s.slice(0, 10);
+    }
+    return JSON.stringify(val).slice(0, 30);
+  }
   // 检测 ISO 日期字符串 (如 2026-05-23T10:29:07.100Z) 并格式化
   if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(val)) {
     const d = new Date(val); const pad = (n: number) => String(n).padStart(2,'0'); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());

@@ -139,13 +139,14 @@ export default function CaseGraph() {
             shadowColor: (CATS[n.category]?.color || '#999') + '40',
           },
         })),
-        links: links.map(l => ({
-          ...l,
-          lineStyle: {
-            color: dk ? 'rgba(148,163,184,0.18)' : 'rgba(100,116,139,0.12)',
-            width: 1.5, curveness: 0.1,
-          },
-        })),
+        links: links.map(l => {
+          function _cat(id:string){return id.startsWith('s-')?1:id.startsWith('e-')?0:2;}
+          var _sc=_cat(l.source),_tc=_cat(l.target);
+          var _linkColor=dk
+            ? (_sc===0&&_tc===1?'rgba(84,112,198,0.55)':_sc===0&&_tc===2?'rgba(250,200,88,0.55)':'rgba(145,204,117,0.55)')
+            : (_sc===0&&_tc===1?'rgba(84,112,198,0.45)':_sc===0&&_tc===2?'rgba(250,200,88,0.45)':'rgba(145,204,117,0.45)');
+          return {...l,lineStyle:{color:_linkColor,width:2,curveness:0.1}};
+        }),
         categories: CATS.map(c => ({ name: c.name, itemStyle: { color: c.color } })),
         roam: true,
         draggable: true,

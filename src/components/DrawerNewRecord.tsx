@@ -46,6 +46,26 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+
+  /** Recursively clean $d objects to ISO strings for antd DatePicker safety */
+  function sanitizeDayjsDeep(obj: unknown): unknown {
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj === 'object' && !Array.isArray(obj) && (obj as Record<string, unknown>).$d !== undefined) {
+      const d = (obj as Record<string, unknown>).$d;
+      return typeof d === 'string' ? d : (typeof d.toISOString === 'function' ? d.toISOString() : String(d));
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => sanitizeDayjsDeep(item));
+    }
+    if (typeof obj === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+        result[k] = sanitizeDayjsDeep(v);
+      }
+      return result;
+    }
+    return obj;
+  }
   const [form] = Form.useForm();
   // 组件挂载跟踪，防止卸载后 setState
   const mountedRef = useRef(true);
