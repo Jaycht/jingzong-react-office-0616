@@ -3,7 +3,6 @@
  * 左侧 tab 切换维度，右侧展示内容
  */
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { ArrowLeft, FileText, Link2, Clock, Paperclip, Pen, Download } from 'lucide-react';
 import { Descriptions, Tag, Button, Empty } from 'antd';
 import { useAppStore } from '../store/appStore';
@@ -168,14 +167,12 @@ export default function CaseDetail({ record, onClose }: Props) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div
       style={{
         position: 'fixed', inset: 0, zIndex: 1000,
         background: darkMode ? '#0f1114' : '#F8FAFC',
         display: 'flex', flexDirection: 'column',
+        animation: 'fade-in 0.15s ease-out',
       }}
     >
       {/* 顶栏 */}
@@ -392,6 +389,6 @@ export default function CaseDetail({ record, onClose }: Props) {
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

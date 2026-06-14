@@ -27,6 +27,9 @@ export default function CaseGraph() {
   const [rk, setRk] = useState(0);
   const records = useMemo(() => { void rk; return getMassRecords(); }, [rk]);
 
+  // 每次进入页面时自动刷新数据
+  useEffect(() => { setRk(k => k + 1); }, []);
+
   const { nodes, links, stats } = useMemo(() => {
     const nm = new Map<string, GraphNode>();
     const ls = new Set<string>();

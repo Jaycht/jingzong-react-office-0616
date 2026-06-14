@@ -218,17 +218,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             if (f.type !== 'section' || !f.repeatable || !f.listName) continue;
             const listData = editRecord.data?.[f.listName];
             if (Array.isArray(listData) && listData.length > 0) {
-              const converted = listData.map((item: Record<string, unknown>) => {
-                const copy: Record<string, unknown> = { ...item };
-                for (const df of allFields) {
-                  if (df.type === 'date' && typeof copy[df.id] === 'string') {
-                    const d = dayjs(copy[df.id] as string);
-                    if (d.isValid()) copy[df.id] = d;
-                  }
-                }
-                return copy;
-              });
-              formData[f.listName] = converted;
+              // 直接复制原始数据，不转 dayjs（antd DatePicker 能处理 ISO 字符串）
+              formData[f.listName] = listData.map((item: Record<string, unknown>) => ({ ...item }));
             }
           }
 
@@ -247,11 +238,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               }));
               continue;
             }
-            if (f.type === 'date' && typeof raw === 'string') {
-              const d = dayjs(raw);
-              if (d.isValid()) formData[f.id] = d;
-              continue;
-            }
+            // 日期字段：保持 ISO 字符串，不转 dayjs（antd DatePicker 原生支持 ISO 字符串）
             if (f.multiple && typeof raw === 'string') {
               formData[f.id] = [raw];
               continue;
