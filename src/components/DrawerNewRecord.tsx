@@ -284,7 +284,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           // 逐字段设置，单个字段出错不影响其他字段
           for (const [fieldKey, fieldVal] of Object.entries(safeData)) {
             try {
-              console.log('[EDIT_LOAD] field=' + fieldKey + ' type=' + typeof fieldVal + ' val=', fieldVal);
+              (window as any).__EDIT_LOAD_DIAG = ((window as any).__EDIT_LOAD_DIAG || '') + fieldKey + '=' + typeof fieldVal + ' ' + JSON.stringify(fieldVal).substring(0,120) + '
+';
               const __isDate = allFields.some(f => f.id === fieldKey && f.type === 'date');
               form.setFieldValue(fieldKey, __isDate && typeof fieldVal !== 'string' ? undefined : fieldVal);
             } catch (e) {

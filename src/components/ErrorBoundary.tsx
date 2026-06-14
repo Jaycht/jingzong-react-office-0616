@@ -39,6 +39,10 @@ export default class ErrorBoundary extends Component<Props, State> {
           <div style={{ fontSize: 11, color: '#ccc', maxWidth: 600, textAlign: 'center', wordBreak: 'break-all', marginTop: -8 }}>
             堆栈: {this.state.error?.stack?.split('\n').slice(0, 2).join(' | ')}
           </div>
+          <div style={{ fontSize: 11, color: '#ff9999', maxWidth: 700, textAlign: 'left', wordBreak: 'break-all', marginTop: 4, padding: '8px 12px', background: 'rgba(0,0,0,0.1)', borderRadius: 6, whiteSpace: 'pre-wrap' }}>
+            加载字段诊断:
+{(window as any).__EDIT_LOAD_DIAG || '(无)'}
+          </div>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
             style={{
