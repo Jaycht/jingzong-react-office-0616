@@ -2,7 +2,7 @@ import type React from 'react';
 import {
   Archive, Banknote, BookOpenCheck, BriefcaseBusiness, ClipboardCheck,
   DatabaseBackup, FileArchive, FileCog, FileSearch, FileText, FolderKanban,
-  Gavel, Handshake, Landmark, LayoutDashboard, ListChecks, LockKeyhole,
+  Gavel, GitBranch, Handshake, Landmark, LayoutDashboard, ListChecks, LockKeyhole,
   Megaphone, MessageSquareText, PieChart, ScrollText, SearchCheck,
   TableProperties, Users, WalletCards, Clock
 } from 'lucide-react';
@@ -1389,7 +1389,7 @@ export const DEPARTMENTS: NavDepartment[] = [
 ];
 
 export const PLATFORM_NAV = {
-  top: [{ id: 'dashboard', label: '工作台', icon: LayoutDashboard }, { id: 'timeline', label: '案件时间轴', icon: Clock }],
+  top: [{ id: 'dashboard', label: '工作台', icon: LayoutDashboard }, { id: 'timeline', label: '案件时间轴', icon: Clock }, { id: 'graph', label: '关系图谱', icon: GitBranch }],
   data: [
     { id: 'statistics', label: '统计分析', icon: PieChart },
     { id: 'importExport', label: '导入导出', icon: TableProperties },

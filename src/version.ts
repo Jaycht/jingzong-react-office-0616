@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.9.12";
+export const APP_VERSION = "V2.9.14";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 9;
-export const VERSION_PATCH = 12;
+export const VERSION_PATCH = 14;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.9.14 =====
+  "V2.9.14 重构 - 案件时间轴全新设计：弹窗查看详��（只展示不跳转），卡片式时间轴布局",
+  "V2.9.14 重构 - 新增案件图谱页面（力导向关系图，案件/嫌疑人/证据线索分类着色）",
+  "V2.9.14 修复 - SharedFormFields fillCaseDetail 改用 ISO 字符串替代 dayjs 实例，避免存入 IndexedDB 后触发编辑崩溃",
   // ===== V2.9.12 =====
   "V2.9.12 修复 - 中队案件管理 flatMode 排除 squad-case，恢复步骤1/步骤2分步显示",
   "V2.9.12 新增 - 身份证号输入自动提取出生日期（suspectIdNo→birthDate）",

@@ -508,8 +508,8 @@ function fillCaseDetail(form: any, detail: CaseDetail): void {
   const kv: Record<string, unknown> = {};
   if (detail.leadOfficer) kv.leadOfficer = detail.leadOfficer;
   if (detail.assistOfficer) kv.assistOfficer = detail.assistOfficer;
-  if (detail.receiveDate) kv.receiveDate = dayjs(detail.receiveDate);
-  if (detail.filingDate) kv.filingDate = dayjs(detail.filingDate);
+  if (detail.receiveDate) kv.receiveDate = detail.receiveDate;  // 保持 ISO 字符串，不转 dayjs
+  if (detail.filingDate) kv.filingDate = detail.filingDate;      // 保持 ISO 字符串，不转 dayjs
   if (detail.caseType) kv.caseType = detail.caseType;
   if (detail.caseSource) kv.caseSource = detail.caseSource;
   if (detail.totalAmount !== undefined) kv.totalAmount = detail.totalAmount;
