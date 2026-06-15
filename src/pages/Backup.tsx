@@ -1,14 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle, Settings2, Save, HardDrive } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson } from '../utils/excelUtils';
+import { getMassRecords } from '../store/massStore';
 
 interface BackupMeta {
   id: string;
   name: string;
   time: string;
   type: 'auto' | 'manual';
+}
+
+/** 自动备份配置 */
+interface AutoBackupConfig {
+  enabled: boolean;
+  intervalHours: number;  // 0 = 不启用定时
+  backupOnSave: boolean;  // 录入数据后备份
+  backupOnClose: boolean; // 关闭时备份
+}
+
+const AUTO_BACKUP_CONFIG_KEY = 'jingzong.autoBackup.config';
+
+const INTERVAL_OPTIONS = [
+  { label: '不启用', value: 0 },
+  { label: '每 6 小时', value: 6 },
+  { label: '每 12 小时', value: 12 },
+  { label: '每天 1 次', value: 24 },
+  { label: '每 2 天', value: 48 },
+  { label: '每 3 天', value: 72 },
+  { label: '每周 1 次', value: 168 },
+];
+
+/** 获取自动备份配置 */
+function getAutoBackupConfig(): AutoBackupConfig {
+  try {
+    const raw = localStorage.getItem(AUTO_BACKUP_CONFIG_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return { enabled: true, intervalHours: 24, backupOnSave: true, backupOnClose: true };
+}
+
+/** 保存自动备份配置 */
+function saveAutoBackupConfig(config: AutoBackupConfig): void {
+  localStorage.setItem(AUTO_BACKUP_CONFIG_KEY, JSON.stringify(config));
+}
+
+/** 判断上次备份距今是否超过间隔 */
+function shouldBackup(config: AutoBackupConfig): boolean {
+  const lastBackup = localStorage.getItem('jingzong.autoBackup.lastTime');
+  if (!lastBackup || config.intervalHours <= 0) return false;
+  const last = parseInt(lastBackup, 10);
+  const now = Date.now();
+  return (now - last) >= config.intervalHours * 60 * 60 * 1000;
+}
+
+/** 标记一次备份 */
+function markBackup(): void {
+  localStorage.setItem('jingzong.autoBackup.lastTime', String(Date.now()));
 }
 
 /** 获取 localStorage 中所有 jingzong.* 数据的总大小（估算） */
@@ -25,28 +74,32 @@ function estimateDataSize(): string {
   return `${(total / (1024 * 1024)).toFixed(1)}MB`;
 }
 
+/** 模块 ID 到中文名称的映射 */
+const MODULE_NAMES: Record<string, string> = {
+  'mass-clue': '线索登记', 'mass-statistics': '涉众统计', 'legal-case-ledger': '案件总台账',
+  'squad-daily': '每日工作记录', 'squad-coercive': '强制措施登记', 'squad-case': '中队案件管理',
+  'squad-property': '涉案财物管理', 'evidence': '线索核查', 'evidence-request': '调证登记',
+  'evidence-freeze': '资金查控', 'evidence-phone-collection': '设备采集', 'evidence-report': '资金分析',
+};
+
 /** 估算各模块记录数 */
 function getRecordStats(): Record<string, number> {
   try {
     const raw = localStorage.getItem('jingzong.mass.records');
-    if (!raw) return { 总记录数: 0 };
+    if (!raw) return { '总记录数': 0 };
     const records = JSON.parse(raw);
-    if (!Array.isArray(records)) return { 总记录数: 0 };
-    const counts: Record<string, number> = { 总记录数: records.length };
+    if (!Array.isArray(records)) return { '总记录数': 0 };
+    const counts: Record<string, number> = { '总记录数': records.length };
     const moduleCounts: Record<string, number> = {};
     for (const r of records) {
-      moduleCounts[r.moduleId] = (moduleCounts[r.moduleId] || 0) + 1;
+      const cn = MODULE_NAMES[r.moduleId] || r.moduleId;
+      moduleCounts[cn] = (moduleCounts[cn] || 0) + 1;
     }
-    // 取前 5 个最多的模块显示
-    const sorted = Object.entries(moduleCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-    for (const [modId, count] of sorted) {
-      counts[modId] = count;
-    }
+    const sorted = Object.entries(moduleCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    for (const [name, count] of sorted) counts[name] = count;
     return counts;
   } catch {
-    return { 总记录数: 0 };
+    return { '总记录数': 0 };
   }
 }
 
@@ -56,6 +109,9 @@ export default function Backup() {
   const [restoring, setRestoring] = useState(false);
   const [restoreResult, setRestoreResult] = useState<{ success: boolean; message: string } | null>(null);
   const [stats, setStats] = useState<Record<string, number>>(() => getRecordStats());
+  const [config, setConfig] = useState<AutoBackupConfig>(() => getAutoBackupConfig());
+  const [autoBackupRunning, setAutoBackupRunning] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
 
   // 加载备份列表和数据统计
   const loadData = () => {
@@ -63,11 +119,64 @@ export default function Backup() {
     setStats(getRecordStats());
   };
 
-  const handleBackup = () => {
+  // 执行备份
+  const doBackup = (type: 'auto' | 'manual') => {
     generateBackup();
-    showToast('备份已生成并下载', 'success');
-    // 稍后刷新列表（下载需要时间，延迟刷新）
+    markBackup();
+    if (type === 'auto') {
+      const meta: BackupMeta = {
+        id: `auto-${Date.now()}`,
+        name: `自动备份 ${new Date().toLocaleString('zh-CN')}`,
+        time: new Date().toLocaleString('zh-CN'),
+        type: 'auto',
+      };
+      // 写入备份元数据
+      const metas = getBackupMetas();
+      metas.unshift(meta);
+      localStorage.setItem('jingzong.backup.metas', JSON.stringify(metas.slice(0, 30)));
+      setBackups(metas.slice(0, 30));
+    }
+    if (type === 'manual') showToast('备份已生成并下载', 'success');
     setTimeout(loadData, 500);
+  };
+
+  // 自动备份定时器
+  useEffect(() => {
+    const cfg = getAutoBackupConfig();
+    if (!cfg.enabled || cfg.intervalHours <= 0) return;
+
+    // 检查是否需要备份
+    if (shouldBackup(cfg)) {
+      doBackup('auto');
+    }
+
+    // 定时检查
+    timerRef.current = setInterval(() => {
+      const currentCfg = getAutoBackupConfig();
+      if (!currentCfg.enabled || currentCfg.intervalHours <= 0) return;
+      if (shouldBackup(currentCfg)) {
+        doBackup('auto');
+      }
+    }, cfg.intervalHours * 60 * 60 * 1000);
+
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  // 页面关闭时备份
+  useEffect(() => {
+    const cfg = getAutoBackupConfig();
+    if (!cfg.backupOnClose) return;
+    const handleBeforeUnload = () => { doBackup('auto'); };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // 更新配置
+  const updateConfig = (key: keyof AutoBackupConfig, value: AutoBackupConfig[keyof AutoBackupConfig]) => {
+    const next = { ...config, [key]: value };
+    setConfig(next);
+    saveAutoBackupConfig(next);
+    showToast('备份设置已保存', 'success');
   };
 
   const handleRestore = () => {
@@ -148,12 +257,12 @@ export default function Backup() {
               </div>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
-              {Object.entries(stats).filter(([k]) => k !== '总记录数').map(([modId, count]) => (
-                <span key={modId} style={{
+              {Object.entries(stats).filter(([k]) => k !== '总记录数').map(([modName, count]) => (
+                <span key={modName} style={{
                   fontSize: 10.5, padding: '1px 8px', borderRadius: 10,
                   background: '#F3F4F6', color: '#6B7280',
                 }}>
-                  {modId.slice(0, 16)}: {count}
+                  {modName}: {count}
                 </span>
               ))}
             </div>
@@ -188,34 +297,65 @@ export default function Backup() {
             </motion.button>
           </motion.div>
 
-          {/* 自动备份状态 */}
+          {/* 自动备份设置 */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
             style={{ background: '#fff', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,.08)', border: '1px solid #E5E7EB' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>自动备份设置</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, padding: '12px 14px', background: '#E8F5E9', borderRadius: 8, border: '1px solid #A5D6A7' }}>
-              <CheckCircle size={18} color="#388E3C" />
+            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Settings2 size={14} color="#1B5E9B" />
+              自动备份设置
+            </div>
+            
+            {/* 定时备份间隔 */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: mutedColor, marginBottom: 6 }}>定时备份间隔</div>
+              <select
+                value={config.intervalHours}
+                onChange={e => updateConfig('intervalHours', Number(e.target.value))}
+                style={{
+                  width: '100%', height: 34, padding: '0 10px',
+                  borderRadius: 8, border: '1px solid #D9D9D9',
+                  fontSize: 12.5, color: textColor, background: '#fff',
+                  outline: 'none', cursor: 'pointer',
+                }}
+              >
+                {INTERVAL_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* 录入数据后备份 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, padding: '8px 10px', background: '#F0FDF4', borderRadius: 8, border: '1px solid #BBF7D0' }}>
+              <input
+                type="checkbox"
+                checked={config.backupOnSave}
+                onChange={e => updateConfig('backupOnSave', e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer' }}
+              />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#388E3C' }}>自动备份已启用</div>
-                <div style={{ fontSize: 11.5, color: '#6B7280' }}>刷新页面或关闭浏览器前建议手动备份</div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: '#166534' }}>录入数据后自动备份</div>
+                <div style={{ fontSize: 11, color: '#86EFAC' }}>新建或更新记录后立即生成备份</div>
               </div>
             </div>
-            {[
-              { label: '存储位置', value: '浏览器 localStorage' },
-              { label: '备份格式', value: 'JSON 完整数据' },
-              { label: '数据范围', value: '所有 jingzong.* 记录' },
-              { label: '备份保留数', value: '最近 30 个版本' },
-            ].map((item) => (
-              <div key={item.label} style={{
-                display: 'flex', justifyContent: 'space-between',
-                padding: '8px 0', borderBottom: '1px solid #F3F4F6', fontSize: 12.5,
-              }}>
-                <span style={{ color: '#6B7280' }}>{item.label}</span>
-                <span style={{ fontWeight: 600 }}>{item.value}</span>
+
+            {/* 关闭时备份 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: '#EFF6FF', borderRadius: 8, border: '1px solid #BFDBFE' }}>
+              <input
+                type="checkbox"
+                checked={config.backupOnClose}
+                onChange={e => updateConfig('backupOnClose', e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer' }}
+              />
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1E40AF' }}>关闭软件时自动备份</div>
+                <div style={{ fontSize: 11, color: '#93C5FD' }}>防止意外断电或崩溃导致数据丢失</div>
               </div>
-            ))}
-            <div style={{ marginTop: 10, padding: '8px 12px', background: '#FFF8E1', borderRadius: 6, fontSize: 11.5, color: '#E67E22', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-              <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-              <span>前端原型仅使用浏览器本地存储，清除浏览器数据会丢失所有记录。请定期手动备份。</span>
+            </div>
+
+            {/* 说明 */}
+            <div style={{ marginTop: 12, padding: '8px 12px', background: '#FFF7ED', borderRadius: 6, fontSize: 11, color: '#9A3412', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+              <HardDrive size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span>自动备份仅保存在浏览器本地，不占用服务器空间。建议定期手动备份到电脑硬盘。</span>
             </div>
           </motion.div>
 

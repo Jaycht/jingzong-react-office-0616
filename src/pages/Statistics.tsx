@@ -66,18 +66,32 @@ export default function Statistics() {
 
   const textColor = '#1F2937';
   const mutedColor = '#6B7280';
-  const CHART_PALETTE = ['#2563EB', '#7C3AED', '#0891B2', '#059669', '#D97706', '#DC2626', '#6D28D9', '#E11D48', '#0284C7', '#9333EA'];
 
-  // 各模块记录对比 — ECharts 渐变柱状图
-  const barData = moduleStats.slice(0, 10);
+  // 各模块记录对比 — 彩色渐变柱状图（参考 echarts-bar-data-color）
+  const barData = moduleStats.slice(0, 15);
+  const BAR_COLORS = [
+    '#c23531', '#2f4554', '#61a0a8', '#d48265', '#749f83',
+    '#ca8622', '#b7a2de', '#2f89d2', '#e062ac', '#e6b0aa',
+    '#91c7ae', '#749f83', '#ca8622', '#b7a2de', '#5470c6',
+  ];
   const barOption = useMemo(() => ({
-    tooltip: { trigger: 'axis' as const, axisPointer: { type: 'shadow' as const }, backgroundColor: '#fff', borderColor: '#E5E7EB', textStyle: { color: textColor } },
+    tooltip: {
+      trigger: 'axis' as const, axisPointer: { type: 'shadow' as const },
+      backgroundColor: '#fff', borderColor: '#E5E7EB', borderWidth: 1,
+      textStyle: { color: textColor, fontSize: 12 },
+      extraCssText: 'border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);',
+    },
     grid: { left: 10, right: 20, top: 15, bottom: 30, containLabel: true },
-    xAxis: { type: 'value' as const, splitLine: { lineStyle: { color: '#F3F4F6' } }, axisLabel: { color: mutedColor, fontSize: 10 }, show: true },
+    xAxis: {
+      type: 'value' as const,
+      splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' } },
+      axisLabel: { color: mutedColor, fontSize: 11 },
+    },
     yAxis: {
-      type: 'category' as const, data: barData.map(d => d.type).reverse(),
+      type: 'category' as const,
+      data: barData.map(d => d.type),
       axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { color: mutedColor, fontSize: 10 },
+      axisLabel: { color: mutedColor, fontSize: 11 },
     },
     series: [{
       type: 'bar' as const,
@@ -85,16 +99,15 @@ export default function Statistics() {
         value: d.count,
         itemStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: CHART_PALETTE[(barData.length - 1 - i) % CHART_PALETTE.length] },
-            { offset: 1, color: CHART_PALETTE[(barData.length - 1 - i) % CHART_PALETTE.length] + '33' },
+            { offset: 0, color: BAR_COLORS[i % BAR_COLORS.length] },
+            { offset: 1, color: BAR_COLORS[i % BAR_COLORS.length] + '88' },
           ]),
-          borderRadius: [0, 6, 6, 0],
+          borderRadius: [0, 4, 4, 0],
         },
-      })).reverse(),
-      barWidth: 20,
-      animationDuration: 700,
+      })),
+      barWidth: 18,
+      animationDuration: 800,
       animationEasing: 'cubicOut' as const,
-      label: { show: true, position: 'right' as const, fontSize: 11, fontWeight: 700, color: textColor, formatter: (p: { value: number }) => String(p.value) },
     }],
   }), [barData]);
 
