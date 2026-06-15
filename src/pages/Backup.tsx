@@ -140,6 +140,10 @@ export default function Backup() {
     setTimeout(loadData, 500);
   };
 
+  const handleBackup = () => {
+    doBackup('manual');
+  };
+
   // 自动备份定时器
   useEffect(() => {
     const cfg = getAutoBackupConfig();
