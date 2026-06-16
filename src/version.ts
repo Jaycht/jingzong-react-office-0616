@@ -1,10 +1,20 @@
-export const APP_VERSION = "V2.12.8";
+export const APP_VERSION = "V2.12.10";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 8;
+export const VERSION_PATCH = 10;
 
 export const CHANGELOG: string[] = [
-  // ===== V2.12.8 =====
+  // ===== V2.12.10 =====
+  "V2.12.10 修复 - 深色模式：11个子页面硬编码白色背景全部替换为CSS变量",
+  "V2.12.10 修复 - 搜索提示词改为：案件名称、姓名、手机号、身份证号、模块",
+  "V2.12.10 修复 - 工作台预警'未命名'改为显示'接报事项'字段",
+  "V2.12.10 修复 - 侧边栏'关系图谱'改名为'案件图谱'",
+  "V2.12.10 修复 - 案件图谱连线加粗(1.5→2.5)，透明度提升更醒目",
+  "V2.12.10 新增 - 工作台新增模块活跃度柱状图（渐变色横向柱状图）",
+  "V2.12.10 修复 - 交办线索名称使用案件名称全局联动（GlobalCaseNameField）",
+  "V2.12.10 修复 - 时间轴日期字段支持dayjs对象格式化",
+  "V2.12.10 修复 - DrawerNewRecord dayjs序列化修复(v.isValid调用)",
+  // ===== V2.12.9 =====
   "V2.12.8 修复 - Framer Motion 从 v11 升级到 v12，修复 React 19 兼容性导致的 'e.clone is not a function' 崩溃",
   "V2.12.8 修复 - 点击案件时间轴记录不再崩溃，页面正常跳转",
   // ===== V2.12.7 =====
