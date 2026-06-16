@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('show-save-dialog', { defaultName, buffer }),
   checkAttachmentFile: (filePath) =>
     ipcRenderer.invoke('check-attachment-file', filePath),
+  getDocumentsDir: () =>
+    ipcRenderer.invoke('get-documents-dir'),
 
   // 自动更新
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),

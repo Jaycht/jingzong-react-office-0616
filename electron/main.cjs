@@ -157,6 +157,11 @@ ipcMain.handle("get-attachments-dir", () => {
   return ATTACHMENTS_DIR;
 });
 
+// 获取文档文件夹路径（用于默认备份路径）
+ipcMain.handle("get-documents-dir", () => {
+  return app.getPath("documents");
+});
+
 // 检查附件文件是否存在
 ipcMain.handle("check-attachment-file", async (_event, filePath) => {
   try {
