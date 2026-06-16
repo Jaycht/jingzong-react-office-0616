@@ -1394,7 +1394,7 @@ export const PLATFORM_NAV = {
   top: [
     { id: 'dashboard', label: '工作台', icon: LayoutDashboard },
     { id: 'timeline', label: '案件时间轴', icon: Clock },
-    { id: 'graph', label: '关系图谱', icon: SearchCheck },
+    { id: 'graph', label: '案件图谱', icon: SearchCheck },
   ],
   data: [
     { id: 'statistics', label: '统计分析', icon: PieChart },

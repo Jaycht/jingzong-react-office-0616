@@ -121,8 +121,8 @@ export default function CaseGraph() {
         links: links.map(l => ({
           ...l,
           lineStyle: {
-            color: dk ? 'rgba(148,163,184,0.18)' : 'rgba(100,116,139,0.12)',
-            width: 1.5, curveness: 0.1,
+            color: dk ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.25)',
+            width: 2.5, curveness: 0.15,
           },
         })),
         categories: CATS.map(c => ({ name: c.name, itemStyle: { color: c.color } })),
@@ -159,8 +159,8 @@ export default function CaseGraph() {
             <GitBranch size={22} color="#fff" />
           </div>
           <div>
-            <div className="text-xl font-bold">案件关系图谱</div>
-            <div className="text-sm text-secondary">拖拽节点 · 滚轮缩放 · 悬停查看关联</div>
+            <div className="text-xl font-bold" style={{ color: 'var(--color-text)' }}>案件图谱</div>
+            <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>拖拽节点 · 滚轮缩放 · 悬停查看关联</div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -185,7 +185,7 @@ export default function CaseGraph() {
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: s.color, boxShadow: `0 0 8px ${s.color}50` }} />
             <div>
               <div className="stat-value" style={{ fontSize: 20, color: s.color }}>{s.value}</div>
-              <div className="stat-label">{s.label}</div>
+              <div className="stat-label" style={{ color: 'var(--color-text-secondary)' }}>{s.label}</div>
             </div>
           </div>
         ))}
@@ -196,8 +196,8 @@ export default function CaseGraph() {
         {nodes.length === 0 ? (
           <div style={{ padding: 80, textAlign: 'center' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>🕸️</div>
-            <div className="text-lg font-semibold" style={{ marginBottom: 8 }}>暂无关联数据</div>
-            <div className="text-sm text-muted">录入案件和嫌疑人信息后将自动生成关系图谱</div>
+            <div className="text-lg font-semibold" style={{ marginBottom: 8, color: 'var(--color-text)' }}>暂无关联数据</div>
+            <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>录入案件和嫌疑人信息后将自动生成关系图谱</div>
           </div>
         ) : (
           <div ref={chartRef} style={{ width: '100%', height: full ? 'calc(100vh - 280px)' : 520, transition: 'height 0.3s' }} />

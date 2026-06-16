@@ -602,11 +602,22 @@ function recordDate(rec: MassRecord): string {
 }
 
 /** ISO日期字符串转中文格式 */
-function fmtDateStr(raw: string): string {
+function fmtDateStr(raw: unknown): string {
   if (!raw) return '';
-  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  // 处理 dayjs 对象
+  if (typeof raw === 'object' && (raw as any).$L !== undefined && (raw as any).$d !== undefined) {
+    try {
+      const dateVal = (raw as any).$d instanceof Date ? (raw as any).$d : new Date(String((raw as any).$d));
+      if (!isNaN(dateVal.getTime())) {
+        return `${dateVal.getFullYear()}年${dateVal.getMonth() + 1}月${dateVal.getDate()}日`;
+      }
+    } catch { return '—'; }
+    return '—';
+  }
+  const str = String(raw);
+  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (match) return `${match[1]}年${parseInt(match[2])}月${parseInt(match[3])}日`;
-  return raw.slice(0, 10);
+  return str.slice(0, 10);
 }
 
 export default function CaseTimeline() {
@@ -654,7 +665,7 @@ export default function CaseTimeline() {
     openModal('newRecord');
   };
 
-  const bg = darkMode ? '#1a1d25' : '#fff';
+  const bg = darkMode ? '#1a1d25' : 'var(--color-surface)';
   const textColor = darkMode ? '#e2e2e6' : '#1F2937';
   const mutedColor = darkMode ? '#8c919a' : '#9CA3AF';
   const borderColor = darkMode ? 'rgba(66,71,79,0.4)' : '#E5E7EB';
@@ -676,8 +687,8 @@ export default function CaseTimeline() {
           <Clock size={20} color="#fff" />
         </div>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: textColor }}>案件时间轴</div>
-          <div style={{ fontSize: 12, color: mutedColor, marginTop: 2 }}>选择案件，查看完整办理时间线</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)' }}>案件时间轴</div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>选择案件，查看完整办理时间线</div>
         </div>
       </motion.div>
 
@@ -688,15 +699,15 @@ export default function CaseTimeline() {
         transition={{ delay: 0.05 }}
         style={{
           background: bg, borderRadius: 12,
-          border: `1px solid ${borderColor}`,
+                    border: `1px solid var(--color-border)`,
           padding: '18px 20px', marginBottom: 24,
           boxShadow: darkMode ? '0 2px 12px rgba(0,0,0,.25)' : '0 1px 4px rgba(0,0,0,.04)',
         }}
       >
-        <div style={{ fontSize: 12, fontWeight: 600, color: mutedColor, marginBottom: 8 }}>选择案件</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 8 }}>选择案件</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {allCaseNames.length === 0 ? (
-            <span style={{ fontSize: 13, color: mutedColor }}>暂无案件数据，请先录入记录</span>
+            <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>暂无案件数据，请先录入记录</span>
           ) : (
             allCaseNames.map((name) => (
               <motion.div
@@ -709,9 +720,9 @@ export default function CaseTimeline() {
                   fontSize: 13, fontWeight: 500,
                   background: selectedCase === name
                     ? 'linear-gradient(135deg, #155A8A, #1B7AB5)'
-                    : darkMode ? 'rgba(66,71,79,0.3)' : '#F3F4F6',
-                  color: selectedCase === name ? '#fff' : textColor,
-                  border: selectedCase === name ? 'none' : `1px solid ${borderColor}`,
+                    : darkMode ? 'rgba(66,71,79,0.3)' : 'var(--color-surface-hover)',
+                  color: selectedCase === name ? '#fff' : 'var(--color-text)',
+                  border: selectedCase === name ? 'none' : `1px solid var(--color-border)`,
                   transition: 'all .15s',
                 }}
               >
@@ -721,7 +732,7 @@ export default function CaseTimeline() {
           )}
         </div>
         {selectedCase && (
-          <div style={{ fontSize: 12, color: mutedColor, marginTop: 10 }}>
+          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 10 }}>
             找到 {timelineRecords.length} 条相关记录
           </div>
         )}
@@ -733,12 +744,12 @@ export default function CaseTimeline() {
           {/* 中心竖线 */}
           <div style={{
             position: 'absolute', left: 19, top: 0, bottom: 0, width: 2,
-            background: `linear-gradient(to bottom, ${darkMode ? '#4B9EFF' : '#2563EB'}, ${darkMode ? '#1a3a5c' : '#D8E1EA'})`,
+            background: `linear-gradient(to bottom, ${darkMode ? '#4B9EFF' : '#2563EB'}, ${darkMode ? '#1a3a5c' : 'var(--color-border)'})`,
             borderRadius: 1,
           }} />
 
           {timelineRecords.length === 0 ? (
-            <div style={{ padding: '40px 0', textAlign: 'center', color: mutedColor, fontSize: 13 }}>
+            <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 13 }}>
               该案件暂无匹配记录
             </div>
           ) : (
@@ -763,7 +774,7 @@ export default function CaseTimeline() {
                     padding: '14px 18px',
                     borderRadius: 10,
                     background: bg,
-                    border: `1px solid ${borderColor}`,
+          border: `1px solid var(--color-border)`,
                     boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,.15)' : '0 1px 3px rgba(0,0,0,.04)',
                     transition: 'all .2s',
                   }}
@@ -773,7 +784,7 @@ export default function CaseTimeline() {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.boxShadow = darkMode ? '0 2px 8px rgba(0,0,0,.15)' : '0 1px 3px rgba(0,0,0,.04)';
-                    e.currentTarget.style.borderColor = borderColor;
+                    e.currentTarget.style.borderColor = 'var(--color-border)';
                   }}
                 >
                   {/* 时间轴节点 */}
@@ -806,28 +817,28 @@ export default function CaseTimeline() {
                           {meta.dept} · {meta.label}
                         </span>
                         <span style={{
-                          fontSize: 11, color: mutedColor,
+                          fontSize: 11, color: 'var(--color-text-secondary)',
                           display: 'flex', alignItems: 'center', gap: 4,
                         }}>
                           <CalendarDays size={11} />
                           {date}
                         </span>
                       </div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: textColor, marginBottom: 4 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 4 }}>
                         {title}
                       </div>
                       {summary.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
                           {summary.map((s, si) => (
-                            <span key={si} style={{ fontSize: 11.5, color: mutedColor }}>
-                              <span style={{ color: darkMode ? '#8c919a' : '#9CA3AF' }}>{s.label}: </span>
-                              <span style={{ color: textColor, fontWeight: 500 }}>{s.value}</span>
+                            <span key={si} style={{ fontSize: 11.5, color: 'var(--color-text-secondary)' }}>
+                          <span style={{ color: 'var(--color-text-secondary)' }}>{s.label}: </span>
+                          <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{s.value}</span>
                             </span>
                           ))}
                         </div>
                       )}
                     </div>
-                    <ChevronRight size={14} color={mutedColor} style={{ flexShrink: 0, marginTop: 10 }} />
+                    <ChevronRight size={14} color="var(--color-text-secondary)" style={{ flexShrink: 0, marginTop: 10 }} />
                   </div>
                 </motion.div>
               );
@@ -838,7 +849,7 @@ export default function CaseTimeline() {
 
       {/* 底部提示 */}
       {!selectedCase && (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: mutedColor }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--color-text-secondary)' }}>
           <Clock size={40} style={{ opacity: 0.3, marginBottom: 12 }} />
           <div style={{ fontSize: 14 }}>请从上方选择一个案件</div>
           <div style={{ fontSize: 12, marginTop: 4 }}>系统将自动汇总该案件在所有模块中的办理记录</div>

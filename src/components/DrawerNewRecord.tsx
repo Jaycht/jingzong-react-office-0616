@@ -126,17 +126,17 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       // 序列化 dayjs 对象为 ISO 字符串，避免传入 IndexedDB 后触发 antd clone 崩溃
       for (const key of Object.keys(values)) {
         const v = values[key];
-        if (v && typeof v === 'object' && v.$L && v.$d) {
-          values[key] = v.isValid ? v.toISOString() : String(v.$d);
+        if (v && typeof v === 'object' && v.$L !== undefined && v.$d !== undefined) {
+          values[key] = (typeof v.isValid === 'function' && v.isValid()) ? v.toISOString() : String(v.$d);
         }
         // 处理 repeatable section 中的 dayjs 对象
         if (Array.isArray(v)) {
-          v.forEach((item: any, idx: number) => {
+          v.forEach((item: any) => {
             if (item && typeof item === 'object') {
               for (const k of Object.keys(item)) {
                 const val = item[k];
-                if (val && typeof val === 'object' && val.$L && val.$d) {
-                  item[k] = val.isValid ? val.toISOString() : String(val.$d);
+                if (val && typeof val === 'object' && val.$L !== undefined && val.$d !== undefined) {
+                  item[k] = (typeof val.isValid === 'function' && val.isValid()) ? val.toISOString() : String(val.$d);
                 }
               }
             }
@@ -588,7 +588,7 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
 
   // ─── 全局案件名称/编号联动 ───
   // 所有模块的 caseName/caseNo 都使用全局 AutoComplete，实现全软件数据共享
-  if (field.id === 'caseName') {
+  if (field.id === 'caseName' || field.id === 'clueName') {
     return <GlobalCaseNameField field={field} subName={subName} />;
   }
   if (field.id === 'caseNo') {

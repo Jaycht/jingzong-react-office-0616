@@ -53,7 +53,7 @@ function calcWarnings(records: MassRecord[]): WarnItem[] {
         const severity: WarnItem['severity'] = remaining <= 0 ? 'overdue' : remaining <= 3 ? 'critical' : 'warning';
         items.push({
           id: rec.id + rule.f + rule.t, recordId: rec.id, moduleId: rec.moduleId,
-          caseName: String(rec.data?.caseName || rec.data?.suspect || '未命名').slice(0, 14),
+          caseName: String(rec.data?.caseName || rec.data?.reportMatter || rec.data?.suspect || '未命名').slice(0, 14),
           type: rule.t, deadline, remainingDays: remaining, severity,
         });
       } catch { /* ignore */ }
@@ -210,6 +210,34 @@ export default function Dashboard() {
     }],
   }), [caseTypes, darkMode, textColor, mutedColor]);
 
+  // 模块活跃度柱状图
+  const moduleBarData = useMemo(() => {
+    const top = Object.entries(moduleRecords)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([id, count]) => ({ name: MODULE_NAMES[id] || id, value: count }));
+    return top;
+  }, [moduleRecords]);
+
+  const barOption = useMemo(() => ({
+    tooltip: { trigger: 'axis' as const, backgroundColor: darkMode ? '#1a1d25' : '#fff', borderColor: darkMode ? '#374151' : '#E5E7EB', textStyle: { color: textColor } },
+    grid: { left: 10, right: 20, top: 10, bottom: 30, containLabel: true },
+    xAxis: { type: 'category' as const, data: moduleBarData.map(d => d.name), axisLabel: { color: mutedColor, fontSize: 10, rotate: 30 }, axisLine: { lineStyle: { color: darkMode ? '#374151' : '#E5E7EB' } } },
+    yAxis: { type: 'value' as const, splitLine: { lineStyle: { color: darkMode ? '#2a2e38' : '#F3F4F6' } }, axisLabel: { color: mutedColor, fontSize: 10 } },
+    series: [{
+      type: 'bar' as const,
+      data: moduleBarData.map((d, i) => ({
+        value: d.value,
+        itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: ['#3B82F6', '#8B5CF6', '#0891B2', '#10B981', '#F59E0B', '#EF4444'][i % 6] },
+          { offset: 1, color: ['#3B82F6', '#8B5CF6', '#0891B2', '#10B981', '#F59E0B', '#EF4444'][i % 6] + '44' },
+        ]), borderRadius: [4, 4, 0, 0] },
+      })),
+      barWidth: 24,
+      label: { show: true, position: 'top' as const, fontSize: 11, fontWeight: 600, color: textColor },
+    }],
+  }), [moduleBarData, darkMode, textColor, mutedColor]);
+
   if (total === 0) {
     return (
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20, alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
@@ -319,6 +347,13 @@ export default function Dashboard() {
             </div>
             {/* 玫瑰图 */}
             <EChartBox option={pieOption} style={{ height: 200 }} />
+            {/* 模块活跃度柱状图 */}
+            {moduleBarData.length > 0 && (
+              <div style={{ marginTop: 16, borderTop: '1px solid var(--color-border-light)', paddingTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: mutedColor, marginBottom: 8 }}>模块活跃度</div>
+                <EChartBox option={barOption} style={{ height: 180 }} />
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

@@ -139,8 +139,8 @@ export default function SettingsPage() {
           <Settings size={20} color="#fff" />
         </div>
         <div>
-          <div style={{ fontSize: 19, fontWeight: 700, color: '#172033' }}>模板字段</div>
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>自定义模块 · 字段类型 · 本机自动保存</div>
+          <div style={{ fontSize: 19, fontWeight: 700, color: 'var(--color-text)' }}>模板字段</div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>自定义模块 · 字段类型 · 本机自动保存</div>
         </div>
       </motion.div>
 
@@ -161,13 +161,13 @@ export default function SettingsPage() {
           </Form>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#172033' }}>字段定义</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>字段定义</div>
             <Button size="small" icon={<Plus size={13} />} onClick={addField}>添加字段</Button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {fields.map((field, index) => (
-              <div key={index} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: 10, background: '#F8FAFC' }}>
+              <div key={index} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: 10, background: 'var(--color-surface-hover)' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: 8, marginBottom: 8 }}>
                   <Input value={field.label} placeholder="字段名称" onChange={(event) => updateField(index, { label: event.target.value })} />
                   <Select value={field.type} onChange={(value) => updateField(index, { type: value })}>
@@ -187,7 +187,7 @@ export default function SettingsPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Space>
                     <Switch size="small" checked={field.required} onChange={(checked) => updateField(index, { required: checked })} />
-                    <span style={{ fontSize: 12, color: '#64748B' }}>必填</span>
+                    <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>必填</span>
                   </Space>
                   <Button type="text" danger size="small" icon={<Trash2 size={13} />} onClick={() => removeField(index)} />
                 </div>
@@ -203,8 +203,8 @@ export default function SettingsPage() {
         <div className="panel" style={{ padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#172033' }}>已保存的自定义模块</div>
-              <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>保存在当前电脑浏览器本地存储中，刷新后仍然存在。</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>已保存的自定义模块</div>
+              <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>保存在当前电脑浏览器本地存储中，刷新后仍然存在。</div>
             </div>
             <Tag color="blue">{customModules.length} 个</Tag>
           </div>
@@ -222,7 +222,7 @@ export default function SettingsPage() {
           <AlertTriangle size={18} color="#DC2626" />
           <span style={{ fontSize: 15, fontWeight: 700, color: '#DC2626' }}>危险操作</span>
         </div>
-        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 12 }}>
+        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 12 }}>
           重置将清除所有工作记录、附件和设置数据，此操作不可撤销。
         </p>
         <Button danger icon={<Trash2 size={14} />} onClick={handleResetAllData}>

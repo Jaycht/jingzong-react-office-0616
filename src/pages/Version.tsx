@@ -110,15 +110,15 @@ export default function Version() {
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.1 }} style={{ marginBottom: 20 }}>
           <img src="./logo.png" alt="" style={{ width: 360, height: 360, objectFit: "contain" }} />
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} style={{ fontSize: 22, fontWeight: 700, color: "#1F2937", marginBottom: 6, letterSpacing: 1 }}>{"经侦大队工作记录管理系统"}</motion.div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} style={{ fontSize: 22, fontWeight: 700, color: "var(--color-text)", marginBottom: 6, letterSpacing: 1 }}>{"经侦大队工作记录管理系统"}</motion.div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} style={{ fontSize: 32, fontWeight: 900, color: "#155A8A", marginBottom: 8, letterSpacing: 2, fontFamily: "'Courier New', monospace" }}>{versionInfo.version}</motion.div>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} style={{ fontSize: 13, color: "#6B7280", marginBottom: 22, letterSpacing: 0.5 }}>Economic Investigation Work Log Registration System</motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 22, letterSpacing: 0.5 }}>Economic Investigation Work Log Registration System</motion.div>
         <div style={{ width: 60, height: 2, background: "linear-gradient(90deg, transparent, #1B5E9B, transparent)", margin: "0 auto 22px" }} />
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} style={{ fontSize: 14, color: "#374151", marginBottom: 18, fontWeight: 500 }}>{"制作人：陈洪涛 © 版权所有"}</motion.div>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} style={{ fontSize: 12.5, color: "#4B5563", lineHeight: 1.8, maxWidth: 720, margin: "0 auto 14px" }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} style={{ fontSize: 14, color: "var(--color-text)", marginBottom: 18, fontWeight: 500 }}>{"制作人：陈洪涛 © 版权所有"}</motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} style={{ fontSize: 12.5, color: "var(--color-text-secondary)", lineHeight: 1.8, maxWidth: 720, margin: "0 auto 14px" }}>
           {"本系统为经侦大队内部工作记录管理专用，未经授权不得复制、传播或用于商业用途。\n本系统所有数据存储于用户本地设备，不收集任何个人隐私信息。\n软件著作权归开发者陈洪涛所有。\n技术支持：如遇问题请联系系统管理员或开发者。"}
         </motion.div>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ fontSize: 12, color: "#9CA3AF", marginTop: 6 }}>Copyright © 2026 陈洪涛. All rights reserved.</motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 6 }}>Copyright © 2026 陈洪涛. All rights reserved.</motion.div>
       </motion.div>
 
       <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
@@ -129,7 +129,7 @@ export default function Version() {
               <c.icon size={20} color={c.color} />
             </div>
             <div>
-              <div style={{ fontSize: 11.5, color: "#6B7280" }}>{c.label}</div>
+              <div style={{ fontSize: 11.5, color: "var(--color-text-secondary)" }}>{c.label}</div>
               <div style={{ fontSize: 14, fontWeight: 700 }}>{c.count}{" 项"}</div>
             </div>
           </motion.div>
@@ -138,30 +138,24 @@ export default function Version() {
 
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
         className="panel" style={{ overflow: "hidden" }}>
-        <div style={{ padding: "13px 16px", borderBottom: "1px solid #E5E7EB", fontSize: 13, fontWeight: 700 }}>{"更新日志"}</div>
+        <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--color-border)", fontSize: 13, fontWeight: 700 }}>{"更新日志"}</div>
         <div>
           {versionGroups.map((g, i) => (
             <motion.div key={g.version} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 + i * 0.08 }}
-              style={{ padding: "16px 18px", borderBottom: i < versionGroups.length - 1 ? "1px solid #F3F4F6" : "none" }}>
+              style={{ padding: "16px 18px", borderBottom: i < versionGroups.length - 1 ? "1px solid var(--color-surface-hover)" : "none" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: "#1F2937" }}>{g.version}</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: "var(--color-text)" }}>{g.version}</span>
                   {i === 0 && (
                     <span style={{ fontSize: 10.5, padding: "1px 8px", borderRadius: 8, background: "#EBF5FF", color: "#1B5E9B", fontWeight: 600 }}>{"当前版本"}</span>
                   )}
                 </div>
-                <span style={{ fontSize: 11.5, color: "#9CA3AF" }}>{versionInfo.updatedAt}</span>
+                <span style={{ fontSize: 11.5, color: "var(--color-text-muted)" }}>{versionInfo.updatedAt}</span>
               </div>
               {g.items.length > 0 && g.items.map((item) => (
                 <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 3 }}>
                   <ArrowRight size={12} color="#388E3C" style={{ marginTop: 2, flexShrink: 0 }} />
-                  <span style={{ fontSize: 12.5, color: "#4B5563" }}>{item}</span>
-                </div>
-              ))}
-              {g.fixes.length > 0 && g.fixes.map((item) => (
-                <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 3 }}>
-                  <CheckCircle size={12} color="#E67E22" style={{ marginTop: 2, flexShrink: 0 }} />
-                  <span style={{ fontSize: 12.5, color: "#4B5563" }}>{item}</span>
+                  <span style={{ fontSize: 12.5, color: "var(--color-text-secondary)" }}>{item}</span>
                 </div>
               ))}
             </motion.div>

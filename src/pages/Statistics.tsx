@@ -151,8 +151,8 @@ export default function Statistics() {
             <BarChart3 size={20} color="#fff" />
           </motion.div>
           <div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: textColor }}>数据统计</div>
-            <div style={{ fontSize: 12, color: mutedColor, marginTop: 1 }}>工作数据可视化分析 · 基于本地存储真实数据</div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: 'var(--color-text)' }}>数据统计</div>
+            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>工作数据可视化分析 · 基于本地存储真实数据</div>
           </div>
         </div>
         <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -163,7 +163,7 @@ export default function Statistics() {
             saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `模块统计明细_${new Date().toISOString().slice(0,10)}.xlsx`);
             showToast('已导出 Excel', 'success');
           }}
-          style={{ height: 34, padding: '0 16px', background: 'var(--color-surface)', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
+          style={{ height: 34, padding: '0 16px', background: 'var(--color-surface)', color: 'var(--color-primary)', border: '1.5px solid var(--color-primary)', borderRadius: 8, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit' }}>
           <Download size={14} />导出报告
         </motion.button>
       </motion.div>
@@ -181,9 +181,9 @@ export default function Statistics() {
               {i === 3 && <Paperclip size={19} color={s.color} />}
             </div>
             <div>
-              <div style={{ fontSize: 11.5, color: mutedColor, marginBottom: 4 }}>{s.label}</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: textColor }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: s.up ? '#388E3C' : '#9CA3AF', marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
+              <div style={{ fontSize: 11.5, color: 'var(--color-text-secondary)', marginBottom: 4 }}>{s.label}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text)' }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: s.up ? '#388E3C' : 'var(--color-text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
                 {s.up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
                 {s.change}
               </div>
@@ -200,7 +200,7 @@ export default function Statistics() {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
               className="card" style={{ padding: '14px 14px 6px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                各模块记录对比 <span style={{ fontSize: 11, color: mutedColor, fontWeight: 400 }}>单位：条记录</span>
+                各模块记录对比 <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 400 }}>单位：条记录</span>
               </div>
               <EChartBox option={barOption} style={{ height: 240 }} />
             </motion.div>
@@ -209,7 +209,7 @@ export default function Statistics() {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
               className="card" style={{ padding: '14px 14px 6px' }}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                记录类型分布 <span style={{ fontSize: 11, color: mutedColor, fontWeight: 400 }}>按数量占比</span>
+                记录类型分布 <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 400 }}>按数量占比</span>
               </div>
               <EChartBox option={pieOption} style={{ height: 240 }} />
             </motion.div>
@@ -218,38 +218,38 @@ export default function Statistics() {
           {/* Module Stats Table */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
             className="card" style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 13, color: mutedColor }}>各模块记录统计明细</div>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>各模块记录统计明细</div>
               <motion.button whileTap={{ scale: 0.97 }} onClick={() => {
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(moduleStats.map(m => ({ 部门: m.dept, 模块: m.type, 记录数: m.count }))), '模块统计');
                 saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `模块统计明细_${new Date().toISOString().slice(0,10)}.xlsx`);
                 showToast('已导出 Excel', 'success');
               }}
-                style={{ height: 30, padding: '0 12px', background: 'var(--color-surface)', color: '#1B5E9B', border: '1.5px solid #1B5E9B', borderRadius: 7, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit' }}>
+                style={{ height: 30, padding: '0 12px', background: 'var(--color-surface)', color: 'var(--color-primary)', border: '1.5px solid var(--color-primary)', borderRadius: 7, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit' }}>
                 <Download size={13} />导出
               </motion.button>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: '#F8FAFC' }}>
+                    <tr style={{ background: 'var(--color-surface-hover)' }}>
                     {['部门', '模块', '记录数', '操作'].map(h => (
-                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: mutedColor, borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap' }}>{h}</th>
+                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: 'var(--color-text-secondary)', borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {moduleStats.length > 0 ? moduleStats.map((row, i) => (
                     <motion.tr key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 + i * 0.04 }}
-                      whileHover={{ background: '#F8FAFC' }} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      whileHover={{ background: 'var(--color-surface-hover)' }} style={{ borderBottom: '1px solid var(--color-surface-hover)' }}>
                       <td style={{ padding: '11px 14px', fontSize: 12.5 }}>{row.dept}</td>
                       <td style={{ padding: '11px 14px', fontSize: 12.5 }}>{row.type}</td>
                       <td style={{ padding: '11px 14px', fontSize: 12.5, fontWeight: 600 }}>{row.count}</td>
-                      <td style={{ padding: '11px 14px', fontSize: 12.5, color: '#9CA3AF' }}>{row.count > 0 ? '有数据' : '无数据'}</td>
+                      <td style={{ padding: '11px 14px', fontSize: 12.5, color: 'var(--color-text-muted)' }}>{row.count > 0 ? '有数据' : '无数据'}</td>
                     </motion.tr>
                   )) : (
-                    <tr><td colSpan={4} style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>暂无数据，请先在工作模块中新建记录</td></tr>
+                    <tr><td colSpan={4} style={{ padding: 40, textAlign: 'center', color: 'var(--color-text-muted)' }}>暂无数据，请先在工作模块中新建记录</td></tr>
                   )}
                 </tbody>
               </table>

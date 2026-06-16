@@ -54,7 +54,7 @@ export default function OperationLog() {
           </motion.div>
           <div>
             <div style={{ fontSize: 19, fontWeight: 700 }}>操作日志</div>
-            <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>用户操作全程留痕 · 可追溯审计 · 数据安全保障</div>
+            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>用户操作全程留痕 · 可追溯审计 · 数据安全保障</div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -82,9 +82,9 @@ export default function OperationLog() {
             onClick={() => setFilterType(f)}
             style={{
               height: 30, padding: '0 14px',
-              border: '1.5px solid ' + (f === filterType ? '#1B5E9B' : '#E5E7EB'),
-              background: f === filterType ? '#EBF5FF' : '#fff',
-              color: f === filterType ? '#1B5E9B' : '#6B7280',
+              border: '1.5px solid ' + (f === filterType ? 'var(--color-primary)' : 'var(--color-border)'),
+              background: f === filterType ? '#EBF5FF' : 'var(--color-surface)',
+              color: f === filterType ? 'var(--color-primary)' : 'var(--color-text-secondary)',
               borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
             }}>
             {f}
@@ -94,7 +94,7 @@ export default function OperationLog() {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           placeholder="搜索操作人 / 操作内容..."
-          style={{ flex: 1, height: 30, padding: '0 10px', border: '1.5px solid #E5E7EB', borderRadius: 6, fontSize: 12, outline: 'none', fontFamily: 'inherit', maxWidth: 260 }}
+          style={{ flex: 1, height: 30, padding: '0 10px', border: '1.5px solid var(--color-border)', borderRadius: 6, fontSize: 12, outline: 'none', fontFamily: 'inherit', maxWidth: 260 }}
         />
       </div>
 
@@ -108,15 +108,15 @@ export default function OperationLog() {
         </div>
         <div>
           {logs.length === 0 ? (
-            <div style={{ padding: 60, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+            <div style={{ padding: 60, textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 13 }}>
               暂无操作日志。开始使用系统后，操作记录将自动生成。
             </div>
           ) : logs.map((log, i) => (
             <motion.div
               key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 + i * 0.06 }}
-              whileHover={{ background: '#F8FAFC' }}
-              style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', borderBottom: i < logs.length - 1 ? '1px solid #F3F4F6' : 'none' }}
+              whileHover={{ background: 'var(--color-surface-hover)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', borderBottom: i < logs.length - 1 ? '1px solid var(--color-surface-hover)' : 'none' }}
             >
               {/* Timeline dot */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flexShrink: 0 }}>
@@ -125,24 +125,24 @@ export default function OperationLog() {
                     {TYPE_COLORS[log.type as keyof typeof TYPE_COLORS].label}
                   </span>
                 </div>
-                {i < logs.length - 1 && <div style={{ width: 1, flex: 1, background: '#E5E7EB', minHeight: 20 }} />}
+                {i < logs.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--color-border)', minHeight: 20 }} />}
               </div>
 
               {/* Content */}
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                  <User size={12} color="#9CA3AF" />
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1F2937' }}>{log.user}</span>
-                  <FileText size={12} color="#9CA3AF" />
-                  <span style={{ fontSize: 12.5, color: '#4B5563' }}>{log.action}</span>
+                  <User size={12} color="var(--color-text-muted)" />
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--color-text)' }}>{log.user}</span>
+                  <FileText size={12} color="var(--color-text-muted)" />
+                  <span style={{ fontSize: 12.5, color: 'var(--color-text)' }}>{log.action}</span>
                 </div>
-                <div style={{ fontSize: 11.5, color: '#9CA3AF', marginLeft: 20 }}>{log.detail}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--color-text-muted)', marginLeft: 20 }}>{log.detail}</div>
               </div>
 
               {/* Meta */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
-                <span style={{ fontSize: 11, color: '#6B7280' }}>{log.time}</span>
-                <span style={{ fontSize: 10.5, color: '#D1D5DB' }}>IP: {log.ip}</span>
+                <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{log.time}</span>
+                <span style={{ fontSize: 10.5, color: 'var(--color-text-muted)' }}>IP: {log.ip}</span>
               </div>
             </motion.div>
           ))}

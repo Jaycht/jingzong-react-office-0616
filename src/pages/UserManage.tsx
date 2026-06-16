@@ -32,7 +32,7 @@ export default function UserManage() {
           </motion.div>
           <div>
             <div style={{ fontSize: 19, fontWeight: 700 }}>用户管理</div>
-            <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>系统用户账号管理 · 权限分配 · 状态控制</div>
+            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>系统用户账号管理 · 权限分配 · 状态控制</div>
           </div>
         </div>
         <motion.button
@@ -61,9 +61,9 @@ export default function UserManage() {
               {i === 3 && <UserX size={19} color={s.color} />}
             </div>
             <div>
-              <div style={{ fontSize: 11.5, color: '#6B7280' }}>{s.label}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--color-text-secondary)' }}>{s.label}</div>
               <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'monospace' }}>{s.value}</div>
-              <div style={{ fontSize: 10.5, color: '#9CA3AF' }}>{s.sub}</div>
+              <div style={{ fontSize: 10.5, color: 'var(--color-text-muted)' }}>{s.sub}</div>
             </div>
           </motion.div>
         ))}
@@ -73,11 +73,11 @@ export default function UserManage() {
       <motion.div
         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
         className="panel" style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 13, color: '#6B7280' }}>共 <strong style={{ color: '#1F2937' }}>48</strong> 个用户</div>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>共 <strong style={{ color: 'var(--color-text)' }}>48</strong> 个用户</div>
           <div style={{ display: 'flex', gap: 6 }}>
             {['全部', '正常', '维护中', '已禁用'].map((f, i) => (
-              <button key={f} style={{ height: 28, padding: '0 12px', border: '1.5px solid ' + (i === 0 ? '#1B5E9B' : '#E5E7EB'), background: i === 0 ? '#EBF5FF' : '#fff', color: i === 0 ? '#1B5E9B' : '#6B7280', borderRadius: 6, fontSize: 11.5, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button key={f} style={{ height: 28, padding: '0 12px', border: '1.5px solid ' + (i === 0 ? 'var(--color-primary)' : 'var(--color-border)'), background: i === 0 ? '#EBF5FF' : 'var(--color-surface)', color: i === 0 ? 'var(--color-primary)' : 'var(--color-text-secondary)', borderRadius: 6, fontSize: 11.5, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {f}
               </button>
             ))}
@@ -85,16 +85,16 @@ export default function UserManage() {
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#F8FAFC' }}>
+            <tr style={{ background: 'var(--color-surface-hover)' }}>
               {['姓名', '警号', '岗位', '角色', '账号状态', '最后登录', '操作'].map((h, i) => (
-                <th key={i} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.4px', borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={i} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11.5, fontWeight: 600, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '.4px', borderBottom: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {MOCK_USERS.map((u, i) => (
               <motion.tr key={u.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 + i * 0.06 }}
-                whileHover={{ background: '#F8FAFC' }} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                whileHover={{ background: 'var(--color-surface-hover)' }} style={{ borderBottom: '1px solid var(--color-surface-hover)' }}>
                 <td style={{ padding: '11px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                     <div style={{ width: 34, height: 34, borderRadius: '50%', background: ROLE_MAP[u.role].bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: ROLE_MAP[u.role].color }}>
@@ -103,7 +103,7 @@ export default function UserManage() {
                     <span style={{ fontSize: 12.5, fontWeight: 600 }}>{u.name}</span>
                   </div>
                 </td>
-                <td style={{ padding: '11px 14px', fontSize: 12, fontFamily: 'monospace', color: '#6B7280' }}>{u.badge}</td>
+                <td style={{ padding: '11px 14px', fontSize: 12, fontFamily: 'monospace', color: 'var(--color-text-secondary)' }}>{u.badge}</td>
                 <td style={{ padding: '11px 14px', fontSize: 12.5 }}>{u.position}</td>
                 <td style={{ padding: '11px 14px', fontSize: 12 }}>
                   <span style={{ padding: '2px 9px', borderRadius: 9, fontSize: 10.5, fontWeight: 600, background: ROLE_MAP[u.role].bg, color: ROLE_MAP[u.role].color }}>{u.roleName}</span>
@@ -111,13 +111,13 @@ export default function UserManage() {
                 <td style={{ padding: '11px 14px', fontSize: 12 }}>
                   <span style={{ padding: '2px 9px', borderRadius: 9, fontSize: 10.5, fontWeight: 600, background: STATUS_MAP[u.status].bg, color: STATUS_MAP[u.status].color }}>{STATUS_MAP[u.status].label}</span>
                 </td>
-                <td style={{ padding: '11px 14px', fontSize: 11.5, color: '#9CA3AF' }}>{u.lastLogin}</td>
+                <td style={{ padding: '11px 14px', fontSize: 11.5, color: 'var(--color-text-muted)' }}>{u.lastLogin}</td>
                 <td style={{ padding: '11px 14px' }}>
                   <div style={{ display: 'flex', gap: 3 }}>
                     {[Edit, Trash2].map((Icon, i) => (
                       <motion.button key={i} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                         onClick={() => i === 0 ? openModal('newUser') : showToast('确认删除该用户？', 'warning')}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', borderRadius: 4, color: i === 1 ? '#D32F2F' : '#9CA3AF', fontSize: 12.5 }}>
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px', borderRadius: 4, color: i === 1 ? '#D32F2F' : 'var(--color-text-muted)', fontSize: 12.5 }}>
                         <Icon size={13} />
                       </motion.button>
                     ))}

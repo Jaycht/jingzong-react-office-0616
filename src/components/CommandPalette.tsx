@@ -178,7 +178,7 @@ export default function CommandPalette({ open, onClose }: Props) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="搜索记录、模块或输入命令..."
+                placeholder="搜索案件名称、姓名、手机号、身份证号、模块..."
                 style={{
                   flex: 1, border: 'none', outline: 'none', background: 'transparent',
                   fontSize: 15, color: 'var(--color-text)', fontFamily: 'inherit',
