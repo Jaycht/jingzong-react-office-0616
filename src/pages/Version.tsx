@@ -21,7 +21,7 @@ interface VersionGroup {
  * into multiple ParsedEntry objects (one per comma-separated item).
  */
 function parseChangelogEntry(raw: string): ParsedEntry[] {
-  const match = raw.match(/^(V[\d.]+)\s+(新增|优化|修复|重构|发布)\s*[-—]\s*(.+)$/);
+  const match = raw.match(/^(V[\d.]+)\s+(新增|优化|修复|重构|发布|增强)\s*[-—]\s*(.+)$/);
   if (!match) return [];
   const version = match[1];
   const type = match[2] as ParsedEntry["type"];
@@ -72,6 +72,7 @@ function buildVersionGroups(changelog: string[]): VersionGroup[] {
 const CHANGELOG_META = [
   { label: "新增", color: "#388E3C", bg: "#E8F5E9", icon: Sparkles },
   { label: "优化", color: "#1B5E9B", bg: "#EBF5FF", icon: RefreshCw },
+  { label: "增强", color: "#7C3AED", bg: "#F3E8FF", icon: RefreshCw },
   { label: "修复", color: "#E67E22", bg: "#FFF3E0", icon: Wrench },
 ];
 
