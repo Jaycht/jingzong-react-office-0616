@@ -358,7 +358,7 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      {/* ── 底部：最近动态 + 最近案件 ── */}
+      {/* ── 底部：最近动态 + 模块活跃度 ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
         {/* 最近动态 */}
@@ -389,31 +389,17 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* 最近案件 */}
+        {/* 模块活跃度（独立面板） */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="panel">
           <div className="panel-header">
-            <FolderOpen size={15} color="var(--color-success)" />
-            <span className="font-semibold" style={{ fontSize: 14 }}>最近案件</span>
+            <BarChart3 size={15} color="var(--color-success)" />
+            <span className="font-semibold" style={{ fontSize: 14 }}>模块活跃度</span>
           </div>
-          <div style={{ maxHeight: 260, overflowY: 'auto', padding: '8px 12px' }}>
-            {recentCases.length === 0 ? (
-              <div style={{ padding: 24, textAlign: 'center', color: mutedColor, fontSize: 12 }}>暂无案件</div>
+          <div style={{ padding: '8px 12px', minHeight: 200 }}>
+            {moduleBarData.length === 0 ? (
+              <div style={{ padding: 24, textAlign: 'center', color: mutedColor, fontSize: 12 }}>暂无数据</div>
             ) : (
-              recentCases.map((c, i) => (
-                <div
-                  key={i}
-                  className="hover-bg"
-                  onClick={() => setCurrentPage(c.moduleId)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', marginBottom: 4, borderRadius: 6, cursor: 'pointer' }}
-                >
-                  <Gavel size={14} color="var(--color-text-muted)" style={{ flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="truncate" style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</div>
-                    <div style={{ fontSize: 11, color: mutedColor }}>{c.moduleName} · {c.date}</div>
-                  </div>
-                  <span className={`badge ${c.status === '已完成' ? 'badge-success' : 'badge-info'}`}>{c.status}</span>
-                </div>
-              ))
+              <EChartBox option={barOption} style={{ height: 220 }} />
             )}
           </div>
         </motion.div>

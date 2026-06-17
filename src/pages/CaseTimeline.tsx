@@ -596,7 +596,8 @@ function recordSummary(rec: MassRecord): { label: string; value: string }[] {
 /** 获取记录的最佳时间戳（中文格式） */
 function recordDate(rec: MassRecord): string {
   const d = rec.data || {};
-  const raw = String(d.collectDate || d.receiveDate || d.filingDate || d.recordDate || d.criminalDetentionDate || d.arrestDate || d.bailDate || d.visitDate || d.createdAt || '');
+  // 直接传原始值给 fmtDateStr，不要用 String() 转换（会把 dayjs 变成 [object Object]）
+  const raw = d.collectDate || d.receiveDate || d.filingDate || d.recordDate || d.criminalDetentionDate || d.arrestDate || d.bailDate || d.visitDate || d.createdAt || '';
   if (!raw) return '';
   return fmtDateStr(raw);
 }

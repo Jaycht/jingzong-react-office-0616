@@ -247,9 +247,15 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               }));
               continue;
             }
-            if (f.type === 'date' && typeof raw === 'string') {
-              const d = dayjs(raw);
-              if (d.isValid()) formData[f.id] = d;
+            if (f.type === 'date') {
+              // 处理字符串、dayjs对象、Date对象，统一转为 dayjs
+              if (typeof raw === 'string') {
+                const d = dayjs(raw);
+                if (d.isValid()) formData[f.id] = d;
+              } else if (raw && typeof raw === 'object' && (raw as any).$d) {
+                // dayjs 对象，直接用
+                formData[f.id] = raw;
+              }
               continue;
             }
             if (f.multiple && typeof raw === 'string') {
