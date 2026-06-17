@@ -1,4 +1,4 @@
-﻿name: Build & Release
+name: Build & Release
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci
+      - run: npm install --legacy-peer-deps
         env:
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
       - name: Build Electron Installer
