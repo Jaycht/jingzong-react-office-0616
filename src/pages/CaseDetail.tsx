@@ -38,7 +38,7 @@ const FIELD_LABELS: Record<string, string> = {
   reporterPhone: '电话', reporterWechat: '微信', reporterAddress: '地址',
   reporterWorkplace: '工作单位', reporterRelationship: '与案件关系',
   reporterConfidential: '是否保密', reporterCooperate: '是否配合',
-  reporterIdentity: '报案人身份',
+  reporterIdentity: '报案人身份', reporters: '报案人',
   measure: '强制措施类型', isNotified: '是否告知/通知', notifyDate: '告知/通知时间',
   approvalDate: '审批时间', executeDate: '执行时间', deadline: '期限',
   approver: '审批人', executeResult: '执行结果',
@@ -46,8 +46,24 @@ const FIELD_LABELS: Record<string, string> = {
   intervieweeName: '姓名', intervieweeGender: '性别', intervieweeAge: '年龄',
   intervieweeIdNo: '身份证号', intervieweePhone: '电话', intervieweeAddress: '地址',
   intervieweeIdentity: '身份', riskLevel: '风险等级',
-  isElderly: '是否 elderly', isHardship: '是否困难户',
+  isElderly: '是否老年人', isHardship: '是否困难户',
   involvedEntities: '涉案主体', attachment: '附件',
+  // 附件字段
+  name: '文件名', lastModifiedDate: '最后修改时间', size: '文件大小',
+  type: '文件类型', percent: '进度', uid: '附件ID',
+  // 其他常见字段
+  totalAmount: '涉案总金额', victimCount: '受害人数',
+  amount: '金额', projectName: '项目名称', clueName: '线索名称',
+  collectDate: '采集日期', visitDate: '走访日期', visitPurpose: '走访目的',
+  visitResult: '走访结果', targetUnit: '走访对象',
+  recordDate: '记录日期', criminalDetentionDate: '刑事拘留日期',
+  bailDate: '取保日期', arrestDate: '逮捕日期',
+  residentialSurveillanceDate: '监视居住日期', transferProsecutionDate: '移诉日期',
+  interrogationDate: '询问时间', detentionDate: '拘留时间',
+  punishment: '处罚结果', rewardStatus: '奖励状态',
+  documentType: '文件类型', documentTitle: '文件标题',
+  relatedCases: '关联案件', evidenceType: '证据类型',
+  involvedEntities: '涉案主体', crimeAmount: '涉案金额',
 };
 
 function fmtDate(iso: string | Date): string {

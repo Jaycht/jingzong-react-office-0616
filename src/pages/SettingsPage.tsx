@@ -216,19 +216,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 数据重置区域 */}
-      <div style={{ marginTop: 24, background: 'var(--color-surface)', border: '1px solid #FECACA', borderRadius: 8, padding: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <AlertTriangle size={18} color="#DC2626" />
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#DC2626' }}>危险操作</span>
-        </div>
-        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 12 }}>
-          重置将清除所有工作记录、附件和设置数据，此操作不可撤销。
-        </p>
-        <Button danger icon={<Trash2 size={14} />} onClick={handleResetAllData}>
-          重置所有数据
-        </Button>
-      </div>
     </div>
   );
 }

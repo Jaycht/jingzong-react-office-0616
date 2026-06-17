@@ -616,8 +616,10 @@ function saveBackupMeta(timestamp: string): void {
 /** 获取备份元信息列表 */
 export function getBackupMetas(): BackupMeta[] {
   try {
-    const raw = localStorageAdapter.getItem<string>(BACKUP_META_KEY, "[]");
-    return raw ? JSON.parse(raw) : [];
+    const raw = localStorageAdapter.getItem(BACKUP_META_KEY, "[]");
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'string') return JSON.parse(raw);
+    return [];
   } catch {
     return [];
   }

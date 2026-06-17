@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle, Settings, FolderOpen } from 'lucide-react';
+import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle, Settings, FolderOpen, AlertTriangle } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson } from '../utils/excelUtils';
 import { getBaseModules } from '../moduleConfig';
 import { localStorageAdapter } from '../store/adapter';
+import { indexedDBAdapter } from '../store/adapter';
 
 interface BackupMeta {
   id: string;
@@ -539,6 +540,42 @@ export default function Backup() {
           </div>
         </motion.div>
       </div>
+
+      {/* 数据重置区域（危险操作） */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+        style={{ marginTop: 24, background: 'var(--color-surface)', border: '1px solid var(--color-danger)', borderRadius: 12, padding: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <AlertTriangle size={18} color="var(--color-danger)" />
+          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-danger)' }}>危险操作</span>
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 14 }}>
+          重置将清除所有工作记录、附件和设置数据，此操作不可撤销。建议先创建备份。
+        </p>
+        <button
+          onClick={() => {
+            Modal.confirm({
+              title: '确认重置所有数据？',
+              content: '此操作将清除所有工作记录、附件、设置和用户数据，不可恢复！',
+              okText: '确认重置',
+              okButtonProps: { danger: true },
+              cancelText: '取消',
+              onOk: () => {
+                localStorage.clear();
+                indexedDBAdapter.clear();
+                showToast('所有数据已重置，页面即将刷新', 'info');
+                setTimeout(() => window.location.reload(), 1000);
+              },
+            });
+          }}
+          style={{
+            padding: '8px 16px', background: 'var(--color-danger)', color: '#fff',
+            border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'inherit',
+          }}
+        >
+          <Trash2 size={14} /> 重置所有数据
+        </button>
+      </motion.div>
     </div>
   );
 }
