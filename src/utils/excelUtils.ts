@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 导入导出 + 备份恢复共享工具函数
  *
  * Excel 为主（用户日常操作），JSON 为辅（完整备份/恢复）
@@ -15,7 +15,7 @@ import { findModule, getBaseModules } from '../moduleConfig';
 import { getMassRecords, saveMassRecord } from '../store/massStore';
 import { getOperationLogs } from '../store/operationLogStore';
 import type { FieldDefinition } from '../moduleConfig';
-import { localStorageAdapter } from "../store/adapter";
+import { localStorageAdapter, indexedDBAdapter } from "../store/adapter";
 import type { MassRecord } from '../store/massStore';
 import { exportAttachmentSnapshot, importAttachmentSnapshot } from '../store/attachmentStore';
 
@@ -648,8 +648,22 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
       if (key.startsWith('jingzong.')) {
         localStorageAdapter.setItem(key, value);
         count++;
+        // 同时写入 IndexedDB（mass records 从 IndexedDB 读取）
+        if (key === 'jingzong.mass.records') {
+          indexedDBAdapter.setItem(key, value);
+        }
       }
     }
+
+    // 重建索引
+    try {
+      const { rebuildCaseIndex, rebuildSuspectIndex } = await import('../store/inputHistoryStore');
+      const records = localStorageAdapter.getItem('jingzong.mass.records', []);
+      if (Array.isArray(records) && records.length > 0) {
+        rebuildCaseIndex(records);
+        rebuildSuspectIndex(records);
+      }
+    } catch { /* ignore */ }
 
     const attachmentCount = Array.isArray(backup.attachments)
       ? await importAttachmentSnapshot(backup.attachments)
