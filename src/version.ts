@@ -1,9 +1,17 @@
-export const APP_VERSION = "V2.12.11";
+export const APP_VERSION = "V2.12.12";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 11;
+export const VERSION_PATCH = 12;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.12 =====
+  "V2.12.12 修复 - 强制措施日期显示[object Object]（recordDate扫描repeatable section中的日期字段）",
+  "V2.12.12 修复 - 强制措施信息显示在案件图谱中（扫描coerciveMeasures数组）",
+  "V2.12.12 增强 - 案件图谱UI升级：更鲜艳的颜色(Indigo/Rose/Emerald)，阴影发光效果，连线加粗到2.5",
+  "V2.12.12 修复 - 查看页面英文字段名改用moduleConfig中文标签",
+  "V2.12.12 修复 - 持有人字段共享嫌疑人全局联动",
+  "V2.12.12 修复 - 备份页面增加自动备份设置",
+  "V2.12.12 修复 - Electron IPC新增get-documents-dir",
   // ===== V2.12.11 =====
   "V2.12.11 修复 - 时间轴日期显示[object Object]（recordDate不再用String()转换dayjs对象）",
   "V2.12.11 修复 - 时间轴点击出错（编辑模式回填时dayjs对象正确处理）",

@@ -596,10 +596,32 @@ function recordSummary(rec: MassRecord): { label: string; value: string }[] {
 /** 获取记录的最佳时间戳（中文格式） */
 function recordDate(rec: MassRecord): string {
   const d = rec.data || {};
-  // 直接传原始值给 fmtDateStr，不要用 String() 转换（会把 dayjs 变成 [object Object]）
-  const raw = d.collectDate || d.receiveDate || d.filingDate || d.recordDate || d.criminalDetentionDate || d.arrestDate || d.bailDate || d.visitDate || d.createdAt || '';
-  if (!raw) return '';
-  return fmtDateStr(raw);
+  // 1. 顶层日期字段
+  const topFields = ['collectDate', 'receiveDate', 'filingDate', 'recordDate', 'criminalDetentionDate', 'arrestDate', 'bailDate', 'visitDate', 'createdAt'];
+  for (const f of topFields) {
+    const raw = d[f];
+    if (raw !== undefined && raw !== null && raw !== '') {
+      const result = fmtDateStr(raw);
+      if (result && result !== '—') return result;
+    }
+  }
+  // 2. repeatable section 中的日期字段（suspects、coerciveMeasures 等）
+  const dateFields = ['criminalDetentionDate', 'bailDate', 'arrestDate', 'residentialSurveillanceDate', 'notifyDate', 'approvalDate', 'executeDate'];
+  for (const key of Object.keys(d)) {
+    const val = d[key];
+    if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+      for (const item of val) {
+        for (const df of dateFields) {
+          const raw = (item as Record<string, unknown>)?.[df];
+          if (raw !== undefined && raw !== null && raw !== '') {
+            const result = fmtDateStr(raw);
+            if (result && result !== '—') return result;
+          }
+        }
+      }
+    }
+  }
+  return '';
 }
 
 /** 任意值转中文日期格式，兼容字符串、dayjs对象、Date对象、ISO字符串 */

@@ -13,9 +13,9 @@ interface GraphNode { id: string; name: string; category: number; symbolSize: nu
 interface GraphLink { source: string; target: string; }
 
 const CATS = [
-  { name: '案件', color: '#5470c6' },
-  { name: '嫌疑人', color: '#91cc75' },
-  { name: '证据/线索', color: '#fac858' },
+  { name: '案件', color: '#6366F1' },
+  { name: '嫌疑人', color: '#F43F5E' },
+  { name: '证据/线索', color: '#10B981' },
 ];
 
 export default function CaseGraph() {
@@ -44,15 +44,33 @@ export default function CaseGraph() {
       if (cn) addN(`c-${cn}`, cn.length > 10 ? cn.slice(0, 10) + '…' : cn, 0, 40);
       if (cl) { addN(`e-${cl}`, cl.length > 10 ? cl.slice(0, 10) + '…' : cl, 2, 24); if (cn) addL(`c-${cn}`, `e-${cl}`); }
 
-      // 提取嫌疑人：支持顶层字段 + repeatable section (suspects数组)
+      // 提取嫌疑人：支持所有可能的数据位置
       const suspectNames = new Set<string>();
       const topSuspect = String(d.suspect || d.suspectName || '').trim();
       if (topSuspect) suspectNames.add(topSuspect);
-      // repeatable section: suspects 是数组，每个元素有 suspectName
+      // suspects repeatable section
       if (Array.isArray(d.suspects)) {
         for (const item of d.suspects) {
           const name = String(item?.suspectName || item?.suspect || '').trim();
           if (name) suspectNames.add(name);
+        }
+      }
+      // coerciveMeasures repeatable section（强制措施模块的嫌疑人）
+      if (Array.isArray(d.coerciveMeasures)) {
+        for (const item of d.coerciveMeasures) {
+          const name = String(item?.suspect || item?.suspectName || '').trim();
+          if (name) suspectNames.add(name);
+        }
+      }
+      // 其他可能包含嫌疑人的 repeatable section
+      for (const key of Object.keys(d)) {
+        if (key === 'suspects' || key === 'coerciveMeasures') continue;
+        const val = d[key];
+        if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
+          for (const item of val) {
+            const name = String((item as any)?.suspectName || (item as any)?.suspect || '').trim();
+            if (name) suspectNames.add(name);
+          }
         }
       }
       for (const sn of suspectNames) {
@@ -106,35 +124,32 @@ export default function CaseGraph() {
         data: nodes.map(n => ({
           ...n,
           label: {
-            show: true, position: 'right', fontSize: 11,
-            color: dk ? '#cbd5e1' : '#334155',
+            show: true, position: 'right', fontSize: 12, fontWeight: 600,
+            color: dk ? '#e2e8f0' : '#1e293b',
             formatter: (p: any) => p.name,
           },
           itemStyle: {
             color: CATS[n.category]?.color || '#999',
-            borderColor: dk ? '#1e293b' : '#fff',
-            borderWidth: 2,
-            shadowBlur: 10,
-            shadowColor: (CATS[n.category]?.color || '#999') + '40',
+            borderColor: dk ? 'rgba(255,255,255,0.15)' : '#fff',
+            borderWidth: 3,
+            shadowBlur: 16,
+            shadowColor: (CATS[n.category]?.color || '#999') + '50',
           },
         })),
         links: links.map(l => ({
           ...l,
           lineStyle: {
-            color: dk ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.25)',
+            color: dk ? 'rgba(148,163,184,0.3)' : 'rgba(100,116,139,0.2)',
             width: 2.5, curveness: 0.15,
           },
         })),
-        categories: CATS.map(c => ({ name: c.name, itemStyle: { color: c.color } })),
-        roam: true,
-        draggable: true,
-        label: { position: 'right', distance: 5 },
-        force: { repulsion: 200, edgeLength: [80, 200], gravity: 0.1 },
+        categories: CATS.map(c => ({ name: c.name, itemStyle: { color: c.color, shadowBlur: 8, shadowColor: c.color + '40' } })),
+        roam: true, draggable: true,
+        force: { repulsion: 280, edgeLength: [100, 220], gravity: 0.08 },
         emphasis: {
           focus: 'adjacency',
-          blurScope: 'global',
-          lineStyle: { width: 3 },
-          itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,0,0,0.15)' },
+          lineStyle: { width: 4, opacity: 0.8 },
+          itemStyle: { shadowBlur: 24, shadowColor: 'rgba(0,0,0,0.2)' },
         },
         blur: { itemStyle: { opacity: 0.15 }, label: { opacity: 0.2 } },
       }],
