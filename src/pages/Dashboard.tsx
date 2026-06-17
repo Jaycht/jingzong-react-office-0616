@@ -6,7 +6,7 @@ import { useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, ArrowUp, ArrowDown, Clock, AlertTriangle, CheckCircle2,
-  FileText, Gavel, Activity, Zap, FolderOpen
+  FileText, Gavel, Activity, Zap, FolderOpen, BarChart3
 } from "lucide-react";
 import * as echarts from 'echarts';
 import { getMassRecords } from "../store/massStore";
