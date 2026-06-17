@@ -225,13 +225,13 @@ export default function ModulePage() {
   });
 
   const dynamicColumns: ColumnsType<DynamicRow> = [
-    { title: '编号', dataIndex: 'code', width: 60, fixed: 'left' as const },
+    { title: '编号', dataIndex: 'code', width: 60, fixed: 'left' as const, sorter: (a: DynamicRow, b: DynamicRow) => Number(a.code) - Number(b.code) },
     ...dataFields.map((f) => ({
       title: f.label,
       dataIndex: f.id,
       width: 120,
       ellipsis: true,
-      sorter: f.type === 'number' || f.type === 'date' ? (a: DynamicRow, b: DynamicRow) => {
+      sorter: (a: DynamicRow, b: DynamicRow) => {
         const va = a[f.id];
         const vb = b[f.id];
         if (va == null && vb == null) return 0;
@@ -239,7 +239,7 @@ export default function ModulePage() {
         if (vb == null) return 1;
         if (f.type === 'number') return Number(va) - Number(vb);
         return String(va).localeCompare(String(vb));
-      } : undefined,
+      },
       defaultSortOrder: f.type === 'date' ? ('descend' as const) : undefined,
     })),
     // 除大队办公室（office）外，涉众办、法制室、案件中队、调证分析不显示经办人列

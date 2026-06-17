@@ -606,7 +606,7 @@ function recordDate(rec: MassRecord): string {
     }
   }
   // 2. repeatable section 中的日期字段（suspects、coerciveMeasures 等）
-  const dateFields = ['criminalDetentionDate', 'bailDate', 'arrestDate', 'residentialSurveillanceDate', 'notifyDate', 'approvalDate', 'executeDate'];
+  const dateFields = ['criminalDetentionDate', 'bailDate', 'arrestDate', 'residentialSurveillanceDate', 'notifyDate', 'approvalDate', 'executeDate', 'summonDate', 'detentionDate', 'transferProsecutionDate', 'interrogationDate', 'captureDate'];
   for (const key of Object.keys(d)) {
     const val = d[key];
     if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object') {
@@ -727,7 +727,7 @@ export default function CaseTimeline() {
   const borderColor = darkMode ? 'rgba(66,71,79,0.4)' : '#E5E7EB';
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+    <div style={{ maxWidth: 1200, width: '100%', margin: '0 auto' }}>
       {/* 头部 */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}

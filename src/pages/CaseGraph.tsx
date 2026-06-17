@@ -215,7 +215,7 @@ export default function CaseGraph() {
             <div className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>录入案件和嫌疑人信息后将自动生成关系图谱</div>
           </div>
         ) : (
-          <div ref={chartRef} style={{ width: '100%', height: full ? 'calc(100vh - 280px)' : 520, transition: 'height 0.3s' }} />
+          <div ref={chartRef} style={{ width: '100%', height: full ? 'calc(100vh - 280px)' : 'min(520px, 60vh)', transition: 'height 0.3s' }} />
         )}
       </motion.div>
     </div>
