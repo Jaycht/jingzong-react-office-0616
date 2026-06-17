@@ -158,6 +158,24 @@ export default function CaseDetail({ record, onClose }: Props) {
     return (tab?.fields || []).filter(f => f.type !== 'section' && f.type !== 'attachment');
   }, [record, allModules]);
 
+  // 从字段定义构建中文标签映射
+  const fieldLabelMap = useMemo(() => {
+    const map: Record<string, string> = { ...FIELD_LABELS };
+    for (const f of fields) {
+      if (!map[f.id]) map[f.id] = f.label;
+    }
+    // 也处理 repeatable section 中的字段
+    const mod = findModule(record.moduleId, allModules);
+    for (const tab of mod?.tabs || []) {
+      for (const f of tab.fields || []) {
+        if (f.type !== 'section' && f.type !== 'attachment' && !map[f.id]) {
+          map[f.id] = f.label;
+        }
+      }
+    }
+    return map;
+  }, [fields, record.moduleId, allModules]);
+
   const textColor = 'var(--color-text)';
   const mutedColor = 'var(--color-text-secondary)';
 
@@ -275,7 +293,7 @@ export default function CaseDetail({ record, onClose }: Props) {
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
               <Descriptions bordered column={2} size="small">
                 {fields.map(f => (
-                  <Descriptions.Item key={f.id} label={FIELD_LABELS[f.id] || f.label} span={f.type === 'textarea' ? 2 : 1}>
+                  <Descriptions.Item key={f.id} label={fieldLabelMap[f.id] || f.label} span={f.type === 'textarea' ? 2 : 1}>
                     {fmtValue(record.data?.[f.id])}
                   </Descriptions.Item>
                 ))}
@@ -299,7 +317,7 @@ export default function CaseDetail({ record, onClose }: Props) {
                             if (k.startsWith('__') || k === 'uid' || k === 'lastModified' || k === 'percent' || k === 'status' || k === 'size') return null;
                             return (
                               <div key={k} style={{ fontSize: 12, lineHeight: 1.8 }}>
-                                <span style={{ color: mutedColor }}>{FIELD_LABELS[k] || k}：</span>
+                                <span style={{ color: mutedColor }}>{fieldLabelMap[k] || k}：</span>
                                 <span style={{ color: textColor, fontWeight: 500 }}>{fmtValue(v)}</span>
                               </div>
                             );

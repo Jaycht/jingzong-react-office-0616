@@ -612,9 +612,9 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
     return <IdNoField field={field} subName={subName} listName={listName} />;
   }
 
-  // 持有人字段：引用嫌疑人数据池做自动补全
+  // 持有人字段：共享嫌疑人全局联动
   if (field.id === 'holder') {
-    return <HolderAutoComplete field={field} subName={subName} />;
+    return <GlobalSuspectField field={field} subName={subName} />;
   }
 
   if (field.id === 'deviceBrand') {

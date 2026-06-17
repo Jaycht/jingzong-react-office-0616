@@ -1,9 +1,16 @@
-export const APP_VERSION = "V2.12.10";
+export const APP_VERSION = "V2.12.11";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 10;
+export const VERSION_PATCH = 11;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.12.11 =====
+  "V2.12.11 修复 - 时间轴日期显示[object Object]（recordDate不再用String()转换dayjs对象）",
+  "V2.12.11 修复 - 时间轴点击出错（编辑模式回填时dayjs对象正确处理）",
+  "V2.12.11 修复 - 工作台模块活跃度改为独立面板取代最近案件",
+  "V2.12.11 修复 - 数据概览中重复的模块活跃度柱状图已移除",
+  "V2.12.11 修复 - 备份页面增加自动备份设置（频率/内容/路径）",
+  "V2.12.11 修复 - Electron IPC新增get-documents-dir获取文档路径",
   // ===== V2.12.10 =====
   "V2.12.10 修复 - 深色模式：11个子页面硬编码白色背景全部替换为CSS变量",
   "V2.12.10 修复 - 搜索提示词改为：案件名称、姓名、手机号、身份证号、模块",

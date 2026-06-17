@@ -347,13 +347,6 @@ export default function Dashboard() {
             </div>
             {/* 玫瑰图 */}
             <EChartBox option={pieOption} style={{ height: 200 }} />
-            {/* 模块活跃度柱状图 */}
-            {moduleBarData.length > 0 && (
-              <div style={{ marginTop: 16, borderTop: '1px solid var(--color-border-light)', paddingTop: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: mutedColor, marginBottom: 8 }}>模块活跃度</div>
-                <EChartBox option={barOption} style={{ height: 180 }} />
-              </div>
-            )}
           </div>
         </motion.div>
       </div>
