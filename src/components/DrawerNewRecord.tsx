@@ -221,9 +221,18 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               const converted = listData.map((item: Record<string, unknown>) => {
                 const copy: Record<string, unknown> = { ...item };
                 for (const df of allFields) {
-                  if (df.type === 'date' && typeof copy[df.id] === 'string') {
-                    const d = dayjs(copy[df.id] as string);
-                    if (d.isValid()) copy[df.id] = d;
+                  if (df.type === 'date') {
+                    const raw = copy[df.id];
+                    if (typeof raw === 'string') {
+                      const d = dayjs(raw);
+                      if (d.isValid()) copy[df.id] = d;
+                    } else if (raw && typeof raw === 'object' && (raw as any).$d) {
+                      // dayjs 对象：转为真正 dayjs 实例
+                      try {
+                        const dateVal = (raw as any).$d instanceof Date ? (raw as any).$d : new Date(String((raw as any).$d));
+                        if (!isNaN(dateVal.getTime())) copy[df.id] = dayjs(dateVal);
+                      } catch { /* ignore */ }
+                    }
                   }
                 }
                 return copy;
@@ -248,13 +257,23 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               continue;
             }
             if (f.type === 'date') {
-              // 处理字符串、dayjs对象、Date对象，统一转为 dayjs
+              // 统一转为 dayjs 对象供 antd DatePicker 使用
               if (typeof raw === 'string') {
                 const d = dayjs(raw);
                 if (d.isValid()) formData[f.id] = d;
-              } else if (raw && typeof raw === 'object' && (raw as any).$d) {
-                // dayjs 对象，直接用
-                formData[f.id] = raw;
+              } else if (raw && typeof raw === 'object') {
+                const obj = raw as Record<string, unknown>;
+                if (obj.$d !== undefined) {
+                  // dayjs 对象：转为 ISO 字符串再转 dayjs，确保是真正的 dayjs 实例
+                  try {
+                    const dateVal = obj.$d instanceof Date ? obj.$d : new Date(String(obj.$d));
+                    if (!isNaN(dateVal.getTime())) {
+                      formData[f.id] = dayjs(dateVal);
+                    }
+                  } catch { /* ignore */ }
+                } else if (raw instanceof Date) {
+                  formData[f.id] = dayjs(raw);
+                }
               }
               continue;
             }

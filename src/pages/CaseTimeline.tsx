@@ -602,23 +602,89 @@ function recordDate(rec: MassRecord): string {
   return fmtDateStr(raw);
 }
 
-/** ISO日期字符串转中文格式 */
+/** 任意值转中文日期格式，兼容字符串、dayjs对象、Date对象、ISO字符串 */
 function fmtDateStr(raw: unknown): string {
-  if (!raw) return '';
-  // 处理 dayjs 对象
-  if (typeof raw === 'object' && (raw as any).$L !== undefined && (raw as any).$d !== undefined) {
+  if (raw === null || raw === undefined) return '';
+  // 字符串：直接匹配
+  if (typeof raw === 'string') {
+    const match = raw.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[1]}年${parseInt(match[2])}月${parseInt(match[3])}日`;
+    return raw.slice(0, 10);
+  }
+  // 对象：尝试各种方式提取日期
+  if (typeof raw === 'object') {
+    const obj = raw as Record<string, unknown>;
+    // dayjs 对象：$d 是底层 Date/string
+    if (obj.$d !== undefined) {
+      try {
+        const dateVal = obj.$d instanceof Date ? obj.$d : new Date(String(obj.$d));
+        if (!isNaN(dateVal.getTime())) {
+          return `${dateVal.getFullYear()}年${dateVal.getMonth() + 1}月${dateVal.getDate()}日`;
+        }
+      } catch { /* ignore */ }
+    }
+    // Date 对象
+    if (raw instanceof Date && !isNaN(raw.getTime())) {
+      return `${raw.getFullYear()}年${raw.getMonth() + 1}月${raw.getDate()}日`;
+    }
+    // 尝试 toJSON (dayjs 会返回 ISO 字符串)
+    if (typeof (raw as any).toJSON === 'function') {
+      try {
+        const s = (raw as any).toJSON();
+        const match = String(s).match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[1]}年${parseInt(match[2])}月${parseInt(match[3])}日`;
+      } catch { /* ignore */ }
+    }
+    // 尝试 toString
     try {
-      const dateVal = (raw as any).$d instanceof Date ? (raw as any).$d : new Date(String((raw as any).$d));
-      if (!isNaN(dateVal.getTime())) {
-        return `${dateVal.getFullYear()}年${dateVal.getMonth() + 1}月${dateVal.getDate()}日`;
+      const s = String(raw);
+      if (s !== '[object Object]' && s.length < 50) {
+        const match = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[1]}年${parseInt(match[2])}月${parseInt(match[3])}日`;
       }
-    } catch { return '—'; }
+    } catch { /* ignore */ }
     return '—';
   }
-  const str = String(raw);
-  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) return `${match[1]}年${parseInt(match[2])}月${parseInt(match[3])}日`;
-  return str.slice(0, 10);
+  // 其他类型
+  const s = String(raw);
+  if (s.startsWith('20')) {
+    const match = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[1]}年${parseInt(match[2])}月${parseInt(match[3])}日`;
+  }
+  return s.slice(0, 10);
+}
+  // dayjs 对象：$d 是底层 Date/string
+  if (typeof raw === 'object') {
+    const obj = raw as Record<string, unknown>;
+    if (obj.$d !== undefined) {
+      try {
+        const dateVal = obj.$d instanceof Date ? obj.$d : new Date(String(obj.$d));
+        if (!isNaN(dateVal.getTime())) {
+          return `${dateVal.getFullYear()}年${dateVal.getMonth() + 1}月${dateVal.getDate()}日`;
+        }
+      } catch { /* ignore */ }
+    }
+    // Date 对象
+    if (raw instanceof Date && !isNaN(raw.getTime())) {
+      return `${raw.getFullYear()}年${raw.getMonth() + 1}月${raw.getDate()}日`;
+    }
+    // 尝试 toString
+    try {
+      const s = String(raw);
+      if (s !== '[object Object]') {
+        const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[1]}年${parseInt(match[2])}月${parseInt(match[3])}日`;
+      }
+    } catch { /* ignore */ }
+    return '—';
+  }
+  // 其他类型
+  const s = String(raw);
+  if (s.startsWith('20')) {
+    const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[1]}年${parseInt(match[2])}月${parseInt(match[3])}日`;
+  }
+  return s.slice(0, 10);
 }
 
 export default function CaseTimeline() {
