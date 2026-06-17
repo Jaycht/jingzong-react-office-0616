@@ -53,10 +53,8 @@ let _versionCache: VersionInfo | null = null;
 
 /** 获取当前版本信息 */
 export function getCurrentVersion(): VersionInfo {
-  if (!_versionCache) {
-    _versionCache = loadVersion();
-  }
-  return { ..._versionCache };
+  // 每次都重新检查版本号，确保 changelog 始终与源码同步
+  return loadVersion();
 }
 
 /** 递增版本号（patch+1），并记录变更 */

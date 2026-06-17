@@ -157,7 +157,7 @@ export default function ModulePage() {
   }
 
   const active = module.tabs.find((tab) => tab.id === activeTab) || module.tabs[0];
-  const activeRecords = realRecords.filter((r) => r.tabId === activeTab);
+  const activeRecords = realRecords.filter((r) => r.tabId === activeTab).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
 
   // ─── 筛选逻辑 ────────────────────────────────
   const filteredRecords = useMemo(() => {
