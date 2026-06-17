@@ -29,6 +29,11 @@ const DEFAULT_VERSION: VersionInfo = {
 function loadVersion(): VersionInfo {
   const parsed = localStorageAdapter.getItem<VersionInfo>(STORAGE_KEY, DEFAULT_VERSION);
 
+  // 确保 changelog 存在且有效
+  if (!parsed.changelog || !Array.isArray(parsed.changelog)) {
+    parsed.changelog = [...CHANGELOG];
+  }
+
   // 强制同步：如果版本号不匹配 或 changelog 条目数量不匹配，都更新
   const versionMismatch = parsed.version !== APP_VERSION;
   const changelogMismatch = parsed.changelog.length !== CHANGELOG.length;

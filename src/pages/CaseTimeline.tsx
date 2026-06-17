@@ -835,6 +835,7 @@ export default function CaseTimeline() {
             timelineRecords.map((rec, i) => {
               const meta = MODULE_META[rec.moduleId] || { label: rec.moduleId, dept: '', icon: FileText, color: '#6B7280' };
               const Icon = meta.icon;
+              const d = rec.data || {};
               const date = extractDate(d.collectDate || d.receiveDate || d.filingDate || d.recordDate || d.criminalDetentionDate || d.arrestDate || d.bailDate || d.visitDate || d.summonDate || d.detentionDate || d.transferProsecutionDate || d.interrogationDate || d.captureDate || d.createdAt) || '日期未知';
               const title = recordTitle(rec);
               const summary = recordSummary(rec);
