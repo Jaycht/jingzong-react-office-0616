@@ -29,10 +29,11 @@ const DEFAULT_VERSION: VersionInfo = {
 function loadVersion(): VersionInfo {
   const parsed = localStorageAdapter.getItem<VersionInfo>(STORAGE_KEY, DEFAULT_VERSION);
 
-  // 如果 localStorage 中的版本号与源码版本号不一致，说明代码已更新
-  // 直接使用源码 CHANGELOG 完全替换，不做合并
-  // 避免旧版残留条目（如 V1.2.x）和错误排序一直存在
-  if (parsed.version !== APP_VERSION) {
+  // 强制同步：如果版本号不匹配 或 changelog 条目数量不匹配，都更新
+  const versionMismatch = parsed.version !== APP_VERSION;
+  const changelogMismatch = parsed.changelog.length !== CHANGELOG.length;
+
+  if (versionMismatch || changelogMismatch) {
     parsed.version = APP_VERSION;
     parsed.major = VERSION_MAJOR;
     parsed.minor = VERSION_MINOR;

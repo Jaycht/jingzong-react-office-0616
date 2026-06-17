@@ -676,6 +676,29 @@ function fmtDateStr(raw: unknown): string {
   return s.slice(0, 10);
 }
 
+/** 从任意值中提取最佳日期显示 */
+function extractDate(val: unknown): string {
+  if (val === null || val === undefined) return '—';
+  // 先尝试 fmtDateStr
+  const formatted = fmtDateStr(val);
+  if (formatted && formatted !== '—') return formatted;
+  // 尝试其他方式
+  if (typeof val === 'object') {
+    const obj = val as Record<string, unknown>;
+    // dayjs 对象的各种属性
+    if (obj.$d) return fmtDateStr(obj.$d);
+    if (obj._i) return fmtDateStr(obj._i);
+    if (obj.$x && obj.$x.l) return obj.$x.l;
+    // 尝试 JSON.stringify 后提取
+    try {
+      const json = JSON.stringify(val);
+      const match = json.match(/"(\d{4}-\d{2}-\d{2})/);
+      if (match) return `${match[1].slice(0,4)}年${parseInt(match[1].slice(5,7))}月${parseInt(match[1].slice(8,10))}日`;
+    } catch { /* ignore */ }
+  }
+  return '—';
+}
+
 export default function CaseTimeline() {
   const darkMode = useAppStore((s) => s.darkMode);
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
@@ -812,7 +835,7 @@ export default function CaseTimeline() {
             timelineRecords.map((rec, i) => {
               const meta = MODULE_META[rec.moduleId] || { label: rec.moduleId, dept: '', icon: FileText, color: '#6B7280' };
               const Icon = meta.icon;
-              const date = recordDate(rec) || fmtDateStr(rec.createdAt) || '日期未知';
+              const date = extractDate(d.collectDate || d.receiveDate || d.filingDate || d.recordDate || d.criminalDetentionDate || d.arrestDate || d.bailDate || d.visitDate || d.summonDate || d.detentionDate || d.transferProsecutionDate || d.interrogationDate || d.captureDate || d.createdAt) || '日期未知';
               const title = recordTitle(rec);
               const summary = recordSummary(rec);
 
