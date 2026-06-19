@@ -1,7 +1,7 @@
 /**
  * 日常随手记存储
  */
-import { indexedDBAdapter } from './adapter';
+import { indexedDBAdapter, localStorageAdapter } from './adapter';
 import { addOperationLog } from './operationLogStore';
 import { useAppStore } from './appStore';
 

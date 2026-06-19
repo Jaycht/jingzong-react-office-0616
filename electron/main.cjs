@@ -1,11 +1,13 @@
-const { app, BrowserWindow, ipcMain, Menu, dialog, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, dialog, shell, Tray, nativeImage, Notification } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const fsp = require("fs/promises");
 
 const isDev = !app.isPackaged;
 let mainWindow = null;
+let tray = null;
 let autoUpdater = null;
+let reminderTimers = new Map();
 
 // 尝试加载 electron-updater（生产环境可选）
 if (!isDev) {
@@ -243,18 +245,105 @@ if (autoUpdater) {
   });
 }
 
+// ======================== 托盘功能 ========================
+function createTray() {
+  const iconPath = path.join(__dirname, "..", "app.ico");
+  tray = new Tray(iconPath);
+  tray.setToolTip("经侦大队工作记录管理系统");
+
+  const contextMenu = Menu.buildFromTemplate([
+    { label: "显示窗口", click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
+    { type: "separator" },
+    { label: "退出", click: () => { app.isQuitting = true; app.quit(); } },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+
+  tray.on("double-click", () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  // 窗口关闭时最小化到托盘
+  if (mainWindow) {
+    mainWindow.on("close", (e) => {
+      if (!app.isQuitting) {
+        e.preventDefault();
+        mainWindow.hide();
+      }
+    });
+  }
+}
+
+// ======================== 开机自启 ========================
+ipcMain.handle("get-auto-start", () => {
+  return app.getLoginItemSettings().openAtLogin;
+});
+
+ipcMain.handle("set-auto-start", (_event, enabled) => {
+  app.setLoginItemSettings({ openAtLogin: enabled });
+  return app.getLoginItemSettings().openAtLogin;
+});
+
+// ======================== 提醒系统 ========================
+ipcMain.handle("schedule-reminder", (_event, { id, title, body, delayMs }) => {
+  // 清除旧的提醒
+  if (reminderTimers.has(id)) {
+    clearTimeout(reminderTimers.get(id));
+  }
+
+  const timer = setTimeout(() => {
+    if (Notification.isSupported()) {
+      const notification = new Notification({
+        title: title || "经侦工作记录提醒",
+        body: body || "您有一条待办提醒",
+        icon: path.join(__dirname, "..", "app.ico"),
+      });
+
+      notification.on("click", () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      });
+
+      notification.show();
+    }
+    reminderTimers.delete(id);
+  }, delayMs);
+
+  reminderTimers.set(id, timer);
+  return { scheduled: true };
+});
+
+ipcMain.handle("cancel-reminder", (_event, { id }) => {
+  if (reminderTimers.has(id)) {
+    clearTimeout(reminderTimers.get(id));
+    reminderTimers.delete(id);
+    return { cancelled: true };
+  }
+  return { cancelled: false };
+});
+
+// ======================== 启动逻辑 ========================
 app.whenReady().then(() => {
   // 确保附件目录存在
   if (!fs.existsSync(ATTACHMENTS_DIR)) {
     fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
   }
   createWindow();
+  createTray();
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  // 不关闭，保持在托盘
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+  }
 });

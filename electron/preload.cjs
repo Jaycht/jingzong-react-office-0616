@@ -35,4 +35,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (_event, data) => callback(data)),
   onUpdateProgress: (callback) => ipcRenderer.on('update-progress', (_event, data) => callback(data)),
   onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', () => callback()),
+
+  // 开机自启
+  getAutoStart: () => ipcRenderer.invoke('get-auto-start'),
+  setAutoStart: (enabled) => ipcRenderer.invoke('set-auto-start', enabled),
+
+  // 提醒系统
+  scheduleReminder: (id, title, body, delayMs) => ipcRenderer.invoke('schedule-reminder', { id, title, body, delayMs }),
+  cancelReminder: (id) => ipcRenderer.invoke('cancel-reminder', { id }),
 });
