@@ -4,7 +4,7 @@ import {
   DatabaseBackup, FileArchive, FileCog, FileSearch, FileText, FolderKanban,
   Gavel, Handshake, Landmark, LayoutDashboard, ListChecks, LockKeyhole,
   Megaphone, MessageSquareText, PieChart, ScrollText, SearchCheck,
-  TableProperties, Users, WalletCards, Clock, StickyNote
+  Settings, TableProperties, Users, WalletCards, Clock, StickyNote
 } from 'lucide-react';
 
 export type FieldType = 'text' | 'textarea' | 'date' | 'number' | 'select' | 'attachment' | 'section';
@@ -1397,12 +1397,12 @@ export const PLATFORM_NAV = {
     { id: 'graph', label: '案件图谱', icon: SearchCheck },
   ],
   data: [
+    { id: 'systemSettings', label: '系统设置', icon: Settings },
     { id: 'dailyNotes', label: '日常随手记', icon: StickyNote },
     { id: 'statistics', label: '统计分析', icon: PieChart },
     { id: 'importExport', label: '导入导出', icon: TableProperties },
     { id: 'attachments', label: '附件档案', icon: FileArchive },
     { id: 'operationLog', label: '操作日志', icon: ScrollText },
-    { id: 'settings', label: '模板字段', icon: FileCog },
     { id: 'backup', label: '备份恢复', icon: DatabaseBackup },
   ],
 };

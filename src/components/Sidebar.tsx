@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronLeft, Database, ShieldCheck, User, KeyRound, LogOut, Plus } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Database, Settings, User, KeyRound, LogOut, Plus } from 'lucide-react';
 import { Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
@@ -348,8 +348,8 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
 
         <NavGroup
           id="data-center"
-          label="数据中心"
-          icon={Database}
+          label="系统设置"
+          icon={Settings}
           expanded={expanded}
           collapsed={collapsed}
           currentPage={currentPage}
@@ -357,9 +357,6 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           onToggle={toggleExpand}
           onNavigate={setCurrentPage}
         />
-        
-        {/* 版权信息入口 */}
-        {renderPlatformItem({ id: 'version', label: '版权信息', icon: ShieldCheck })}
 
         {/* 快速新建按钮 */}
         {!collapsed && (

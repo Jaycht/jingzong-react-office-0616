@@ -14,6 +14,7 @@ import ErrorBoundary from "./ErrorBoundary";
 import CommandPalette from "./CommandPalette";
 import NotificationPanel from "./NotificationPanel";
 import FloatingSearch from "./FloatingSearch";
+import { useReminderService } from "../hooks/useReminderService";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Statistics = lazy(() => import("../pages/Statistics"));
@@ -29,6 +30,7 @@ const ModulePage = lazy(() => import("../pages/ModulePage"));
 const CaseTimeline = lazy(() => import("../pages/CaseTimeline"));
 const CaseGraph = lazy(() => import("../pages/CaseGraph"));
 const DailyNotes = lazy(() => import("../pages/DailyNotes"));
+const SystemSettings = lazy(() => import("../pages/SystemSettings"));
 
 const PAGES: Record<string, React.FC> = {
   dashboard: Dashboard, statistics: Statistics,
@@ -38,6 +40,7 @@ const PAGES: Record<string, React.FC> = {
   timeline: CaseTimeline,
   graph: CaseGraph,
   dailyNotes: DailyNotes,
+  systemSettings: SystemSettings,
   interview: PlaceholderPage, meeting: PlaceholderPage, victim: PlaceholderPage,
   clue: PlaceholderPage, fund: PlaceholderPage, daily: PlaceholderPage,
   party: PlaceholderPage, report: PlaceholderPage, userSettings: PlaceholderPage,
@@ -68,6 +71,7 @@ const winControls = {
 };
 
 export default function AppLayout() {
+    useReminderService();
     const modalId = useAppStore((s) => s.modalId);
   const closeModal = useAppStore((s) => s.closeModal);
   const drawerOpen = useAppStore((s) => s.drawerOpen);

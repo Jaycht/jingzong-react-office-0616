@@ -1,9 +1,16 @@
-export const APP_VERSION = "V2.12.12";
+export const APP_VERSION = "V2.14.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 12;
-export const VERSION_PATCH = 12;
+export const VERSION_MINOR = 14;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.0 =====
+  "V2.14.0 新增 - 系统托盘：最小化到托盘、双击恢复、右键菜单（显示窗口/退出）",
+  "V2.14.0 新增 - 开机自启：Windows注册表自动启动，系统设置页一键开关",
+  "V2.14.0 新增 - 提醒系统：随手记自定义提醒+法律时限自动预警+Electron原生通知+稍后提醒(1/3/5/10/30分钟)",
+  "V2.14.0 新增 - 系统设置页面：开机自启开关、关闭最小化到托盘、深色模式、关于软件",
+  "V2.14.0 新增 - 日常随手记功能(批量录入/列表筛选/导入导出/自定义类型/提醒设置)",
+  "V2.14.0 优化 - 侧边栏'数据中心'改名为'系统设置'，版权信息合并到系统设置页",
   // ===== V2.12.12 =====
   "V2.12.12 修复 - 强制措施日期显示[object Object]（recordDate扫描repeatable section中的日期字段）",
   "V2.12.12 修复 - 强制措施信息显示在案件图谱中（扫描coerciveMeasures数组）",
