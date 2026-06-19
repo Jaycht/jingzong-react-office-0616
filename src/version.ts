@@ -1,9 +1,16 @@
-export const APP_VERSION = "V2.14.5";
+export const APP_VERSION = "V2.14.6";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 5;
+export const VERSION_PATCH = 6;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.6 =====
+  "V2.14.6 重构 - 提醒弹窗改为独立浮动窗口(不在应用内)，桌面右下角紫色渐变卡片",
+  "V2.14.6 新增 - 通知窗口自定义HTML：渐变背景+铃声播放+稍后提醒/不再提醒按钮",
+  "V2.14.6 修复 - 法律时限预警冷却从60秒改为24小时，每天最多提醒一次",
+  "V2.14.6 修复 - 去掉系统原生Notification，完全由独立窗口控制弹窗和声音",
+  "V2.14.6 新增 - 系统设置页面右侧显示大logo",
+  "V2.14.6 新增 - 侧边栏恢复「关于软件」独立导航项",
   // ===== V2.14.5 =====
   "V2.14.5 修复 - 提醒声音：添加autoplay-policy无用户手势限制，Electron环境下Audio正常播放",
   "V2.14.5 新增 - 应用内弹窗添加「稍后提醒(5分钟)」和「不再提醒」按钮",

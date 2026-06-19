@@ -293,35 +293,88 @@ ipcMain.handle("set-auto-start", (_event, enabled) => {
 });
 
 // ======================== 提醒系统 ========================
+// 创建独立浮动通知窗口（桌面右下角，不在主窗口内）
+let notifWindows = [];
+
+function createNotifWindow(title, body, soundFile, noteId) {
+  const { screen } = require("electron");
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenW, height: screenH } = primaryDisplay.workAreaSize;
+
+  const notifWidth = 400;
+  const notifHeight = 160;
+  const gap = 16;
+  const index = notifWindows.length;
+  const x = screenW - notifWidth - gap;
+  const y = screenH - notifHeight - gap - index * (notifHeight + gap);
+
+  const params = new URLSearchParams({ title, body, sound: soundFile || "", noteId: noteId || "" });
+
+  const notifWin = new BrowserWindow({
+    width: notifWidth,
+    height: notifHeight,
+    x: Math.max(0, x),
+    y: Math.max(0, y),
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    movable: false,
+    focusable: false,
+    hasShadow: false,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  notifWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
+  if (isDev) {
+    notifWin.loadURL(`http://localhost:5173/notification.html?${params.toString()}`);
+  } else {
+    notifWin.loadFile(path.join(__dirname, "notification.html"), { search: params.toString() });
+  }
+
+  notifWindows.push(notifWin);
+
+  notifWin.on("closed", () => {
+    notifWindows = notifWindows.filter((w) => w !== notifWin);
+  });
+
+  // 10秒后自动关闭
+  setTimeout(() => {
+    if (!notifWin.isDestroyed()) notifWin.close();
+  }, 12000);
+}
+
 ipcMain.handle("show-reminder", (_event, { title, body, soundFile, noteId }) => {
-  // 方式1: 原生系统通知
-  try {
-    if (Notification.isSupported()) {
-      const iconPath = path.join(__dirname, "..", "app.ico");
-      const notification = new Notification({
-        title: title || "经侦工作记录提醒",
-        body: body || "您有一条待办提醒",
-        icon: fs.existsSync(iconPath) ? iconPath : undefined,
-        silent: false,
-      });
-      notification.on("click", () => {
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
-        }
-      });
-      notification.show();
-    }
-  } catch (err) {
-    console.warn("[Reminder] Native notification failed:", err.message);
-  }
-
-  // 方式2: 推送到渲染进程显示应用内弹窗 + 播放声音
-  if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send("show-in-app-notification", { title, body, soundFile, noteId });
-  }
-
+  createNotifWindow(title, body, soundFile, noteId);
   return { shown: true };
+});
+
+// 通知窗口操作
+ipcMain.on("notif-close", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win && !win.isDestroyed()) win.close();
+});
+
+ipcMain.on("notif-snooze", (event, minutes, noteId) => {
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send("reminder-snoozed", { minutes, noteId });
+  }
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win && !win.isDestroyed()) win.close();
+});
+
+ipcMain.on("notif-dismiss", (event, noteId) => {
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send("reminder-dismissed", { noteId });
+  }
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win && !win.isDestroyed()) win.close();
 });
 
 ipcMain.handle("cancel-reminder", (_event, { id }) => {

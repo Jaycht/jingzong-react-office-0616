@@ -44,4 +44,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showReminder: (title, body, soundFile, noteId) => ipcRenderer.invoke('show-reminder', { title, body, soundFile, noteId }),
   cancelReminder: (id) => ipcRenderer.invoke('cancel-reminder', { id }),
   onShowInAppNotification: (callback) => ipcRenderer.on('show-in-app-notification', (_event, data) => callback(data)),
+
+  // 通知窗口操作
+  closeNotifWindow: () => ipcRenderer.send('notif-close'),
+  notifSnooze: (minutes, noteId) => ipcRenderer.send('notif-snooze', minutes, noteId),
+  notifDismiss: (noteId) => ipcRenderer.send('notif-dismiss', noteId),
+  onReminderSnoozed: (callback) => ipcRenderer.on('reminder-snoozed', (_event, data) => callback(data)),
+  onReminderDismissed: (callback) => ipcRenderer.on('reminder-dismissed', (_event, data) => callback(data)),
 });

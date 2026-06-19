@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import type React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronLeft, Database, Settings, User, KeyRound, LogOut, Plus } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Database, Settings, ShieldCheck, User, KeyRound, LogOut, Plus } from 'lucide-react';
 import { Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
@@ -357,6 +357,9 @@ export default function Sidebar({ onOpenProfile, onOpenPassword }: Props) {
           onToggle={toggleExpand}
           onNavigate={setCurrentPage}
         />
+
+        {/* 关于软件 */}
+        {renderPlatformItem({ id: 'version', label: '关于软件', icon: ShieldCheck })}
 
         {/* 快速新建按钮 */}
         {!collapsed && (

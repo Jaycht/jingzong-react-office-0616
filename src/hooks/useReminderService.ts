@@ -33,37 +33,18 @@ function getSnoozed(): Record<string, number> {
   catch { return {}; }
 }
 
-export function snoozeReminder(id: string, minutes: number) {
+function setSnoozed(id: string, untilMs: number) {
   const s = getSnoozed();
-  s[id] = Date.now() + minutes * 60 * 1000;
+  s[id] = untilMs;
   try { localStorage.setItem(SNOOZED_KEY, JSON.stringify(s)); } catch {}
 }
 
-const audioCache: Record<string, HTMLAudioElement> = {};
-
-export function playReminderSound(soundFile?: string) {
-  try {
-    const src = soundFile ? `/audio/${soundFile}` : '/reminder.mp3';
-    if (!audioCache[src]) {
-      audioCache[src] = new Audio(src);
-      audioCache[src].volume = 1.0;
-    }
-    const audio = audioCache[src];
-    audio.currentTime = 0;
-    audio.play().catch(() => {});
-  } catch {}
+export function snoozeReminder(id: string, minutes: number) {
+  setSnoozed(id, Date.now() + minutes * 60 * 1000);
 }
 
-function fireReminder(title: string, body: string, soundFile?: string, noteId?: string) {
-  if (isElectron) {
-    // Electron: 由主进程推送回渲染进程播声音+弹窗，此处不播
-    (window as any).electronAPI.showReminder(title, body, soundFile || '', noteId || '');
-  } else {
-    playReminderSound(soundFile);
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body });
-    }
-  }
+export function dismissReminder(id: string) {
+  addDismissed(id);
 }
 
 const LEGAL_RULES: Array<{ label: string; field: string; days: number }> = [
@@ -111,39 +92,37 @@ function checkLegalDeadlines(records: any[]): Array<{ id: string; title: string;
   return alerts;
 }
 
-export function dismissReminder(id: string) {
-  addDismissed(id);
-}
-
-export function useReminderService(showNotification: (title: string, body: string, soundFile?: string, noteId?: string) => void) {
+export function useReminderService() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!isElectron && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
+    if (!isElectron) return;
 
-    // 监听主进程推送的应用内通知
-    if (isElectron && (window as any).electronAPI?.onShowInAppNotification) {
-      (window as any).electronAPI.onShowInAppNotification((data: { title: string; body: string; soundFile?: string; noteId?: string }) => {
-        showNotification(data.title, data.body, data.soundFile, data.noteId);
+    // 监听通知窗口的"稍后提醒"和"不再提醒"操作
+    const api = (window as any).electronAPI;
+    if (api.onReminderSnoozed) {
+      api.onReminderSnoozed((_e: any, data: { minutes: number; noteId: string }) => {
+        if (data.noteId) snoozeReminder(data.noteId, data.minutes);
+      });
+    }
+    if (api.onReminderDismissed) {
+      api.onReminderDismissed((_e: any, data: { noteId: string }) => {
+        if (data.noteId) dismissReminder(data.noteId);
       });
     }
 
     function check() {
       const dismissed = getDismissed();
       const triggered = getTriggered();
+      const snoozed = getSnoozed();
       const now = Date.now();
 
       // 日常随手记提醒
       try {
         const notes = getDailyNotes();
-        const snoozed = getSnoozed();
         for (const note of notes) {
           if (!note.reminder?.enabled || !note.reminder?.time) continue;
           if (dismissed.has(note.id)) continue;
-
-          // 跳过已稍后提醒的记录
           if (snoozed[note.id] && now < snoozed[note.id]) continue;
 
           const reminderTime = new Date(note.reminder.time).getTime();
@@ -162,20 +141,26 @@ export function useReminderService(showNotification: (title: string, body: strin
 
           if (now - lastTriggered < cooldownMs) continue;
 
-          fireReminder('日常随手记提醒', `${note.title || '未命名记录'} - ${note.type}`, note.reminder.sound, note.id);
+          api.showReminder(
+            '日常随手记提醒',
+            `${note.title || '未命名记录'} - ${note.type}`,
+            note.reminder.sound || '',
+            note.id,
+          );
           markTriggered(note.id);
         }
       } catch {}
 
-      // 法律时限预警
+      // 法律时限预警 — 冷却 24 小时，每天最多提醒一次
       try {
         const records = getMassRecords();
         if (records.length > 0) {
           const alerts = checkLegalDeadlines(records);
           for (const alert of alerts) {
             if (dismissed.has(alert.id)) continue;
-            if (triggered[alert.id] && now - triggered[alert.id] < 60000) continue;
-            fireReminder(alert.title, alert.body);
+            const lastTriggered = triggered[alert.id] || 0;
+            if (now - lastTriggered < 24 * 60 * 60 * 1000) continue;
+            api.showReminder(alert.title, alert.body, '', '');
             markTriggered(alert.id);
           }
         }
@@ -186,5 +171,5 @@ export function useReminderService(showNotification: (title: string, body: strin
     intervalRef.current = setInterval(check, 5000);
 
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [showNotification]);
+  }, []);
 }
