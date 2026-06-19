@@ -28,6 +28,7 @@ const ModulePage = lazy(() => import("../pages/ModulePage"));
 
 const CaseTimeline = lazy(() => import("../pages/CaseTimeline"));
 const CaseGraph = lazy(() => import("../pages/CaseGraph"));
+const DailyNotes = lazy(() => import("../pages/DailyNotes"));
 
 const PAGES: Record<string, React.FC> = {
   dashboard: Dashboard, statistics: Statistics,
@@ -36,6 +37,7 @@ const PAGES: Record<string, React.FC> = {
   attachments: Attachments,
   timeline: CaseTimeline,
   graph: CaseGraph,
+  dailyNotes: DailyNotes,
   interview: PlaceholderPage, meeting: PlaceholderPage, victim: PlaceholderPage,
   clue: PlaceholderPage, fund: PlaceholderPage, daily: PlaceholderPage,
   party: PlaceholderPage, report: PlaceholderPage, userSettings: PlaceholderPage,
