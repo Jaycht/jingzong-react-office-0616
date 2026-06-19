@@ -1,9 +1,16 @@
-export const APP_VERSION = "V2.14.4";
+export const APP_VERSION = "V2.14.5";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 4;
+export const VERSION_PATCH = 5;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.5 =====
+  "V2.14.5 修复 - 提醒声音：添加autoplay-policy无用户手势限制，Electron环境下Audio正常播放",
+  "V2.14.5 新增 - 应用内弹窗添加「稍后提醒(5分钟)」和「不再提醒」按钮",
+  "V2.14.5 修复 - 稍后提醒：5分钟内跳过该记录检查，到期后重新触发",
+  "V2.14.5 修复 - 不再提醒：永久跳过该记录，写入dismissed列表",
+  "V2.14.5 修复 - 声音不重复播放：Electron下仅在应用内弹窗时播放一次",
+  "V2.14.5 优化 - 弹窗自动消失时间从8秒延长到10秒",
   // ===== V2.14.4 =====
   "V2.14.4 修复 - 提醒系统三重保障：主进程原生Notification(setAppUserModelId) + webContents推送 + 应用内紫色弹窗",
   "V2.14.4 修复 - 主进程Notification设置silent:true避免声音重复，renderer端播放用户选择的铃声",

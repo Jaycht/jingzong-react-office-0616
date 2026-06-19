@@ -14,7 +14,7 @@ import ErrorBoundary from "./ErrorBoundary";
 import CommandPalette from "./CommandPalette";
 import NotificationPanel from "./NotificationPanel";
 import FloatingSearch from "./FloatingSearch";
-import { useReminderService, playReminderSound } from "../hooks/useReminderService";
+import { useReminderService, playReminderSound, dismissReminder, snoozeReminder } from "../hooks/useReminderService";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Statistics = lazy(() => import("../pages/Statistics"));
@@ -74,6 +74,8 @@ interface AppNotification {
   id: number;
   title: string;
   body: string;
+  soundFile?: string;
+  noteId?: string;
 }
 
 let notifId = 0;
@@ -81,13 +83,13 @@ let notifId = 0;
 export default function AppLayout() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
-  const showNotification = useCallback((title: string, body: string) => {
+  const showNotification = useCallback((title: string, body: string, soundFile?: string, noteId?: string) => {
     const id = ++notifId;
-    setNotifications((prev) => [...prev, { id, title, body }]);
-    playReminderSound();
+    setNotifications((prev) => [...prev, { id, title, body, soundFile, noteId }]);
+    playReminderSound(soundFile);
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 8000);
+    }, 10000);
   }, []);
 
   useReminderService(showNotification);
@@ -149,7 +151,7 @@ export default function AppLayout() {
       )}
 
       {/* 应用内提醒弹窗 */}
-      <div style={{ position: 'fixed', top: isElectron ? 42 : 10, right: 20, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
+      <div style={{ position: 'fixed', top: isElectron ? 42 : 10, right: 20, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none', maxWidth: 360 }}>
         <AnimatePresence>
           {notifications.map((n) => (
             <motion.div
@@ -166,15 +168,38 @@ export default function AppLayout() {
                 background: 'linear-gradient(135deg, #7C3AED, #A78BFA)',
                 color: '#fff',
                 boxShadow: '0 8px 32px rgba(124,58,237,.4)',
-                cursor: 'pointer',
-              }}
-              onClick={() => {
-                setNotifications((prev) => prev.filter((nn) => nn.id !== n.id));
-                if (isElectron) (window as any).electronAPI?.showWindow?.();
               }}
             >
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{n.title}</div>
-              <div style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.4 }}>{n.body}</div>
+              <div style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.4, marginBottom: 10 }}>{n.body}</div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                {n.noteId && (
+                  <button
+                    onClick={() => {
+                      snoozeReminder(n.noteId!, 5);
+                      setNotifications((prev) => prev.filter((nn) => nn.id !== n.id));
+                    }}
+                    style={{
+                      padding: '4px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.4)',
+                      background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 12, cursor: 'pointer',
+                    }}
+                  >
+                    稍后提醒(5分钟)
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (n.noteId) dismissReminder(n.noteId);
+                    setNotifications((prev) => prev.filter((nn) => nn.id !== n.id));
+                  }}
+                  style={{
+                    padding: '4px 12px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.4)',
+                    background: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 12, cursor: 'pointer',
+                  }}
+                >
+                  不再提醒
+                </button>
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>

@@ -6,6 +6,7 @@ const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?
 
 const DISMISSED_KEY = 'jingzong.reminder.dismissed';
 const TRIGGERED_KEY = 'jingzong.reminder.triggered';
+const SNOOZED_KEY = 'jingzong.reminder.snoozed';
 
 function getDismissed(): Set<string> {
   try { const raw = localStorage.getItem(DISMISSED_KEY); return raw ? new Set(JSON.parse(raw)) : new Set(); }
@@ -27,6 +28,17 @@ function markTriggered(id: string) {
   try { localStorage.setItem(TRIGGERED_KEY, JSON.stringify(s)); } catch {}
 }
 
+function getSnoozed(): Record<string, number> {
+  try { const raw = localStorage.getItem(SNOOZED_KEY); return raw ? JSON.parse(raw) : {}; }
+  catch { return {}; }
+}
+
+export function snoozeReminder(id: string, minutes: number) {
+  const s = getSnoozed();
+  s[id] = Date.now() + minutes * 60 * 1000;
+  try { localStorage.setItem(SNOOZED_KEY, JSON.stringify(s)); } catch {}
+}
+
 const audioCache: Record<string, HTMLAudioElement> = {};
 
 export function playReminderSound(soundFile?: string) {
@@ -42,12 +54,15 @@ export function playReminderSound(soundFile?: string) {
   } catch {}
 }
 
-function fireReminder(title: string, body: string, soundFile?: string) {
-  playReminderSound(soundFile);
+function fireReminder(title: string, body: string, soundFile?: string, noteId?: string) {
   if (isElectron) {
-    (window as any).electronAPI.showReminder(title, body);
-  } else if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, { body });
+    // Electron: 由主进程推送回渲染进程播声音+弹窗，此处不播
+    (window as any).electronAPI.showReminder(title, body, soundFile || '', noteId || '');
+  } else {
+    playReminderSound(soundFile);
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, { body });
+    }
   }
 }
 
@@ -100,7 +115,7 @@ export function dismissReminder(id: string) {
   addDismissed(id);
 }
 
-export function useReminderService(showNotification: (title: string, body: string) => void) {
+export function useReminderService(showNotification: (title: string, body: string, soundFile?: string, noteId?: string) => void) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -108,10 +123,10 @@ export function useReminderService(showNotification: (title: string, body: strin
       Notification.requestPermission();
     }
 
-    // 监听主进程推送的应用内通知（最可靠的通道）
+    // 监听主进程推送的应用内通知
     if (isElectron && (window as any).electronAPI?.onShowInAppNotification) {
-      (window as any).electronAPI.onShowInAppNotification((data: { title: string; body: string }) => {
-        showNotification(data.title, data.body);
+      (window as any).electronAPI.onShowInAppNotification((data: { title: string; body: string; soundFile?: string; noteId?: string }) => {
+        showNotification(data.title, data.body, data.soundFile, data.noteId);
       });
     }
 
@@ -123,9 +138,13 @@ export function useReminderService(showNotification: (title: string, body: strin
       // 日常随手记提醒
       try {
         const notes = getDailyNotes();
+        const snoozed = getSnoozed();
         for (const note of notes) {
           if (!note.reminder?.enabled || !note.reminder?.time) continue;
           if (dismissed.has(note.id)) continue;
+
+          // 跳过已稍后提醒的记录
+          if (snoozed[note.id] && now < snoozed[note.id]) continue;
 
           const reminderTime = new Date(note.reminder.time).getTime();
           if (isNaN(reminderTime)) continue;
@@ -143,7 +162,7 @@ export function useReminderService(showNotification: (title: string, body: strin
 
           if (now - lastTriggered < cooldownMs) continue;
 
-          fireReminder('日常随手记提醒', `${note.title || '未命名记录'} - ${note.type}`, note.reminder.sound);
+          fireReminder('日常随手记提醒', `${note.title || '未命名记录'} - ${note.type}`, note.reminder.sound, note.id);
           markTriggered(note.id);
         }
       } catch {}

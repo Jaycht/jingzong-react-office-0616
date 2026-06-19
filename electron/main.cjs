@@ -11,6 +11,9 @@ let autoUpdater = null;
 // Windows 通知必须设置 AppUserModelID，否则 Notification.show() 静默失败
 app.setAppUserModelId("com.jingzong.worklog");
 
+// 允许 Audio.play() 无需用户手势（提醒声音播放）
+app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
+
 // 尝试加载 electron-updater（生产环境可选）
 if (!isDev) {
   try {
@@ -290,9 +293,8 @@ ipcMain.handle("set-auto-start", (_event, enabled) => {
 });
 
 // ======================== 提醒系统 ========================
-ipcMain.handle("show-reminder", (_event, { title, body }) => {
+ipcMain.handle("show-reminder", (_event, { title, body, soundFile, noteId }) => {
   // 方式1: 原生系统通知
-  let nativeShown = false;
   try {
     if (Notification.isSupported()) {
       const iconPath = path.join(__dirname, "..", "app.ico");
@@ -300,7 +302,7 @@ ipcMain.handle("show-reminder", (_event, { title, body }) => {
         title: title || "经侦工作记录提醒",
         body: body || "您有一条待办提醒",
         icon: fs.existsSync(iconPath) ? iconPath : undefined,
-        silent: true,
+        silent: false,
       });
       notification.on("click", () => {
         if (mainWindow) {
@@ -309,18 +311,17 @@ ipcMain.handle("show-reminder", (_event, { title, body }) => {
         }
       });
       notification.show();
-      nativeShown = true;
     }
   } catch (err) {
     console.warn("[Reminder] Native notification failed:", err.message);
   }
 
-  // 方式2: 推送到渲染进程显示应用内弹窗 + 播放声音（最可靠）
+  // 方式2: 推送到渲染进程显示应用内弹窗 + 播放声音
   if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send("show-in-app-notification", { title, body });
+    mainWindow.webContents.send("show-in-app-notification", { title, body, soundFile, noteId });
   }
 
-  return { nativeShown };
+  return { shown: true };
 });
 
 ipcMain.handle("cancel-reminder", (_event, { id }) => {
