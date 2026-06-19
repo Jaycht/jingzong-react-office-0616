@@ -71,4 +71,19 @@ export function deleteDailyNote(id: string): void {
   const notes = getDailyNotes().filter((n) => n.id !== id);
   indexedDBAdapter.setItem(STORAGE_KEY, notes);
   addOperationLog({ user: currentUser(), action: '删除', detail: `删除随手记 ${id}`, ip: 'local', type: 'delete' });
+  // 清理该记录在 localStorage 中残留的提醒状态
+  try {
+    ['jingzong.reminder.dismissed', 'jingzong.reminder.triggered', 'jingzong.reminder.snoozed'].forEach((key) => {
+      const raw = localStorage.getItem(key);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) {
+        const filtered = data.filter((v: string) => v !== id);
+        localStorage.setItem(key, JSON.stringify(filtered));
+      } else if (typeof data === 'object' && data[id] !== undefined) {
+        delete data[id];
+        localStorage.setItem(key, JSON.stringify(data));
+      }
+    });
+  } catch {}
 }

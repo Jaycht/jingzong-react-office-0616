@@ -1,9 +1,12 @@
-export const APP_VERSION = "V2.14.6";
+export const APP_VERSION = "V2.14.7";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 6;
+export const VERSION_PATCH = 7;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.7 =====
+  "V2.14.7 修复 - 删除随手记时清理localStorage中残留的提醒状态(dismissed/triggered/snoozed)",
+  "V2.14.7 清理 - 移除preload中废弃的onShowInAppNotification通道",
   // ===== V2.14.6 =====
   "V2.14.6 重构 - 提醒弹窗改为独立浮动窗口(不在应用内)，桌面右下角紫色渐变卡片",
   "V2.14.6 新增 - 通知窗口自定义HTML：渐变背景+铃声播放+稍后提醒/不再提醒按钮",
