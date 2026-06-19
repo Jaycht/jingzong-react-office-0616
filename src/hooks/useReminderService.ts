@@ -6,6 +6,7 @@ const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?
 
 const DISMISSED_KEY = 'jingzong.reminder.dismissed';
 const SNOOZED_KEY = 'jingzong.reminder.snoozed';
+const SCHEDULED_KEY = 'jingzong.reminder.scheduled';
 
 function getDismissed(): Set<string> {
   try {
@@ -39,9 +40,29 @@ function removeSnoozed(id: string) {
   try { localStorage.setItem(SNOOZED_KEY, JSON.stringify(s)); } catch {}
 }
 
+function getScheduled(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SCHEDULED_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+
+function markScheduled(id: string) {
+  const s = getScheduled();
+  s.add(id);
+  try { localStorage.setItem(SCHEDULED_KEY, JSON.stringify([...s])); } catch {}
+}
+
+function clearScheduled(id: string) {
+  const s = getScheduled();
+  s.delete(id);
+  try { localStorage.setItem(SCHEDULED_KEY, JSON.stringify([...s])); } catch {}
+}
+
 export function scheduleSnooze(id: string, title: string, body: string, minutes: number) {
   const delayMs = minutes * 60 * 1000;
   setSnoozed(id, Date.now() + delayMs);
+  clearScheduled(id);
   if (isElectron) {
     (window as any).electronAPI.scheduleReminder(`snooze-${id}`, title, body, delayMs);
   }
@@ -98,21 +119,12 @@ function checkLegalDeadlines(records: any[]): Array<{ id: string; title: string;
   return alerts;
 }
 
-function getOrCreateScheduledSet(): Set<string> {
-  if (!(window as any).electronAPI._scheduledReminders) {
-    (window as any).electronAPI._scheduledReminders = new Set();
-  }
-  return (window as any).electronAPI._scheduledReminders;
-}
-
-function scheduleIfDue(id: string, title: string, body: string, timeMs: number) {
-  const now = Date.now();
-  const scheduled = getOrCreateScheduledSet();
-  if (scheduled.has(id)) return;
-
-  const delayMs = Math.max(0, timeMs - now);
-  (window as any).electronAPI.scheduleReminder(id, title, body, delayMs <= 1000 ? 100 : delayMs);
-  scheduled.add(id);
+function fireNotification(id: string, title: string, body: string, delayMs: number) {
+  const api = (window as any).electronAPI;
+  if (!api) return;
+  clearScheduled(id);
+  api.scheduleReminder(id, title, body, delayMs);
+  markScheduled(id);
 }
 
 export function useReminderService() {
@@ -122,28 +134,34 @@ export function useReminderService() {
     if (!isElectron) return;
 
     function checkDailyReminders() {
-      const notes = getDailyNotes();
-      const dismissed = getDismissed();
-      const snoozed = getSnoozed();
-      const now = Date.now();
+      try {
+        const notes = getDailyNotes();
+        const dismissed = getDismissed();
+        const snoozed = getSnoozed();
+        const scheduled = getScheduled();
+        const now = Date.now();
 
-      for (const note of notes) {
-        if (!note.reminder?.enabled || !note.reminder?.time) continue;
-        if (dismissed.has(note.id)) continue;
+        for (const note of notes) {
+          if (!note.reminder?.enabled || !note.reminder?.time) continue;
+          if (dismissed.has(note.id)) continue;
 
-        const reminderTime = new Date(note.reminder.time).getTime();
-        if (isNaN(reminderTime)) continue;
+          const reminderTime = new Date(note.reminder.time).getTime();
+          if (isNaN(reminderTime)) continue;
 
-        if (snoozed[note.id] && now < snoozed[note.id]) continue;
-        if (snoozed[note.id] && now >= snoozed[note.id]) removeSnoozed(note.id);
+          if (snoozed[note.id] && now < snoozed[note.id]) continue;
+          if (snoozed[note.id] && now >= snoozed[note.id]) removeSnoozed(note.id);
 
-        scheduleIfDue(
-          note.id,
-          '日常随手记提醒',
-          `${note.title || '未命名记录'} - ${note.type}`,
-          reminderTime,
-        );
-      }
+          if (scheduled.has(note.id)) continue;
+
+          const delayMs = Math.max(0, reminderTime - now);
+          fireNotification(
+            note.id,
+            '日常随手记提醒',
+            `${note.title || '未命名记录'} - ${note.type}`,
+            delayMs,
+          );
+        }
+      } catch {}
     }
 
     function checkLegal() {
@@ -152,10 +170,12 @@ export function useReminderService() {
         if (!records.length) return;
         const alerts = checkLegalDeadlines(records);
         const dismissed = getDismissed();
+        const scheduled = getScheduled();
 
         for (const alert of alerts) {
           if (dismissed.has(alert.id)) continue;
-          scheduleIfDue(alert.id, alert.title, alert.body, Date.now());
+          if (scheduled.has(alert.id)) continue;
+          fireNotification(alert.id, alert.title, alert.body, 100);
         }
       } catch {}
     }
@@ -166,7 +186,7 @@ export function useReminderService() {
     intervalRef.current = setInterval(() => {
       checkDailyReminders();
       checkLegal();
-    }, 30 * 1000);
+    }, 15 * 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -176,6 +196,7 @@ export function useReminderService() {
 
 export function dismissReminder(id: string) {
   addDismissed(id);
+  clearScheduled(id);
   if (isElectron) {
     (window as any).electronAPI.cancelReminder({ id });
   }

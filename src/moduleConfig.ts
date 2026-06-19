@@ -1393,12 +1393,12 @@ export const DEPARTMENTS: NavDepartment[] = [
 export const PLATFORM_NAV = {
   top: [
     { id: 'dashboard', label: '工作台', icon: LayoutDashboard },
-    { id: 'timeline', label: '案件时间轴', icon: Clock },
     { id: 'graph', label: '案件图谱', icon: SearchCheck },
+    { id: 'timeline', label: '案件时间轴', icon: Clock },
+    { id: 'dailyNotes', label: '日常随手记', icon: StickyNote },
   ],
   data: [
     { id: 'systemSettings', label: '系统设置', icon: Settings },
-    { id: 'dailyNotes', label: '日常随手记', icon: StickyNote },
     { id: 'statistics', label: '统计分析', icon: PieChart },
     { id: 'importExport', label: '导入导出', icon: TableProperties },
     { id: 'attachments', label: '附件档案', icon: FileArchive },

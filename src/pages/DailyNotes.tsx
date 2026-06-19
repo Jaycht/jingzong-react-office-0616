@@ -1,10 +1,8 @@
-/**
- * 日常随手记 - 简单 CRUD 页面
- */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { StickyNote, Plus, Trash2, Download, Upload, Bell, X, Calendar } from 'lucide-react';
-import { Modal, Input, Select, DatePicker, Switch, Tag } from 'antd';
+import { StickyNote, Plus, Trash2, Download, Upload, Bell, X, Pen } from 'lucide-react';
+import { Modal, Input, Select, DatePicker, Switch, Tag, Button, Table, Space } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import { useAppStore } from '../store/appStore';
 import { getDailyNotes, createDailyNote, updateDailyNote, deleteDailyNote, getCustomTypes, saveCustomTypes, type DailyNote } from '../store/dailyNotesStore';
 import { saveAs } from 'file-saver';
@@ -19,34 +17,47 @@ const REPEAT_OPTIONS = [
 
 export default function DailyNotes() {
   const showToast = useAppStore((s) => s.showToast);
-  const [notes, setNotes] = useState<DailyNote[]>(() => getDailyNotes());
-  const [filterType, setFilterType] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [filterType, setFilterType] = useState<string | null>(null);
+  const [filterText, setFilterText] = useState('');
   const [editingNote, setEditingNote] = useState<DailyNote | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [customTypes, setCustomTypes] = useState<string[]>(() => getCustomTypes());
   const [newType, setNewType] = useState('');
   const [showTypeManager, setShowTypeManager] = useState(false);
-  const [batchMode, setBatchMode] = useState(false);
-  const [batchDate, setBatchDate] = useState(dayjs());
-  const [batchType, setBatchType] = useState('一般工作');
+
+  const allNotes = useMemo(() => { void refreshKey; return getDailyNotes(); }, [refreshKey]);
 
   const filteredNotes = useMemo(() => {
-    let list = notes;
+    let list = allNotes;
     if (filterType) list = list.filter((n) => n.type === filterType);
-    return list.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
-  }, [notes, filterType]);
+    if (filterText.trim()) {
+      const kw = filterText.trim().toLowerCase();
+      list = list.filter((n) =>
+        (n.title && n.title.toLowerCase().includes(kw)) ||
+        (n.contents && n.contents.some((c) => c.toLowerCase().includes(kw))) ||
+        (n.notes && n.notes.toLowerCase().includes(kw))
+      );
+    }
+    return list;
+  }, [allNotes, filterType, filterText]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = useCallback((id: string, title: string) => {
     Modal.confirm({
-      title: '确认删除', content: '删除后不可恢复，确定要删除吗？',
+      title: '确认删除',
+      content: `确定要删除记录「${title || '无标题'}」吗？删除后不可恢复。`,
       okText: '删除', okButtonProps: { danger: true }, cancelText: '取消',
-      onOk: () => { deleteDailyNote(id); setNotes(getDailyNotes()); showToast('已删除', 'success'); },
+      onOk: () => {
+        deleteDailyNote(id);
+        setRefreshKey((k) => k + 1);
+        showToast('已删除', 'success');
+      },
     });
-  };
+  }, [showToast]);
 
   const handleExport = () => {
     if (filteredNotes.length === 0) { showToast('没有可导出的数据', 'warning'); return; }
-    const rows = filteredNotes.map((n) => ({ 日期: n.date, 标题: n.title, 类型: n.type, 内容: n.contents.join('\n'), 备注: n.notes, 创建时间: n.createdAt }));
+    const rows = filteredNotes.map((n) => ({ 日期: n.date, 标题: n.title, 类型: n.type, 内容: n.contents.join('\n'), 提醒: n.reminder?.enabled ? '已设置' : '无', 备注: n.notes, 创建时间: n.createdAt }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '随手记');
     saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `随手记_${dayjs().format('YYYY-MM-DD')}.xlsx`);
@@ -68,7 +79,8 @@ export default function DailyNotes() {
           createDailyNote({ date: r['日期'] || dayjs().format('YYYY-MM-DD'), title: r['标题'] || '', type: r['类型'] || '一般工作', contents: r['内容'] ? String(r['内容']).split('\n') : [''], notes: r['备注'] || '' });
           count++;
         }
-        setNotes(getDailyNotes()); showToast(`成功导入 ${count} 条记录`, 'success');
+        setRefreshKey((k) => k + 1);
+        showToast(`成功导入 ${count} 条记录`, 'success');
       } catch { showToast('导入失败', 'error'); }
     };
     input.click();
@@ -83,6 +95,47 @@ export default function DailyNotes() {
 
   const handleDeleteType = (t: string) => { const next = customTypes.filter((x) => x !== t); setCustomTypes(next); saveCustomTypes(next); };
 
+  const columns: ColumnsType<DailyNote> = [
+    {
+      title: '日期', dataIndex: 'date', width: 110,
+      sorter: (a, b) => a.date.localeCompare(b.date),
+      defaultSortOrder: 'descend',
+    },
+    {
+      title: '标题', dataIndex: 'title', width: 180, ellipsis: true,
+      sorter: (a, b) => (a.title || '').localeCompare(b.title || ''),
+    },
+    {
+      title: '类型', dataIndex: 'type', width: 100,
+      filters: customTypes.map((t) => ({ text: t, value: t })),
+      onFilter: (value, record) => record.type === value,
+      render: (t: string) => <Tag color="purple">{t}</Tag>,
+    },
+    {
+      title: '内容', dataIndex: 'contents', width: 250, ellipsis: true,
+      render: (c: string[]) => c?.[0] || '—',
+    },
+    {
+      title: '提醒', width: 80, align: 'center',
+      render: (_: unknown, rec: DailyNote) => rec.reminder?.enabled
+        ? <Bell size={13} style={{ color: 'var(--color-warning)' }} />
+        : <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>—</span>,
+    },
+    {
+      title: '备注', dataIndex: 'notes', width: 150, ellipsis: true,
+      render: (v: string) => v || '—',
+    },
+    {
+      title: '操作', width: 130, fixed: 'right' as const,
+      render: (_: unknown, rec: DailyNote) => (
+        <Space size={4}>
+          <Button type="link" size="small" icon={<Pen size={13} />} onClick={() => setEditingNote(rec)}>编辑</Button>
+          <Button type="link" size="small" danger icon={<Trash2 size={13} />} onClick={() => handleDelete(rec.id, rec.title)}>删除</Button>
+        </Space>
+      ),
+    },
+  ];
+
   return (
     <div>
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
@@ -90,66 +143,49 @@ export default function DailyNotes() {
         <div style={{ width: 42, height: 42, borderRadius: 10, background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(124,58,237,.3)' }}>
           <StickyNote size={20} color="#fff" />
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ fontSize: 19, fontWeight: 700 }}>日常随手记</div>
-          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>快速记录 · 批量录入 · 导入导出</div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>快速记录 · 导入导出</div>
         </div>
       </motion.div>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <button className="btn btn-primary" onClick={() => setShowNew(true)} style={{ gap: 6 }}><Plus size={14} /> 新建记录</button>
-        <button className="btn btn-ghost" onClick={() => setBatchMode(!batchMode)} style={{ gap: 6 }}><StickyNote size={14} /> {batchMode ? '退出批量' : '批量录入'}</button>
         <button className="btn btn-ghost" onClick={handleExport} style={{ gap: 6 }}><Download size={14} /> 导出</button>
         <button className="btn btn-ghost" onClick={handleImport} style={{ gap: 6 }}><Upload size={14} /> 导入</button>
         <button className="btn btn-ghost" onClick={() => setShowTypeManager(true)} style={{ gap: 6 }}>类型管理</button>
         <div style={{ flex: 1 }} />
-        <Select value={filterType} onChange={setFilterType} allowClear placeholder="按类型筛选" style={{ width: 140, height: 34 }} options={customTypes.map((t) => ({ label: t, value: t }))} />
+        <Input.Search
+          allowClear
+          placeholder="搜索标题、内容..."
+          value={filterText}
+          onChange={(e) => setFilterText(e.target.value)}
+          onSearch={(v) => setFilterText(v)}
+          style={{ width: 200 }}
+        />
       </div>
 
-      {batchMode && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="card" style={{ padding: 16, marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>批量录入模式</div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12 }}>
-            <DatePicker value={batchDate} onChange={(d) => d && setBatchDate(d)} style={{ width: 140 }} />
-            <Select value={batchType} onChange={setBatchType} style={{ width: 130 }} options={customTypes.map((t) => ({ label: t, value: t }))} />
-          </div>
-          <BatchEntry date={batchDate.format('YYYY-MM-DD')} type={batchType} onCreated={() => setNotes(getDailyNotes())} />
-        </motion.div>
-      )}
-
       <div className="panel" style={{ overflow: 'hidden' }}>
-        <div className="panel-header">
-          <span className="font-semibold" style={{ fontSize: 14 }}>记录列表</span>
-          <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--color-text-muted)' }}>共 {filteredNotes.length} 条</span>
-        </div>
-        <div style={{ maxHeight: 500, overflowY: 'auto' }}>
-          {filteredNotes.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 13 }}>暂无记录</div>
-          ) : filteredNotes.map((n) => (
-            <div key={n.id} className="hover-bg" style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer' }}
-              onClick={() => setEditingNote(n)}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <Tag color="purple">{n.type}</Tag>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>{n.title || '无标题'}</span>
-                {n.reminder?.enabled && <Bell size={12} color="var(--color-warning)" />}
-                <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--color-text-muted)' }}>{n.date}</span>
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {n.contents?.[0] || n.notes || '—'}
-              </div>
-            </div>
-          ))}
-        </div>
+        <Table
+          columns={columns}
+          dataSource={filteredNotes}
+          rowKey="id"
+          size="middle"
+          pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
+          scroll={{ x: 900 }}
+          locale={{ emptyText: '暂无记录' }}
+          onRow={(record) => ({ onDoubleClick: () => setEditingNote(record) })}
+        />
       </div>
 
       {(showNew || editingNote) && (
         <NoteModal note={editingNote} customTypes={customTypes}
           onClose={() => { setShowNew(false); setEditingNote(null); }}
-          onSaved={() => { setNotes(getDailyNotes()); setShowNew(false); setEditingNote(null); }} />
+          onSaved={() => { setRefreshKey((k) => k + 1); setShowNew(false); setEditingNote(null); }} />
       )}
 
       {showTypeManager && (
-        <Modal open title="类型管理" onCancel={() => setShowTypeManager(false)} footer={null} width={400}>
+        <Modal open title="类型管理" onCancel={() => setShowTypeManager(false)} footer={null} width={400} maskClosable={false}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <Input value={newType} onChange={(e) => setNewType(e.target.value)} placeholder="输入新类型名称" onPressEnter={handleAddType} style={{ flex: 1 }} />
             <button className="btn btn-primary btn-sm" onClick={handleAddType}>添加</button>
@@ -163,44 +199,42 @@ export default function DailyNotes() {
   );
 }
 
-function BatchEntry({ date, type, onCreated }: { date: string; type: string; onCreated: () => void }) {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const showToast = useAppStore((s) => s.showToast);
-  const handleSave = () => {
-    if (!title.trim()) { showToast('请输入标题', 'warning'); return; }
-    createDailyNote({ date, title: title.trim(), type, contents: content ? [content] : [''] });
-    setTitle(''); setContent(''); onCreated(); showToast('已添加', 'success');
-  };
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="标题" style={{ flex: 1 }} />
-      <Input.TextArea value={content} onChange={(e) => setContent(e.target.value)} placeholder="内容（可选）" autoSize={{ minRows: 1, maxRows: 3 }} style={{ flex: 2 }} />
-      <button className="btn btn-primary btn-sm" onClick={handleSave} style={{ height: 34 }}>添加</button>
-    </div>
-  );
-}
-
 function NoteModal({ note, customTypes, onClose, onSaved }: { note: DailyNote | null; customTypes: string[]; onClose: () => void; onSaved: () => void }) {
   const showToast = useAppStore((s) => s.showToast);
   const [date, setDate] = useState(dayjs(note?.date || undefined));
   const [title, setTitle] = useState(note?.title || '');
-  const [type, setType] = useState(note?.type || '一般工作');
+  const [type, setType] = useState(note?.type || customTypes[0] || '一般工作');
   const [contents, setContents] = useState<string[]>(note?.contents?.length ? note.contents : ['']);
   const [reminderEnabled, setReminderEnabled] = useState(note?.reminder?.enabled || false);
-  const [reminderTime, setReminderTime] = useState(dayjs(note?.reminder?.time || undefined));
+  const [reminderTime, setReminderTime] = useState(() => {
+    if (note?.reminder?.time) {
+      const d = dayjs(note.reminder.time);
+      return d.isValid() ? d : dayjs().add(30, 'minute');
+    }
+    return dayjs().add(30, 'minute');
+  });
   const [reminderRepeat, setReminderRepeat] = useState(note?.reminder?.repeat || 'none');
   const [notesText, setNotesText] = useState(note?.notes || '');
 
   const handleSave = () => {
     if (!title.trim()) { showToast('请输入标题', 'warning'); return; }
-    const data = { date: date.format('YYYY-MM-DD'), title: title.trim(), type, contents: contents.filter((c) => c.trim()), reminder: { enabled: reminderEnabled, time: reminderTime.toISOString(), repeat: reminderRepeat }, notes: notesText };
+    const reminderData = reminderEnabled
+      ? { enabled: true, time: reminderTime.toISOString(), repeat: reminderRepeat }
+      : { enabled: false, time: '', repeat: 'none' };
+    const data = {
+      date: date.format('YYYY-MM-DD'),
+      title: title.trim(),
+      type,
+      contents: contents.filter((c) => c.trim()),
+      reminder: reminderData,
+      notes: notesText,
+    };
     if (note) { updateDailyNote(note.id, data); showToast('已更新', 'success'); } else { createDailyNote(data); showToast('已创建', 'success'); }
     onSaved();
   };
 
   return (
-    <Modal open title={note ? '编辑记录' : '新建记录'} onCancel={onClose} width={600} onOk={handleSave} okText={note ? '更新' : '保存'}>
+    <Modal open title={note ? '编辑记录' : '新建记录'} onCancel={onClose} width={600} onOk={handleSave} okText={note ? '更新' : '保存'} maskClosable={false}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', gap: 10 }}>
           <DatePicker value={date} onChange={(d) => d && setDate(d)} style={{ flex: 1 }} />
