@@ -12,6 +12,10 @@ const FLAT_NAMES: Record<string, string> = {
   settings: "模板字段",
   backup: "备份恢复",
   version: "版权信息",
+  systemSettings: "系统设置",
+  dailyNotes: "日常随手记",
+  timeline: "案件时间轴",
+  graph: "案件图谱",
 };
 
 function findPageName(id: string): string {
@@ -21,7 +25,7 @@ function findPageName(id: string): string {
       if (mod.id === id) return mod.label;
     }
   }
-  for (const group of [PLATFORM_NAV.data]) {
+  for (const group of [PLATFORM_NAV.top, PLATFORM_NAV.data]) {
     for (const item of group) {
       if (item.id === id) return item.label;
     }

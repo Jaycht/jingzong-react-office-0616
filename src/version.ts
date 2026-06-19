@@ -1,9 +1,15 @@
-export const APP_VERSION = "V2.14.1";
+export const APP_VERSION = "V2.14.2";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 1;
+export const VERSION_PATCH = 2;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.2 =====
+  "V2.14.2 修复 - 提醒系统重写：改用renderer端轮询+Web Notification+声音提醒，解决Electron setTimeout不触发问题",
+  "V2.14.2 新增 - 提醒触发时播放声音提示(595.mp3)，浏览器通知权限自动请求",
+  "V2.14.2 新增 - 随手记表格新增序号、提醒时间、重复类型列",
+  "V2.14.2 修复 - Breadcrumb面包屑支持dailyNotes/systemSettings等页面中文名称",
+  "V2.14.2 修复 - 关于软件Copyright改为：陈洪涛",
   // ===== V2.14.1 =====
   "V2.14.1 修复 - 日常随手记列表改为antd表格视图(可排序/可筛选/编辑删除按钮)",
   "V2.14.1 修复 - 去掉批量录入功能",

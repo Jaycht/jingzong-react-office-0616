@@ -89,7 +89,7 @@ export default function SystemSettings() {
             <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.8 }}>
               <div>版本：{APP_VERSION}</div>
               <div>技术栈：React + Electron + IndexedDB</div>
-              <div>Copyright © 2026 经侦大队</div>
+              <div>Copyright © 2026 陈洪涛</div>
               <div style={{ marginTop: 8, fontSize: 11, color: 'var(--color-text-muted)' }}>
                 本系统用于经侦大队日常工作记录管理，包含案件管理、调证分析、涉众处理、
                 法制审核等业务模块。数据完全本地存储，支持离线使用。

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { StickyNote, Plus, Trash2, Download, Upload, Bell, X, Pen } from 'lucide-react';
+import { StickyNote, Plus, Trash2, Download, Upload, X, Pen } from 'lucide-react';
 import { Modal, Input, Select, DatePicker, Switch, Tag, Button, Table, Space } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppStore } from '../store/appStore';
@@ -97,32 +97,57 @@ export default function DailyNotes() {
 
   const columns: ColumnsType<DailyNote> = [
     {
+      title: '序号', width: 60, fixed: 'left' as const, align: 'center',
+      render: (_: unknown, __: DailyNote, index: number) => index + 1,
+      sorter: (a: DailyNote, b: DailyNote) => {
+        const ai = filteredNotes.indexOf(a);
+        const bi = filteredNotes.indexOf(b);
+        return ai - bi;
+      },
+    },
+    {
       title: '日期', dataIndex: 'date', width: 110,
       sorter: (a, b) => a.date.localeCompare(b.date),
       defaultSortOrder: 'descend',
     },
     {
-      title: '标题', dataIndex: 'title', width: 180, ellipsis: true,
+      title: '标题', dataIndex: 'title', width: 160, ellipsis: true,
       sorter: (a, b) => (a.title || '').localeCompare(b.title || ''),
     },
     {
-      title: '类型', dataIndex: 'type', width: 100,
+      title: '类型', dataIndex: 'type', width: 90,
       filters: customTypes.map((t) => ({ text: t, value: t })),
       onFilter: (value, record) => record.type === value,
       render: (t: string) => <Tag color="purple">{t}</Tag>,
     },
     {
-      title: '内容', dataIndex: 'contents', width: 250, ellipsis: true,
+      title: '内容', dataIndex: 'contents', width: 200, ellipsis: true,
       render: (c: string[]) => c?.[0] || '—',
     },
     {
-      title: '提醒', width: 80, align: 'center',
-      render: (_: unknown, rec: DailyNote) => rec.reminder?.enabled
-        ? <Bell size={13} style={{ color: 'var(--color-warning)' }} />
-        : <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>—</span>,
+      title: '提醒时间', width: 150, align: 'center',
+      sorter: (a, b) => {
+        const ta = a.reminder?.enabled && a.reminder?.time ? new Date(a.reminder.time).getTime() : 0;
+        const tb = b.reminder?.enabled && b.reminder?.time ? new Date(b.reminder.time).getTime() : 0;
+        return ta - tb;
+      },
+      render: (_: unknown, rec: DailyNote) => {
+        if (!rec.reminder?.enabled || !rec.reminder?.time) return <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>—</span>;
+        const d = new Date(rec.reminder.time);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        return <span style={{ fontSize: 12 }}>{d.getFullYear()}-{pad(d.getMonth()+1)}-{pad(d.getDate())} {pad(d.getHours())}:{pad(d.getMinutes())}</span>;
+      },
     },
     {
-      title: '备注', dataIndex: 'notes', width: 150, ellipsis: true,
+      title: '重复', width: 80, align: 'center',
+      render: (_: unknown, rec: DailyNote) => {
+        if (!rec.reminder?.enabled || !rec.reminder?.repeat || rec.reminder.repeat === 'none') return <span style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>—</span>;
+        const map: Record<string, string> = { '30min': '每30分钟', '1hour': '每小时', daily: '每日', weekly: '每周', monthly: '每月' };
+        return <Tag color="blue" style={{ fontSize: 11 }}>{map[rec.reminder.repeat] || rec.reminder.repeat}</Tag>;
+      },
+    },
+    {
+      title: '备注', dataIndex: 'notes', width: 120, ellipsis: true,
       render: (v: string) => v || '—',
     },
     {
@@ -172,7 +197,7 @@ export default function DailyNotes() {
           rowKey="id"
           size="middle"
           pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
-          scroll={{ x: 900 }}
+          scroll={{ x: 1200 }}
           locale={{ emptyText: '暂无记录' }}
           onRow={(record) => ({ onDoubleClick: () => setEditingNote(record) })}
         />
