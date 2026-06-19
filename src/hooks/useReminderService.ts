@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { getDailyNotes } from '../store/dailyNotesStore';
 import { getMassRecords } from '../store/massStore';
 
+const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron;
+
 const DISMISSED_KEY = 'jingzong.reminder.dismissed';
 const TRIGGERED_KEY = 'jingzong.reminder.triggered';
 
@@ -25,25 +27,28 @@ function markTriggered(id: string) {
   try { localStorage.setItem(TRIGGERED_KEY, JSON.stringify(s)); } catch {}
 }
 
-let reminderAudio: HTMLAudioElement | null = null;
-function playReminderSound() {
+const audioCache: Record<string, HTMLAudioElement> = {};
+
+function playReminderSound(soundFile?: string) {
   try {
-    if (!reminderAudio) {
-      reminderAudio = new Audio('/reminder.mp3');
-      reminderAudio.volume = 0.8;
+    const src = soundFile ? `/audio/${soundFile}` : '/reminder.mp3';
+    if (!audioCache[src]) {
+      audioCache[src] = new Audio(src);
+      audioCache[src].volume = 0.9;
     }
-    reminderAudio.currentTime = 0;
-    reminderAudio.play().catch(() => {});
+    const audio = audioCache[src];
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
   } catch {}
 }
 
-function showReminderNotification(title: string, body: string) {
-  try {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/favicon.ico' });
-    }
-  } catch {}
-  playReminderSound();
+function fireReminder(title: string, body: string, soundFile?: string) {
+  playReminderSound(soundFile);
+  if (isElectron) {
+    (window as any).electronAPI.showReminder(title, body);
+  } else if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body });
+  }
 }
 
 const LEGAL_RULES: Array<{ label: string; field: string; days: number }> = [
@@ -99,7 +104,7 @@ export function useReminderService() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
+    if (!isElectron && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
 
@@ -131,7 +136,7 @@ export function useReminderService() {
 
           if (now - lastTriggered < cooldownMs) continue;
 
-          showReminderNotification('日常随手记提醒', `${note.title || '未命名记录'} - ${note.type}`);
+          fireReminder('日常随手记提醒', `${note.title || '未命名记录'} - ${note.type}`, note.reminder.sound);
           markTriggered(note.id);
         }
       } catch {}
@@ -144,7 +149,7 @@ export function useReminderService() {
           for (const alert of alerts) {
             if (dismissed.has(alert.id)) continue;
             if (triggered[alert.id] && now - triggered[alert.id] < 60000) continue;
-            showReminderNotification(alert.title, alert.body);
+            fireReminder(alert.title, alert.body);
             markTriggered(alert.id);
           }
         }
@@ -152,7 +157,7 @@ export function useReminderService() {
     }
 
     check();
-    intervalRef.current = setInterval(check, 10 * 1000);
+    intervalRef.current = setInterval(check, 8000);
 
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []);

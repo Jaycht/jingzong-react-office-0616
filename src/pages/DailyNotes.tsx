@@ -15,6 +15,19 @@ const REPEAT_OPTIONS = [
   { value: 'weekly', label: '每周' }, { value: 'monthly', label: '每月' },
 ];
 
+const SOUND_OPTIONS = [
+  { value: 'QQ消息.wav', label: 'QQ消息' },
+  { value: 'QQ滴滴滴.wav', label: 'QQ滴滴滴' },
+  { value: 'QQ特别关心铃声.wav', label: 'QQ特别关心铃声' },
+  { value: '微信消息.wav', label: '微信消息' },
+  { value: '苹果消息.wav', label: '苹果消息' },
+  { value: '苹果消息提醒.wav', label: '苹果消息提醒' },
+  { value: '苹果叮叮.wav', label: '苹果叮叮' },
+  { value: '手机QQ消息提醒.wav', label: '手机QQ消息提醒' },
+  { value: '好友上线.wav', label: '好友上线' },
+  { value: '报时鸟.wav', label: '报时鸟' },
+];
+
 export default function DailyNotes() {
   const showToast = useAppStore((s) => s.showToast);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -239,13 +252,14 @@ function NoteModal({ note, customTypes, onClose, onSaved }: { note: DailyNote | 
     return dayjs().add(30, 'minute');
   });
   const [reminderRepeat, setReminderRepeat] = useState(note?.reminder?.repeat || 'none');
+  const [reminderSound, setReminderSound] = useState(note?.reminder?.sound || 'QQ消息.wav');
   const [notesText, setNotesText] = useState(note?.notes || '');
 
   const handleSave = () => {
     if (!title.trim()) { showToast('请输入标题', 'warning'); return; }
     const reminderData = reminderEnabled
-      ? { enabled: true, time: reminderTime.toISOString(), repeat: reminderRepeat }
-      : { enabled: false, time: '', repeat: 'none' };
+      ? { enabled: true, time: reminderTime.toISOString(), repeat: reminderRepeat, sound: reminderSound }
+      : { enabled: false, time: '', repeat: 'none', sound: reminderSound };
     const data = {
       date: date.format('YYYY-MM-DD'),
       title: title.trim(),
@@ -276,7 +290,7 @@ function NoteModal({ note, customTypes, onClose, onSaved }: { note: DailyNote | 
           ))}
           <button className="btn btn-sm btn-ghost" onClick={() => setContents([...contents, ''])} style={{ gap: 4 }}><Plus size={12} /> 添加内容</button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <Switch checked={reminderEnabled} onChange={setReminderEnabled} />
           <span style={{ fontSize: 13 }}>设置提醒</span>
           {reminderEnabled && (<>
@@ -284,6 +298,12 @@ function NoteModal({ note, customTypes, onClose, onSaved }: { note: DailyNote | 
             <Select value={reminderRepeat} onChange={setReminderRepeat} style={{ width: 120 }} options={REPEAT_OPTIONS} />
           </>)}
         </div>
+        {reminderEnabled && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 13 }}>提醒声音</span>
+            <Select value={reminderSound} onChange={setReminderSound} style={{ width: 200 }} options={SOUND_OPTIONS} />
+          </div>
+        )}
         <Input.TextArea value={notesText} onChange={(e) => setNotesText(e.target.value)} placeholder="备注（可选）" autoSize={{ minRows: 2, maxRows: 4 }} />
       </div>
     </Modal>

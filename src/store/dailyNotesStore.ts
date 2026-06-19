@@ -13,7 +13,7 @@ export interface DailyNote {
   title: string;
   type: string;
   contents: string[];
-  reminder: { enabled: boolean; time: string; repeat: string };
+  reminder: { enabled: boolean; time: string; repeat: string; sound?: string };
   notes: string;
   attachments: any[];
   createdAt: string;
@@ -45,7 +45,7 @@ export function createDailyNote(data: Partial<DailyNote>): DailyNote {
     title: data.title || '',
     type: data.type || '一般工作',
     contents: data.contents || [''],
-    reminder: data.reminder || { enabled: false, time: '', repeat: 'none' },
+    reminder: data.reminder || { enabled: false, time: '', repeat: 'none', sound: 'QQ消息.wav' },
     notes: data.notes || '',
     attachments: data.attachments || [],
     createdAt: now,

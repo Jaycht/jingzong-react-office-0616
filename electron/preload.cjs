@@ -41,6 +41,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setAutoStart: (enabled) => ipcRenderer.invoke('set-auto-start', enabled),
 
   // 提醒系统
-  scheduleReminder: (id, title, body, delayMs) => ipcRenderer.invoke('schedule-reminder', { id, title, body, delayMs }),
+  showReminder: (title, body) => ipcRenderer.invoke('show-reminder', { title, body }),
   cancelReminder: (id) => ipcRenderer.invoke('cancel-reminder', { id }),
 });

@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.14.2";
+export const APP_VERSION = "V2.14.3";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 2;
+export const VERSION_PATCH = 3;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.3 =====
+  "V2.14.3 修复 - 提醒通知改用主进程Electron原生Notification IPC，解决Windows不弹窗问题",
+  "V2.14.3 新增 - 提醒声音选择：10种铃声(QQ/微信/苹果等)，弹窗内下拉菜单选择",
+  "V2.14.3 新增 - 10个提醒铃声音频素材集成(public/audio/)",
+  "V2.14.3 优化 - 提醒检查间隔从10秒缩短到8秒，更及时触发",
   // ===== V2.14.2 =====
   "V2.14.2 修复 - 提醒系统重写：改用renderer端轮询+Web Notification+声音提醒，解决Electron setTimeout不触发问题",
   "V2.14.2 新增 - 提醒触发时播放声音提示(595.mp3)，浏览器通知权限自动请求",

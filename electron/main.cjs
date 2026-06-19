@@ -7,7 +7,6 @@ const isDev = !app.isPackaged;
 let mainWindow = null;
 let tray = null;
 let autoUpdater = null;
-let reminderTimers = new Map();
 
 // 尝试加载 electron-updater（生产环境可选）
 if (!isDev) {
@@ -288,43 +287,28 @@ ipcMain.handle("set-auto-start", (_event, enabled) => {
 });
 
 // ======================== 提醒系统 ========================
-ipcMain.handle("schedule-reminder", (_event, { id, title, body, delayMs }) => {
-  // 清除旧的提醒
-  if (reminderTimers.has(id)) {
-    clearTimeout(reminderTimers.get(id));
+ipcMain.handle("show-reminder", (_event, { title, body }) => {
+  if (Notification.isSupported()) {
+    const iconPath = path.join(__dirname, "..", "app.ico");
+    const notification = new Notification({
+      title: title || "经侦工作记录提醒",
+      body: body || "您有一条待办提醒",
+      icon: fs.existsSync(iconPath) ? iconPath : undefined,
+    });
+    notification.on("click", () => {
+      if (mainWindow) {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    });
+    notification.show();
+    return { shown: true };
   }
-
-  const timer = setTimeout(() => {
-    if (Notification.isSupported()) {
-      const notification = new Notification({
-        title: title || "经侦工作记录提醒",
-        body: body || "您有一条待办提醒",
-        icon: path.join(__dirname, "..", "app.ico"),
-      });
-
-      notification.on("click", () => {
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
-        }
-      });
-
-      notification.show();
-    }
-    reminderTimers.delete(id);
-  }, delayMs);
-
-  reminderTimers.set(id, timer);
-  return { scheduled: true };
+  return { shown: false, reason: "notification not supported" };
 });
 
 ipcMain.handle("cancel-reminder", (_event, { id }) => {
-  if (reminderTimers.has(id)) {
-    clearTimeout(reminderTimers.get(id));
-    reminderTimers.delete(id);
-    return { cancelled: true };
-  }
-  return { cancelled: false };
+  return { cancelled: true };
 });
 
 // ======================== 启动逻辑 ========================
