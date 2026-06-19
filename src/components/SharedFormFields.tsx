@@ -9,7 +9,7 @@ import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
 import { MODULE_NAMES } from '../moduleConfig';
 import { getClueProjectNames, getLegalReportMatters, getEvidenceClueNames, getSquadCaseNames, getSquadCaseNos, getMassRecords } from '../store/massStore';
-import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName, getCaseDetail, type CaseDetail, getAllSuspectNames, getSuspectInfo, deleteFieldHistoryEntry, getHiddenSuggestions, hideFieldSuggestion } from '../store/inputHistoryStore';
+import { getFieldHistory, getAllCaseNames, getAllCaseNos, getCaseNamesByNo, getCaseNosByName, getCaseDetail, type CaseDetail, getAllSuspectNames, getSuspectInfo, deleteFieldHistoryEntry, getHiddenSuggestions, hideFieldSuggestion, recordFieldValue } from '../store/inputHistoryStore';
 
 type SelectValue = string | string[] | undefined;
 
@@ -949,6 +949,10 @@ export function GlobalSuspectField({ field, subName, listName }: {
       if (String(current || '') !== localValue) {
         form.setFieldValue(fullName, localValue);
       }
+      if (localValue.trim()) {
+        recordFieldValue('suspect', localValue);
+        recordFieldValue('suspectName', localValue);
+      }
       fillSuspectRelated(localValue);
     }, 200);
   };
@@ -960,7 +964,8 @@ export function GlobalSuspectField({ field, subName, listName }: {
     }
     fillSuspectRelated(selectedValue);
     setOpen(false);
-    // 触发关联查询
+    recordFieldValue('suspect', selectedValue);
+    recordFieldValue('suspectName', selectedValue);
     queryRelatedRecords(selectedValue);
   };
 
@@ -1157,6 +1162,9 @@ export function HolderAutoComplete({ field, subName }: {
       if (String(current || '') !== localValue) {
         form.setFieldsValue({ [key]: localValue });
       }
+      if (localValue.trim()) {
+        recordFieldValue('holder', localValue);
+      }
     }, 200);
   };
 
@@ -1164,6 +1172,7 @@ export function HolderAutoComplete({ field, subName }: {
     form.setFieldsValue({ [key]: selectedValue });
     setLocalValue(selectedValue);
     setOpen(false);
+    recordFieldValue('holder', selectedValue);
   };
 
   return (

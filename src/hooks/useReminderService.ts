@@ -101,13 +101,13 @@ export function useReminderService() {
     // 监听通知窗口的"稍后提醒"和"不再提醒"操作
     const api = (window as any).electronAPI;
     if (api.onReminderSnoozed) {
-      api.onReminderSnoozed((_e: any, data: { minutes: number; noteId: string }) => {
-        if (data.noteId) snoozeReminder(data.noteId, data.minutes);
+      api.onReminderSnoozed((data: { minutes: number; noteId: string }) => {
+        if (data && data.noteId) snoozeReminder(data.noteId, data.minutes);
       });
     }
     if (api.onReminderDismissed) {
-      api.onReminderDismissed((_e: any, data: { noteId: string }) => {
-        if (data.noteId) dismissReminder(data.noteId);
+      api.onReminderDismissed((data: { noteId: string }) => {
+        if (data && data.noteId) dismissReminder(data.noteId);
       });
     }
 

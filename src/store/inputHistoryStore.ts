@@ -109,20 +109,23 @@ export function recordFormFields(
   fieldsIds: string[],
   data: Record<string, unknown>,
 ): void {
+  // 1) 记录顶层扁平字段
   for (const id of fieldsIds) {
     const raw = data[id];
     if (typeof raw === 'string') {
       recordFieldValue(id, raw);
-    } else if (Array.isArray(raw)) {
-      // select multiple 或 repeatable section 内的字段
-      for (const item of raw) {
-        if (typeof item === 'string') {
-          recordFieldValue(id, item);
-        } else if (typeof item === 'object' && item !== null) {
-          for (const key of Object.keys(item as Record<string, unknown>)) {
-            const val = (item as Record<string, unknown>)[key];
-            if (typeof val === 'string') {
-              recordFieldValue(key, val);
+    }
+  }
+
+  // 2) 遍历所有值，从 repeatable section 数组中提取嵌套字段
+  for (const key of Object.keys(data)) {
+    const val = data[key];
+    if (Array.isArray(val)) {
+      for (const item of val) {
+        if (typeof item === 'object' && item !== null) {
+          for (const [k, v] of Object.entries(item as Record<string, unknown>)) {
+            if (typeof v === 'string' && v.trim()) {
+              recordFieldValue(k, v);
             }
           }
         }

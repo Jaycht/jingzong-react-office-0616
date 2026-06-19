@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.14.7";
+export const APP_VERSION = "V2.14.8";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 7;
+export const VERSION_PATCH = 8;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.8 =====
+  "V2.14.8 修复 - 稍后提醒/不再提醒失效：preload回调参数签名错误导致IPC数据丢失",
+  "V2.14.8 修复 - 嫌疑人/持有人输入历史不稳定：GlobalSuspectField和HolderAutoComplete未调用recordFieldValue写入历史",
+  "V2.14.8 修复 - recordFormFields支持repeatable section嵌套数组提取字段值",
   // ===== V2.14.7 =====
   "V2.14.7 修复 - 删除随手记时清理localStorage中残留的提醒状态(dismissed/triggered/snoozed)",
   "V2.14.7 清理 - 移除preload中废弃的onShowInAppNotification通道",
