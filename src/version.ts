@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.14.3";
+export const APP_VERSION = "V2.14.4";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 3;
+export const VERSION_PATCH = 4;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.4 =====
+  "V2.14.4 修复 - 提醒系统三重保障：主进程原生Notification(setAppUserModelId) + webContents推送 + 应用内紫色弹窗",
+  "V2.14.4 修复 - 主进程Notification设置silent:true避免声音重复，renderer端播放用户选择的铃声",
+  "V2.14.4 修复 - 应用内弹窗：紫色渐变卡片从右侧滑入，8秒后自动消失，点击可恢复窗口",
+  "V2.14.4 优化 - 提醒检查间隔从8秒缩短到5秒，更及时触发",
   // ===== V2.14.3 =====
   "V2.14.3 修复 - 提醒通知改用主进程Electron原生Notification IPC，解决Windows不弹窗问题",
   "V2.14.3 新增 - 提醒声音选择：10种铃声(QQ/微信/苹果等)，弹窗内下拉菜单选择",

@@ -43,4 +43,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 提醒系统
   showReminder: (title, body) => ipcRenderer.invoke('show-reminder', { title, body }),
   cancelReminder: (id) => ipcRenderer.invoke('cancel-reminder', { id }),
+  onShowInAppNotification: (callback) => ipcRenderer.on('show-in-app-notification', (_event, data) => callback(data)),
 });

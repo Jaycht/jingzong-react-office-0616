@@ -29,12 +29,12 @@ function markTriggered(id: string) {
 
 const audioCache: Record<string, HTMLAudioElement> = {};
 
-function playReminderSound(soundFile?: string) {
+export function playReminderSound(soundFile?: string) {
   try {
     const src = soundFile ? `/audio/${soundFile}` : '/reminder.mp3';
     if (!audioCache[src]) {
       audioCache[src] = new Audio(src);
-      audioCache[src].volume = 0.9;
+      audioCache[src].volume = 1.0;
     }
     const audio = audioCache[src];
     audio.currentTime = 0;
@@ -100,12 +100,19 @@ export function dismissReminder(id: string) {
   addDismissed(id);
 }
 
-export function useReminderService() {
+export function useReminderService(showNotification: (title: string, body: string) => void) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!isElectron && 'Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
+    }
+
+    // 监听主进程推送的应用内通知（最可靠的通道）
+    if (isElectron && (window as any).electronAPI?.onShowInAppNotification) {
+      (window as any).electronAPI.onShowInAppNotification((data: { title: string; body: string }) => {
+        showNotification(data.title, data.body);
+      });
     }
 
     function check() {
@@ -157,8 +164,8 @@ export function useReminderService() {
     }
 
     check();
-    intervalRef.current = setInterval(check, 8000);
+    intervalRef.current = setInterval(check, 5000);
 
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, []);
+  }, [showNotification]);
 }

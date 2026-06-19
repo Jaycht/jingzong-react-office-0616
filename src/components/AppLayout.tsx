@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal, Spin } from "antd";
 import { useLocation } from "react-router-dom";
@@ -14,7 +14,7 @@ import ErrorBoundary from "./ErrorBoundary";
 import CommandPalette from "./CommandPalette";
 import NotificationPanel from "./NotificationPanel";
 import FloatingSearch from "./FloatingSearch";
-import { useReminderService } from "../hooks/useReminderService";
+import { useReminderService, playReminderSound } from "../hooks/useReminderService";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Statistics = lazy(() => import("../pages/Statistics"));
@@ -70,9 +70,29 @@ const winControls = {
   },
 };
 
+interface AppNotification {
+  id: number;
+  title: string;
+  body: string;
+}
+
+let notifId = 0;
+
 export default function AppLayout() {
-    useReminderService();
-    const modalId = useAppStore((s) => s.modalId);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
+  const showNotification = useCallback((title: string, body: string) => {
+    const id = ++notifId;
+    setNotifications((prev) => [...prev, { id, title, body }]);
+    playReminderSound();
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 8000);
+  }, []);
+
+  useReminderService(showNotification);
+
+  const modalId = useAppStore((s) => s.modalId);
   const closeModal = useAppStore((s) => s.closeModal);
   const drawerOpen = useAppStore((s) => s.drawerOpen);
   const closeDrawer = useAppStore((s) => s.closeDrawer);
@@ -92,7 +112,6 @@ export default function AppLayout() {
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
 
-  // Ctrl+K 全局快捷键
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -108,7 +127,6 @@ export default function AppLayout() {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5' }}>
-      {/* Electron 无边框窗口拖拽条 + 窗口控制 */}
       {isElectron && (
         <div
           style={{
@@ -122,7 +140,6 @@ export default function AppLayout() {
           <span style={{ fontSize: 12, lineHeight: 1, color: darkMode ? 'rgba(255,255,255,0.35)' : '#9CA3AF', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
             经侦大队工作记录管理系统
           </span>
-          {/* 窗口控制按钮（不可拖拽） */}
           <div style={{ WebkitAppRegion: 'no-drag' as any, display: 'flex', gap: 2, paddingRight: 4 }}>
             <div onClick={winControls.min} title="最小化" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#9CA3AF', fontSize: 12 }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>─</div>
             <div onClick={winControls.max} title="最大化" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#9CA3AF', fontSize: 11 }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>□</div>
@@ -130,6 +147,39 @@ export default function AppLayout() {
           </div>
         </div>
       )}
+
+      {/* 应用内提醒弹窗 */}
+      <div style={{ position: 'fixed', top: isElectron ? 42 : 10, right: 20, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
+        <AnimatePresence>
+          {notifications.map((n) => (
+            <motion.div
+              key={n.id}
+              initial={{ opacity: 0, x: 300, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 300, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              style={{
+                pointerEvents: 'auto',
+                width: 340,
+                padding: '14px 18px',
+                borderRadius: 12,
+                background: 'linear-gradient(135deg, #7C3AED, #A78BFA)',
+                color: '#fff',
+                boxShadow: '0 8px 32px rgba(124,58,237,.4)',
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                setNotifications((prev) => prev.filter((nn) => nn.id !== n.id));
+                if (isElectron) (window as any).electronAPI?.showWindow?.();
+              }}
+            >
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{n.title}</div>
+              <div style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.4 }}>{n.body}</div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
       <Sidebar
         onOpenProfile={() => setProfileOpen(true)}
