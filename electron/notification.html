@@ -48,12 +48,10 @@ function closeWindow() {
 let noteIdGlobal = '';
 function snooze(minutes) {
   if (window.electronAPI) window.electronAPI.notifSnooze(minutes, noteIdGlobal);
-  closeWindow();
 }
 
 function dismiss() {
   if (window.electronAPI) window.electronAPI.notifDismiss(noteIdGlobal);
-  closeWindow();
 }
 
 window.addEventListener('DOMContentLoaded', function() {

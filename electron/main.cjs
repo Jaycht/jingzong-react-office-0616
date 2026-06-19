@@ -332,11 +332,8 @@ function createNotifWindow(title, body, soundFile, noteId) {
 
   notifWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
-  if (isDev) {
-    notifWin.loadURL(`http://localhost:5173/notification.html?${params.toString()}`);
-  } else {
-    notifWin.loadFile(path.join(__dirname, "notification.html"), { search: params.toString() });
-  }
+  const notifPath = path.join(__dirname, "notification.html");
+  notifWin.loadFile(notifPath, { search: params.toString() });
 
   notifWindows.push(notifWin);
 

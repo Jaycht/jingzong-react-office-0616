@@ -43,7 +43,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 提醒系统
   showReminder: (title, body, soundFile, noteId) => ipcRenderer.invoke('show-reminder', { title, body, soundFile, noteId }),
   cancelReminder: (id) => ipcRenderer.invoke('cancel-reminder', { id }),
-  onShowInAppNotification: (callback) => ipcRenderer.on('show-in-app-notification', (_event, data) => callback(data)),
 
   // 通知窗口操作
   closeNotifWindow: () => ipcRenderer.send('notif-close'),
