@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle, Settings, FolderOpen, AlertTriangle } from 'lucide-react';
+import { Modal } from 'antd';
 import { useAppStore } from "../store/appStore"
 import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson } from '../utils/excelUtils';
 import { getBaseModules } from '../moduleConfig';
@@ -16,9 +17,10 @@ interface BackupMeta {
 
 interface AutoBackupSettings {
   enabled: boolean;
-  intervalMinutes: number; // 0 = 手动, 30 = 每小时, 60 = 每2小时, 120 = 每4小时, 240 = 每8小时
-  selectedModules: string[]; // 空数组 = 全部
+  intervalMinutes: number;
+  selectedModules: string[];
   backupPath: string;
+  backupOnQuit: boolean;
 }
 
 const DEFAULT_SETTINGS: AutoBackupSettings = {
@@ -26,6 +28,7 @@ const DEFAULT_SETTINGS: AutoBackupSettings = {
   intervalMinutes: 0,
   selectedModules: [],
   backupPath: '',
+  backupOnQuit: false,
 };
 
 const INTERVAL_OPTIONS = [
@@ -100,6 +103,30 @@ export default function Backup() {
     setBackups(getBackupMetas());
     setStats(getRecordStats());
   };
+
+  // 退出时自动备份监听
+  useEffect(() => {
+    const api = (window as any).electronAPI;
+    if (!api?.onTriggerQuitBackup) return;
+    api.onTriggerQuitBackup(async () => {
+      const s = loadSettings();
+      if (!s.backupOnQuit) return;
+      try {
+        const data = {};
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('jingzong.')) {
+            try { data[key] = localStorageAdapter.getItem(key, ''); } catch {}
+          }
+        }
+        const attachments = await (await import('../utils/excelUtils')).exportAttachmentSnapshot?.() || [];
+        const backup = { version: '2.0', createdAt: new Date().toISOString(), data, attachments };
+        const json = JSON.stringify(backup);
+        const ts = new Date().toISOString().slice(0, 16).replace('T', '_');
+        await api.saveJsonFile(json, `jingzong_退出备份_${ts}.json`);
+      } catch {}
+    });
+  }, []);
 
   // 获取默认备份路径
   const getDefaultPath = useCallback(async () => {
@@ -192,15 +219,38 @@ export default function Backup() {
   };
 
   const handleBrowsePath = async () => {
-    if (typeof window !== 'undefined' && window.electronAPI?.getDocumentsDir) {
+    if (typeof window !== 'undefined' && window.electronAPI?.showDirectoryDialog) {
       try {
-        const dir = await window.electronAPI.getDocumentsDir();
-        updateSettings({ backupPath: dir });
+        const result = await window.electronAPI.showDirectoryDialog();
+        if (result && !result.canceled && result.path) {
+          updateSettings({ backupPath: result.path });
+          showToast('备份目录已设置', 'success');
+        }
       } catch {
-        showToast('无法获取文档路径', 'error');
+        showToast('无法打开目录选择对话框', 'error');
       }
     } else {
-      showToast('浏览器环境不支持自定义路径', 'info');
+      showToast('浏览器环境不支持选择目录', 'info');
+    }
+  };
+
+  const handleBrowseAttachmentsPath = async () => {
+    if (typeof window !== 'undefined' && window.electronAPI?.showDirectoryDialog) {
+      try {
+        const result = await window.electronAPI.showDirectoryDialog();
+        if (result && !result.canceled && result.path) {
+          if (window.electronAPI?.setAttachmentsPath) {
+            const r = await window.electronAPI.setAttachmentsPath(result.path);
+            if (r.success) {
+              showToast(`附件保存路径已切换到: ${result.path}`, 'success');
+            } else {
+              showToast(r.error || '设置失败', 'error');
+            }
+          }
+        }
+      } catch {
+        showToast('无法打开目录选择对话框', 'error');
+      }
     }
   };
 
@@ -374,6 +424,60 @@ export default function Backup() {
               </div>
               <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
                 {settings.selectedModules.length === 0 ? '已选择全部数据' : `已选择 ${settings.selectedModules.length} 个模块`}
+              </div>
+            </div>
+
+            {/* 退出时自动备份 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, padding: '10px 14px', borderRadius: 8, background: settings.backupOnQuit ? 'var(--color-primary-bg)' : 'var(--color-surface-hover)', border: `1px solid ${settings.backupOnQuit ? 'var(--color-primary)' : 'var(--color-border)'}` }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>退出时自动备份</div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>点击「退出」时自动保存一份全局备份到文档/jingzong_backups</div>
+              </div>
+              <button
+                onClick={() => updateSettings({ backupOnQuit: !settings.backupOnQuit })}
+                style={{
+                  width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                  background: settings.backupOnQuit ? 'var(--color-primary)' : 'var(--color-surface-hover)',
+                  position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                }}
+              >
+                <div style={{
+                  width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                  position: 'absolute', top: 2, left: settings.backupOnQuit ? 22 : 2,
+                  transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                }} />
+              </button>
+            </div>
+
+            {/* 附件保存路径 */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>附件保存路径</label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <div
+                  style={{
+                    flex: 1, height: 34, padding: '0 10px', borderRadius: 6,
+                    border: '1px solid var(--color-border)', background: 'var(--color-surface)',
+                    color: 'var(--color-text)', fontSize: 12, fontFamily: 'inherit',
+                    display: 'flex', alignItems: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                  title="点击右侧按钮修改"
+                >
+                  附件存储在软件自动检测的磁盘路径下
+                </div>
+                <button
+                  onClick={handleBrowseAttachmentsPath}
+                  style={{
+                    height: 34, padding: '0 10px', borderRadius: 6,
+                    border: '1px solid var(--color-border)', background: 'var(--color-surface)',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                    fontSize: 12, fontFamily: 'inherit', color: 'var(--color-text-secondary)',
+                  }}
+                >
+                  <FolderOpen size={13} /> 修改
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>
+                附件默认保存到非C盘（如D:\\jingzong_data\\attachments），可手动切换
               </div>
             </div>
 

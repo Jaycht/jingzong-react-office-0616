@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.14.10";
+export const APP_VERSION = "V2.14.11";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 10;
+export const VERSION_PATCH = 11;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.11 =====
+  "V2.14.11 新增 - 退出时自动备份：系统设置中开启后，点击退出自动保存全局备份到文档/jingzong_backups",
+  "V2.14.11 新增 - 附件存储路径改到非C盘：自动检测D/E/F盘，优先非C盘保存附件",
+  "V2.14.11 新增 - 附件路径可自定义：备份恢复页新增附件保存路径修改按钮，弹出真实目录选择对话框",
+  "V2.14.11 修复 - 备份浏览按钮改为真实目录选择对话框(原只返回文档路径)",
   // ===== V2.14.10 =====
   "V2.14.10 修复 - 多选框全选bug：去掉scroll.y(Ant Design rowSelection+scroll.y已知冲突)，改用pageSize:10+minHeight:520控制表格高度",
   // ===== V2.14.9 =====

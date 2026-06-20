@@ -31,8 +31,55 @@ const LOGIN_SIZE = { width: 974, height: 711 };
 const MAIN_SIZE = { width: 1400, height: 900 };
 const MAIN_MIN = { minWidth: 1100, minHeight: 700 };
 
-// 附件存储目录
-const ATTACHMENTS_DIR = path.join(app.getPath("userData"), "attachments");
+// 附件存储目录 — 优先放非C盘，找不到则用userData
+function getAttachmentsDir() {
+  const configPath = path.join(app.getPath("userData"), "path-config.json");
+  try {
+    if (fs.existsSync(configPath)) {
+      const cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+      if (cfg.attachmentsDir && fs.existsSync(cfg.attachmentsDir)) return cfg.attachmentsDir;
+    }
+  } catch {}
+
+  // 扫描可用盘符，优先非C盘
+  const drives = ["D:", "E:", "F:", "G:", "H:", "I:", "J:"];
+  for (const d of drives) {
+    const candidate = path.join(d + "\\", "jingzong_data", "attachments");
+    try {
+      const dir = d + "\\";
+      if (fs.existsSync(dir)) {
+        if (!fs.existsSync(candidate)) fs.mkdirSync(candidate, { recursive: true });
+        return candidate;
+      }
+    } catch {}
+  }
+
+  // 全部失败则用 userData
+  return path.join(app.getPath("userData"), "attachments");
+}
+
+const ATTACHMENTS_DIR = getAttachmentsDir();
+
+// 保存附件路径配置
+function savePathConfig(key, value) {
+  const configPath = path.join(app.getPath("userData"), "path-config.json");
+  let cfg = {};
+  try { if (fs.existsSync(configPath)) cfg = JSON.parse(fs.readFileSync(configPath, "utf-8")); } catch {}
+  cfg[key] = value;
+  fs.writeFileSync(configPath, JSON.stringify(cfg, null, 2), "utf-8");
+}
+
+// 读取附件路径配置
+function getPathConfig(key) {
+  const configPath = path.join(app.getPath("userData"), "path-config.json");
+  try {
+    if (fs.existsSync(configPath)) {
+      const cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+      return cfg[key];
+    }
+  } catch {}
+  return null;
+}
 
 // 移除默认菜单栏（全局生效）
 Menu.setApplicationMenu(null);
@@ -164,9 +211,47 @@ ipcMain.handle("get-attachments-dir", () => {
   return ATTACHMENTS_DIR;
 });
 
+// 获取/设置附件保存路径（用户可自定义）
+ipcMain.handle("get-attachments-path", () => {
+  return getPathConfig("attachmentsDir") || ATTACHMENTS_DIR;
+});
+
+ipcMain.handle("set-attachments-path", (_event, newPath) => {
+  if (newPath && fs.existsSync(newPath)) {
+    savePathConfig("attachmentsDir", newPath);
+    return { success: true, path: newPath };
+  }
+  return { success: false, error: "路径不存在" };
+});
+
 // 获取文档文件夹路径（用于默认备份路径）
 ipcMain.handle("get-documents-dir", () => {
   return app.getPath("documents");
+});
+
+// 选择目录对话框
+ipcMain.handle("show-directory-dialog", async () => {
+  const result = await dialog.showOpenDialog({
+    title: "选择备份目录",
+    defaultPath: app.getPath("documents"),
+    properties: ["openDirectory"],
+  });
+  if (result.canceled || result.filePaths.length === 0) return { canceled: true };
+  return { path: result.filePaths[0] };
+});
+
+// 保存 JSON 文件到指定路径（退出时自动备份用）
+ipcMain.handle("save-json-file", async (_event, { json, fileName }) => {
+  try {
+    const dir = app.getPath("documents");
+    const backupDir = path.join(dir, "jingzong_backups");
+    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+    const filePath = path.join(backupDir, fileName);
+    await fsp.writeFile(filePath, json, "utf-8");
+    return { success: true, filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 });
 
 // 检查附件文件是否存在
@@ -259,7 +344,17 @@ function createTray() {
   const contextMenu = Menu.buildFromTemplate([
     { label: "显示窗口", click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
     { type: "separator" },
-    { label: "退出", click: () => { app.isQuitting = true; app.quit(); } },
+    { label: "退出", click: () => {
+      app.isQuitting = true;
+      // 通知渲染进程执行退出前备份
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send("trigger-quit-backup");
+        // 给渲染进程 3 秒执行备份，然后强制退出
+        setTimeout(() => { app.quit(); }, 3000);
+      } else {
+        app.quit();
+      }
+    }},
   ]);
 
   tray.setContextMenu(contextMenu);

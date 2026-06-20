@@ -27,6 +27,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('check-attachment-file', filePath),
   getDocumentsDir: () =>
     ipcRenderer.invoke('get-documents-dir'),
+  showDirectoryDialog: () =>
+    ipcRenderer.invoke('show-directory-dialog'),
+  saveJsonFile: (json, fileName) =>
+    ipcRenderer.invoke('save-json-file', { json, fileName }),
+  getAttachmentsPath: () =>
+    ipcRenderer.invoke('get-attachments-path'),
+  setAttachmentsPath: (newPath) =>
+    ipcRenderer.invoke('set-attachments-path', newPath),
+  onTriggerQuitBackup: (callback) =>
+    ipcRenderer.on('trigger-quit-backup', () => callback()),
 
   // 自动更新
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
