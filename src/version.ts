@@ -1,9 +1,14 @@
-export const APP_VERSION = "V2.14.8";
+export const APP_VERSION = "V2.14.9";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 8;
+export const VERSION_PATCH = 9;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.9 =====
+  "V2.14.9 新增 - 日常随手记列表多选框，支持选择性导出和批量删除",
+  "V2.14.9 新增 - 批量删除按钮，选中记录后显示，带确认提示",
+  "V2.14.9 新增 - 导出支持选中项导出，未选中则导出全部",
+  "V2.14.9 优化 - 表格纵向高度拉高到460px，默认显示约10条记录",
   // ===== V2.14.8 =====
   "V2.14.8 修复 - 稍后提醒/不再提醒失效：preload回调参数签名错误导致IPC数据丢失",
   "V2.14.8 修复 - 嫌疑人/持有人输入历史不稳定：GlobalSuspectField和HolderAutoComplete未调用recordFieldValue写入历史",

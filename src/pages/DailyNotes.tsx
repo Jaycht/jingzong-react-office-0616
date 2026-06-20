@@ -38,6 +38,7 @@ export default function DailyNotes() {
   const [customTypes, setCustomTypes] = useState<string[]>(() => getCustomTypes());
   const [newType, setNewType] = useState('');
   const [showTypeManager, setShowTypeManager] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
   const allNotes = useMemo(() => { void refreshKey; return getDailyNotes(); }, [refreshKey]);
 
@@ -68,13 +69,31 @@ export default function DailyNotes() {
     });
   }, [showToast]);
 
+  const handleBatchDelete = useCallback(() => {
+    if (selectedRowKeys.length === 0) return;
+    Modal.confirm({
+      title: '确认批量删除',
+      content: `确定要删除选中的 ${selectedRowKeys.length} 条记录吗？删除后不可恢复。`,
+      okText: '删除', okButtonProps: { danger: true }, cancelText: '取消',
+      onOk: () => {
+        for (const key of selectedRowKeys) deleteDailyNote(String(key));
+        setSelectedRowKeys([]);
+        setRefreshKey((k) => k + 1);
+        showToast(`已删除 ${selectedRowKeys.length} 条记录`, 'success');
+      },
+    });
+  }, [selectedRowKeys, showToast]);
+
   const handleExport = () => {
-    if (filteredNotes.length === 0) { showToast('没有可导出的数据', 'warning'); return; }
-    const rows = filteredNotes.map((n) => ({ 日期: n.date, 标题: n.title, 类型: n.type, 内容: n.contents.join('\n'), 提醒: n.reminder?.enabled ? '已设置' : '无', 备注: n.notes, 创建时间: n.createdAt }));
+    const exportData = selectedRowKeys.length > 0
+      ? filteredNotes.filter((n) => selectedRowKeys.includes(n.id))
+      : filteredNotes;
+    if (exportData.length === 0) { showToast('没有可导出的数据', 'warning'); return; }
+    const rows = exportData.map((n) => ({ 日期: n.date, 标题: n.title, 类型: n.type, 内容: n.contents.join('\n'), 提醒: n.reminder?.enabled ? '已设置' : '无', 备注: n.notes, 创建时间: n.createdAt }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '随手记');
     saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]), `随手记_${dayjs().format('YYYY-MM-DD')}.xlsx`);
-    showToast(`已导出 ${filteredNotes.length} 条记录`, 'success');
+    showToast(`已导出 ${exportData.length} 条记录`, 'success');
   };
 
   const handleImport = () => {
@@ -109,15 +128,6 @@ export default function DailyNotes() {
   const handleDeleteType = (t: string) => { const next = customTypes.filter((x) => x !== t); setCustomTypes(next); saveCustomTypes(next); };
 
   const columns: ColumnsType<DailyNote> = [
-    {
-      title: '序号', width: 60, fixed: 'left' as const, align: 'center',
-      render: (_: unknown, __: DailyNote, index: number) => index + 1,
-      sorter: (a: DailyNote, b: DailyNote) => {
-        const ai = filteredNotes.indexOf(a);
-        const bi = filteredNotes.indexOf(b);
-        return ai - bi;
-      },
-    },
     {
       title: '日期', dataIndex: 'date', width: 110,
       sorter: (a, b) => a.date.localeCompare(b.date),
@@ -189,8 +199,11 @@ export default function DailyNotes() {
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <button className="btn btn-primary" onClick={() => setShowNew(true)} style={{ gap: 6 }}><Plus size={14} /> 新建记录</button>
-        <button className="btn btn-ghost" onClick={handleExport} style={{ gap: 6 }}><Download size={14} /> 导出</button>
+        <button className="btn btn-ghost" onClick={handleExport} style={{ gap: 6 }}><Download size={14} /> {selectedRowKeys.length > 0 ? `导出选中(${selectedRowKeys.length})` : '导出'}</button>
         <button className="btn btn-ghost" onClick={handleImport} style={{ gap: 6 }}><Upload size={14} /> 导入</button>
+        {selectedRowKeys.length > 0 && (
+          <button className="btn btn-ghost" onClick={handleBatchDelete} style={{ gap: 6, color: '#DC2626' }}><Trash2 size={14} /> 批量删除({selectedRowKeys.length})</button>
+        )}
         <button className="btn btn-ghost" onClick={() => setShowTypeManager(true)} style={{ gap: 6 }}>类型管理</button>
         <div style={{ flex: 1 }} />
         <Input.Search
@@ -209,8 +222,9 @@ export default function DailyNotes() {
           dataSource={filteredNotes}
           rowKey="id"
           size="middle"
+          rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
           pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1200, y: 460 }}
           locale={{ emptyText: '暂无记录' }}
           onRow={(record) => ({ onDoubleClick: () => setEditingNote(record) })}
         />
