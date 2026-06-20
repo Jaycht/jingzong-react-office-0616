@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.14.9";
+export const APP_VERSION = "V2.14.10";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 9;
+export const VERSION_PATCH = 10;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.10 =====
+  "V2.14.10 修复 - 多选框全选bug：去掉scroll.y(Ant Design rowSelection+scroll.y已知冲突)，改用pageSize:10+minHeight:520控制表格高度",
   // ===== V2.14.9 =====
   "V2.14.9 新增 - 日常随手记列表多选框，支持选择性导出和批量删除",
   "V2.14.9 新增 - 批量删除按钮，选中记录后显示，带确认提示",

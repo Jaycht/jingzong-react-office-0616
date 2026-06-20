@@ -216,15 +216,15 @@ export default function DailyNotes() {
         />
       </div>
 
-      <div className="panel" style={{ overflow: 'hidden' }}>
+      <div className="panel" style={{ overflow: 'hidden', minHeight: 520 }}>
         <Table
           columns={columns}
           dataSource={filteredNotes}
           rowKey="id"
           size="middle"
           rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
-          pagination={{ pageSize: 20, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
-          scroll={{ x: 1200, y: 460 }}
+          pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (total) => `共 ${total} 条` }}
+          scroll={{ x: 1200 }}
           locale={{ emptyText: '暂无记录' }}
           onRow={(record) => ({ onDoubleClick: () => setEditingNote(record) })}
         />
