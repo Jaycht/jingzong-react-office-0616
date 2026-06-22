@@ -149,10 +149,16 @@ export default function DailyNotes() {
   const handleOpenSticky = (rec: DailyNote) => {
     const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.createNoteWindow;
     if (isElectron) {
+      const content = [
+        rec.title ? `【${rec.title}】` : '',
+        rec.type ? `[${rec.type}]` : '',
+        ...(rec.contents || []),
+        rec.notes ? `\n备注：${rec.notes}` : '',
+      ].filter(Boolean).join('\n');
       (window as any).electronAPI.createNoteWindow({
         id: `sticky-${rec.id}`,
         title: rec.title || '便签',
-        text: `<b>${rec.title || '无标题'}</b><br>${(rec.contents || []).join('<br>')}<br><br><i>${rec.notes || ''}</i>`,
+        text: content,
         date: rec.date,
       });
     } else {
