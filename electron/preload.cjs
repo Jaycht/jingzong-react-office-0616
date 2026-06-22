@@ -71,4 +71,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onInitNote: (callback) => ipcRenderer.on('init-note', (_event, data) => callback(data)),
   onNoteClosed: (callback) => ipcRenderer.on('note-closed', (_event, data) => callback(data)),
   onNoteContentChanged: (callback) => ipcRenderer.on('note-content-changed', (_event, data) => callback(data)),
+  onNoteMinState: (callback) => ipcRenderer.on('note-minimize-state', (_event, data) => callback(data)),
 });

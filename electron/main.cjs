@@ -577,7 +577,24 @@ ipcMain.on("note-drag", (event, { id, dx, dy }) => {
 ipcMain.on("note-minimize", (event, { id }) => {
   const entry = noteWindows.get(id);
   if (!entry || entry.win.isDestroyed()) return;
-  entry.win.minimize();
+  const HEADER_H = 36;
+  const MIN_H = 120;
+  if (entry.data.minimized) {
+    // 展开：恢复高度
+    entry.data.minimized = false;
+    entry.win.setResizable(true);
+    entry.win.setMinimumSize(200, MIN_H);
+    entry.win.setBounds({ x: entry.data.x, y: entry.data.y, width: entry.data.w, height: entry.data.h || 320 });
+  } else {
+    // 折叠：缩到标题栏高度
+    entry.data.minimized = true;
+    const [w] = entry.win.getSize();
+    entry.data.h = entry.win.getSize()[1];
+    entry.win.setMinimumSize(200, HEADER_H);
+    entry.win.setBounds({ x: entry.data.x, y: entry.data.y, width: w, height: HEADER_H });
+    entry.win.setResizable(false);
+  }
+  entry.win.webContents.send("note-minimize-state", { id, minimized: entry.data.minimized });
 });
 
 ipcMain.on("note-close", (event, { id }) => {
