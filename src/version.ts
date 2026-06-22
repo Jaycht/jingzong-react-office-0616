@@ -1,9 +1,13 @@
-export const APP_VERSION = "V2.14.12";
+export const APP_VERSION = "V2.14.13";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 12;
+export const VERSION_PATCH = 13;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.13 =====
+  "V2.14.13 新增 - 桌面便签功能：随手记列表点击「便签」按钮，弹出独立透明悬浮窗口",
+  "V2.14.13 功能 - 便签窗口：透明无边框置顶、拖拽移动、富文本编辑、6种颜色、置顶切换",
+  "V2.14.13 功能 - 便签内容自动保存，与随手记数据联动",
   // ===== V2.14.12 =====
   "V2.14.12 修复 - 备份功能遗漏IndexedDB数据：新增读取dailyNotes/massRecords/drafts到备份文件",
   "V2.14.12 修复 - 恢复功能遗漏IndexedDB数据：新增写回dailyNotes/drafts到IndexedDB，修复重置后数据为空",

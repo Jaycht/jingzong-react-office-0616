@@ -473,6 +473,124 @@ ipcMain.handle("cancel-reminder", (_event, { id }) => {
   return { cancelled: true };
 });
 
+// ======================== 桌面便签 ========================
+const noteWindows = new Map(); // id -> { win, data }
+
+function createNoteWindow(noteData) {
+  const { screen } = require("electron");
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenW, height: screenH } = primaryDisplay.workAreaSize;
+  const id = noteData.id || `note-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+  const data = {
+    id,
+    title: noteData.title || "",
+    text: noteData.text || "",
+    date: noteData.date || new Date().toISOString().slice(0,10),
+    colorIdx: noteData.colorIdx ?? Math.floor(Math.random() * 6),
+    alwaysOnTop: true,
+    x: noteData.x ?? Math.max(0, screenW - 320),
+    y: noteData.y ?? Math.max(0, 60 + noteWindows.size * 40),
+    w: noteData.w ?? 280,
+    h: noteData.h ?? 320,
+  };
+
+  const win = new BrowserWindow({
+    x: data.x, y: data.y, width: data.w, height: data.h,
+    frame: false, transparent: true, alwaysOnTop: true,
+    skipTaskbar: true, hasShadow: false,
+    resizable: true, minWidth: 200, minHeight: 100,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
+      contextIsolation: true, nodeIntegration: false,
+    },
+  });
+
+  win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  win.setAlwaysOnTop(true, "floating");
+  win.loadFile(path.join(__dirname, "note.html"));
+
+  win.once("ready-to-show", () => {
+    win.webContents.send("init-note", data);
+    win.showInactive();
+  });
+
+  win.on("moved", () => {
+    if (win.isDestroyed()) return;
+    const [x, y] = win.getPosition();
+    data.x = x; data.y = y;
+  });
+
+  win.on("closed", () => {
+    noteWindows.delete(id);
+    if (mainWindow && mainWindow.webContents) {
+      mainWindow.webContents.send("note-closed", { id });
+    }
+  });
+
+  noteWindows.set(id, { win, data });
+  return id;
+}
+
+// 便签 IPC
+ipcMain.handle("create-note-window", (_event, noteData) => {
+  const id = noteData.id || `note-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+  // 去重：如果同ID便签已打开，直接聚焦
+  const existing = noteWindows.get(id);
+  if (existing && !existing.win.isDestroyed()) {
+    existing.win.show();
+    existing.win.focus();
+    return id;
+  }
+  return createNoteWindow({ ...noteData, id });
+});
+
+ipcMain.on("note-update", (event, { id, updates }) => {
+  const entry = noteWindows.get(id);
+  if (!entry) return;
+  Object.assign(entry.data, updates);
+  if (updates.alwaysOnTop !== undefined && !entry.win.isDestroyed()) {
+    entry.win.setAlwaysOnTop(!!updates.alwaysOnTop, "floating");
+  }
+  if (updates.opacity !== undefined && !entry.win.isDestroyed()) {
+    entry.win.setOpacity(Math.max(0.3, Math.min(1, updates.opacity)));
+  }
+  // 便签内容变更 → 同步回主窗口渲染进程，写入 IndexedDB
+  if (updates.text !== undefined && mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send("note-content-changed", { id, text: updates.text });
+  }
+});
+
+ipcMain.on("note-drag", (event, { id, dx, dy }) => {
+  const entry = noteWindows.get(id);
+  if (!entry || entry.win.isDestroyed()) return;
+  const [x, y] = entry.win.getPosition();
+  entry.win.setPosition(x + dx, y + dy, false);
+});
+
+ipcMain.on("note-drag", (event, { id, dx, dy }) => {
+  const entry = noteWindows.get(id);
+  if (!entry || entry.win.isDestroyed()) return;
+  const [x, y] = entry.win.getPosition();
+  entry.win.setPosition(x + dx, y + dy, false);
+});
+
+ipcMain.on("note-minimize", (event, { id }) => {
+  const entry = noteWindows.get(id);
+  if (!entry || entry.win.isDestroyed()) return;
+  entry.win.minimize();
+});
+
+ipcMain.on("note-close", (event, { id }) => {
+  const entry = noteWindows.get(id);
+  if (!entry || entry.win.isDestroyed()) return;
+  entry.win.close();
+});
+
+ipcMain.on("note-copy-text", (_event, { text }) => {
+  const { clipboard } = require("electron");
+  clipboard.writeText(text);
+});
+
 // ======================== 启动逻辑 ========================
 app.whenReady().then(() => {
   // 确保附件目录存在
