@@ -1,9 +1,15 @@
-export const APP_VERSION = "V2.14.15";
+export const APP_VERSION = "V2.14.16";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 15;
+export const VERSION_PATCH = 16;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.14.16 =====
+  "V2.14.16 修复 - 便签颜色选择器失效：color-indicator缺少no-drag被drag区域吞掉点击",
+  "V2.14.16 修复 - 右键菜单叠加：菜单元素添加id防重复，统一closeAllPopups函数",
+  "V2.14.16 新增 - textarea右键菜单：文本编辑区可直接右键呼出操作菜单",
+  "V2.14.16 修复 - 便签内容显示HTML标签：改为传纯文本到textarea",
+  "V2.14.16 修复 - 便签标题显示随手记标题而非日期字数",
   // ===== V2.14.15 =====
   "V2.14.15 修复 - 便签拖拽改回原生drag，解决窗口乱跑问题",
   "V2.14.15 新增 - 便签透明度调节：标题栏👁按钮+右键菜单「调整透明度」",
