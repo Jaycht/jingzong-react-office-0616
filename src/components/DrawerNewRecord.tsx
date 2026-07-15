@@ -21,6 +21,7 @@ import {
   IdNoField,
 } from './SharedFormFields';
 import { saveAttachment, relinkAttachment, getAttachment } from '../store/attachmentStore';
+import { ATTACHMENT_CATEGORIES } from '../constants/attachmentCategories';
 import { saveDraft, getDraft, deleteDraft } from '../store/draftStore';
 
 interface Props { onClose: () => void; editRecord?: import('../store/massStore').MassRecord | null; }
@@ -853,7 +854,7 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
           value={category}
           onChange={(v: string) => setCategory(v)}
           style={{ width: 160 }}
-          options={['书证', '笔录', '银行流水', '鉴定意见', '照片', '音视频', '其他'].map((c) => ({ label: c, value: c }))}
+          options={ATTACHMENT_CATEGORIES.map((c) => ({ label: c, value: c }))}
         />
       </div>
       <Form.Item name={name} valuePropName="fileList" getValueFromEvent={(info: { fileList?: UploadFile[] }) => info?.fileList ?? []} noStyle>

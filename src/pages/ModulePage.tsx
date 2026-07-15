@@ -140,6 +140,7 @@ export default function ModulePage() {
   const [filterHandler, setFilterHandler] = useState<string | null>(null);
   const [filterCase, setFilterCase] = useState<string | null>(null);
   const [filterPerson, setFilterPerson] = useState<string | null>(null);
+  const [filterBattle, setFilterBattle] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [dense, setDense] = useState(false);
   const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
@@ -243,8 +244,11 @@ export default function ModulePage() {
         return pn === filterPerson;
       });
     }
+    if (filterBattle) {
+      list = list.filter((r) => String(r.data?.battleType || '') === filterBattle);
+    }
     return list;
-  }, [activeRecords, filterText, filterDateRange, filterStatus, filterHandler, filterCase, filterPerson, statusByRecord]);
+  }, [activeRecords, filterText, filterDateRange, filterStatus, filterHandler, filterCase, filterPerson, filterBattle, statusByRecord]);
 
   interface DynamicRow {
     key: string;
@@ -363,6 +367,14 @@ export default function ModulePage() {
     return names.map((n) => ({ label: n, value: n }));
   }, [activeRecords]);
 
+  // ─── 战役类型筛选（仅含 battleType 字段的模块，如「集群战役」：集群/协同/协查边界隔离） ──
+  const hasBattleType = fields.some((f) => f.id === 'battleType');
+  const battleOptions = useMemo(() => {
+    if (!hasBattleType) return [];
+    const opts = ['集群', '协同', '协查'];
+    return opts.map((c) => ({ label: c, value: c }));
+  }, [hasBattleType]);
+
   // ─── 状态筛选 chip ────────────────────────────
   const statusChips = [
     { label: '办理中', value: '办理中', color: 'var(--color-primary)' },
@@ -393,7 +405,7 @@ export default function ModulePage() {
     setSelectedRowKeys((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   const toggleCol = (key: string) =>
     setHiddenCols((prev) => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
-  const clearFilters = () => { setFilterText(''); setFilterDateRange(null); setFilterStatus(null); setFilterHandler(null); setFilterCase(null); setFilterPerson(null); };
+  const clearFilters = () => { setFilterText(''); setFilterDateRange(null); setFilterStatus(null); setFilterHandler(null); setFilterCase(null); setFilterPerson(null); setFilterBattle(null); };
 
   // ─── 导入处理 ─────────────────────────────────
   const handleImport = async (file: File) => {
@@ -657,7 +669,17 @@ export default function ModulePage() {
               options={personOptions}
             />
           )}
-          {(filterText || filterDateRange || filterStatus || filterHandler) && (
+          {hasBattleType && (
+            <Select
+              value={filterBattle}
+              onChange={(v) => setFilterBattle(v)}
+              allowClear
+              placeholder="按战役类型筛选"
+              style={{ width: 160, height: 36 }}
+              options={battleOptions}
+            />
+          )}
+          {(filterText || filterDateRange || filterStatus || filterHandler || filterCase || filterPerson || filterBattle) && (
             <button className="mp-btn" onClick={clearFilters}>
               清除筛选
             </button>

@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.15.0";
+export const APP_VERSION = "V2.16.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 15;
+export const VERSION_MINOR = 16;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.16.0 =====
+  "V2.16.0 新增 - 四项渐进优化落地：①详情页(CaseDetail)附件预览支持 PDF——非图片附件按 MIME 区分图标(PDF 用红色文档图标)，预览弹窗对 application/pdf 内嵌 iframe 浏览，不再破图；②关联记录支持手动「钉选」结构化关联——关联面板点「关联」双向持久化至 record.data.linkedRecordIds(与启发式匹配互补，展示集合=启发式∪手动关联)，取消关联同步解除双向链接；③附件分类(书证/笔录/银行流水/鉴定意见/照片/音视频/其他)抽为共享常量 src/constants/attachmentCategories.ts，录入下拉与详情分组统一引用，消除重复硬编码；④列表(ModulePage)对含 battleType 字段的模块(集群战役)新增「战役类型」快速筛选(集群/协同/协查)，三类边界可隔离查看；清除筛选按钮现覆盖全部筛选条件",
   // ===== V2.15.0 =====
   "V2.15.0 优化 - 按复盘方案逐条落地(回退点:快照分支 snapshot/v2.14.50-preplan):①查看页(CaseDetail)新增默认收起的「关联记录/时间线」折叠区,用多条关键身份词(姓名/身份证/电话/案件名/项目名/主体)匹配,关联项可点击切换查看;②编辑页(DrawerNewRecord)新建成功后新增「再建一条」按钮(重置表单+重挂以清空附件子状态)适配高频重复登记;③状态派生健壮性:STATUS_LABEL_HINTS 扩词+id 兜底,且基于模块全部字段(不受可见列开关影响),避免状态列隐藏后徽标丢失;④列表高级筛选新增「按案件/按人员」下拉;⑤批量操作新增「批量改状态」(按模块状态字段选项批量应用),与既有批量删除/导出组成选择条;⑥附件支持分类(书证/笔录/银行流水/鉴定意见/照片/音视频/其他)上传时选择并落库,详情页按分类分组展示,图片附件显示缩略图+点击放大预览(新增 getAttachmentPreview 读磁盘/IndexedDB 二进制)",
   "V2.14.50 优化 - 查看详情页附件区(CaseDetail)在附件名称下方另起一行标注「上传时间」：附件收集时兼容 uploadedAt(attachmentStore)与 lastModifiedDate/lastModified(antd file 对象，后者为 Date 实例)两种时间来源，统一格式化到秒(YYYY-MM-DD HH:mm:ss)；新增 .cd-att-main/.cd-att-time 样式(名称可折行+灰色小字时间行)",

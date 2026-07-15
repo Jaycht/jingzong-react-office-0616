@@ -9,7 +9,7 @@ import { Collapse, Modal } from 'antd';
 import { FileText, Paperclip, Pen, Download } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { downloadAttachment, getAttachmentPreview } from '../store/attachmentStore';
-import { getMassRecords } from '../store/massStore';
+import { getMassRecords, updateMassRecord } from '../store/massStore';
 import { MODULE_NAMES, findModule } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { FIELD_LABELS } from '../constants/fieldLabels';
@@ -179,6 +179,37 @@ export default function CaseDetail({ record, onClose, onOpenRelated }: Props) {
     return { relatedRecords: rel, timeline: tl };
   }, [record]);
 
+  // 结构化关联：手动「钉选」的关联记录 id（与启发式匹配互补，双向持久化到 record.data.linkedRecordIds）
+  const [linkedIds, setLinkedIds] = useState<string[]>(() =>
+    Array.isArray(record.data?.linkedRecordIds) ? (record.data!.linkedRecordIds as string[]) : []
+  );
+  const linkedSet = useMemo(() => new Set(linkedIds), [linkedIds]);
+  // 展示用关联集合 = 启发式匹配 ∪ 手动关联（去重，手动关联项补充进列表）
+  const displayedRelated = useMemo(() => {
+    const all = getMassRecords();
+    const map = new Map<string, MassRecord>();
+    for (const r of relatedRecords) map.set(r.id, r);
+    for (const id of linkedIds) {
+      if (!map.has(id)) {
+        const rec = all.find((x) => x.id === id);
+        if (rec) map.set(id, rec);
+      }
+    }
+    return [...map.values()];
+  }, [relatedRecords, linkedIds]);
+
+  /** 切换与某条记录的关联（双向持久化；updateMassRecord 为整对象替换 data，必须展开旧 data 后再写入） */
+  const toggleLink = (other: MassRecord) => {
+    const isLinked = linkedIds.includes(other.id);
+    const newCurrent = isLinked ? linkedIds.filter((id) => id !== other.id) : [...linkedIds, other.id];
+    setLinkedIds(newCurrent);
+    updateMassRecord(record.id, { ...(record.data || {}), linkedRecordIds: newCurrent });
+    const otherLinked: string[] = Array.isArray(other.data?.linkedRecordIds) ? (other.data!.linkedRecordIds as string[]) : [];
+    const newOther = isLinked ? otherLinked.filter((id) => id !== record.id) : [...otherLinked, record.id];
+    updateMassRecord(other.id, { ...(other.data || {}), linkedRecordIds: newOther });
+    showToast(isLinked ? '已取消关联' : '已关联该记录', 'success');
+  };
+
   // 附件：收集所有附件数组（包括 attachment / fileList 等字段），同时取出上传时间与分类
   const attachments = useMemo(() => {
     const d = record.data || {};
@@ -209,11 +240,11 @@ export default function CaseDetail({ record, onClose, onOpenRelated }: Props) {
     return groups;
   }, [record]);
 
-  // 附件预览（图片点击放大）
-  const [preview, setPreview] = useState<{ url: string; name: string } | null>(null);
+  // 附件预览（图片/PDF 点击放大）
+  const [preview, setPreview] = useState<{ url: string; name: string; mime?: string } | null>(null);
   const openPreview = async (uid: string, name: string) => {
     const p = await getAttachmentPreview(uid);
-    if (p) setPreview({ url: p.url, name });
+    if (p) setPreview({ url: p.url, name, mime: p.mime });
     else showToast('无法预览该附件', 'warning');
   };
 
@@ -382,39 +413,51 @@ export default function CaseDetail({ record, onClose, onOpenRelated }: Props) {
                 <span className="cd-att-cat">{g.category}</span>
                 <span className="cd-att-cat-count">{g.items.length}</span>
               </div>
-              {g.items.map((att) => (
-                <div key={att.uid} className="cd-att">
-                  {att.type?.startsWith('image/') ? (
-                    <button className="cd-att-thumb-btn" title="点击放大" onClick={() => openPreview(att.uid, att.name)}>
-                      <ImageThumb uid={att.uid} />
-                    </button>
-                  ) : (
-                    <span className="cd-att-icon"><Paperclip size={15} /></span>
-                  )}
-                  <div className="cd-att-main">
-                    <span className="cd-att-name">{att.name}</span>
-                    {att.time ? <span className="cd-att-time">上传时间：{fmtValue(att.time)}</span> : null}
-                  </div>
-                  <div className="cd-att-acts">
-                    {att.type?.startsWith('image/') && (
-                      <button className="cd-att-btn sm" onClick={() => openPreview(att.uid, att.name)}>预览</button>
+              {g.items.map((att) => {
+                const isImage = att.type?.startsWith('image/');
+                const isPdf = att.type === 'application/pdf';
+                return (
+                  <div key={att.uid} className="cd-att">
+                    {isImage ? (
+                      <button className="cd-att-thumb-btn" title="点击放大" onClick={() => openPreview(att.uid, att.name)}>
+                        <ImageThumb uid={att.uid} />
+                      </button>
+                    ) : isPdf ? (
+                      <span className="cd-att-icon pdf"><FileText size={15} /></span>
+                    ) : (
+                      <span className="cd-att-icon"><Paperclip size={15} /></span>
                     )}
-                    <button className="cd-att-btn" onClick={async () => {
-                      try { await downloadAttachment(att.uid); } catch { /* ignore */ }
-                    }}>
-                      <Download size={15} /> 下载
-                    </button>
+                    <div className="cd-att-main">
+                      <span className="cd-att-name">{att.name}</span>
+                      {att.time ? <span className="cd-att-time">上传时间：{fmtValue(att.time)}</span> : null}
+                    </div>
+                    <div className="cd-att-acts">
+                      {(isImage || isPdf) && (
+                        <button className="cd-att-btn sm" onClick={() => openPreview(att.uid, att.name)}>预览</button>
+                      )}
+                      <button className="cd-att-btn" onClick={async () => {
+                        try { await downloadAttachment(att.uid); } catch { /* ignore */ }
+                      }}>
+                        <Download size={15} /> 下载
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ))}
         </div>
       )}
 
-      {/* 图片预览弹窗 */}
-      <Modal open={!!preview} footer={null} onCancel={() => setPreview(null)} width={720} title={preview?.name || '预览'} styles={{ body: { padding: 12 } }}>
-        {preview ? <img src={preview.url} alt={preview.name} style={{ width: '100%', borderRadius: 8 }} /> : null}
+      {/* 附件预览弹窗：图片直接展示，PDF 内嵌 iframe 浏览 */}
+      <Modal open={!!preview} footer={null} onCancel={() => setPreview(null)} width={preview?.mime === 'application/pdf' ? 860 : 720} title={preview?.name || '预览'} styles={{ body: { padding: 12 } }}>
+        {preview ? (
+          preview.mime === 'application/pdf' ? (
+            <iframe src={preview.url} title={preview.name} style={{ width: '100%', height: '70vh', border: 0, borderRadius: 8 }} />
+          ) : (
+            <img src={preview.url} alt={preview.name} style={{ width: '100%', borderRadius: 8 }} />
+          )
+        ) : null}
       </Modal>
 
       {/* 关联与脉络：默认收起，点击展开（经侦高价值关联能力，但不默认铺开） */}
@@ -426,15 +469,24 @@ export default function CaseDetail({ record, onClose, onOpenRelated }: Props) {
         items={[
           {
             key: 'rel',
-            label: `关联记录（${relatedRecords.length}）`,
-            children: relatedRecords.length === 0 ? (
-              <div className="cd-empty">暂无关联记录</div>
+            label: `关联记录（${displayedRelated.length}）`,
+            children: displayedRelated.length === 0 ? (
+              <div className="cd-empty">暂无关联记录（可在右侧点「关联」手动建立）</div>
             ) : (
               <div className="cd-rel-list">
-                {relatedRecords.map(r => (
-                  <div key={r.id} className="cd-rel-item" onClick={() => onOpenRelated?.(r)}>
-                    <span className="cd-rel-title">{deriveRecordTitle(r.data || {})}</span>
-                    <span className="cd-rel-meta">{MODULE_NAMES[r.moduleId] || r.moduleId}</span>
+                {displayedRelated.map((r) => (
+                  <div key={r.id} className="cd-rel-item">
+                    <div className="cd-rel-main" onClick={() => onOpenRelated?.(r)}>
+                      <span className="cd-rel-title">{deriveRecordTitle(r.data || {})}</span>
+                      <span className="cd-rel-meta">{MODULE_NAMES[r.moduleId] || r.moduleId}</span>
+                    </div>
+                    <button
+                      className={`cd-rel-link-btn ${linkedSet.has(r.id) ? 'on' : ''}`}
+                      title={linkedSet.has(r.id) ? '点击取消关联' : '关联此记录'}
+                      onClick={(e) => { e.stopPropagation(); toggleLink(r); }}
+                    >
+                      {linkedSet.has(r.id) ? '已关联' : '关联'}
+                    </button>
                   </div>
                 ))}
               </div>
