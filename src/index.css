@@ -1558,3 +1558,24 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
   .cd-side-item { padding: 11px 14px; font-size: 14px; gap: 8px; }
   .cd-info, .cd-sec-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== 显示密度（V2.17.0） ===== */
+/* 宽松：适配年长同事，放大字号与间距 */
+html[data-density="comfortable"] { font-size: 15px; }
+html[data-density="comfortable"] .card,
+html[data-density="comfortable"] .panel { font-size: 14.5px; }
+html[data-density="comfortable"] .ant-table { font-size: 14px; }
+html[data-density="comfortable"] .ant-table-cell { padding-top: 12px !important; padding-bottom: 12px !important; }
+html[data-density="comfortable"] .ant-btn { height: 38px; font-size: 14px; }
+html[data-density="comfortable"] .cd-rel-item,
+html[data-density="comfortable"] .cd-att { padding-top: 12px; padding-bottom: 12px; }
+html[data-density="comfortable"] .SettingRow,
+html[data-density="comfortable"] .cd-att-groups { font-size: 14.5px; }
+
+/* 紧凑：一屏更多内容 */
+html[data-density="compact"] { font-size: 13px; }
+html[data-density="compact"] .card,
+html[data-density="compact"] .panel { font-size: 12.5px; }
+html[data-density="compact"] .ant-table { font-size: 12px; }
+html[data-density="compact"] .ant-table-cell { padding-top: 6px !important; padding-bottom: 6px !important; }
+html[data-density="compact"] .ant-btn { height: 30px; font-size: 12px; }

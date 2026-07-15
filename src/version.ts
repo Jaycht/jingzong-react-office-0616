@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.16.0";
+export const APP_VERSION = "V2.17.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 16;
+export const VERSION_MINOR = 17;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.17.0 =====
+  "V2.17.0 重构 - 系统设置大瘦身（按用户复盘精简）:①删除导入导出页「数据统计报告(PDF)」占位死功能(从未实现);②操作日志页「导出日志」与导入导出页的「系统操作日志(JSON)」导出重复,移除前者(保留导入导出为唯一出口);③「清理孤儿附件」从模块与字段页移入附件档案页(归属更合理);④自动备份设置(开关/频率/范围/退出备份/附件路径/备份路径)从备份恢复页抽出独立组件 AutoBackupPanel 迁入「通用设置」,备份恢复页精简为数据概览+立即备份/恢复+历史+重置;通用设置新增:显示密度(标准/宽松大字号/紧凑)、操作提示音(接 public/audio 的 10 个 wav,成功/警告/失败提示)、列表默认排序(更新/创建时间/按模块)、启动打开(工作台/上次模块)、时间格式(YYYY-MM-DD 与 YYYY/MM/DD),全部经 appStore 持久化;显示密度以 data-density 根属性驱动 CSS 覆盖",
   // ===== V2.16.0 =====
   "V2.16.0 新增 - 四项渐进优化落地：①详情页(CaseDetail)附件预览支持 PDF——非图片附件按 MIME 区分图标(PDF 用红色文档图标)，预览弹窗对 application/pdf 内嵌 iframe 浏览，不再破图；②关联记录支持手动「钉选」结构化关联——关联面板点「关联」双向持久化至 record.data.linkedRecordIds(与启发式匹配互补，展示集合=启发式∪手动关联)，取消关联同步解除双向链接；③附件分类(书证/笔录/银行流水/鉴定意见/照片/音视频/其他)抽为共享常量 src/constants/attachmentCategories.ts，录入下拉与详情分组统一引用，消除重复硬编码；④列表(ModulePage)对含 battleType 字段的模块(集群战役)新增「战役类型」快速筛选(集群/协同/协查)，三类边界可隔离查看；清除筛选按钮现覆盖全部筛选条件",
   // ===== V2.15.0 =====

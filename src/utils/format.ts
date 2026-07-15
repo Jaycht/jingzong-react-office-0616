@@ -3,6 +3,8 @@
  * 集中项目中散落重复的日期 / 数值格式化逻辑（M-7），各组件统一引用。
  */
 
+import { useAppStore } from "../store/appStore";
+
 /** 在日期上增加天数，返回新 Date */
 export function addDays(date: Date, days: number): Date {
   const result = new Date(date);
@@ -133,4 +135,32 @@ export function formatChineseDate(raw: unknown): string {
     if (m) return `${m[1]}年${parseInt(m[2], 10)}月${parseInt(m[3], 10)}日`;
   }
   return s.slice(0, 10);
+}
+
+/**
+ * 受全局「时间格式」设置驱动的格式化（V2.17.0 新增）。
+ * 按 setting.timeFormat 切换 YYYY-MM-DD / YYYY/MM/DD；withTime 时附 时:分。
+ * 解析时按本地时区处理 ISO，避免 UTC 偏移导致跨日错位。
+ */
+const pad2 = (n: number) => String(n).padStart(2, "0");
+function toLocalDate(input: string | number | Date): Date {
+  if (input instanceof Date) return input;
+  if (typeof input === "number") return new Date(input);
+  let s = String(input).trim();
+  if (s.includes("T")) s = s.replace("T", " ").replace(/Z$/, "").replace(/\.\d+$/, "");
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? new Date(NaN) : d;
+}
+
+export function formatBySetting(
+  input: string | number | Date,
+  opts?: { withTime?: boolean },
+): string {
+  const tf = useAppStore.getState().timeFormat;
+  const d = toLocalDate(input);
+  if (isNaN(d.getTime())) return String(input);
+  const sep = tf === "YYYY/MM/DD" ? "/" : "-";
+  let out = `${d.getFullYear()}${sep}${pad2(d.getMonth() + 1)}${sep}${pad2(d.getDate())}`;
+  if (opts?.withTime) out += ` ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  return out;
 }

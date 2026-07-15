@@ -107,6 +107,23 @@ export default function AppLayout() {
       navigate("/app/" + currentPage, { replace: true });
     }
   }, [currentPage, location.pathname, navigate]);
+
+  // 持久化当前模块，供「启动行为=上次模块」恢复
+  useEffect(() => {
+    try { localStorage.setItem("jingzong.lastPage", currentPage); } catch { /* ignore */ }
+  }, [currentPage]);
+
+  // 启动行为：无 hash（全新打开）时，若设为「上次模块」则恢复
+  useEffect(() => {
+    const sb = useAppStore.getState().startupBehavior;
+    if (sb === "last" && !window.location.hash) {
+      const last = (() => { try { return localStorage.getItem("jingzong.lastPage"); } catch { return null; } })();
+      if (last && last !== "dashboard") {
+        useAppStore.getState().setCurrentPage(last);
+      }
+    }
+  }, []);
+
   const editRecord = useAppStore((s) => s.editRecord);
   const setEditRecord = useAppStore((s) => s.setEditRecord);
 

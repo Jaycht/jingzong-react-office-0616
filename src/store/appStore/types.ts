@@ -37,6 +37,24 @@ export interface UiSlice {
 
   lowPerfMode: boolean;
   toggleLowPerfMode: () => void;
+
+  // 通用设置：显示密度（适配年长同事）
+  uiDensity: "standard" | "comfortable" | "compact";
+  setUiDensity: (v: "standard" | "comfortable" | "compact") => void;
+
+  // 通用设置：操作提示音
+  soundEnabled: boolean;
+  setSoundEnabled: (v: boolean) => void;
+  soundType: string;
+  setSoundType: (v: string) => void;
+
+  // 通用设置：列表默认排序 / 启动行为 / 时间格式
+  listSort: "updatedDesc" | "updatedAsc" | "createdDesc" | "createdAsc" | "module";
+  setListSort: (v: "updatedDesc" | "updatedAsc" | "createdDesc" | "createdAsc" | "module") => void;
+  startupBehavior: "dashboard" | "last";
+  setStartupBehavior: (v: "dashboard" | "last") => void;
+  timeFormat: "YYYY-MM-DD" | "YYYY/MM/DD";
+  setTimeFormat: (v: "YYYY-MM-DD" | "YYYY/MM/DD") => void;
 }
 
 // 编辑上下文（供 DrawerNewRecord 等共享）

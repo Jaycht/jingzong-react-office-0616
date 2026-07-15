@@ -3,8 +3,9 @@ import { motion } from 'framer-motion';
 import {
   Settings, Power, Monitor, ShieldCheck, Boxes,
   PieChart, TableProperties, FileArchive, ScrollText, DatabaseBackup,
+  Volume2, ListOrdered, Clock,
 } from 'lucide-react';
-import { Switch } from 'antd';
+import { Switch, Select } from 'antd';
 import { useAppStore } from '../store/appStore';
 
 import SettingsPage from './SettingsPage';
@@ -14,6 +15,12 @@ import Attachments from './Attachments';
 import OperationLog from './OperationLog';
 import Backup from './Backup';
 import Version from './Version';
+import AutoBackupPanel from '../components/AutoBackupPanel';
+
+const SOUND_OPTIONS = [
+  'QQ消息.wav', '微信消息.wav', '报时鸟.wav', '苹果消息.wav', '苹果叮叮.wav',
+  '苹果消息提醒.wav', 'QQ滴滴滴.wav', '好友上线.wav', '手机QQ消息提醒.wav', 'QQ特别关心铃声.wav',
+].map((f) => ({ label: f.replace(/\.wav$/, ''), value: f }));
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -33,6 +40,21 @@ const TABS: { id: TabId; label: string; icon: React.ComponentType<{ size?: numbe
 export default function SystemSettings() {
   const darkMode = useAppStore((s) => s.darkMode);
   const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
+
+  // 通用设置：显示密度 / 提示音 / 列表排序 / 启动行为 / 时间格式
+  const uiDensity = useAppStore((s) => s.uiDensity);
+  const setUiDensity = useAppStore((s) => s.setUiDensity);
+  const soundEnabled = useAppStore((s) => s.soundEnabled);
+  const setSoundEnabled = useAppStore((s) => s.setSoundEnabled);
+  const soundType = useAppStore((s) => s.soundType);
+  const setSoundType = useAppStore((s) => s.setSoundType);
+  const listSort = useAppStore((s) => s.listSort);
+  const setListSort = useAppStore((s) => s.setListSort);
+  const startupBehavior = useAppStore((s) => s.startupBehavior);
+  const setStartupBehavior = useAppStore((s) => s.setStartupBehavior);
+  const timeFormat = useAppStore((s) => s.timeFormat);
+  const setTimeFormat = useAppStore((s) => s.setTimeFormat);
+
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [autoStart, setAutoStart] = useState(false);
   const [closeToTray, setCloseToTray] = useState(() => {
@@ -72,7 +94,7 @@ export default function SystemSettings() {
     switch (activeTab) {
       case 'general':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 680 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 760 }}>
             <Section title="启动与窗口" icon={<Power size={16} />}>
               <SettingRow
                 title="开机自动启动"
@@ -99,7 +121,96 @@ export default function SystemSettings() {
                 desc="切换浅色/深色界面主题"
                 extra={<Switch checked={darkMode} onChange={toggleDarkMode} />}
               />
+              <SettingRow
+                title="显示密度"
+                desc="宽松更适合年长同事阅读；紧凑可一屏显示更多内容"
+                extra={
+                  <Select
+                    value={uiDensity}
+                    onChange={(v) => setUiDensity(v as "standard" | "comfortable" | "compact")}
+                    style={{ width: 140, height: 36 }}
+                    options={[
+                      { label: '标准', value: 'standard' },
+                      { label: '宽松（大字号）', value: 'comfortable' },
+                      { label: '紧凑', value: 'compact' },
+                    ]}
+                  />
+                }
+              />
             </Section>
+            <Section title="通知与声音" icon={<Volume2 size={16} />}>
+              <SettingRow
+                title="操作提示音"
+                desc="操作成功或失败时播放提示音（失败/警告也会响）"
+                extra={<Switch checked={soundEnabled} onChange={(v) => setSoundEnabled(v)} />}
+              />
+              <SettingRow
+                title="提示音类型"
+                desc="选择喜欢的提示音"
+                extra={
+                  <Select
+                    value={soundType}
+                    onChange={(v) => setSoundType(v)}
+                    disabled={!soundEnabled}
+                    style={{ width: 160, height: 36 }}
+                    options={SOUND_OPTIONS}
+                  />
+                }
+              />
+            </Section>
+            <Section title="列表与启动" icon={<ListOrdered size={16} />}>
+              <SettingRow
+                title="列表默认排序"
+                desc="各模块记录列表的默认排列顺序"
+                extra={
+                  <Select
+                    value={listSort}
+                    onChange={(v) => setListSort(v as "updatedDesc" | "updatedAsc" | "createdDesc" | "createdAsc" | "module")}
+                    style={{ width: 160, height: 36 }}
+                    options={[
+                      { label: '更新时间（新→旧）', value: 'updatedDesc' },
+                      { label: '更新时间（旧→新）', value: 'updatedAsc' },
+                      { label: '创建时间（新→旧）', value: 'createdDesc' },
+                      { label: '创建时间（旧→新）', value: 'createdAsc' },
+                      { label: '按模块分组', value: 'module' },
+                    ]}
+                  />
+                }
+              />
+              <SettingRow
+                title="启动打开"
+                desc="打开软件时默认进入的页面"
+                extra={
+                  <Select
+                    value={startupBehavior}
+                    onChange={(v) => setStartupBehavior(v as "dashboard" | "last")}
+                    style={{ width: 160, height: 36 }}
+                    options={[
+                      { label: '工作台', value: 'dashboard' },
+                      { label: '上次所在模块', value: 'last' },
+                    ]}
+                  />
+                }
+              />
+            </Section>
+            <Section title="时间格式" icon={<Clock size={16} />}>
+              <SettingRow
+                title="日期显示格式"
+                desc="列表中日期的统一展示格式"
+                extra={
+                  <Select
+                    value={timeFormat}
+                    onChange={(v) => setTimeFormat(v as "YYYY-MM-DD" | "YYYY/MM/DD")}
+                    style={{ width: 160, height: 36 }}
+                    options={[
+                      { label: '2026-07-15', value: 'YYYY-MM-DD' },
+                      { label: '2026/07/15', value: 'YYYY/MM/DD' },
+                    ]}
+                  />
+                }
+              />
+            </Section>
+            <AutoBackupPanel />
           </div>
         );
       case 'modules': return <SettingsPage />;

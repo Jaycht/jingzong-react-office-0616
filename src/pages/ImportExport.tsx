@@ -290,18 +290,6 @@ export default function ImportExport() {
                 showToast('正在导出操作日志...', 'info');
               }}
             />
-            <div style={{
-              padding: '11px 14px', background: 'var(--color-surface-hover)',
-              border: '1px solid var(--color-border)', borderRadius: 8,
-              display: 'flex', alignItems: 'center', gap: 10,
-              opacity: 0.6,
-            }}>
-              <div style={{ fontSize: 9.5, padding: '1px 6px', borderRadius: 4, background: 'var(--color-surface-hover)', color: 'var(--color-text-muted)', fontWeight: 700, fontFamily: 'monospace' }}>pdf</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-muted)' }}>数据统计报告（PDF）</div>
-                <div style={{ fontSize: 11, color: '#B0BEC5' }}>需要后端支持 · 待实现</div>
-              </div>
-            </div>
           </div>
         </motion.div>
       </div>

@@ -5,7 +5,6 @@ import type { ColumnsType } from 'antd/es/table';
 import { Plus, Save, Settings, Trash2 } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { createCustomModule, useCustomModules } from '../customModules';
-import { cleanupOrphanAttachments } from '../store/massStore';
 import { DEPARTMENTS, type FieldDefinition, type FieldType, type WorkModule } from '../moduleConfig';
 
 const fieldTypeLabels: Partial<Record<FieldType, string>> = {
@@ -35,19 +34,6 @@ export default function SettingsPage() {
     { label: '记录日期', type: 'date', required: true },
     { label: '工作内容', type: 'textarea', required: true },
   ]);
-  const [cleaning, setCleaning] = useState(false);
-
-  const handleCleanupOrphans = async () => {
-    setCleaning(true);
-    try {
-      const n = await cleanupOrphanAttachments();
-      showToast(n > 0 ? `已清理 ${n} 个孤儿附件` : '未发现孤儿附件', n > 0 ? 'success' : 'info');
-    } catch (e) {
-      showToast('清理失败: ' + (e instanceof Error ? e.message : '未知错误'), 'error');
-    } finally {
-      setCleaning(false);
-    }
-  };
 
   const addField = () => setFields((prev) => [...prev, { ...defaultField }]);
   const updateField = (index: number, patch: Partial<FieldDraft>) => {
@@ -197,18 +183,6 @@ export default function SettingsPage() {
           ) : (
             <Empty description="暂无自定义模块" style={{ padding: 50 }} />
           )}
-        </div>
-      </div>
-
-      <div className="panel" style={{ padding: 18, marginTop: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)' }}>附件维护</div>
-            <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 2 }}>
-              删除记录时已自动清理其附件；此按钮可清理「上传后未保存」或「已无对应记录」的孤立附件。
-            </div>
-          </div>
-          <Button icon={<Trash2 size={14} />} loading={cleaning} onClick={handleCleanupOrphans}>清理孤儿附件</Button>
         </div>
       </div>
 

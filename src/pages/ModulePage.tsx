@@ -16,7 +16,7 @@ import { exportModuleToExcel, exportSelectedRecords, importExcelToModule } from 
 import { exportModuleReport } from '../utils/reportGenerator';
 import { generateFundReport } from '../utils/reportUtils';
 import CaseDetail from './CaseDetail';
-import { formatValue } from '../utils/format';
+import { formatValue, formatBySetting } from '../utils/format';
 
 type FieldValue = string | number | boolean | null | undefined | string[] | Record<string, unknown>;
 
@@ -186,7 +186,20 @@ export default function ModulePage() {
   }
 
   const active = module.tabs.find((tab) => tab.id === activeTab) || module.tabs[0];
-  const activeRecords = realRecords.filter((r) => r.tabId === activeTab).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+
+  // 列表默认排序：受全局「列表排序」设置驱动
+  const listSort = useAppStore((s) => s.listSort);
+  const activeRecords = useMemo(() => {
+    const list = realRecords.filter((r) => r.tabId === activeTab);
+    const cmp: Record<typeof listSort, (a: typeof list[number], b: typeof list[number]) => number> = {
+      updatedDesc: (a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''),
+      updatedAsc: (a, b) => (a.updatedAt || '').localeCompare(b.updatedAt || ''),
+      createdDesc: (a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''),
+      createdAsc: (a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''),
+      module: (a, b) => a.moduleId.localeCompare(b.moduleId),
+    };
+    return [...list].sort(cmp[listSort]);
+  }, [realRecords, activeTab, listSort]);
 
   // ─── 字段与派生（必须先于 filteredRecords 定义，避免 statusByRecord 暂时性死区报错） ──
   const fields = active?.fields || [];
@@ -309,7 +322,7 @@ export default function ModulePage() {
         ? [{ title: '经办人' as const, dataIndex: '_handler' as const, width: 80, ellipsis: true,
             sorter: (a: DynamicRow, b: DynamicRow) => a._handler.localeCompare(b._handler) }]
         : []),
-      { title: '更新时间', dataIndex: '_updatedAt', width: 130, sorter: (a: DynamicRow, b: DynamicRow) => a._updatedAt.localeCompare(b._updatedAt), defaultSortOrder: 'descend' as const },
+      { title: '更新时间', dataIndex: '_updatedAt', width: 130, sorter: (a: DynamicRow, b: DynamicRow) => a._updatedAt.localeCompare(b._updatedAt), defaultSortOrder: 'descend' as const, render: (v: string) => formatBySetting(v, { withTime: true }) },
       {
         title: '操作',
         dataIndex: '_action',

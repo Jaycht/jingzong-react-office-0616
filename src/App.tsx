@@ -189,9 +189,13 @@ function AppContent() {
 
 export default function App() {
   const darkMode = useAppStore((s) => s.darkMode);
+  const uiDensity = useAppStore((s) => s.uiDensity);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
+  useEffect(() => {
+    document.documentElement.setAttribute('data-density', uiDensity);
+  }, [uiDensity]);
   return (
     <ConfigProvider locale={zhCN} theme={darkMode ? DARK_THEME : LIGHT_THEME}>
       <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
