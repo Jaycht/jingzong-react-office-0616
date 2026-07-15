@@ -4,11 +4,12 @@
  * 只做信息展示：基本信息（表格行式）+ repeatable 段落 + 附件；
  * 不展示关联记录、时间线（按需求移除）。
  */
-import { useMemo } from 'react';
-import { Modal } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
+import { Collapse, Modal } from 'antd';
 import { FileText, Paperclip, Pen, Download } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
-import { downloadAttachment } from '../store/attachmentStore';
+import { downloadAttachment, getAttachmentPreview } from '../store/attachmentStore';
+import { getMassRecords } from '../store/massStore';
 import { MODULE_NAMES, findModule } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { FIELD_LABELS } from '../constants/fieldLabels';
@@ -18,6 +19,7 @@ type MassRecord = import('../store/massStore').MassRecord;
 interface Props {
   record: MassRecord;
   onClose: () => void;
+  onOpenRelated?: (rec: MassRecord) => void;
 }
 
 // 字段中文标签统一引用 src/constants/fieldLabels
@@ -83,9 +85,19 @@ function fmtValue(val: unknown): string {
   return String(val);
 }
 
-type CdStatusKind = 'done' | 'warning' | 'danger' | 'info';
+/** 派生记录标题：兼容各模块主键字段，回退到首个有值文本字段 */
+function deriveRecordTitle(d: Record<string, unknown>): string {
+  const cands = [d.caseName, d.suspect, d.subjectName, d.projectName, d.reporterName, d.name, d.title];
+  for (const c of cands) {
+    if (c != null && String(c).trim() !== '') return String(c).trim();
+  }
+  for (const [k, v] of Object.entries(d)) {
+    if (!k.startsWith('__') && typeof v === 'string' && v.trim() !== '') return v.trim().slice(0, 40);
+  }
+  return '未命名';
+}
 
-/** 派生记录真实状态（与 ModulePage 同源），用于状态徽标 */
+type CdStatusKind = 'done' | 'warning' | 'danger' | 'info';
 const CD_STATUS_HINTS = ['状态', '进度', '结案', '归档', '报销', '反馈', '整改', '结果'];
 function deriveCdStatus(rec: MassRecord, fields: { type: string; label: string; id: string }[]): { label: string; kind: CdStatusKind } | null {
   const sf = fields.find((f) => f.type === 'select' && CD_STATUS_HINTS.some((h) => f.label.includes(h)));
@@ -109,10 +121,23 @@ function isAttachmentValue(v: unknown): boolean {
   return v.every(item => item && typeof item === 'object' && !!(item as Record<string, unknown>).uid);
 }
 
-export default function CaseDetail({ record, onClose }: Props) {
+/** 图片附件缩略图：懒加载预览图（仅图片类型） */
+function ImageThumb({ uid }: { uid: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    getAttachmentPreview(uid).then((p) => { if (alive && p) setUrl(p.url); }).catch(() => {});
+    return () => { alive = false; };
+  }, [uid]);
+  if (!url) return <div className="cd-thumb cd-thumb-ph" />;
+  return <img className="cd-thumb" src={url} alt="" />;
+}
+
+export default function CaseDetail({ record, onClose, onOpenRelated }: Props) {
   const setEditRecord = useAppStore((s) => s.setEditRecord);
   const setCurrentPage = useAppStore((s) => s.setCurrentPage);
   const openModal = useAppStore((s) => s.openModal);
+  const showToast = useAppStore((s) => s.showToast);
   const { allModules } = useCustomModules();
 
   const caseName = useMemo(() => {
@@ -130,10 +155,34 @@ export default function CaseDetail({ record, onClose }: Props) {
   }, [record]);
   const moduleName = MODULE_NAMES[record.moduleId] || record.moduleId;
 
-  // 附件：收集所有附件数组（包括 attachment / fileList 等字段），同时取出上传时间
+  // 关联记录 + 时间线：用「多条关键身份词(姓名/身份证/电话/案件名/项目名/主体名等)」匹配，比单标题串鲁棒
+  const { relatedRecords, timeline } = useMemo(() => {
+    const all = getMassRecords();
+    const d = record.data || {};
+    const IDENTITY_KEYS = ['caseName', 'suspect', 'subjectName', 'projectName', 'reporterName', 'name', 'title', 'caseNo', 'idCard', 'phone', 'mobile', 'company', 'unit', 'orgName', 'legalName', 'personName', 'suspectName'];
+    const kws = new Set<string>();
+    for (const k of IDENTITY_KEYS) {
+      const v = d[k];
+      if (typeof v === 'string' && v.trim().length >= 2) kws.add(v.trim().toLowerCase());
+    }
+    for (const v of Object.values(d)) {
+      if (typeof v === 'string' && /[\d]{4,}/.test(v)) kws.add(v.trim().toLowerCase());
+    }
+    const matchAny = (data: Record<string, unknown>, kw: string) =>
+      Object.values(data).some(v =>
+        (typeof v === 'string' && v.toLowerCase().includes(kw)) ||
+        (Array.isArray(v) && v.some(x => typeof x === 'string' && x.toLowerCase().includes(kw)))
+      );
+    const kwArr = [...kws];
+    const rel = all.filter(r => r.id !== record.id && kwArr.some(kw => matchAny(r.data || {}, kw))).slice(0, 12);
+    const tl = [...rel].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).slice(0, 20);
+    return { relatedRecords: rel, timeline: tl };
+  }, [record]);
+
+  // 附件：收集所有附件数组（包括 attachment / fileList 等字段），同时取出上传时间与分类
   const attachments = useMemo(() => {
     const d = record.data || {};
-    const files: Array<{ uid: string; name: string; time?: string }> = [];
+    const files: Array<{ uid: string; name: string; time?: string; category?: string; type?: string }> = [];
     for (const [, val] of Object.entries(d)) {
       if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object' && val[0].uid && val[0].name) {
         for (const item of val) {
@@ -143,13 +192,30 @@ export default function CaseDetail({ record, onClose }: Props) {
             let time: string | undefined;
             if (typeof rawTime === 'string') time = rawTime;
             else if (rawTime instanceof Date) time = rawTime.toISOString();
-            files.push({ uid: item.uid as string, name: item.name as string, time });
+            const cat = typeof obj.category === 'string' && obj.category.trim() ? obj.category : '其他';
+            files.push({ uid: item.uid as string, name: item.name as string, time, category: cat, type: typeof obj.type === 'string' ? obj.type : undefined });
           }
         }
       }
     }
-    return files;
+    // 按分类分组（保持出现顺序）
+    const groups: Array<{ category: string; items: typeof files }> = [];
+    const idxMap = new Map<string, number>();
+    for (const f of files) {
+      const c = f.category || '其他';
+      if (!idxMap.has(c)) { idxMap.set(c, groups.length); groups.push({ category: c, items: [] }); }
+      groups[idxMap.get(c)!].items.push(f);
+    }
+    return groups;
   }, [record]);
+
+  // 附件预览（图片点击放大）
+  const [preview, setPreview] = useState<{ url: string; name: string } | null>(null);
+  const openPreview = async (uid: string, name: string) => {
+    const p = await getAttachmentPreview(uid);
+    if (p) setPreview({ url: p.url, name });
+    else showToast('无法预览该附件', 'warning');
+  };
 
   // 收集"属于 repeatable 段"的字段 id：这些字段的值存在数组（listName）里，
   // 不应在顶层基本信息里以空值重复出现（如"报案人：—"），避免用户误以为个人信息未保存。
@@ -304,27 +370,95 @@ export default function CaseDetail({ record, onClose }: Props) {
         );
       })}
 
-      {/* 附件 */}
+      {/* 附件（按分类分组） */}
       <div className="cd-content-title" style={{ marginTop: 18 }}>附件</div>
       {attachments.length === 0 ? (
         <div className="cd-empty">暂无附件</div>
       ) : (
-        <div>
-          {attachments.map(att => (
-            <div key={att.uid} className="cd-att">
-              <div className="cd-att-main">
-                <span className="cd-att-name"><Paperclip size={14} style={{ marginRight: 6, verticalAlign: '-2px' }} />{att.name}</span>
-                {att.time ? <span className="cd-att-time">上传时间：{fmtValue(att.time)}</span> : null}
+        <div className="cd-att-groups">
+          {attachments.map((g) => (
+            <div key={g.category} className="cd-att-group">
+              <div className="cd-att-group-head">
+                <span className="cd-att-cat">{g.category}</span>
+                <span className="cd-att-cat-count">{g.items.length}</span>
               </div>
-              <button className="cd-att-btn" onClick={async () => {
-                try { await downloadAttachment(att.uid); } catch { /* ignore */ }
-              }}>
-                <Download size={15} /> 下载
-              </button>
+              {g.items.map((att) => (
+                <div key={att.uid} className="cd-att">
+                  {att.type?.startsWith('image/') ? (
+                    <button className="cd-att-thumb-btn" title="点击放大" onClick={() => openPreview(att.uid, att.name)}>
+                      <ImageThumb uid={att.uid} />
+                    </button>
+                  ) : (
+                    <span className="cd-att-icon"><Paperclip size={15} /></span>
+                  )}
+                  <div className="cd-att-main">
+                    <span className="cd-att-name">{att.name}</span>
+                    {att.time ? <span className="cd-att-time">上传时间：{fmtValue(att.time)}</span> : null}
+                  </div>
+                  <div className="cd-att-acts">
+                    {att.type?.startsWith('image/') && (
+                      <button className="cd-att-btn sm" onClick={() => openPreview(att.uid, att.name)}>预览</button>
+                    )}
+                    <button className="cd-att-btn" onClick={async () => {
+                      try { await downloadAttachment(att.uid); } catch { /* ignore */ }
+                    }}>
+                      <Download size={15} /> 下载
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>
       )}
+
+      {/* 图片预览弹窗 */}
+      <Modal open={!!preview} footer={null} onCancel={() => setPreview(null)} width={720} title={preview?.name || '预览'} styles={{ body: { padding: 12 } }}>
+        {preview ? <img src={preview.url} alt={preview.name} style={{ width: '100%', borderRadius: 8 }} /> : null}
+      </Modal>
+
+      {/* 关联与脉络：默认收起，点击展开（经侦高价值关联能力，但不默认铺开） */}
+      <div className="cd-content-title" style={{ marginTop: 18 }}>关联与脉络</div>
+      <Collapse
+        ghost
+        size="small"
+        defaultActiveKey={[]}
+        items={[
+          {
+            key: 'rel',
+            label: `关联记录（${relatedRecords.length}）`,
+            children: relatedRecords.length === 0 ? (
+              <div className="cd-empty">暂无关联记录</div>
+            ) : (
+              <div className="cd-rel-list">
+                {relatedRecords.map(r => (
+                  <div key={r.id} className="cd-rel-item" onClick={() => onOpenRelated?.(r)}>
+                    <span className="cd-rel-title">{deriveRecordTitle(r.data || {})}</span>
+                    <span className="cd-rel-meta">{MODULE_NAMES[r.moduleId] || r.moduleId}</span>
+                  </div>
+                ))}
+              </div>
+            ),
+          },
+          {
+            key: 'tl',
+            label: `时间线（${timeline.length}）`,
+            children: timeline.length === 0 ? (
+              <div className="cd-empty">暂无时间线</div>
+            ) : (
+              <div className="cd-tl-list">
+                {timeline.map(r => (
+                  <div key={r.id} className="cd-tl-item" onClick={() => onOpenRelated?.(r)}>
+                    <span className="cd-tl-dot" />
+                    <span className="cd-tl-title">{deriveRecordTitle(r.data || {})}</span>
+                    <span className="cd-tl-time">{fmtDateTime(String(r.updatedAt))}</span>
+                  </div>
+                ))}
+              </div>
+            ),
+          },
+        ]}
+      />
     </Modal>
   );
 }

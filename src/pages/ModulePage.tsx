@@ -5,12 +5,12 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import {
   CalendarPlus, CheckCircle2, Clock, Columns3, Download, Eye, FileText, LayoutGrid,
-  List, Pen, Plus, Rows3, Search, Trash2, Upload,
+  List, Pen, Plus, RefreshCw, Rows3, Search, Trash2, Upload,
 } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { findModule, filterVisibleFields, type FieldDefinition } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
-import { deleteMassRecord, deleteMassRecords, getMassRecords } from '../store/massStore';
+import { deleteMassRecord, deleteMassRecords, getMassRecords, updateMassRecord } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import { exportModuleToExcel, exportSelectedRecords, importExcelToModule } from '../utils/excelUtils';
 import { exportModuleReport } from '../utils/reportGenerator';
@@ -31,10 +31,17 @@ type StatusKind = 'done' | 'warning' | 'danger' | 'info';
  * 真实状态字段识别：select 类型且标签含这些关键字。
  * 用于替代原来恒取 data.status 的假「办理中」徽标。
  */
-const STATUS_LABEL_HINTS = ['状态', '进度', '结案', '归档', '报销', '反馈', '整改', '结果'];
+const STATUS_LABEL_HINTS = ['状态', '进度', '结案', '归档', '报销', '反馈', '整改', '结果', '办理', '审批', '审核', '处理', '进展', '环节', '阶段', '情况', '流转'];
 
 function findStatusField(fields: FieldDefinition[]): FieldDefinition | null {
-  return fields.find((f) => f.type === 'select' && STATUS_LABEL_HINTS.some((h) => f.label.includes(h))) || null;
+  // 1) 标签命中关键字
+  const byLabel = fields.find((f) => f.type === 'select' && STATUS_LABEL_HINTS.some((h) => f.label.includes(h)));
+  if (byLabel) return byLabel;
+  // 2) id 命中（常见命名）
+  const byId = fields.find((f) => f.type === 'select' && /^(status|state|approvalStatus|handleStatus|procStatus|caseStatus|flowStatus)$/i.test(f.id));
+  if (byId) return byId;
+  // 3) 单选字段且标签以「状态/情况」结尾的兜底
+  return fields.find((f) => f.type === 'select' && /(状态|情况|进度|结果)$/.test(f.label)) || null;
 }
 
 function mapStatusKind(value: string): StatusKind {
@@ -131,6 +138,8 @@ export default function ModulePage() {
   const [filterDateRange, setFilterDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [filterHandler, setFilterHandler] = useState<string | null>(null);
+  const [filterCase, setFilterCase] = useState<string | null>(null);
+  const [filterPerson, setFilterPerson] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [dense, setDense] = useState(false);
   const [hiddenCols, setHiddenCols] = useState<Set<string>>(new Set());
@@ -184,12 +193,13 @@ export default function ModulePage() {
   const dataFields = useMemo(() => getDataFields(visibleFields, 6), [visibleFields]);
 
   // 派生每条记录的真实状态（徽标 / 统计 / 筛选共用单一数据源）
+  // 注意：基于模块全部字段(fields)而非可见列(visibleFields)，避免状态列被隐藏后状态全部丢失
   const statusByRecord = useMemo(() => {
     const m = new Map<string, { label: string; kind: StatusKind } | null>();
-    for (const rec of realRecords) m.set(rec.id, deriveStatus(rec, visibleFields));
+    for (const rec of realRecords) m.set(rec.id, deriveStatus(rec, fields));
     return m;
-  }, [realRecords, visibleFields]);
-  const hasStatusField = !!findStatusField(visibleFields);
+  }, [realRecords, fields]);
+  const hasStatusField = !!findStatusField(fields);
 
   // ─── 筛选逻辑 ────────────────────────────────
   const filteredRecords = useMemo(() => {
@@ -224,8 +234,17 @@ export default function ModulePage() {
         return h === filterHandler;
       });
     }
+    if (filterCase) {
+      list = list.filter((r) => String(r.data?.caseName || '').trim() === filterCase);
+    }
+    if (filterPerson) {
+      list = list.filter((r) => {
+        const pn = String(r.data?.suspect || r.data?.subjectName || r.data?.reporterName || r.data?.name || r.data?.personName || '').trim();
+        return pn === filterPerson;
+      });
+    }
     return list;
-  }, [activeRecords, filterText, filterDateRange, filterStatus, filterHandler, statusByRecord]);
+  }, [activeRecords, filterText, filterDateRange, filterStatus, filterHandler, filterCase, filterPerson, statusByRecord]);
 
   interface DynamicRow {
     key: string;
@@ -326,6 +345,24 @@ export default function ModulePage() {
     return handlers.map((h) => ({ label: h, value: h }));
   }, [activeRecords]);
 
+  // ─── 案件选项（按案件筛选） ───────────────────
+  const caseOptions = useMemo(() => {
+    const names = Array.from(new Set(
+      activeRecords.map((r) => String(r.data?.caseName || '').trim()).filter(Boolean)
+    )).sort();
+    return names.map((n) => ({ label: n, value: n }));
+  }, [activeRecords]);
+
+  // ─── 人员选项（按人员筛选：嫌疑人/主体/举报人/姓名等） ──
+  const personOptions = useMemo(() => {
+    const names = Array.from(new Set(
+      activeRecords
+        .map((r) => String(r.data?.suspect || r.data?.subjectName || r.data?.reporterName || r.data?.name || r.data?.personName || '').trim())
+        .filter(Boolean)
+    )).sort();
+    return names.map((n) => ({ label: n, value: n }));
+  }, [activeRecords]);
+
   // ─── 状态筛选 chip ────────────────────────────
   const statusChips = [
     { label: '办理中', value: '办理中', color: 'var(--color-primary)' },
@@ -356,7 +393,7 @@ export default function ModulePage() {
     setSelectedRowKeys((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   const toggleCol = (key: string) =>
     setHiddenCols((prev) => { const n = new Set(prev); if (n.has(key)) n.delete(key); else n.add(key); return n; });
-  const clearFilters = () => { setFilterText(''); setFilterDateRange(null); setFilterStatus(null); setFilterHandler(null); };
+  const clearFilters = () => { setFilterText(''); setFilterDateRange(null); setFilterStatus(null); setFilterHandler(null); setFilterCase(null); setFilterPerson(null); };
 
   // ─── 导入处理 ─────────────────────────────────
   const handleImport = async (file: File) => {
@@ -415,6 +452,41 @@ export default function ModulePage() {
     }
     exportSelectedRecords(ids, module.id, activeTab);
     showToast(`正在导出 ${ids.length} 条记录...`, 'info');
+  };
+
+  const handleBatchStatus = () => {
+    const sf = findStatusField(fields);
+    if (!sf) {
+      showToast('当前模块没有状态字段，无法批量改状态', 'warning');
+      return;
+    }
+    const ids = selectedRowKeys as string[];
+    if (ids.length === 0) return;
+    let target = '';
+    const opts = (sf.options || []).map((o) =>
+      typeof o === 'string' ? { label: o, value: o } : { label: (o as { label: string }).label, value: (o as { value: string }).value }
+    );
+    Modal.confirm({
+      title: '批量修改状态',
+      content: (
+        <Select
+          style={{ width: '100%', marginTop: 8 }}
+          placeholder={`选择要设为的状态（${sf.label}）`}
+          options={opts}
+          onChange={(v: string) => { target = v; }}
+        />
+      ),
+      okText: '应用',
+      onOk: () => {
+        if (!target) {
+          showToast('请先选择状态', 'warning');
+          return;
+        }
+        ids.forEach((id) => updateMassRecord(id, { [sf.id]: target }));
+        setRefreshKey((k) => k + 1);
+        showToast(`已将 ${ids.length} 条记录状态设为「${target}」`, 'success');
+      },
+    });
   };
 
   return (
@@ -565,6 +637,26 @@ export default function ModulePage() {
               options={handlerOptions}
             />
           )}
+          {caseOptions.length > 0 && (
+            <Select
+              value={filterCase}
+              onChange={(v) => setFilterCase(v)}
+              allowClear
+              placeholder="按案件筛选"
+              style={{ width: 170, height: 36 }}
+              options={caseOptions}
+            />
+          )}
+          {personOptions.length > 0 && (
+            <Select
+              value={filterPerson}
+              onChange={(v) => setFilterPerson(v)}
+              allowClear
+              placeholder="按人员筛选"
+              style={{ width: 150, height: 36 }}
+              options={personOptions}
+            />
+          )}
           {(filterText || filterDateRange || filterStatus || filterHandler) && (
             <button className="mp-btn" onClick={clearFilters}>
               清除筛选
@@ -601,6 +693,7 @@ export default function ModulePage() {
       {selectedRowKeys.length > 0 && (
         <div className="mp-selbar">
           <span>已选 {selectedRowKeys.length} 项</span>
+          <button className="mp-btn" onClick={handleBatchStatus}><RefreshCw size={14} /> 批量改状态</button>
           <button className="mp-btn" onClick={handleBatchDelete}><Trash2 size={14} /> 批量删除</button>
           <button className="mp-btn" onClick={handleExportSelected}><Download size={14} /> 导出选中</button>
           <button className="mp-btn" onClick={() => setSelectedRowKeys([])}>取消选择</button>
@@ -760,7 +853,7 @@ export default function ModulePage() {
 
       {/* 案件 360° 全屏视图 */}
       {caseDetail && (
-        <CaseDetail record={caseDetail} onClose={() => setCaseDetail(null)} />
+        <CaseDetail record={caseDetail} onClose={() => setCaseDetail(null)} onOpenRelated={setCaseDetail} />
       )}
     </div>
   );

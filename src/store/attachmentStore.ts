@@ -20,6 +20,8 @@ export interface AttachmentRecord {
   uploadedAt: string;
   /** Electron 模式下存文件路径，浏览器模式下为空 */
   filePath?: string;
+  /** 附件分类：书证/笔录/银行流水/鉴定意见/其他 */
+  category?: string;
 }
 
 export interface AttachmentReference {
@@ -30,6 +32,7 @@ export interface AttachmentReference {
   size: number;
   type: string;
   uploadedAt: string;
+  category?: string;
 }
 
 export interface AttachmentBackupItem {
@@ -102,7 +105,27 @@ export function toAttachmentReference(record: AttachmentRecord): AttachmentRefer
     size: record.fileSize,
     type: record.fileType,
     uploadedAt: record.uploadedAt,
+    category: record.category,
   };
+}
+
+/** 读取附件内容并返回可用的 dataURL（用于预览）；Electron 模式读磁盘，浏览器模式读 IndexedDB 二进制 */
+export async function getAttachmentPreview(id: string): Promise<{ url: string; mime: string } | null> {
+  const rec = await getAttachment(id);
+  if (!rec) return null;
+  const mime = rec.fileType || 'application/octet-stream';
+  if (rec.filePath && isElectron()) {
+    try {
+      const res = await window.electronAPI.readAttachmentFile(rec.filePath);
+      if (res.success && res.buffer) {
+        return { url: `data:${mime};base64,${arrayBufferToBase64(res.buffer)}`, mime };
+      }
+    } catch { /* ignore */ }
+  }
+  if (rec.data && rec.data.byteLength > 0) {
+    return { url: `data:${mime};base64,${arrayBufferToBase64(rec.data)}`, mime };
+  }
+  return null;
 }
 
 /** 保存文件到 IndexedDB */
@@ -111,6 +134,7 @@ export async function saveAttachment(
   moduleId: string,
   fieldId: string,
   file: File,
+  category = '其他',
 ): Promise<AttachmentRecord> {
   const id = `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const fileName = file.name;
@@ -140,6 +164,7 @@ export async function saveAttachment(
       uploadedAt,
       data: new ArrayBuffer(0), // 不存二进制
       filePath: result.filePath,
+      category,
     };
 
     const db = await openDB();
@@ -165,6 +190,7 @@ export async function saveAttachment(
     fileSize,
     data: buffer,
     uploadedAt,
+    category,
   };
 
   const db = await openDB();

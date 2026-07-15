@@ -1,10 +1,11 @@
-export const APP_VERSION = "V2.14.50";
+export const APP_VERSION = "V2.15.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 14;
-export const VERSION_PATCH = 50;
+export const VERSION_MINOR = 15;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
-  // ===== V2.14.50 =====
+  // ===== V2.15.0 =====
+  "V2.15.0 优化 - 按复盘方案逐条落地(回退点:快照分支 snapshot/v2.14.50-preplan):①查看页(CaseDetail)新增默认收起的「关联记录/时间线」折叠区,用多条关键身份词(姓名/身份证/电话/案件名/项目名/主体)匹配,关联项可点击切换查看;②编辑页(DrawerNewRecord)新建成功后新增「再建一条」按钮(重置表单+重挂以清空附件子状态)适配高频重复登记;③状态派生健壮性:STATUS_LABEL_HINTS 扩词+id 兜底,且基于模块全部字段(不受可见列开关影响),避免状态列隐藏后徽标丢失;④列表高级筛选新增「按案件/按人员」下拉;⑤批量操作新增「批量改状态」(按模块状态字段选项批量应用),与既有批量删除/导出组成选择条;⑥附件支持分类(书证/笔录/银行流水/鉴定意见/照片/音视频/其他)上传时选择并落库,详情页按分类分组展示,图片附件显示缩略图+点击放大预览(新增 getAttachmentPreview 读磁盘/IndexedDB 二进制)",
   "V2.14.50 优化 - 查看详情页附件区(CaseDetail)在附件名称下方另起一行标注「上传时间」：附件收集时兼容 uploadedAt(attachmentStore)与 lastModifiedDate/lastModified(antd file 对象，后者为 Date 实例)两种时间来源，统一格式化到秒(YYYY-MM-DD HH:mm:ss)；新增 .cd-att-main/.cd-att-time 样式(名称可折行+灰色小字时间行)",
   // ===== V2.14.49 =====
   "V2.14.49 修复 - 查看详情页(CaseDetail)附件与时间显示修正：①把 key 为 'attachment'/'fileList' 的附件数组从 repeatable 段里移出，统一在「附件」区展示，避免详情中出现英文 'attachment（1条）' 标题；②增强 isAttachmentValue 判断并排除 lastModifiedDate/lastModified/originFileObj/response/xhr/thumbUrl 等附件内部字段， repeatable 段不再显示附件元数据；③ fmtValue 增加对 Date 实例的处理，含秒 ISO 与 Date 对象均只保留到秒(YYYY-MM-DD HH:mm:ss)，解决 '最后修改时间' 仍显示毫秒与Z后缀的问题；④ repeatable 段标题优先用 section label，再回退 FIELD_LABELS 中文映射，最后才是 key 本身",

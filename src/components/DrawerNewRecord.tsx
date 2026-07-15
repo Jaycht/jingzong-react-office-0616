@@ -47,6 +47,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [formKey, setFormKey] = useState(0);
   const [form] = Form.useForm();
   // 组件挂载跟踪，防止卸载后 setState
   const mountedRef = useRef(true);
@@ -118,7 +119,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     setCurrentStep(0);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (keepOpen = false) => {
     try {
       const values = await form.validateFields();
 
@@ -186,12 +187,23 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           pendingAttachments.current.clear();
           setTimeout(() => {
             safeSetSaving(false);
-            safeSetDirty(false);
-            deleteDraft(selectedModuleId, selectedTabId);
-            showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已创建`, 'success');
             // 重建案件索引
             rebuildCaseIndex(getMassRecords());
             rebuildSuspectIndex(getMassRecords());
+            if (keepOpen) {
+              // 再建一条：重置为新空白表单，留在弹窗内继续录入
+              safeSetDirty(false);
+              deleteDraft(selectedModuleId, selectedTabId);
+              form.resetFields();
+              setCurrentStep(0);
+              pendingAttachments.current.clear();
+              setFormKey((k) => k + 1); // 重挂表单，重置附件子组件状态
+              showToast('已创建，可继续录入下一条', 'success');
+              return;
+            }
+            safeSetDirty(false);
+            deleteDraft(selectedModuleId, selectedTabId);
+            showToast(`${selectedModule?.label} · ${selectedTab?.label || '记录'} 已创建`, 'success');
             onClose();
           }, 300);
         }
@@ -420,15 +432,27 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               </Button>
             )}
             {(flatMode || isLastStep) ? (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                loading={saving}
-                onClick={handleSubmit}
-                style={{ height: 36, paddingInline: 20 }}
-              >
-                创建记录
-              </Button>
+              <>
+                {!isEditing && (
+                  <Button
+                    icon={<PlusOutlined />}
+                    loading={saving}
+                    onClick={() => handleSubmit(true)}
+                    style={{ height: 36, paddingInline: 16 }}
+                  >
+                    再建一条
+                  </Button>
+                )}
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  loading={saving}
+                  onClick={() => handleSubmit(false)}
+                  style={{ height: 36, paddingInline: 20 }}
+                >
+                  {isEditing ? '保存修改' : '创建记录'}
+                </Button>
+              </>
             ) : (
               <Button
                 type="primary"
@@ -513,6 +537,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
             {/* Fields for current step */}
             <Form
+              key={formKey}
               form={form}
               layout="vertical"
               requiredMark="optional"
@@ -760,6 +785,7 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
   editRecord?: import('../store/massStore').MassRecord | null;
 }) {
   const fieldName = typeof name === 'string' ? name : name[1];
+  const [category, setCategory] = useState('其他');
   // 优先从 editRecord 原始数据初始化（不受 form.setFieldsValue 时序影响）
   const [fileList, setFileListState] = useState<UploadFile[]>(() => {
     if (editRecord) {
@@ -821,11 +847,20 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
 
   return (
     <Form.Item label={field.label}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <span style={{ fontSize: 13, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>附件分类</span>
+        <Select
+          value={category}
+          onChange={(v: string) => setCategory(v)}
+          style={{ width: 160 }}
+          options={['书证', '笔录', '银行流水', '鉴定意见', '照片', '音视频', '其他'].map((c) => ({ label: c, value: c }))}
+        />
+      </div>
       <Form.Item name={name} valuePropName="fileList" getValueFromEvent={(info: { fileList?: UploadFile[] }) => info?.fileList ?? []} noStyle>
         <Upload.Dragger
           beforeUpload={async (file) => {
             try {
-              const record = await saveAttachment('pending', moduleId, field.id, file);
+              const record = await saveAttachment('pending', moduleId, field.id, file, category);
               pendingAttachments.current.add(record.id);
               const prev: UploadFile[] = (form.getFieldValue(fieldName) as UploadFile[]) || [];
               const newFile = {
@@ -834,6 +869,7 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
                 status: 'done' as const,
                 size: file.size,
                 type: file.type,
+                category,
               };
               const next = [...prev, newFile];
               form.setFieldsValue({ [fieldName]: next });
