@@ -1,11 +1,11 @@
 import { lazy, Suspense, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Modal, Spin } from "antd";
-import { useLocation } from "react-router-dom";
+import { Modal } from "antd";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
 import Sidebar from "./Sidebar";
+import PageSkeleton from "./PageSkeleton";
 import ProfileModal from "./ProfileModal";
-import PasswordModal from "./PasswordModal";
 import DrawerNewRecord from "./DrawerNewRecord";
 import ModalNewUser from "./ModalNewUser";
 import Drawer from "./Drawer";
@@ -50,8 +50,8 @@ const PAGES: Record<string, React.FC> = {
 const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
 
 const winControls = {
-  min: () => (window as any).electronAPI?.minimize(),
-  max: () => (window as any).electronAPI?.maximize(),
+  min: () => window.electronAPI?.minimize(),
+  max: () => window.electronAPI?.maximize(),
   close: () => {
     Modal.confirm({
       title: '确认退出？',
@@ -60,8 +60,8 @@ const winControls = {
       okType: 'danger',
       cancelText: '取消',
       onOk: () => {
-        if ((window as any).electronAPI?.close) {
-          (window as any).electronAPI.close();
+        if (window.electronAPI?.close) {
+          window.electronAPI.close();
         } else {
           try { window.close(); } catch {}
         }
@@ -79,18 +79,38 @@ export default function AppLayout() {
   const closeDrawer = useAppStore((s) => s.closeDrawer);
   const darkMode = useAppStore((s) => s.darkMode);
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPage = useAppStore((s) => s.currentPage);
-  const setCurrentPage = useAppStore((s) => s.setCurrentPage);
 
+  // 外部导航（浏览器前进/后退、书签、手动改地址、刷新直达）时，用 URL 单向回写 store。
+  // 必须在「store→URL」同步之前声明，确保挂载时先以 URL 为准，避免被默认页覆盖。
   useEffect(() => {
-    const path = location.pathname.replace("/app/", "") || "dashboard";
-    setCurrentPage(path);
-  }, [location.pathname, setCurrentPage]);
+    const applyFromUrl = () => {
+      const hash = window.location.hash || "";
+      const urlPage =
+        hash.replace(/^#\/app\//, "").replace(/^#\/?/, "") || "dashboard";
+      if (urlPage !== useAppStore.getState().currentPage) {
+        useAppStore.getState().setCurrentPage(urlPage);
+      }
+    };
+    applyFromUrl(); // 挂载即采纳 URL（刷新 / 书签直达）
+    window.addEventListener("hashchange", applyFromUrl);
+    return () => window.removeEventListener("hashchange", applyFromUrl);
+  }, []);
+
+  // 单向同步：store.currentPage 为唯一事实源，URL 仅作镜像（支持刷新与历史记录）。
+  // 不再反向用 effect 把 URL 写回 store，避免「URL↔store」双向回环导致的
+  // "Maximum update depth exceeded" 死循环（根因：两 effect 同拍触发、快照不一致）。
+  useEffect(() => {
+    const urlPage = location.pathname.replace("/app/", "") || "dashboard";
+    if (urlPage !== currentPage) {
+      navigate("/app/" + currentPage, { replace: true });
+    }
+  }, [currentPage, location.pathname, navigate]);
   const editRecord = useAppStore((s) => s.editRecord);
   const setEditRecord = useAppStore((s) => s.setEditRecord);
 
   const [profileOpen, setProfileOpen] = useState(false);
-  const [passwordOpen, setPasswordOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
 
   useEffect(() => {
@@ -112,7 +132,7 @@ export default function AppLayout() {
         <div
           style={{
             height: 34, flexShrink: 0, display: 'flex', alignItems: 'center',
-            WebkitAppRegion: 'drag' as any,
+            WebkitAppRegion: 'drag',
             background: darkMode ? '#0a1a2e' : '#F0F2F5',
             paddingLeft: 14,
             borderBottom: darkMode ? 'none' : '1px solid #E5E7EB',
@@ -121,7 +141,7 @@ export default function AppLayout() {
           <span style={{ fontSize: 12, lineHeight: 1, color: darkMode ? 'rgba(255,255,255,0.35)' : '#9CA3AF', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
             经侦大队工作记录管理系统
           </span>
-          <div style={{ WebkitAppRegion: 'no-drag' as any, display: 'flex', gap: 2, paddingRight: 4 }}>
+          <div style={{ WebkitAppRegion: 'no-drag', display: 'flex', gap: 2, paddingRight: 4 }}>
             <div onClick={winControls.min} title="最小化" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#9CA3AF', fontSize: 12 }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>─</div>
             <div onClick={winControls.max} title="最大化" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#9CA3AF', fontSize: 11 }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>□</div>
             <div onClick={winControls.close} title="关闭" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#9CA3AF', fontSize: 13 }} onMouseEnter={e => { e.currentTarget.style.background = '#E81123'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF'; }}>×</div>
@@ -132,7 +152,6 @@ export default function AppLayout() {
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
       <Sidebar
         onOpenProfile={() => setProfileOpen(true)}
-        onOpenPassword={() => setPasswordOpen(true)}
       />
       <div className="content-area" style={{
         flex: 1, overflow: 'auto', padding: '16px 20px',
@@ -145,12 +164,7 @@ export default function AppLayout() {
             transition={{ duration: 0.2 }}
           >
             <Breadcrumb />
-            <Suspense fallback={
-              <div style={{ padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <Spin size="large" />
-                <div style={{ color: 'var(--color-text-muted)', fontSize: 13 }}>页面加载中...</div>
-              </div>
-            }>
+            <Suspense fallback={<PageSkeleton />}>
               <Page />
             </Suspense>
           </motion.div>
@@ -172,7 +186,6 @@ export default function AppLayout() {
       {drawerOpen && <Drawer onClose={closeDrawer} />}
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
-      <PasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
       <FloatingSearch onClick={() => setCmdOpen(true)} />
     </div>

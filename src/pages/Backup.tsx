@@ -7,6 +7,7 @@ import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson } fro
 import { getBaseModules } from '../moduleConfig';
 import { localStorageAdapter } from '../store/adapter';
 import { indexedDBAdapter } from '../store/adapter';
+import { clearAttachments, exportAttachmentSnapshot } from '../store/attachmentStore';
 
 interface BackupMeta {
   id: string;
@@ -64,17 +65,19 @@ function estimateDataSize(): string {
   return `${(total / (1024 * 1024)).toFixed(1)}MB`;
 }
 
-/** 估算各模块记录数 */
+/** 估算各模块记录数（数据现存储于 IndexedDB，从 IndexedDB 读取） */
 function getRecordStats(): Record<string, number> {
   try {
-    const raw = localStorage.getItem('jingzong.mass.records');
-    if (!raw) return { '总记录数': 0 };
-    const records = JSON.parse(raw);
+    const records = indexedDBAdapter.getItem<Array<{ moduleId?: string }>>(
+      'jingzong.mass.records',
+      [],
+    );
     if (!Array.isArray(records)) return { '总记录数': 0 };
     const counts: Record<string, number> = { '总记录数': records.length };
     const moduleCounts: Record<string, number> = {};
     for (const r of records) {
-      moduleCounts[r.moduleId] = (moduleCounts[r.moduleId] || 0) + 1;
+      const moduleId = r.moduleId ?? '';
+      moduleCounts[moduleId] = (moduleCounts[moduleId] || 0) + 1;
     }
     const sorted = Object.entries(moduleCounts)
       .sort((a, b) => b[1] - a[1])
@@ -106,9 +109,9 @@ export default function Backup() {
 
   // 退出时自动备份监听
   useEffect(() => {
-    const api = (window as any).electronAPI;
+    const api = window.electronAPI;
     if (!api?.onTriggerQuitBackup) return;
-    api.onTriggerQuitBackup(async () => {
+    const off = api.onTriggerQuitBackup(async () => {
       const s = loadSettings();
       if (!s.backupOnQuit) return;
       try {
@@ -128,25 +131,14 @@ export default function Backup() {
             if (val !== null && val !== undefined) data[key] = val;
           } catch {}
         }
-        const attachments = await (await import('../utils/excelUtils')).exportAttachmentSnapshot?.() || [];
+        const attachments = await exportAttachmentSnapshot() || [];
         const backup = { version: '2.0', createdAt: new Date().toISOString(), data, attachments };
         const json = JSON.stringify(backup);
         const ts = new Date().toISOString().slice(0, 16).replace('T', '_');
         await api.saveJsonFile(json, `jingzong_退出备份_${ts}.json`);
       } catch {}
     });
-  }, []);
-
-  // 获取默认备份路径
-  const getDefaultPath = useCallback(async () => {
-    if (typeof window !== 'undefined' && window.electronAPI?.getDocumentsDir) {
-      try {
-        return await window.electronAPI.getDocumentsDir();
-      } catch {
-        return '文档文件夹';
-      }
-    }
-    return '浏览器下载目录';
+    return () => { if (typeof off === 'function') off(); };
   }, []);
 
   // 保存设置
@@ -672,9 +664,11 @@ export default function Backup() {
               okText: '确认重置',
               okButtonProps: { danger: true },
               cancelText: '取消',
-              onOk: () => {
+              onOk: async () => {
                 localStorage.clear();
                 indexedDBAdapter.clear();
+                // 一并清空附件库（M-2：重置须清理附件，否则残留孤立附件）
+                try { await clearAttachments(); } catch { /* ignore */ }
                 showToast('所有数据已重置，页面即将刷新', 'info');
                 setTimeout(() => window.location.reload(), 1000);
               },

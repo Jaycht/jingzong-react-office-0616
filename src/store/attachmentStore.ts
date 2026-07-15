@@ -46,7 +46,7 @@ export interface AttachmentBackupItem {
 
 /** 判断是否运行在 Electron 环境 */
 function isElectron(): boolean {
-  return typeof window !== 'undefined' && !!(window as any).electronAPI?.isElectron;
+  return typeof window !== 'undefined' && !!window.electronAPI?.isElectron;
 }
 
 function openDB(): Promise<IDBDatabase> {
@@ -121,7 +121,7 @@ export async function saveAttachment(
   // Electron 模式：文件存硬盘，IDB 只存元数据
   if (isElectron()) {
     const buffer = await file.arrayBuffer();
-    const result = await (window as any).electronAPI.saveAttachmentFile(
+    const result = await window.electronAPI.saveAttachmentFile(
       Array.from(new Uint8Array(buffer)),
       fileName,
       moduleId,
@@ -193,9 +193,9 @@ export async function getAttachment(id: string): Promise<AttachmentRecord | null
 
   // Electron 模式：从硬盘读取文件数据
   if (isElectron() && record.filePath) {
-    const result = await (window as any).electronAPI.readAttachmentFile(record.filePath);
+    const result = await window.electronAPI.readAttachmentFile(record.filePath);
     if (result.success) {
-      record.data = new Uint8Array(result.buffer).buffer;
+      record.data = new Uint8Array(result.buffer!).buffer;
     }
   }
 
@@ -271,7 +271,20 @@ export async function deleteAttachment(id: string): Promise<void> {
 
   // Electron 模式：同时删除硬盘文件
   if (isElectron() && record.filePath) {
-    (window as any).electronAPI.deleteAttachmentFile(record.filePath).catch(() => {});
+    window.electronAPI.deleteAttachmentFile(record.filePath).catch(() => {});
+  }
+}
+
+/** 删除某条记录关联的所有附件（按 recordId 索引），返回删除数量 */
+export async function deleteAttachmentsByRecord(recordId: string): Promise<number> {
+  try {
+    const atts = await getAttachmentsByRecord(recordId);
+    for (const a of atts) {
+      await deleteAttachment(a.id);
+    }
+    return atts.length;
+  } catch {
+    return 0;
   }
 }
 
@@ -292,7 +305,7 @@ export async function clearAttachments(): Promise<void> {
   if (isElectron()) {
     for (const att of all) {
       if (att.filePath) {
-        (window as any).electronAPI.deleteAttachmentFile(att.filePath).catch(() => {});
+        window.electronAPI.deleteAttachmentFile(att.filePath).catch(() => {});
       }
     }
   }
@@ -306,8 +319,8 @@ export async function downloadAttachment(id: string): Promise<void> {
   const buf = Array.from(new Uint8Array(att.data));
 
   // Electron 模式：弹出原生保存对话框，由用户选择位置
-  if (isElectron() && (window as any).electronAPI?.showSaveDialog) {
-    const result = await (window as any).electronAPI.showSaveDialog(att.fileName, buf);
+  if (isElectron() && window.electronAPI?.showSaveDialog) {
+    const result = await window.electronAPI.showSaveDialog(att.fileName, buf);
     if (result.success) {
       return; // 保存成功，无需额外提示
     } else if (!result.canceled) {
@@ -352,9 +365,9 @@ export async function exportAttachmentSnapshot(): Promise<AttachmentBackupItem[]
     let dataBase64 = '';
     // Electron 模式：从硬盘读取文件数据
     if (isElectron() && item.filePath) {
-      const result = await (window as any).electronAPI.readAttachmentFile(item.filePath);
+      const result = await window.electronAPI.readAttachmentFile(item.filePath);
       if (result.success) {
-        dataBase64 = arrayBufferToBase64(new Uint8Array(result.buffer).buffer);
+        dataBase64 = arrayBufferToBase64(new Uint8Array(result.buffer!).buffer);
       }
     } else {
       dataBase64 = arrayBufferToBase64(item.data);
@@ -386,7 +399,7 @@ export async function importAttachmentSnapshot(items: AttachmentBackupItem[]): P
 
     // Electron 模式：先写硬盘再存元数据
     if (isElectron()) {
-      const result = await (window as any).electronAPI.saveAttachmentFile(
+      const result = await window.electronAPI.saveAttachmentFile(
         Array.from(new Uint8Array(buffer)),
         item.fileName,
         item.moduleId,

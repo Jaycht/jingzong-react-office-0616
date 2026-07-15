@@ -74,13 +74,13 @@ export default function Attachments() {
 
   // 异步检查 Electron 附件文件的本地完整性
   useEffect(() => {
-    if (!(window as any).electronAPI?.checkAttachmentFile) return;
+    if (!window.electronAPI?.checkAttachmentFile) return;
     const checkAll = async () => {
       const map: Record<string, boolean> = {};
       for (const att of dbAttachments) {
         if (att.filePath) {
           try {
-            const result = await (window as any).electronAPI.checkAttachmentFile(att.filePath);
+            const result = await window.electronAPI.checkAttachmentFile(att.filePath);
             map[att.id] = result.exists;
           } catch { map[att.id] = false; }
         }
@@ -150,8 +150,8 @@ export default function Attachments() {
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const zipBuffer = await zipBlob.arrayBuffer();
 
-      if ((window as any).electronAPI?.showSaveDialog) {
-        const result = await (window as any).electronAPI.showSaveDialog(
+      if (window.electronAPI?.showSaveDialog) {
+        const result = await window.electronAPI.showSaveDialog(
           '附件打包_' + new Date().toISOString().slice(0, 10) + '.zip',
           Array.from(new Uint8Array(zipBuffer))
         );

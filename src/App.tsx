@@ -12,32 +12,11 @@ import { useAppStore, loadUserFromStorage } from "./store/appStore";
 import { migrateOldCasesToMassStore, getMassRecords } from "./store/massStore";
 import { rebuildCaseIndex, rebuildSuspectIndex } from "./store/inputHistoryStore";
 import { indexedDBAdapter } from "./store/adapter";
-
-declare global {
-  interface Window {
-    electronAPI?: {
-      resizeToMain: () => void;
-      resizeToLogin: () => void;
-      isElectron: boolean;
-      minimize: () => void;
-      maximize: () => void;
-      close: () => void;
-      saveAttachmentFile: (buffer: number[], fileName: string, moduleId: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
-      readAttachmentFile: (filePath: string) => Promise<{ success: boolean; buffer?: ArrayBuffer; error?: string }>;
-      deleteAttachmentFile: (filePath: string) => Promise<{ success: boolean; error?: string }>;
-      checkAttachmentFile: (filePath: string) => Promise<{ success: boolean; exists: boolean; error?: string }>;
-      getAttachmentsDir: () => Promise<string>;
-      showSaveDialog: (defaultName: string, buffer: number[]) => Promise<{ success: boolean; canceled?: boolean; filePath?: string; error?: string }>;
-      checkForUpdates: () => Promise<{ available: boolean; version?: string; error?: string }>;
-      downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
-      installUpdate: () => void;
-    };
-  }
-}
+import { isElectron as isElectronEnv } from "./lib/env";
 
 function AppContent() {
   const navigate = useNavigate();
-  const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
+  const isElectron = isElectronEnv();
 
   // 数据迁移 + 重建案件索引
   useEffect(() => {
@@ -86,7 +65,11 @@ function AppContent() {
 
     const saved = loadUserFromStorage();
     if (saved && saved.name && isAutoLogin) {
-      useAppStore.getState().setUser(saved.name, saved.role);
+      useAppStore.getState().setUser(saved.name, saved.role, {
+        badge: saved.badge,
+        phone: saved.phone,
+        department: saved.department,
+      });
       // 有持久化的用户且开启了自动登录 → 直接进入主界面
       if (isElectron) {
         window.electronAPI?.resizeToMain();
@@ -98,7 +81,6 @@ function AppContent() {
   const setUser = useAppStore((s) => s.setUser);
   const toasts = useAppStore((s) => s.toasts);
   const removeToast = useAppStore((s) => s.removeToast);
-  const darkMode = useAppStore((s) => s.darkMode);
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
 
   // Electron 自动更新检查
@@ -126,8 +108,8 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [isElectron]);
 
-  const handleLogin = (name: string, role: string) => {
-    setUser(name, role);
+  const handleLogin = (name: string, role: string, extra?: { badge?: string; phone?: string; department?: string }) => {
+    setUser(name, role, extra);
     if (isElectron) {
       window.electronAPI?.resizeToMain();
     }
@@ -212,7 +194,7 @@ export default function App() {
   }, [darkMode]);
   return (
     <ConfigProvider locale={zhCN} theme={darkMode ? DARK_THEME : LIGHT_THEME}>
-      <HashRouter>
+      <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AppContent />
       </HashRouter>
     </ConfigProvider>

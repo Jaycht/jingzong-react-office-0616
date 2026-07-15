@@ -7,7 +7,7 @@ import { useEffect } from "react";
 export function useUnsavedChanges(active: boolean) {
   useEffect(() => {
     if (!active) return;
-    const isElectron = typeof window !== "undefined" && (window as any).electronAPI?.isElectron;
+    const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
     if (isElectron) return; // Electron 下不拦截窗口关闭
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>桌面提醒弹窗 · 预览</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei UI",system-ui,sans-serif;
+  background:radial-gradient(1200px 700px at 75% 15%,#2b3a67 0%,#1a2138 45%,#0f1320 100%);
+  color:#e8ecf5;min-height:100vh;overflow:hidden;position:relative}
+
+/* ===== 顶部说明 ===== */
+.head{position:fixed;top:0;left:0;right:0;padding:22px 30px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.head h1{font-size:17px;font-weight:700;letter-spacing:.02em}
+.head h1 span{color:#9aa6c4;font-weight:500;font-size:13px;margin-left:10px}
+.head .hint{font-size:12.5px;color:#8b96b5}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap}
+.tbtn{padding:9px 16px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);
+  color:#e8ecf5;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .16s;display:inline-flex;align-items:center;gap:7px}
+.tbtn:hover{background:rgba(255,255,255,.16);transform:translateY(-1px)}
+.tbtn.primary{background:linear-gradient(150deg,#818CF8,#6366F1);border-color:transparent}
+.tbtn.primary:hover{filter:brightness(1.07)}
+
+/* ===== 桌面壁纸装饰 ===== */
+.desk{position:absolute;inset:0;z-index:0}
+.desk .clock{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:.9}
+.desk .clock .t{font-size:64px;font-weight:700;letter-spacing:.02em;text-shadow:0 4px 30px rgba(0,0,0,.4)}
+.desk .clock .d{font-size:15px;color:#aab3cf;margin-top:6px}
+.desk .dock{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:12px;
+  padding:10px 16px;border-radius:20px;background:rgba(255,255,255,.08);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12)}
+.desk .dock i{width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.14);display:block}
+
+/* ===== 通知堆叠区（右下角）===== */
+.stack{position:fixed;right:28px;bottom:28px;z-index:4;display:flex;flex-direction:column-reverse;gap:14px;width:400px}
+
+.notif{position:relative;width:400px;display:flex;flex-direction:column;padding:16px 18px 14px;border-radius:18px;overflow:hidden;
+  background:rgba(255,255,255,.93);backdrop-filter:blur(26px) saturate(165%);-webkit-backdrop-filter:blur(26px) saturate(165%);
+  border:1px solid rgba(15,23,42,.07);
+  box-shadow:0 22px 56px rgba(0,0,0,.32),0 6px 18px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.7);
+  color:#1F2430;animation:notifIn .42s cubic-bezier(.2,.85,.25,1);--accent:#6366F1;--accent-2:#818CF8;--accent-soft:rgba(99,102,241,.14)}
+.notif.urgent{--accent:#EF4444;--accent-2:#F87171;--accent-soft:rgba(239,68,68,.16)}
+.notif.important{--accent:#F59E0B;--accent-2:#FBBF24;--accent-soft:rgba(245,158,11,.16)}
+.notif.leaving{animation:notifOut .28s ease forwards}
+@keyframes notifIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes notifOut{to{opacity:0;transform:translateY(10px) scale(.97)}}
+
+.notif::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--accent-2),var(--accent))}
+.top{display:flex;align-items:flex-start;gap:12px;position:relative;z-index:1}
+.ico{width:42px;height:42px;border-radius:13px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,var(--accent-2),var(--accent));color:#fff;
+  box-shadow:0 6px 16px var(--accent-soft),inset 0 1px 0 rgba(255,255,255,.35)}
+.ico svg{width:21px;height:21px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.titles{flex:1;min-width:0;padding-top:1px}
+.title{font-size:14.5px;font-weight:700;line-height:1.3;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:2px 9px;border-radius:999px;line-height:1.5;white-space:nowrap}
+.pill-type{background:rgba(15,23,42,.06);color:rgba(15,23,42,.6)}
+.pill-prio{color:#fff}
+.pill-date{background:rgba(15,23,42,.04);color:rgba(15,23,42,.42);font-weight:500}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.95);flex-shrink:0}
+.x{width:26px;height:26px;border-radius:8px;flex-shrink:0;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  background:rgba(15,23,42,.05);color:rgba(15,23,42,.45);font-size:13px;transition:background .15s,color .15s}
+.x:hover{background:rgba(15,23,42,.1);color:rgba(15,23,42,.75)}
+
+.body{position:relative;z-index:1;margin-top:11px;font-size:12.5px;line-height:1.55;color:rgba(15,23,42,.66);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:auto;padding-top:12px;position:relative;z-index:1}
+.btn{padding:7px 15px;border-radius:10px;border:1px solid transparent;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  display:inline-flex;align-items:center;gap:6px;transition:all .16s;white-space:nowrap}
+.btn svg{width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.btn-ghost{background:rgba(15,23,42,.04);border-color:rgba(15,23,42,.07);color:rgba(15,23,42,.62)}
+.btn-ghost:hover{background:rgba(15,23,42,.08);color:rgba(15,23,42,.85)}
+.btn-solid{background:linear-gradient(150deg,var(--accent-2),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 12px var(--accent-soft)}
+.btn-solid:hover{filter:brightness(1.05);box-shadow:0 6px 16px var(--accent-soft)}
+
+.countbar{position:absolute;left:4px;right:0;bottom:0;height:3px;background:rgba(15,23,42,.05);overflow:hidden;border-radius:0 0 18px 18px;z-index:2}
+.countfill{height:100%;width:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent));border-radius:0 0 0 18px;animation:count 12s linear forwards}
+@keyframes count{from{width:100%}to{width:0%}}
+</style>
+</head>
+<body>
+<div class="desk">
+  <div class="clock"><div class="t" id="clock">--:--</div><div class="d" id="date">——</div></div>
+  <div class="dock"><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<div class="head">
+  <h1>桌面提醒弹窗 · 预览<span>便签同款质感 · 优先级配色 · 倒计时进度条</span></h1>
+  <div class="toolbar">
+    <button class="tbtn" onclick="spawn('normal')">+ 普通提醒</button>
+    <button class="tbtn" onclick="spawn('important')">+ 重要提醒</button>
+    <button class="tbtn primary" onclick="spawn('urgent')">+ 紧急提醒</button>
+  </div>
+</div>
+
+<div class="stack" id="stack"></div>
+
+<script>
+const SAMPLES = {
+  normal:   { title:'日常随手记提醒', type:'一般工作', date:'2026-07-13', body:'回执材料已收到，记得整理归档到案件卷宗，并同步更新电子台账。' },
+  important:{ title:'日常随手记提醒', type:'案件办理', date:'2026-07-13', body:'翟慎刚案资金查控结果今日到期，需及时导出银行流水并送法制室审核。' },
+  urgent:   { title:'日常随手记提醒', type:'强制措施', date:'2026-07-13', body:'取保候审期限届满（7月14日），请立即办理续保或解除手续，逾期将违规！' },
+};
+const PRIO = { normal:'普通', important:'重要', urgent:'紧急' };
+let seq = 0;
+
+function spawn(priority){
+  const s = SAMPLES[priority];
+  const id = 'n'+(++seq);
+  const el = document.createElement('div');
+  el.className = 'notif ' + priority;
+  el.id = id;
+  el.innerHTML = `
+    <div class="top">
+      <div class="ico"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></div>
+      <div class="titles">
+        <div class="title">${s.title}</div>
+        <div class="meta">
+          <span class="pill pill-type">${s.type}</span>
+          ${priority!=='normal'?`<span class="pill pill-prio" style="background:var(--accent)"><span class="dot"></span>${PRIO[priority]}</span>`:''}
+          <span class="pill pill-date">${s.date}</span>
+        </div>
+      </div>
+      <button class="x" title="关闭" onclick="closeCard('${id}')">✕</button>
+    </div>
+    <div class="body">${s.body}</div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="closeCard('${id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>稍后 5 分钟</button>
+      <button class="btn btn-solid" onclick="closeCard('${id}')">不再提醒</button>
+    </div>
+    <div class="countbar"><div class="countfill"></div></div>`;
+  // 列：新消息从底部进入
+  document.getElementById('stack').appendChild(el);
+  // 12 秒自动消失（与桌面端一致）
+  setTimeout(()=>closeCard(id), 12000);
+}
+
+function closeCard(id){
+  const el = document.getElementById(id);
+  if(!el || el.classList.contains('leaving')) return;
+  el.classList.add('leaving');
+  setTimeout(()=>el.remove(), 280);
+}
+
+// 时钟
+function tick(){
+  const d = new Date();
+  const p = n=>String(n).padStart(2,'0');
+  document.getElementById('clock').textContent = p(d.getHours())+':'+p(d.getMinutes());
+  const wk = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  document.getElementById('date').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${wk}`;
+}
+tick(); setInterval(tick, 1000);
+
+// 初始演示：各来一条
+window.addEventListener('DOMContentLoaded', ()=>{
+  spawn('urgent');
+  setTimeout(()=>spawn('important'), 220);
+  setTimeout(()=>spawn('normal'), 440);
+});
+</script>
+</body></html>

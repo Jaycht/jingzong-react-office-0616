@@ -391,19 +391,27 @@ ipcMain.handle("set-auto-start", (_event, enabled) => {
 // 创建独立浮动通知窗口（桌面右下角，不在主窗口内）
 let notifWindows = [];
 
-function createNotifWindow(title, body, soundFile, noteId) {
+function createNotifWindow(title, body, soundFile, noteId, extra) {
   const { screen } = require("electron");
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width: screenW, height: screenH } = primaryDisplay.workAreaSize;
 
   const notifWidth = 400;
-  const notifHeight = 160;
+  const notifHeight = 196;
   const gap = 16;
   const index = notifWindows.length;
   const x = screenW - notifWidth - gap;
   const y = screenH - notifHeight - gap - index * (notifHeight + gap);
 
-  const params = new URLSearchParams({ title, body, sound: soundFile || "", noteId: noteId || "" });
+  const params = new URLSearchParams({
+    title,
+    body,
+    sound: soundFile || "",
+    noteId: noteId || "",
+    type: (extra && extra.type) || "",
+    priority: (extra && extra.priority) || "",
+    date: (extra && extra.date) || "",
+  });
 
   const notifWin = new BrowserWindow({
     width: notifWidth,
@@ -436,14 +444,14 @@ function createNotifWindow(title, body, soundFile, noteId) {
     notifWindows = notifWindows.filter((w) => w !== notifWin);
   });
 
-  // 10秒后自动关闭
+  // 12秒后自动关闭
   setTimeout(() => {
     if (!notifWin.isDestroyed()) notifWin.close();
   }, 12000);
 }
 
-ipcMain.handle("show-reminder", (_event, { title, body, soundFile, noteId }) => {
-  createNotifWindow(title, body, soundFile, noteId);
+ipcMain.handle("show-reminder", (_event, { title, body, soundFile, noteId, extra }) => {
+  createNotifWindow(title, body, soundFile, noteId, extra);
   return { shown: true };
 });
 
@@ -558,13 +566,6 @@ ipcMain.on("note-update", (event, { id, updates }) => {
   if (updates.text !== undefined && mainWindow && mainWindow.webContents) {
     mainWindow.webContents.send("note-content-changed", { id, text: updates.text });
   }
-});
-
-ipcMain.on("note-drag", (event, { id, dx, dy }) => {
-  const entry = noteWindows.get(id);
-  if (!entry || entry.win.isDestroyed()) return;
-  const [x, y] = entry.win.getPosition();
-  entry.win.setPosition(x + dx, y + dy, false);
 });
 
 ipcMain.on("note-drag", (event, { id, dx, dy }) => {

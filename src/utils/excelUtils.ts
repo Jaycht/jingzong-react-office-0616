@@ -18,6 +18,7 @@ import type { FieldDefinition } from '../moduleConfig';
 import { localStorageAdapter, indexedDBAdapter } from "../store/adapter";
 import type { MassRecord } from '../store/massStore';
 import { exportAttachmentSnapshot, importAttachmentSnapshot } from '../store/attachmentStore';
+import { notifyDataChanged } from '../store/dataEvents';
 
 // ─── 类型 ─────────────────────────────────────────────
 
@@ -213,9 +214,7 @@ export function exportModuleToExcel(moduleId: string, tabId?: string): void {
   const targetTabs = tabId ? tabs.filter((t) => t.tabId === tabId) : tabs;
 
   for (const tab of targetTabs) {
-    const tabRecords = tabId
-      ? records.filter((r) => r.tabId === tab.tabId)
-      : records.filter((r) => r.tabId === tab.tabId);
+    const tabRecords = records.filter((r) => r.tabId === tab.tabId);
 
     if (tabRecords.length === 0 && !tabId) continue;
 
@@ -424,7 +423,7 @@ export async function importExcelToModule(
 
       for (const row of jsonRows) {
         try {
-          const data: Record<string, any> = {};
+          const data: Record<string, string> = {};
           for (const [label, value] of Object.entries(row)) {
             const field = LABEL_TO_FIELD[label];
             if (field) data[field] = value;
@@ -434,14 +433,14 @@ export async function importExcelToModule(
             result.errors.push('缺少案件名称或案件编号');
             continue;
           }
-          saveMassRecord('squad-case', 'squad-case-1', data as any);
+          saveMassRecord('squad-case', 'squad-case-1', data);
           result.success++;
         } catch {
           result.failed++;
         }
       }
-    } catch (err: any) {
-      result.errors.push(err.message || '导入 squad-case 失败');
+    } catch (err) {
+      result.errors.push(err instanceof Error ? err.message : '导入 squad-case 失败');
     }
     return result;
   }
@@ -695,6 +694,9 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
     const attachmentMessage = Array.isArray(backup.attachments)
       ? `，${attachmentCount} 个附件`
       : '';
+
+    // 通知各依赖 getMassRecords() 的组件重新读取（仪表盘/预警等）
+    notifyDataChanged();
 
     return { success: true, message: `成功恢复 ${count} 项数据${attachmentMessage}` };
   } catch (err) {

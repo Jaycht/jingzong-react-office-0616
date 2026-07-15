@@ -3,7 +3,7 @@
  * 消除 DrawerNewRecord.tsx 中多份重复的 AutoComplete/MultiPerson 组件
  */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { AutoComplete, Button, Divider, Form, Input, Select, Space } from 'antd';
+import { AutoComplete, Button, Divider, Form, Input, Select, Space, type FormInstance } from 'antd';
 import dayjs from 'dayjs';
 import { localStorageAdapter } from "../store/adapter";
 import type { FieldDefinition } from '../moduleConfig';
@@ -461,17 +461,19 @@ export function IdNoField({ field, subName, listName }: {
 
   const handleIdNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    form.setFieldsValue({ [fieldName as any]: val });
+    const fieldKey: string = Array.isArray(fieldName) ? fieldName.join(',') : fieldName;
+    form.setFieldsValue({ [fieldKey]: val });
     // 身份证号达到15位或18位时自动提取出生日期
     if (val.length === 18 || val.length === 15) {
       const birth = parseBirthFromIdNo(val);
       if (birth) {
-        form.setFieldsValue({ [birthDateName as any]: dayjs(birth) });
+        const birthKey: string = Array.isArray(birthDateName) ? birthDateName.join(',') : birthDateName;
+        form.setFieldsValue({ [birthKey]: dayjs(birth) });
       }
     }
   };
 
-  const watchedValue: unknown = Form.useWatch(fieldName as any, form);
+  const watchedValue: unknown = Form.useWatch(fieldName, form);
   const currentValue: string = (typeof watchedValue === 'string' ? watchedValue : '') || '';
 
   return (
@@ -505,7 +507,7 @@ export function IdNoField({ field, subName, listName }: {
  * 从 CaseDetail 中提取字段填入表单
  * 仅填充表单中实际存在的字段，不抛出未定义字段的错误
  */
-function fillCaseDetail(form: any, detail: CaseDetail): void {
+function fillCaseDetail(form: FormInstance, detail: CaseDetail): void {
   const kv: Record<string, unknown> = {};
   if (detail.leadOfficer) kv.leadOfficer = detail.leadOfficer;
   if (detail.assistOfficer) kv.assistOfficer = detail.assistOfficer;
@@ -895,7 +897,7 @@ export function GlobalSuspectField({ field, subName, listName }: {
   listName?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [, setRefreshKey] = useState(0);
   const form = Form.useFormInstance();
 
   const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
@@ -933,11 +935,6 @@ export function GlobalSuspectField({ field, subName, listName }: {
       if (info.phone)  kv.phone = info.phone;
       if (Object.keys(kv).length > 0) form.setFieldsValue(kv);
     }
-  };
-
-  // 输入时只更新本地 state，不写 form（避免 IME 中断）
-  const handleChange = (val: string) => {
-    setLocalValue(val);
   };
 
   // 失焦时同步到 form，并关闭下拉

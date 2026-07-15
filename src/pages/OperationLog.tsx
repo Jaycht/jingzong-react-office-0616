@@ -18,6 +18,12 @@ const TYPE_COLORS: Record<string, { bg: string; color: string; label: string }> 
   backup: { bg: '#E0F7FA', color: '#00ACC1', label: '备份' },
 };
 
+// 兜底：日志类型未在上方定义时避免 undefined 访问崩溃（L-7）
+const DEFAULT_TYPE_META = { bg: '#EEEEEE', color: '#616161', label: '其他' };
+function typeMeta(t: string) {
+  return TYPE_COLORS[t] ?? DEFAULT_TYPE_META;
+}
+
 export default function OperationLog() {
     const showToast = useAppStore((s) => s.showToast);
   const [, setRefreshKey] = useState(0);
@@ -120,9 +126,9 @@ export default function OperationLog() {
             >
               {/* Timeline dot */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: TYPE_COLORS[log.type as keyof typeof TYPE_COLORS].bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: TYPE_COLORS[log.type as keyof typeof TYPE_COLORS].color }}>
-                    {TYPE_COLORS[log.type as keyof typeof TYPE_COLORS].label}
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: typeMeta(log.type).bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: typeMeta(log.type).color }}>
+                    {typeMeta(log.type).label}
                   </span>
                 </div>
                 {i < logs.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--color-border)', minHeight: 20 }} />}

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>桌面便签 · 样式预览</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:100%;min-height:100vh;font-family:"Segoe UI","PingFang SC","Microsoft YaHei UI",system-ui,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, #e8eef7 0%, transparent 60%),
+    radial-gradient(1000px 700px at 110% 20%, #eef0f6 0%, transparent 55%),
+    linear-gradient(160deg,#f3f5f9,#e9edf3);
+  color:#1f2937;padding:40px 28px 64px;overflow-x:hidden}
+.preview-head{max-width:1040px;margin:0 auto 30px}
+.preview-head h1{font-size:22px;font-weight:800;letter-spacing:.01em}
+.preview-head p{margin-top:8px;font-size:13.5px;color:#64748b;line-height:1.7}
+.preview-head .tag{display:inline-block;font-size:11px;font-weight:700;color:#2563eb;background:rgba(37,99,235,.1);
+  padding:3px 10px;border-radius:999px;margin-bottom:12px;letter-spacing:.04em}
+.stage{max-width:1040px;margin:0 auto;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;justify-content:center}
+.col{display:flex;flex-direction:column;gap:22px}
+
+/* ===== 便签窗口（与 electron/note.html 同源样式） ===== */
+.note{width:300px;height:320px;display:flex;flex-direction:column;border-radius:18px;overflow:hidden;position:relative;
+  box-shadow:0 18px 50px rgba(15,23,42,.20),0 4px 14px rgba(15,23,42,.10),inset 0 1px 0 rgba(255,255,255,.55);
+  transition:box-shadow .25s ease,transform .25s ease;animation:floatIn .5s ease both}
+.note::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.05)}
+.note:hover{box-shadow:0 24px 64px rgba(15,23,42,.26),0 6px 18px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(-2px)}
+.note.static{width:240px;height:200px;animation-delay:.08s}
+.header{height:42px;min-height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 12px;
+  border-bottom:1px solid rgba(0,0,0,.05);position:relative;z-index:10;background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0))}
+.header-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.color-indicator{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.85);
+  box-shadow:0 1px 4px rgba(0,0,0,.18),inset 0 1px 1px rgba(255,255,255,.5);cursor:pointer;flex-shrink:0;transition:transform .15s ease}
+.color-indicator:hover{transform:scale(1.18)}
+.type-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;
+  background:rgba(0,0,0,.10);color:rgba(0,0,0,.66);white-space:nowrap;flex-shrink:0;letter-spacing:.02em;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.type-tag .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.4)}
+.meta-label{font-size:12.5px;font-weight:600;opacity:.82;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-right{display:flex;align-items:center;gap:2px;opacity:0;transition:opacity .18s ease}
+.note:hover .header-right{opacity:1}
+.hbtn{width:30px;height:30px;border:none;border-radius:9px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:rgba(0,0,0,.62);transition:background .14s,color .14s,transform .14s}
+.hbtn:hover{background:rgba(0,0,0,.09);color:rgba(0,0,0,.92);transform:translateY(-1px)}
+.hbtn:active{transform:translateY(0) scale(.94)}
+.hbtn.close:hover{background:rgba(214,40,40,.92);color:#fff}
+.hbtn svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.8;fill:none}
+.body{flex:1;position:relative;overflow:hidden}
+.textarea{width:100%;height:100%;border:none;outline:none;resize:none;background:transparent;font-size:14.5px;line-height:1.82;
+  padding:14px 18px 16px;font-family:inherit;letter-spacing:.01em;overflow-y:auto;color:inherit}
+.textarea::placeholder{color:rgba(0,0,0,.22)}
+.textarea::-webkit-scrollbar{width:6px}
+.textarea::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:3px}
+.textarea::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.22)}
+.statusbar{height:26px;min-height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;
+  font-size:10.5px;color:rgba(0,0,0,.4);border-top:1px solid rgba(0,0,0,.05);
+  background:linear-gradient(0deg, rgba(0,0,0,.03), rgba(0,0,0,0));user-select:none}
+.save-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(34,160,90,.8);margin-right:5px;vertical-align:middle;
+  box-shadow:0 0 0 3px rgba(34,160,90,.16);transition:background .2s}
+.save-dot.saving{background:rgba(220,150,30,.9);box-shadow:0 0 0 3px rgba(220,150,30,.16)}
+.color-picker{position:absolute;top:46px;left:10px;display:none;gap:8px;padding:9px 11px;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border-radius:14px;
+  box-shadow:0 10px 30px rgba(15,23,42,.20),0 0 0 .5px rgba(15,23,42,.08);z-index:100;animation:popIn .16s ease}
+.color-picker.show{display:flex}
+.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.8);box-shadow:0 1px 4px rgba(0,0,0,.14);transition:transform .12s ease}
+.color-dot:hover{transform:scale(1.16)}
+.color-dot.active{border-color:rgba(15,23,42,.35);transform:scale(1.16);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 1px 4px rgba(0,0,0,.18)}
+.note.minimized .body,.note.minimized .statusbar{display:none}
+.note.minimized .header{border-bottom:none}
+@keyframes popIn{from{opacity:0;transform:scale(.92) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes floatIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.preview-tip{max-width:1040px;margin:36px auto 0;font-size:12px;color:#94a3b8;text-align:center;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="preview-head">
+  <span class="tag">桌面便签 · 样式预览</span>
+  <h1>便签窗口视觉升级（Premium）</h1>
+  <p>同一套样式已同步应用到 Electron 桌面便签（electron/note.html）。下方左侧为<b>可交互主便签</b>（点击左上色点切换颜色、悬停右上出现操作钮、输入自动统计字数、折叠），右侧三张为不同配色 / 类型 / 优先级的效果套系。</p>
+</div>
+
+<div class="stage">
+  <!-- 主便签（可交互） -->
+  <div class="col">
+    <div class="note" id="note">
+      <div class="header" id="header">
+        <div class="header-left">
+          <div class="color-indicator" id="color-indicator" title="切换颜色"></div>
+          <span class="type-tag" id="type-tag"><span class="dot" style="background:#B45309"></span>重要</span>
+          <span class="meta-label" id="meta-label">案件资金查证进度</span>
+        </div>
+        <div class="header-right">
+          <button class="hbtn" id="btn-min" title="折叠/展开"><svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6"></line></svg></button>
+          <button class="hbtn" id="btn-pin" title="置顶切换">📌</button>
+          <button class="hbtn close" id="btn-close" title="关闭便签"><svg viewBox="0 0 12 12"><line x1="2.5" y1="2.5" x2="9.5" y2="9.5"></line><line x1="9.5" y1="2.5" x2="2.5" y2="9.5"></line></svg></button>
+        </div>
+      </div>
+      <div class="color-picker" id="color-picker"></div>
+      <div class="body">
+        <textarea class="textarea" id="textarea" placeholder="输入内容…">① 调取涉案账户流水（工行/建行）
+② 比对资金去向与嫌疑人供述
+③ 16:00 前汇总异常交易清单
+④ 同步经侦云平台</textarea>
+      </div>
+      <div class="statusbar" id="statusbar">
+        <span id="save-state"><span class="save-dot"></span>已保存</span>
+        <span id="word-count">0 字</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 套系展示 -->
+  <div class="col">
+    <div class="note static" style="background:#FBF3CE">
+      <div class="header" style="background:linear-gradient(180deg,#F4E3A6,#EAD89B)">
+        <div class="header-left">
+          <div class="color-indicator" style="background:#E9C44A"></div>
+          <span class="type-tag">一般工作</span>
+          <span class="meta-label">周四例会要点</span>
+        </div>
+      </div>
+      <div class="body"><div class="textarea" style="color:#6B5410;pointer-events:none">传达支队下季度考核细则，明确台账录入规范，提醒全员按时归档。</div></div>
+      <div class="statusbar"><span><span class="save-dot"></span>已保存</span><span>36 字</span></div>
+    </div>
+
+    <div class="note static" style="background:#DCEAFB">
+      <div class="header" style="background:linear-gradient(180deg,#C6DBF5,#B9D0EF)">
+        <div class="header-left">
+          <div class="color-indicator" style="background:#7FB2EE"></div>
+          <span class="type-tag"><span class="dot" style="background:#B91C1C"></span>紧急</span>
+          <span class="meta-label">协查通报</span>
+        </div>
+      </div>
+      <div class="body"><div class="textarea" style="color:#1C3C5E;pointer-events:none">异地协查请求今日 18:00 前回函，需法制室会签，注意涉密材料单独封装。</div></div>
+      <div class="statusbar"><span><span class="save-dot saving"></span>保存中…</span><span>41 字</span></div>
+    </div>
+
+    <div class="note static" style="background:#FCE0E6">
+      <div class="header" style="background:linear-gradient(180deg,#F7CBD6,#F1BECB)">
+        <div class="header-left">
+          <div class="color-indicator" style="background:#EF9DB1"></div>
+          <span class="type-tag">涉众线索</span>
+          <span class="meta-label">报案人回访</span>
+        </div>
+      </div>
+      <div class="body"><div class="textarea" style="color:#7A2740;pointer-events:none">3 名投资人对接确认笔录，整理信访诉求清单，周报中单列风险等级。</div></div>
+      <div class="statusbar"><span><span class="save-dot"></span>已保存</span><span>38 字</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="preview-tip">提示：本预览为纯网页静态演示，桌面 Electron 版还支持透明度调节、置顶、右键菜单与跨窗口同步保存。</div>
+
+<script>
+const COLORS=[
+  {bg:'#FBF3CE',header:'#F4E3A6',text:'#6B5410',dot:'#E9C44A'},
+  {bg:'#FCE0E6',header:'#F7CBD6',text:'#7A2740',dot:'#EF9DB1'},
+  {bg:'#DCF3E4',header:'#C7EBD2',text:'#1F4A30',dot:'#83D49B'},
+  {bg:'#DCEAFB',header:'#C6DBF5',text:'#1C3C5E',dot:'#7FB2EE'},
+  {bg:'#ECE2FB',header:'#DCCFF4',text:'#3B2B68',dot:'#B79BF0'},
+  {bg:'#FCE7D2',header:'#F6D6B6',text:'#6B3A12',dot:'#F2B079'},
+];
+const NAMES=['黄色','粉色','绿色','蓝色','紫色','橙色'];
+let colorIdx=0;
+
+function shade(hex,pct){
+  const n=parseInt(hex.slice(1),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=Math.max(0,Math.min(255,r+Math.round(255*pct/100)));
+  g=Math.max(0,Math.min(255,g+Math.round(255*pct/100)));
+  b=Math.max(0,Math.min(255,b+Math.round(255*pct/100)));
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function applyColor(idx){
+  const c=COLORS[idx];colorIdx=idx;
+  document.getElementById('note').style.background=c.bg;
+  document.getElementById('header').style.background='linear-gradient(180deg,'+c.header+','+shade(c.header,-6)+')';
+  document.getElementById('textarea').style.color=c.text;
+  document.getElementById('color-indicator').style.background=c.dot;
+  document.querySelectorAll('#color-picker .color-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+}
+function buildPicker(){
+  const p=document.getElementById('color-picker');p.innerHTML='';
+  COLORS.forEach((c,i)=>{
+    const d=document.createElement('div');d.className='color-dot'+(i===colorIdx?' active':'');
+    d.style.background=c.dot;d.title=NAMES[i];
+    d.onclick=()=>{applyColor(i);p.classList.remove('show');};
+    p.appendChild(d);
+  });
+}
+function updateWordCount(){
+  const t=document.getElementById('textarea').value;
+  document.getElementById('word-count').textContent=t.replace(/\s/g,'').length+' 字';
+}
+
+// 交互
+document.getElementById('color-indicator').onclick=(e)=>{e.stopPropagation();document.getElementById('color-picker').classList.toggle('show');};
+document.addEventListener('click',(e)=>{if(!e.target.closest('#color-picker')&&!e.target.closest('#color-indicator'))document.getElementById('color-picker').classList.remove('show');});
+document.getElementById('btn-min').onclick=()=>document.getElementById('note').classList.toggle('minimized');
+let saveTimer=null;
+document.getElementById('textarea').addEventListener('input',()=>{
+  updateWordCount();
+  document.getElementById('save-state').innerHTML='<span class="save-dot saving"></span>保存中…';
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>document.getElementById('save-state').innerHTML='<span class="save-dot"></span>已保存',220);
+});
+buildPicker();applyColor(0);updateWordCount();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
  * 读取 evidence-report 模块的存储数据，生成 Word 兼容格式的 .doc 文件
  */
 
-import { saveAs } from 'file-saver';
+import { buildDocReport } from './docReport';
 import { getMassRecords } from '../store/massStore';
 import { formatDateValue, safeHtml } from './htmlUtils';
 
@@ -35,10 +35,8 @@ export function generateFundReport(recordId?: string): void {
   const html = buildReportHtml(data);
 
   // 保存为 .doc（Word 可打开）
-  const bom = '\uFEFF';
-  const blob = new Blob([bom + html], { type: 'application/msword;charset=utf-8' });
   const caseName = String(data.caseName || '资金分析报告').replace(/[/\\?*[\]]/g, '_');
-  saveAs(blob, `${caseName}_资金分析报告.doc`);
+  buildDocReport(html, `${caseName}_资金分析报告.doc`);
 }
 
 function buildReportHtml(data: ReportData): string {

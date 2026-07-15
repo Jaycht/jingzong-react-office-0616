@@ -1,28 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, FileText, Check, Users, Paperclip, TrendingUp, TrendingDown, Download } from 'lucide-react';
-import * as echarts from 'echarts';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { useAppStore } from "../store/appStore"
 import { getMassRecords } from '../store/massStore';
 import { getBaseModules } from '../moduleConfig';
+import EChartBox from '../components/EChartBox';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 26 } } };
 
-/** 简单的 ECharts 包装组件 */
-function EChartBox({ option, style }: { option: Record<string, unknown>; style?: React.CSSProperties }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!ref.current) return;
-    const chart = echarts.init(ref.current);
-    chart.setOption(option, true);
-    const h = () => chart.resize();
-    window.addEventListener('resize', h);
-    return () => { window.removeEventListener('resize', h); chart.dispose(); };
-  }, [option]);
-  return <div ref={ref} style={{ width: '100%', ...style }} />;
+/** echarts formatter 回调参数（结构化收敛自 any，作为 CallbackDataParams 的超类型以便赋值给 EChartsOption） */
+interface EChartsParam {
+  name: string;
+  dataIndex: number;
+  dataType?: string;
+  data?: unknown;
+  value?: unknown;
 }
 
 export default function Statistics() {
@@ -46,13 +41,20 @@ export default function Statistics() {
   }, []);
 
   const modules = useMemo(() => getBaseModules(), []);
-  const moduleRecords: Record<string, number> = {};
-  for (const r of records) moduleRecords[r.moduleId] = (moduleRecords[r.moduleId] || 0) + 1;
+
+  // 聚合统计：收口到 useMemo，避免每次渲染重复遍历（L-8）
+  const { moduleRecords, thisMonth, lastMonth } = useMemo(() => {
+    const mr: Record<string, number> = {};
+    for (const r of records) mr[r.moduleId] = (mr[r.moduleId] || 0) + 1;
+    const ym = new Date().toISOString().slice(0, 7);
+    const thisMonthCount = records.filter(r => r.createdAt?.startsWith(ym)).length;
+    const d = new Date(); d.setMonth(d.getMonth() - 1);
+    const lastMonthCount = records.filter(r => r.createdAt?.startsWith(d.toISOString().slice(0, 7))).length;
+    return { moduleRecords: mr, thisMonth: thisMonthCount, lastMonth: lastMonthCount };
+  }, [records]);
 
   const totalRecords = records.length;
   const totalCases = cases.length;
-  const thisMonth = records.filter(r => r.createdAt?.startsWith(new Date().toISOString().slice(0, 7))).length;
-  const lastMonth = records.filter(r => { const d = new Date(); d.setMonth(d.getMonth() - 1); return r.createdAt?.startsWith(d.toISOString().slice(0, 7)); }).length;
 
   const STATS = [
     { label: '总记录数', value: String(totalRecords + totalCases), change: `本月+${thisMonth}`, up: true, color: '#1B5E9B' },
@@ -103,7 +105,7 @@ export default function Statistics() {
       barWidth: 18,
       itemStyle: {
         borderRadius: [0, 6, 6, 0],
-        color: (params: any) => {
+        color: (params: EChartsParam) => {
           const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'];
           return colors[params.dataIndex % colors.length];
         },

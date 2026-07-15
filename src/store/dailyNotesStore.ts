@@ -7,15 +7,18 @@ import { useAppStore } from './appStore';
 
 const STORAGE_KEY = 'jingzong.dailyNotes';
 
+export type NotePriority = 'normal' | 'important' | 'urgent';
+
 export interface DailyNote {
   id: string;
   date: string;
   title: string;
   type: string;
+  priority: NotePriority;
   contents: string[];
   reminder: { enabled: boolean; time: string; repeat: string; sound?: string };
   notes: string;
-  attachments: any[];
+  attachments: Array<Record<string, unknown>>;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +47,7 @@ export function createDailyNote(data: Partial<DailyNote>): DailyNote {
     date: data.date || now.slice(0, 10),
     title: data.title || '',
     type: data.type || '一般工作',
+    priority: data.priority || 'normal',
     contents: data.contents || [''],
     reminder: data.reminder || { enabled: false, time: '', repeat: 'none', sound: 'QQ消息.wav' },
     notes: data.notes || '',

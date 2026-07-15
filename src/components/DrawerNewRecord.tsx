@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button, DatePicker, Form, Input, InputNumber,
   Modal, Select, Space, Upload,
+  type FormInstance, type UploadFile,
 } from 'antd';
 import dayjs from 'dayjs';
 import { InboxOutlined, PlusOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
@@ -12,11 +13,11 @@ import { findModule, filterVisibleFields, type FieldDefinition } from '../module
 import { useCustomModules } from '../customModules';
 import { saveMassRecord, updateMassRecord, getMassRecords } from '../store/massStore';
 import ErrorBoundary from './ErrorBoundary';
-import { recordFormFields, rebuildCaseIndex, rebuildSuspectIndex, getFieldHistory } from '../store/inputHistoryStore';
+import { recordFormFields, rebuildCaseIndex, rebuildSuspectIndex } from '../store/inputHistoryStore';
 import {
   GlobalCaseNameField, GlobalCaseNoField, GlobalSuspectField,
   InputWithHistory,
-  MultiPersonField, PersistedSelect, DeviceBrandField, HolderAutoComplete,
+  MultiPersonField, PersistedSelect, DeviceBrandField,
   IdNoField,
 } from './SharedFormFields';
 import { saveAttachment, relinkAttachment, getAttachment } from '../store/attachmentStore';
@@ -90,8 +91,6 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   const totalSteps = steps.length;
   const currentStepMeta = steps[currentStep];
   const stepFields = currentStepMeta?.fields || [];
-  const stepRepeatable = currentStepMeta?.repeatable ?? false;
-  const stepListName = currentStepMeta?.listName || 'items';
 
   const handleClose = () => {
     if (isDirty) {
@@ -131,12 +130,15 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
         }
         // 处理 repeatable section 中的 dayjs 对象
         if (Array.isArray(v)) {
-          v.forEach((item: any) => {
+          v.forEach((item: Record<string, unknown>) => {
             if (item && typeof item === 'object') {
               for (const k of Object.keys(item)) {
                 const val = item[k];
-                if (val && typeof val === 'object' && val.$L !== undefined && val.$d !== undefined) {
-                  item[k] = (typeof val.isValid === 'function' && val.isValid()) ? val.toISOString() : String(val.$d);
+                if (val && typeof val === 'object') {
+                  const dv = val as { $L?: unknown; $d?: unknown; isValid?: () => boolean; toISOString?: () => string };
+                  if (dv.$L !== undefined && dv.$d !== undefined) {
+                    item[k] = (dv.isValid && dv.isValid()) ? dv.toISOString!() : String(dv.$d);
+                  }
                 }
               }
             }
@@ -226,12 +228,13 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                     if (typeof raw === 'string') {
                       const d = dayjs(raw);
                       if (d.isValid()) copy[df.id] = d;
-                    } else if (raw && typeof raw === 'object' && (raw as any).$d) {
-                      // dayjs 对象：转为真正 dayjs 实例
-                      try {
-                        const dateVal = (raw as any).$d instanceof Date ? (raw as any).$d : new Date(String((raw as any).$d));
+                    } else if (raw && typeof raw === 'object') {
+                      // dayjs 对象（含 $d）或 { $d: ... } 形状：转为真正 dayjs 实例
+                      const maybeDayjs = raw as { $d?: unknown };
+                      if (maybeDayjs.$d != null) {
+                        const dateVal = maybeDayjs.$d instanceof Date ? maybeDayjs.$d : new Date(String(maybeDayjs.$d));
                         if (!isNaN(dateVal.getTime())) copy[df.id] = dayjs(dateVal);
-                      } catch { /* ignore */ }
+                      }
                     }
                   }
                 }
@@ -249,7 +252,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             if (f.type === 'attachment') {
               // 附件字段：只保留 uid/name/status，避免 AntD Upload 调用 clone 报错
               const rawArr = Array.isArray(raw) ? raw : [];
-              formData[f.id] = rawArr.map((item: any) => ({
+              formData[f.id] = rawArr.map((item: { uid?: string | number; id?: string | number; name?: string; fileName?: string }) => ({
                 uid: item?.uid || item?.id || String(Math.random()),
                 name: item?.name || item?.fileName || '附件',
                 status: 'done',
@@ -334,12 +337,12 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   }, [selectedModuleId, selectedTabId, editRecord]);
 
   // 自动保存草稿：表单变化后 2 秒自动保存到 IndexedDB
-  const draftTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const changeCountRef = useRef(0);
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // 用 state 计数器（而非 ref）作为 effect 依赖，确保每次表单变化都能触发自动保存
+  const [changeCount, setChangeCount] = useState(0);
   useEffect(() => {
     if (isEditing) return;
-    const count = changeCountRef.current;
-    if (count === 0) return;
+    if (changeCount === 0) return;
     const checkAndSave = () => {
       if (!mountedRef.current) return;
       const values = form.getFieldsValue();
@@ -353,7 +356,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     clearTimeout(draftTimerRef.current);
     draftTimerRef.current = setTimeout(checkAndSave, 2000);
     return () => clearTimeout(draftTimerRef.current);
-  }, [changeCountRef.current, selectedModuleId, selectedTabId, currentStep, isEditing, form]);
+  }, [changeCount, selectedModuleId, selectedTabId, currentStep, isEditing, form]);
 
   // 恢复草稿提示
   useEffect(() => {
@@ -453,10 +456,10 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                 style={{
                   flex: 1, padding: '8px 12px', borderRadius: 6, cursor: 'pointer',
                   textAlign: 'center', fontSize: 13,
-                  background: active ? '#E6F1F8' : done ? '#E8F5E9' : '#F8FAFC',
-                  color: active ? '#155A8A' : done ? '#138A63' : '#94A3B8',
+                  background: active ? 'var(--color-primary-bg)' : done ? 'var(--color-success-bg)' : 'var(--color-surface-hover)',
+                  color: active ? 'var(--color-primary)' : done ? 'var(--color-success)' : 'var(--color-text-muted)',
                   fontWeight: active ? 700 : 400,
-                  border: active ? '1px solid #155A8A' : '1px solid transparent',
+                  border: active ? '1px solid var(--color-primary)' : '1px solid transparent',
                   transition: 'all .15s',
                 }}
               >
@@ -472,13 +475,13 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       <div style={{ overflow: 'auto', padding: '0 24px 16px' }}>
         {/* Module/Template selector */}
             <div style={{
-              background: '#F6F8FB', border: '1px solid #D8E1EA', borderRadius: 8,
+              background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', borderRadius: 8,
               padding: 14, marginBottom: 20,
             }}>
-              <div style={{ fontSize: 13, color: '#64748B', marginBottom: 6 }}>
+              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
                 {selectedModule?.departmentLabel} · {selectedModule?.label} · {selectedTab?.label}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#172033', marginBottom: 8 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', marginBottom: 8 }}>
                 {flatMode ? `${steps[0]?.label} · ${steps[1]?.label}` : (hasSections ? steps[currentStep]?.label : '基本信息')}
               </div>
               <div style={{ display: 'flex', gap: 14 }}>
@@ -513,7 +516,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               form={form}
               layout="vertical"
               requiredMark="optional"
-              onValuesChange={() => { if (mountedRef.current) { setIsDirty(true); changeCountRef.current++; } }}
+              onValuesChange={() => { if (mountedRef.current) { setIsDirty(true); setChangeCount((c) => c + 1); } }}
             >
               {/* 所有步骤字段同时渲染、用 display 切换可见性，保证 antd Form.Item / Form.List 永不卸载 */}
               {steps.map((step, si) => {
@@ -531,11 +534,11 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                             )}
                             {subFields.map(({ key, name: idx }) => (
                               <div key={key} style={{
-                                border: '1px solid #E2E8F0', borderRadius: 8, padding: 16,
-                                marginBottom: 16, background: '#FAFBFC',
+                                border: '1px solid var(--color-border-light)', borderRadius: 8, padding: 16,
+                                marginBottom: 16, background: 'var(--color-surface-hover)',
                               }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                  <span style={{ fontSize: 14, fontWeight: 700, color: '#155A8A' }}>
+                                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-primary)' }}>
                                     {step.label} #{idx + 1}
                                   </span>
                                   {subFields.length > 1 && (
@@ -604,7 +607,7 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
   field: FieldDefinition; 
   moduleId: string; 
   subName?: number; 
-  form: any;
+  form: FormInstance;
   pendingAttachments: React.MutableRefObject<Set<string>>;
   editRecord?: import('../store/massStore').MassRecord | null;
   listName?: string;
@@ -647,10 +650,10 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '14px 0 4px', marginTop: 8,
-        borderBottom: '1px solid #D8E1EA',
+        borderBottom: '1px solid var(--color-border)',
       }}>
-        <div style={{ width: 3, height: 18, background: '#155A8A', borderRadius: 2, flexShrink: 0 }} />
-        <span style={{ fontSize: 14, fontWeight: 700, color: '#172033' }}>{field.label}</span>
+        <div style={{ width: 3, height: 18, background: 'var(--color-primary)', borderRadius: 2, flexShrink: 0 }} />
+        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>{field.label}</span>
       </div>
     );
   }
@@ -752,13 +755,13 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
   field: FieldDefinition;
   name: string | (string | number)[];
   moduleId: string;
-  form: any;
+  form: FormInstance;
   pendingAttachments: React.MutableRefObject<Set<string>>;
   editRecord?: import('../store/massStore').MassRecord | null;
 }) {
   const fieldName = typeof name === 'string' ? name : name[1];
   // 优先从 editRecord 原始数据初始化（不受 form.setFieldsValue 时序影响）
-  const [fileList, setFileListState] = useState<any[]>(() => {
+  const [fileList, setFileListState] = useState<UploadFile[]>(() => {
     if (editRecord) {
       // 从原始记录数据中直接读取附件列表
       const raw = editRecord.data?.[field.id];
@@ -778,31 +781,9 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRemove = (uid: string) => {
-    const next = fileList.filter((f: any) => f.uid !== uid);
+    const next = fileList.filter((f: UploadFile) => f.uid !== uid);
     form.setFieldsValue({ [fieldName]: next });
     syncFileList();
-  };
-
-  const handlePreview = async (uid: string, fileName: string) => {
-    // 在 await 之前打开窗口，防止浏览器阻止弹窗
-    const newWin = window.open('', '_blank');
-    if (!newWin) {
-      // 弹窗被拦截，降级为下载
-      return handleDownload(uid, fileName);
-    }
-    newWin.document.write('<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#999;font-family:sans-serif">加载中...</div>');
-    try {
-      const att = await getAttachment(uid);
-      if (!att) { newWin.close(); return; }
-      const blob = new Blob([att.data], { type: att.fileType });
-      const url = URL.createObjectURL(blob);
-      newWin.location.href = url;
-      // URL.revokeObjectURL 延后回收，防止预览窗口打开后立刻断链
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-    } catch (err) {
-      newWin.close();
-      console.warn('[attachment] 预览失败:', err);
-    }
   };
 
   const showToast = useAppStore.getState().showToast.bind(useAppStore.getState());
@@ -813,8 +794,8 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
       if (!att) throw new Error('附件数据不存在');
       const buf = Array.from(new Uint8Array(att.data));
       // Electron 模式：始终弹出原生保存对话框
-      if ((window as any).electronAPI?.showSaveDialog) {
-        const result = await (window as any).electronAPI.showSaveDialog(fileName, buf);
+      if (window.electronAPI?.showSaveDialog) {
+        const result = await window.electronAPI.showSaveDialog(fileName, buf);
         if (!result.success && !result.canceled) {
           throw new Error(result.error || '保存失败');
         }
@@ -840,13 +821,13 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
 
   return (
     <Form.Item label={field.label}>
-      <Form.Item name={name} valuePropName="fileList" getValueFromEvent={(info: any) => info?.fileList || []} noStyle>
+      <Form.Item name={name} valuePropName="fileList" getValueFromEvent={(info: { fileList?: UploadFile[] }) => info?.fileList ?? []} noStyle>
         <Upload.Dragger
           beforeUpload={async (file) => {
             try {
               const record = await saveAttachment('pending', moduleId, field.id, file);
               pendingAttachments.current.add(record.id);
-              const prev: any[] = form.getFieldValue(fieldName) || [];
+              const prev: UploadFile[] = (form.getFieldValue(fieldName) as UploadFile[]) || [];
               const newFile = {
                 uid: record.id,
                 name: file.name,
@@ -873,17 +854,17 @@ function AttachmentField({ field, name, moduleId, form, pendingAttachments, edit
 
       {fileList.length > 0 && (
         <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {fileList.map((file: any) => (
+          {fileList.map((file: UploadFile) => (
             <div key={file.uid} style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '6px 10px', borderRadius: 6,
-              background: '#F9FAFB', border: '1px solid #E5E7EB',
+              background: 'var(--color-surface-hover)', border: '1px solid var(--color-border-light)',
             }}>
-              <span style={{ flex: 1, fontSize: 13, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ flex: 1, fontSize: 13, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 📎 {file.name}
               </span>
               <span onClick={() => handleDownload(file.uid, file.name)}
-                style={{ fontSize: 12, color: '#155A8A', cursor: 'pointer', flexShrink: 0 }}>
+                style={{ fontSize: 12, color: 'var(--color-primary)', cursor: 'pointer', flexShrink: 0 }}>
                 下载
               </span>
               <span onClick={() => handleRemove(file.uid)}

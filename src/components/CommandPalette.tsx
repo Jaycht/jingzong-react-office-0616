@@ -37,7 +37,7 @@ function getModuleEmoji(moduleId: string): string {
 export default function CommandPalette({ open, onClose }: Props) {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const navigate = useAppStore((s) => s.setCurrentPage);
+  const setCurrentPage = useAppStore((s) => s.setCurrentPage);
   const openModal = useAppStore((s) => s.openModal);
   const setCurrentTabId = useAppStore((s) => s.setCurrentTabId);
   const setEditRecord = useAppStore((s) => s.setEditRecord);
@@ -62,17 +62,16 @@ export default function CommandPalette({ open, onClose }: Props) {
 
   // 构建搜索结果
   const items = useMemo<CommandItem[]>(() => {
-    const result: CommandItem[] = [];
     const kw = query.trim().toLowerCase();
 
     // 快捷命令
     const actions: CommandItem[] = [
-      { id: 'act-new', label: '新建记录', sublabel: '打开新建表单', icon: <Plus size={16} />, type: 'action', action: () => { navigate('dashboard'); openModal('newRecord'); } },
-      { id: 'act-stats', label: '统计分析', sublabel: '查看数据统计', icon: <BarChart3 size={16} />, type: 'page', action: () => navigate('statistics') },
-      { id: 'act-import', label: '导入数据', sublabel: '从 Excel 导入', icon: <Upload size={16} />, type: 'page', action: () => navigate('importExport') },
-      { id: 'act-export', label: '导出数据', sublabel: '导出 Excel', icon: <Download size={16} />, type: 'page', action: () => navigate('importExport') },
-      { id: 'act-backup', label: '备份恢复', sublabel: '数据备份与恢复', icon: <Database size={16} />, type: 'page', action: () => navigate('backup') },
-      { id: 'act-timeline', label: '案件时间轴', sublabel: '查看案件时间线', icon: <Clock size={16} />, type: 'page', action: () => navigate('timeline') },
+      { id: 'act-new', label: '新建记录', sublabel: '打开新建表单', icon: <Plus size={16} />, type: 'action', action: () => { setCurrentPage('dashboard'); openModal('newRecord'); } },
+      { id: 'act-stats', label: '统计分析', sublabel: '查看数据统计', icon: <BarChart3 size={16} />, type: 'page', action: () => setCurrentPage('statistics') },
+      { id: 'act-import', label: '导入数据', sublabel: '从 Excel 导入', icon: <Upload size={16} />, type: 'page', action: () => setCurrentPage('importExport') },
+      { id: 'act-export', label: '导出数据', sublabel: '导出 Excel', icon: <Download size={16} />, type: 'page', action: () => setCurrentPage('importExport') },
+      { id: 'act-backup', label: '备份恢复', sublabel: '数据备份与恢复', icon: <Database size={16} />, type: 'page', action: () => setCurrentPage('backup') },
+      { id: 'act-timeline', label: '案件时间轴', sublabel: '查看案件时间线', icon: <Clock size={16} />, type: 'page', action: () => setCurrentPage('timeline') },
     ];
 
     // 各模块快捷入口
@@ -82,11 +81,11 @@ export default function CommandPalette({ open, onClose }: Props) {
           id: `page-${mod.id}`,
           label: mod.label,
           sublabel: `${dept.label} · 新建${mod.label}`,
-          icon: <span style={{ fontSize: 14 }}>{getModuleEmoji(mod.id)}</span>,
+          icon: mod.icon ? <mod.icon size={16} /> : <span style={{ fontSize: 14 }}>{getModuleEmoji(mod.id)}</span>,
           type: 'page',
           moduleId: mod.id,
           action: () => {
-            navigate(mod.id);
+            setCurrentPage(mod.id);
             setCurrentTabId(mod.tabs[0]?.id || '');
             setTimeout(() => openModal('newRecord'), 100);
           },
@@ -121,7 +120,7 @@ export default function CommandPalette({ open, onClose }: Props) {
         recordId: rec.id,
         action: () => {
           setEditRecord(rec);
-          navigate(rec.moduleId);
+          setCurrentPage(rec.moduleId);
           openModal('newRecord');
         },
       });
@@ -129,7 +128,7 @@ export default function CommandPalette({ open, onClose }: Props) {
     }
 
     return [...matchedActions.slice(0, 6), ...matchedRecords].slice(0, 12);
-  }, [query, records, navigate, openModal, setCurrentTabId, setEditRecord]);
+  }, [query, records, setCurrentPage, openModal, setCurrentTabId, setEditRecord]);
 
   const [selectedIdx, setSelectedIdx] = useState(0);
   useEffect(() => { setSelectedIdx(0); }, [query]);

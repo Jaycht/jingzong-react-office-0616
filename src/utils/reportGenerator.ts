@@ -2,7 +2,7 @@
  * 通用日报/周报/月报生成器
  * 为每个模块生成 Word 兼容格式的报表
  */
-import { saveAs } from 'file-saver';
+import { buildDocReport } from './docReport';
 import { getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import type { WorkModule } from '../moduleConfig';
@@ -72,10 +72,8 @@ export function exportModuleReport(
   });
 
   const html = buildReportHtml(module, type, period, filtered);
-  const bom = '﻿';
-  const blob = new Blob([bom + html], { type: 'application/msword;charset=utf-8' });
   const fileName = `${module.departmentLabel}_${module.label}_${REPORT_LABELS[type]}_${period.label.replace(/[/\\?*[\]]/g, '_')}.doc`;
-  saveAs(blob, fileName);
+  buildDocReport(html, fileName);
 }
 
 
