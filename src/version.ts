@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.18.0";
+export const APP_VERSION = "V2.18.1";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 18;
-export const VERSION_PATCH = 0;
+export const VERSION_PATCH = 1;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.18.1 =====
+  "V2.18.1 优化 - 收尾两项历史任务：①L-15 悬浮(hover)交互统一规范——index.css 新增 --hover-transition/--hover-lift/--hover-bg/--hover-border/--hover-shadow 令牌，落地 .wb-hover-card/.wb-hover-row/.wb-hover-ghost 三个通用工具类供新页面复用；收敛残留硬编码色(深色 .btn-primary 写死 #2563EB、.dash-action-primary 渐变 #1D4ED8/#2563EB、.tl-card/.tl-list-row 的 #6B7280 fallback)与字面量过渡(0.4s cubic-bezier / 0.3s ease)到设计令牌，全站 hover 反馈统一为「主色边框+主色背景+轻微上浮+统一过渡」；②输出《部门模块体检报告》(部门模块体检报告.md)：梳理 5 部门 23 模块现状、已落地改造回顾(状态真实派生/时限提醒补齐/专属字段补齐/UI 高级化/列表关联增强)、及 5 项后续增强建议(全局检索/状态字段补齐/时限扩展/报表统一/打印优化)",
   // ===== V2.18.0 =====
   "V2.18.0 重构 - 系统设置二次精简与提示音三态化：①删除「统计分析」页——其与工作台(Dashboard)的 ECharts 玫瑰图/柱状图/动态高度重复，移除侧边栏 PLATFORM_NAV 入口、AppLayout 路由、工作台跳转按钮、命令面板入口、系统设置标签、面包屑映射与 smoke 测试引用，并删除 Statistics.tsx；②操作提示音由单一「提示音类型」拆分为「成功/警告/失败」三类独立选择，每类 4 种自生成 wav 素材(public/audio 下 success-1~4/warning-1~4/failure-1~4)，showToast 按 toast 类型(success/warning/error)播放对应音效、info 不响，全部经 appStore 持久化",
   // ===== V2.17.0 =====
