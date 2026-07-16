@@ -299,6 +299,9 @@ export default function ModulePage() {
   const colMenuItems = useMemo(() => toggleableCols.map((c) => ({ key: c.key, label: c.label })), [toggleableCols]);
   const visibleColKeys = useMemo(() => toggleableCols.filter((c) => !hiddenCols.has(c.key)).map((c) => c.key), [toggleableCols, hiddenCols]);
 
+  // 打印态：必须在 dynamicColumns 之前声明，否则 useMemo 闭包访问到尚未初始化的 printing（TDZ 报错）
+  const [printing, setPrinting] = useState(false);
+
   const dynamicColumns = useMemo<ColumnsType<DynamicRow>>(() => {
     const base: ColumnsType<DynamicRow> = [
       { title: '编号', dataIndex: 'code', ...(printing ? {} : { width: 60, fixed: 'left' as const }), sorter: (a: DynamicRow, b: DynamicRow) => Number(a.code) - Number(b.code) },
@@ -512,7 +515,6 @@ export default function ModulePage() {
     });
   };
 
-  const [printing, setPrinting] = useState(false);
   const printStyleRef = useRef<HTMLStyleElement | null>(null);
 
   /** 汇总当前生效的筛选条件，用于打印页眉展示 */

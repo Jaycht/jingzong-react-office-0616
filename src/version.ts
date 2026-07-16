@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.21.4";
+export const APP_VERSION = "V2.21.5";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 21;
-export const VERSION_PATCH = 4;
+export const VERSION_PATCH = 5;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.21.5 =====
+  "V2.21.5 修复 - 进入模块页崩溃(ReferenceError: Cannot access 'it' before initialization)：打印态 printing 状态声明位置后于 dynamicColumns 的 useMemo 导致 TDZ，已上移至 useMemo 之前，模块页可正常进入",
   // ===== V2.21.4 =====
   "V2.21.4 修复 - 打印表格根因修复：打印态去除 antd 列 ellipsis/width/fixed 与分离式 header，编号表头与内容完整对齐不再截断",
   // ===== V2.21.3 =====
