@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.20.0";
+export const APP_VERSION = "V2.21.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 20;
+export const VERSION_MINOR = 21;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.21.0 =====
+  "V2.21.0 优化 - 打印增强：①「打印当前列表」升级为下拉，提供「自动方向/纵向 A4/横向 A4」三选项；自动模式按可见列数(排除选择列与操作列)动态判定——列数>8 自动横向、其余纵向，打印前注入 @page 方向(打印结束 afterprint 自动移除注入样式)，多列表格不再挤压；②新增打印专用页眉(屏幕态隐藏、打印态显示)，含模块名+部门·当前类目+打印时间+记录条数+生效筛选条件(关键词/日期范围/状态/经办人/案件/人员/战役)，打印输出清晰可归档",
   // ===== V2.20.0 =====
   "V2.20.0 新增 - 全局检索常驻化与列表打印优化：①全局检索上移顶部常驻栏——在 AppLayout 的 electron-titlebar 与 app-main-row 之间新增常驻顶栏(.app-topbar)，内嵌 GlobalSearch（跨 5 部门 23 模块全字段+附件名检索、按部门·模块分组、关键词高亮、点击直达记录），所有页面一屏可达，并移除 Dashboard 中重复的接入；②常驻栏右侧新增「命令面板 ⌘K」入口按钮（点击或 Ctrl/⌘+K 打开），保持导航可达；③移除右下角常驻悬浮搜索按钮(FloatingSearch)——其仅作为命令面板触发器，全局检索常驻后已冗余，删除组件及引用；④ModulePage 工具栏新增「打印当前列表」按钮——点击进入 printing 态关闭表格分页、渲染全部行后调用 window.print()，afterprint 自动复位；⑤@media print 增强——隐藏.app-topbar/.mp-toolbar/.mp-kpi-row/.breadcrumb，列表表格展开铺满、隐藏选择列与操作列、保留表头底色与单元格边框，A4 友好",
   // ===== V2.19.0 =====

@@ -515,21 +515,73 @@ export default function ModulePage() {
   };
 
   const [printing, setPrinting] = useState(false);
+  const printStyleRef = useRef<HTMLStyleElement | null>(null);
 
-  const handlePrintList = () => {
+  /** 汇总当前生效的筛选条件，用于打印页眉展示 */
+  const buildPrintFilters = (): string[] => {
+    const f: string[] = [];
+    if (filterText.trim()) f.push(`关键词「${filterText.trim()}」`);
+    if (filterDateRange && filterDateRange[0] && filterDateRange[1])
+      f.push(`日期 ${filterDateRange[0].format('YYYY-MM-DD')} ~ ${filterDateRange[1].format('YYYY-MM-DD')}`);
+    if (filterStatus) f.push(`状态「${filterStatus}」`);
+    if (filterHandler) f.push(`经办人「${filterHandler}」`);
+    if (filterCase) f.push(`案件「${filterCase}」`);
+    if (filterPerson) f.push(`人员「${filterPerson}」`);
+    if (filterBattle) f.push(`战役「${filterBattle}」`);
+    return f;
+  };
+
+  const handlePrintList = (orientation: 'auto' | 'portrait' | 'landscape' = 'auto') => {
     setPrinting(true);
     // 等待 printing 态重渲染（表格关闭分页、展示全部行）后再唤起打印
-    setTimeout(() => window.print(), 80);
+    setTimeout(() => {
+      // 统计可见列数（排除选择列与操作列），自动判定横向
+      const ths = document.querySelectorAll('.ant-table-thead th');
+      let visibleCols = 0;
+      ths.forEach((th) => {
+        const cls = (th as HTMLElement).className || '';
+        if (cls.includes('ant-table-selection-column') || cls.includes('mp-act-col')) return;
+        visibleCols++;
+      });
+      const useLandscape = orientation === 'landscape' || (orientation === 'auto' && visibleCols > 8);
+      // 注入 @page 方向（覆盖默认纵向），打印结束后移除
+      const style = document.createElement('style');
+      style.id = 'print-orientation';
+      style.textContent = useLandscape
+        ? '@page { size: A4 landscape; margin: 10mm; }'
+        : '@page { size: A4 portrait; margin: 12mm; }';
+      document.head.appendChild(style);
+      printStyleRef.current = style;
+      window.print();
+    }, 80);
   };
 
   useEffect(() => {
-    const onAfter = () => setPrinting(false);
+    const onAfter = () => {
+      setPrinting(false);
+      if (printStyleRef.current) {
+        printStyleRef.current.remove();
+        printStyleRef.current = null;
+      }
+    };
     window.addEventListener('afterprint', onAfter);
     return () => window.removeEventListener('afterprint', onAfter);
   }, []);
 
   return (
     <div>
+      {/* 打印专用页眉：屏幕态隐藏，打印态显示模块名+类目+筛选条件+时间+条数 */}
+      <div className="print-list-header">
+        <div className="plh-title">{module?.label} · 记录列表</div>
+        <div className="plh-sub">{module?.departmentLabel} · 当前类目：{active?.label || module?.label}</div>
+        <div className="plh-meta">
+          <span>打印时间：{dayjs().format('YYYY-MM-DD HH:mm')}</span>
+          <span>共 {rows.length} 条</span>
+          {buildPrintFilters().length > 0 && (
+            <span>筛选条件：{buildPrintFilters().join('；')}</span>
+          )}
+        </div>
+      </div>
       {/* 头部 */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
@@ -633,9 +685,19 @@ export default function ModulePage() {
               <button className="mp-btn"><FileText size={15} /> 生成报告</button>
             </Dropdown>
           )}
-          <button className="mp-btn" onClick={handlePrintList}>
-            <Printer size={15} /> 打印当前列表
-          </button>
+          <Dropdown
+            trigger={['click']}
+            menu={{
+              items: [
+                { key: 'auto', icon: <Printer size={13} />, label: '打印（自动方向）' },
+                { key: 'portrait', icon: <FileText size={13} />, label: '纵向 A4' },
+                { key: 'landscape', icon: <FileText size={13} />, label: '横向 A4' },
+              ],
+              onClick: ({ key }) => handlePrintList(key as 'auto' | 'portrait' | 'landscape'),
+            }}
+          >
+            <button className="mp-btn"><Printer size={15} /> 打印当前列表</button>
+          </Dropdown>
         </div>
         <div className="mp-tb-sep" />
 

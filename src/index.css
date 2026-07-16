@@ -1616,6 +1616,12 @@ html[data-density="compact"] .ant-btn { height: 30px; font-size: 12px; }
 
 /* ===================== 打印优化（#131） ===================== */
 /* A4 友好：隐藏装饰性 chrome，内容区满宽浅底、保留配色、面板避免跨页断裂 */
+/* 打印默认 A4 纵向；横向由打印逻辑按列数/用户选择动态注入覆盖 */
+@page { size: A4 portrait; margin: 12mm; }
+
+/* 打印专用页眉：屏幕态隐藏 */
+.print-list-header { display: none; }
+
 @media print {
   html, body { background: #fff !important; }
   .app-shell { height: auto !important; display: block !important; }
@@ -1663,4 +1669,11 @@ html[data-density="compact"] .ant-btn { height: 30px; font-size: 12px; }
   .ant-table-thead > tr > th { background: #F3F4F6 !important; }
 
   a[href]::after { content: ""; }
+
+  /* 打印专用页眉：显示模块名+类目+筛选条件+时间+条数，并隐藏屏幕态头部 */
+  .mp-head { display: none !important; }
+  .print-list-header { display: block !important; margin-bottom: 8mm; padding-bottom: 6px; border-bottom: 2px solid #1f2937; }
+  .print-list-header .plh-title { font-size: 18px; font-weight: 700; color: #111827; }
+  .print-list-header .plh-sub { font-size: 12px; color: #6b7280; margin-top: 3px; }
+  .print-list-header .plh-meta { font-size: 11px; color: #374151; margin-top: 6px; display: flex; gap: 16px; flex-wrap: wrap; }
 }
