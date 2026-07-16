@@ -89,7 +89,7 @@ export default function Sidebar({ onOpenProfile }: Props) {
     return all.find((x) => x.mid === currentPage)?.id || null;
   }, [departments, currentPage]);
 
-  const [expanded, setExpanded] = useState<string | null>(activeDeptId || "office");
+  const [expanded, setExpanded] = useState<string | null>(null);
   useEffect(() => { if (activeDeptId) setExpanded(activeDeptId); }, [activeDeptId]);
 
   const toggleExpand = (id: string) => setExpanded((prev) => (prev === id ? null : id));

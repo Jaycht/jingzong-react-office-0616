@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.21.0";
+export const APP_VERSION = "V2.21.1";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 21;
-export const VERSION_PATCH = 0;
+export const VERSION_PATCH = 1;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.21.1 =====
+  "V2.21.1 优化 - 顶栏与侧栏交互微调：①顶部常驻栏全局检索改为居中对齐（常驻栏布局由左对齐改为 flex 居中、搜索框 maxWidth 720 居中，命令面板按钮改为绝对定位靠右，不再挤压搜索框）；②侧边栏进入主界面默认全部部门分组折叠（expanded 初始值由 office 改为 null，不再默认展开大队办公室），导航到某部门模块时仍自动展开当前部门便于定位",
   // ===== V2.21.0 =====
   "V2.21.0 优化 - 打印增强：①「打印当前列表」升级为下拉，提供「自动方向/纵向 A4/横向 A4」三选项；自动模式按可见列数(排除选择列与操作列)动态判定——列数>8 自动横向、其余纵向，打印前注入 @page 方向(打印结束 afterprint 自动移除注入样式)，多列表格不再挤压；②新增打印专用页眉(屏幕态隐藏、打印态显示)，含模块名+部门·当前类目+打印时间+记录条数+生效筛选条件(关键词/日期范围/状态/经办人/案件/人员/战役)，打印输出清晰可归档",
   // ===== V2.20.0 =====

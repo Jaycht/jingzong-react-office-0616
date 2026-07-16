@@ -171,16 +171,16 @@ export default function AppLayout() {
       <div
         className="app-topbar"
         style={{
-          height: 'auto', flexShrink: 0, display: 'flex', alignItems: 'center',
+          position: 'relative', height: 'auto', flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center',
           gap: 16, padding: '10px 20px',
           background: darkMode ? '#0e1626' : '#fff',
           borderBottom: darkMode ? '1px solid rgba(163,201,255,0.1)' : '1px solid #E5E7EB',
         }}
       >
-        <div style={{ flex: 1, maxWidth: 720 }}>
+        <div style={{ width: '100%', maxWidth: 720 }}>
           <GlobalSearch />
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             className="wb-hover-ghost"
             onClick={() => setCmdOpen(true)}
