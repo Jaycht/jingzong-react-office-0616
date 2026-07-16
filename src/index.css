@@ -1656,7 +1656,7 @@ html[data-density="compact"] .ant-btn { height: 30px; font-size: 12px; }
   .mp-kpi-row,
   .breadcrumb { display: none !important; }
 
-  /* 列表表格：展开铺满、隐藏选择列与操作列、保留表头底色与边框 */
+  /* 列表表格：展开铺满、隐藏选择列与操作列、保留表头底色与边框；内容完整不截断 */
   .mp-table-wrap,
   .ant-table-container,
   .ant-table-content,
@@ -1665,8 +1665,22 @@ html[data-density="compact"] .ant-btn { height: 30px; font-size: 12px; }
   .ant-table-pagination { display: none !important; }
   .ant-table-selection-column,
   .mp-act-col { display: none !important; }
-  .ant-table-cell { border: 1px solid #e5e7eb !important; }
-  .ant-table-thead > tr > th { background: #F3F4F6 !important; }
+  .ant-table-cell,
+  .ant-table-cell-ellipsis,
+  .ant-table-cell .ant-typography-ellipsis,
+  .ant-table-cell > span { white-space: normal !important; word-break: break-word !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
+  .ant-table-cell { border: 1px solid #e5e7eb !important; padding: 6px 10px !important; }
+  .ant-table-thead > tr > th { background: #F3F4F6 !important; white-space: normal !important; word-break: keep-all !important; min-width: 48px !important; }
+  /* 取消固定列，避免表头错位/内容被遮挡 */
+  .ant-table-cell-fix-left,
+  .ant-table-cell-fix-right { position: static !important; left: auto !important; right: auto !important; z-index: auto !important; }
+  .ant-table-container::before,
+  .ant-table-container::after { display: none !important; }
+  .ant-table-cell-fix-left::after,
+  .ant-table-cell-fix-right::after { display: none !important; }
+  /* 首列（编号）最小宽度，确保表头显示完整 */
+  .ant-table-thead > tr > th:first-child,
+  .ant-table-tbody > tr > td:first-child { min-width: 64px !important; width: auto !important; text-align: center !important; }
 
   a[href]::after { content: ""; }
 

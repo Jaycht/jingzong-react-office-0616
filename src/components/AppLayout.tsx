@@ -208,19 +208,19 @@ export default function AppLayout() {
         className="app-topbar"
         style={{
           position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: 16, padding: '10px 20px',
+          gap: 16, padding: '12px 22px',
           background: darkMode ? '#0e1626' : '#fff',
           borderBottom: darkMode ? '1px solid rgba(163,201,255,0.1)' : '1px solid #E5E7EB',
         }}
       >
         {/* 左：品牌标识 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, WebkitAppRegion: 'drag', minWidth: 0 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: `linear-gradient(135deg, ${BRAND.primaryLight}, ${BRAND.primaryDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16, flexShrink: 0, boxShadow: '0 3px 10px rgba(37,99,235,.3)' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 11, background: `linear-gradient(135deg, ${BRAND.primaryLight}, ${BRAND.primaryDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 20, flexShrink: 0, boxShadow: '0 3px 12px rgba(37,99,235,.32)' }}>
             经
           </div>
           <div style={{ lineHeight: 1.2, minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: darkMode ? '#E6EAF2' : '#1F2937', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>经侦工作记录</div>
-            <div style={{ fontSize: 10, color: darkMode ? '#8A94A6' : '#6B7280', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>ECONOMIC INVESTIGATION</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: darkMode ? '#E6EAF2' : '#1F2937', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>经侦工作记录</div>
+            <div style={{ fontSize: 11, color: darkMode ? '#8A94A6' : '#6B7280', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>ECONOMIC INVESTIGATION</div>
           </div>
         </div>
 
@@ -231,7 +231,7 @@ export default function AppLayout() {
 
         {/* 右：个人信息 + 命令面板 */}
         <div style={{ WebkitAppRegion: 'no-drag', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-          <div title="点击查看个人资料" onClick={() => setProfileOpen(true)} style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${darkMode ? 'rgba(255,255,255,0.25)' : '#fff'}`, boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,.4)' : '0 2px 8px rgba(15,23,42,.15)', flexShrink: 0 }}>
+          <div title="点击查看个人资料" onClick={() => setProfileOpen(true)} style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${darkMode ? 'rgba(255,255,255,0.25)' : '#fff'}`, boxShadow: darkMode ? '0 2px 10px rgba(0,0,0,.45)' : '0 2px 10px rgba(15,23,42,.18)', flexShrink: 0 }}>
             <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <button className="wb-hover-ghost" onClick={() => setProfileOpen(true)} title="个人资料" style={topBtn()}>

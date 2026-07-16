@@ -1,9 +1,12 @@
-export const APP_VERSION = "V2.21.2";
+export const APP_VERSION = "V2.21.3";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 21;
-export const VERSION_PATCH = 2;
+export const VERSION_PATCH = 3;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.21.3 =====
+  "V2.21.3 修复 - 打印时表格首列(编号)表头显示完整、内容不再截断",
+  "V2.21.3 优化 - 顶部常驻栏加高、品牌图标与头像放大，头像更清晰",
   // ===== V2.21.2 =====
   "V2.21.2 优化 - 品牌标识与个人信息迁移至顶部常驻栏：经侦工作记录标识(含图标)移到顶栏最左，个人信息(头像/资料/深色/性能/退出)与命令面板移到顶栏最右，全局检索改为绝对居中；左侧导航区移除品牌头与用户信息卡，整体上调，首屏导航更紧凑",
   // ===== V2.21.1 =====
