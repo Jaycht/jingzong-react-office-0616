@@ -301,12 +301,11 @@ export default function ModulePage() {
 
   const dynamicColumns = useMemo<ColumnsType<DynamicRow>>(() => {
     const base: ColumnsType<DynamicRow> = [
-      { title: '编号', dataIndex: 'code', width: 60, fixed: 'left' as const, sorter: (a: DynamicRow, b: DynamicRow) => Number(a.code) - Number(b.code) },
+      { title: '编号', dataIndex: 'code', ...(printing ? {} : { width: 60, fixed: 'left' as const }), sorter: (a: DynamicRow, b: DynamicRow) => Number(a.code) - Number(b.code) },
       ...dataFields.map((f) => ({
         title: f.label,
         dataIndex: f.id,
-        width: 120,
-        ellipsis: true,
+        ...(printing ? {} : { width: 120, ellipsis: true }),
         sorter: (a: DynamicRow, b: DynamicRow) => {
           const va = a[f.id];
           const vb = b[f.id];
@@ -319,15 +318,14 @@ export default function ModulePage() {
         defaultSortOrder: f.type === 'date' ? ('descend' as const) : undefined,
       })),
       ...(module.departmentId === 'office'
-        ? [{ title: '经办人' as const, dataIndex: '_handler' as const, width: 80, ellipsis: true,
+        ? [{ title: '经办人' as const, dataIndex: '_handler' as const, ...(printing ? {} : { width: 80, ellipsis: true }),
             sorter: (a: DynamicRow, b: DynamicRow) => a._handler.localeCompare(b._handler) }]
         : []),
-      { title: '更新时间', dataIndex: '_updatedAt', width: 130, sorter: (a: DynamicRow, b: DynamicRow) => a._updatedAt.localeCompare(b._updatedAt), defaultSortOrder: 'descend' as const, render: (v: string) => formatBySetting(v, { withTime: true }) },
+      { title: '更新时间', dataIndex: '_updatedAt', ...(printing ? {} : { width: 130 }), sorter: (a: DynamicRow, b: DynamicRow) => a._updatedAt.localeCompare(b._updatedAt), defaultSortOrder: 'descend' as const, render: (v: string) => formatBySetting(v, { withTime: true }) },
       {
         title: '操作',
         dataIndex: '_action',
-        width: 180,
-        fixed: 'right' as const,
+        ...(printing ? {} : { width: 180, fixed: 'right' as const }),
         className: 'mp-act-col',
         render: (_: unknown, record: DynamicRow) => (
           <div className="mp-act-col">
@@ -350,7 +348,7 @@ export default function ModulePage() {
       return true;
     });
   },
-  [dataFields, module, hiddenCols]);
+  [dataFields, module, hiddenCols, printing]);
 
   // ─── 经办人选项 ───────────────────────────────
   const handlerOptions = useMemo(() => {
@@ -951,7 +949,7 @@ export default function ModulePage() {
                         showTotal: (t) => `共 ${t} 条`,
                       }
                 }
-                scroll={{ x: 'max-content' }}
+                scroll={printing ? undefined : { x: 'max-content' }}
                 rowSelection={{
                   selectedRowKeys,
                   onChange: (keys) => setSelectedRowKeys(keys),

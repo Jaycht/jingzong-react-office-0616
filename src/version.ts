@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.21.3";
+export const APP_VERSION = "V2.21.4";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 21;
-export const VERSION_PATCH = 3;
+export const VERSION_PATCH = 4;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.21.4 =====
+  "V2.21.4 修复 - 打印表格根因修复：打印态去除 antd 列 ellipsis/width/fixed 与分离式 header，编号表头与内容完整对齐不再截断",
   // ===== V2.21.3 =====
   "V2.21.3 修复 - 打印时表格首列(编号)表头显示完整、内容不再截断",
   "V2.21.3 优化 - 顶部常驻栏加高、品牌图标与头像放大，头像更清晰",
