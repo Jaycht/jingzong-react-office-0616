@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.21.1";
+export const APP_VERSION = "V2.21.2";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 21;
-export const VERSION_PATCH = 1;
+export const VERSION_PATCH = 2;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.21.2 =====
+  "V2.21.2 优化 - 品牌标识与个人信息迁移至顶部常驻栏：经侦工作记录标识(含图标)移到顶栏最左，个人信息(头像/资料/深色/性能/退出)与命令面板移到顶栏最右，全局检索改为绝对居中；左侧导航区移除品牌头与用户信息卡，整体上调，首屏导航更紧凑",
   // ===== V2.21.1 =====
   "V2.21.1 优化 - 顶栏与侧栏交互微调：①顶部常驻栏全局检索改为居中对齐（常驻栏布局由左对齐改为 flex 居中、搜索框 maxWidth 720 居中，命令面板按钮改为绝对定位靠右，不再挤压搜索框）；②侧边栏进入主界面默认全部部门分组折叠（expanded 初始值由 office 改为 null，不再默认展开大队办公室），导航到某部门模块时仍自动展开当前部门便于定位",
   // ===== V2.21.0 =====

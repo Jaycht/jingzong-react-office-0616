@@ -14,7 +14,8 @@ import ErrorBoundary from "./ErrorBoundary";
 import CommandPalette from "./CommandPalette";
 import NotificationPanel from "./NotificationPanel";
 import GlobalSearch from "./GlobalSearch";
-import { Command } from "lucide-react";
+import { Command, User, LogOut, Sun, Moon, Gauge } from "lucide-react";
+import { BRAND } from "../constants/theme";
 import { useReminderService } from "../hooks/useReminderService";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
@@ -78,6 +79,9 @@ export default function AppLayout() {
   const drawerOpen = useAppStore((s) => s.drawerOpen);
   const closeDrawer = useAppStore((s) => s.closeDrawer);
   const darkMode = useAppStore((s) => s.darkMode);
+  const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
+  const lowPerfMode = useAppStore((s) => s.lowPerfMode);
+  const toggleLowPerfMode = useAppStore((s) => s.toggleLowPerfMode);
   const location = useLocation();
   const navigate = useNavigate();
   const currentPage = useAppStore((s) => s.currentPage);
@@ -130,6 +134,41 @@ export default function AppLayout() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
 
+  const customAvatar = (() => { try { return localStorage.getItem("jingzong.avatar"); } catch { return null; } })();
+  const avatarSrc = customAvatar || "/avatar-default.jpg";
+
+  const handleLogout = () => {
+    Modal.confirm({
+      title: "确认退出登录？",
+      content: "退出后需要重新登录。",
+      okText: "退出",
+      cancelText: "取消",
+      onOk: () => {
+        try {
+          const raw = localStorage.getItem("jingzong.login.v1");
+          if (raw) {
+            const saved = JSON.parse(raw);
+            saved.autoLogin = false;
+            localStorage.setItem("jingzong.login.v1", JSON.stringify(saved));
+          }
+        } catch { /* ignore */ }
+        useAppStore.getState().setUser("", "");
+        if (isElectron) window.electronAPI?.resizeToLogin();
+        navigate("/login");
+        useAppStore.getState().showToast("已退出登录", "info");
+      },
+    });
+  };
+
+  const topBtn = (extra?: React.CSSProperties): React.CSSProperties => ({
+    display: "flex", alignItems: "center", gap: 6,
+    height: 34, padding: "0 10px", borderRadius: 9,
+    border: darkMode ? "1px solid rgba(163,201,255,0.18)" : "1px solid #E5E7EB",
+    background: "transparent", color: darkMode ? "#c8ccd4" : "#4B5563",
+    fontSize: 13, cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
+    ...extra,
+  });
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -156,9 +195,6 @@ export default function AppLayout() {
             borderBottom: darkMode ? 'none' : '1px solid #E5E7EB',
           }}
         >
-          <span style={{ fontSize: 12, lineHeight: 1, color: darkMode ? 'rgba(255,255,255,0.35)' : '#9CA3AF', fontFamily: "'JetBrains Mono',monospace", flex: 1 }}>
-            经侦大队工作记录管理系统
-          </span>
           <div style={{ WebkitAppRegion: 'no-drag', display: 'flex', gap: 2, paddingRight: 4 }}>
             <div onClick={winControls.min} title="最小化" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#9CA3AF', fontSize: 12 }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>─</div>
             <div onClick={winControls.max} title="最大化" style={{ width: 32, height: 22, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#9CA3AF', fontSize: 11 }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>□</div>
@@ -167,43 +203,57 @@ export default function AppLayout() {
         </div>
       )}
 
-      {/* ── 顶部常驻栏：全局检索（常驻所有页面）+ 命令面板入口 ── */}
+      {/* ── 顶部常驻栏：品牌（最左） + 全局检索（绝对居中） + 个人信息/命令面板（最右） ── */}
       <div
         className="app-topbar"
         style={{
-          position: 'relative', height: 'auto', flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center',
+          position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           gap: 16, padding: '10px 20px',
           background: darkMode ? '#0e1626' : '#fff',
           borderBottom: darkMode ? '1px solid rgba(163,201,255,0.1)' : '1px solid #E5E7EB',
         }}
       >
-        <div style={{ width: '100%', maxWidth: 720 }}>
+        {/* 左：品牌标识 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, WebkitAppRegion: 'drag', minWidth: 0 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: `linear-gradient(135deg, ${BRAND.primaryLight}, ${BRAND.primaryDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16, flexShrink: 0, boxShadow: '0 3px 10px rgba(37,99,235,.3)' }}>
+            经
+          </div>
+          <div style={{ lineHeight: 1.2, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: darkMode ? '#E6EAF2' : '#1F2937', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>经侦工作记录</div>
+            <div style={{ fontSize: 10, color: darkMode ? '#8A94A6' : '#6B7280', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>ECONOMIC INVESTIGATION</div>
+          </div>
+        </div>
+
+        {/* 中：全局检索（始终绝对居中） */}
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: '100%', maxWidth: 720, WebkitAppRegion: 'no-drag' }}>
           <GlobalSearch />
         </div>
-        <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            className="wb-hover-ghost"
-            onClick={() => setCmdOpen(true)}
-            title="打开命令面板（Ctrl / ⌘ + K）"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              height: 36, padding: '0 12px', borderRadius: 10,
-              border: darkMode ? '1px solid rgba(163,201,255,0.18)' : '1px solid #E5E7EB',
-              background: 'transparent', color: darkMode ? '#c8ccd4' : '#4B5563',
-              fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            <Command size={15} />
-            <span>命令面板</span>
-            <kbd style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, border: darkMode ? '1px solid rgba(163,201,255,0.2)' : '1px solid #E5E7EB', color: darkMode ? '#8c919a' : '#9CA3AF' }}>⌘K</kbd>
+
+        {/* 右：个人信息 + 命令面板 */}
+        <div style={{ WebkitAppRegion: 'no-drag', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <div title="点击查看个人资料" onClick={() => setProfileOpen(true)} style={{ width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${darkMode ? 'rgba(255,255,255,0.25)' : '#fff'}`, boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,.4)' : '0 2px 8px rgba(15,23,42,.15)', flexShrink: 0 }}>
+            <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <button className="wb-hover-ghost" onClick={() => setProfileOpen(true)} title="个人资料" style={topBtn()}>
+            <User size={15} /><span>资料</span>
+          </button>
+          <button className="wb-hover-ghost" onClick={toggleDarkMode} title={darkMode ? '切换为浅色' : '切换为深色'} style={topBtn()}>
+            {darkMode ? <Sun size={15} /> : <Moon size={15} />}<span>{darkMode ? '浅色' : '深色'}</span>
+          </button>
+          <button className="wb-hover-ghost" onClick={toggleLowPerfMode} title={lowPerfMode ? '切换为高性能模式' : '切换为低性能模式'} style={topBtn()}>
+            <Gauge size={15} /><span>性能</span>
+          </button>
+          <button className="wb-hover-ghost" onClick={handleLogout} title="退出登录" style={{ ...topBtn(), color: '#DC2626' }}>
+            <LogOut size={15} /><span>退出</span>
+          </button>
+          <button className="wb-hover-ghost" onClick={() => setCmdOpen(true)} title="打开命令面板（Ctrl / ⌘ + K）" style={{ ...topBtn(), marginLeft: 4 }}>
+            <Command size={15} /><span>命令面板</span>
           </button>
         </div>
       </div>
 
       <div className="app-main-row" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-      <Sidebar
-        onOpenProfile={() => setProfileOpen(true)}
-      />
+      <Sidebar />
       <div className="content-area" style={{
         flex: 1, overflow: 'auto', padding: '16px 20px',
         background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5',
