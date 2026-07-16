@@ -23,7 +23,7 @@ function mountAt(path: string, page: string) {
 describe("AppLayout 挂载不应触发无限循环", () => {
   const cases: Array<[string, string]> = [
     ["/app/dashboard", "dashboard"],
-    ["/app/dashboard", "statistics"],
+    ["/app/importExport", "importExport"],
     ["/app/legal-report-case", "dashboard"],
     ["/app/dailyNotes", "dashboard"],
   ];

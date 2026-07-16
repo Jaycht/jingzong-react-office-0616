@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Settings, Power, Monitor, ShieldCheck, Boxes,
-  PieChart, TableProperties, FileArchive, ScrollText, DatabaseBackup,
+  TableProperties, FileArchive, ScrollText, DatabaseBackup,
   Volume2, ListOrdered, Clock,
 } from 'lucide-react';
 import { Switch, Select } from 'antd';
 import { useAppStore } from '../store/appStore';
 
 import SettingsPage from './SettingsPage';
-import Statistics from './Statistics';
 import ImportExport from './ImportExport';
 import Attachments from './Attachments';
 import OperationLog from './OperationLog';
@@ -17,19 +16,32 @@ import Backup from './Backup';
 import Version from './Version';
 import AutoBackupPanel from '../components/AutoBackupPanel';
 
-const SOUND_OPTIONS = [
-  'QQ消息.wav', '微信消息.wav', '报时鸟.wav', '苹果消息.wav', '苹果叮叮.wav',
-  '苹果消息提醒.wav', 'QQ滴滴滴.wav', '好友上线.wav', '手机QQ消息提醒.wav', 'QQ特别关心铃声.wav',
-].map((f) => ({ label: f.replace(/\.wav$/, ''), value: f }));
+const SUCCESS_SOUNDS = [
+  { value: 'success-1.wav', label: '上行琶音' },
+  { value: 'success-2.wav', label: '双声叮咚' },
+  { value: 'success-3.wav', label: '大三和弦' },
+  { value: 'success-4.wav', label: '清脆Sparkle' },
+];
+const WARNING_SOUNDS = [
+  { value: 'warning-1.wav', label: '双声提示' },
+  { value: 'warning-2.wav', label: '三连蜂鸣' },
+  { value: 'warning-3.wav', label: '警示颤音' },
+  { value: 'warning-4.wav', label: '中音Ping' },
+];
+const FAILURE_SOUNDS = [
+  { value: 'failure-1.wav', label: '下行失落' },
+  { value: 'failure-2.wav', label: '低音蜂鸣' },
+  { value: 'failure-3.wav', label: '错误闷响' },
+  { value: 'failure-4.wav', label: '低落双音' },
+];
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
-type TabId = 'general' | 'modules' | 'statistics' | 'importExport' | 'attachments' | 'operationLog' | 'backup' | 'about';
+type TabId = 'general' | 'modules' | 'importExport' | 'attachments' | 'operationLog' | 'backup' | 'about';
 
 const TABS: { id: TabId; label: string; icon: React.ComponentType<{ size?: number; color?: string }>; tint: string }[] = [
   { id: 'general', label: '通用设置', icon: Settings, tint: '#6366F1' },
   { id: 'modules', label: '模块与字段', icon: Boxes, tint: '#8B5CF6' },
-  { id: 'statistics', label: '统计分析', icon: PieChart, tint: '#0EA5E9' },
   { id: 'importExport', label: '导入导出', icon: TableProperties, tint: '#14B8A6' },
   { id: 'attachments', label: '附件档案', icon: FileArchive, tint: '#F59E0B' },
   { id: 'operationLog', label: '操作日志', icon: ScrollText, tint: '#64748B' },
@@ -46,8 +58,12 @@ export default function SystemSettings() {
   const setUiDensity = useAppStore((s) => s.setUiDensity);
   const soundEnabled = useAppStore((s) => s.soundEnabled);
   const setSoundEnabled = useAppStore((s) => s.setSoundEnabled);
-  const soundType = useAppStore((s) => s.soundType);
-  const setSoundType = useAppStore((s) => s.setSoundType);
+  const successSound = useAppStore((s) => s.successSound);
+  const setSuccessSound = useAppStore((s) => s.setSuccessSound);
+  const warningSound = useAppStore((s) => s.warningSound);
+  const setWarningSound = useAppStore((s) => s.setWarningSound);
+  const failureSound = useAppStore((s) => s.failureSound);
+  const setFailureSound = useAppStore((s) => s.setFailureSound);
   const listSort = useAppStore((s) => s.listSort);
   const setListSort = useAppStore((s) => s.setListSort);
   const startupBehavior = useAppStore((s) => s.startupBehavior);
@@ -141,19 +157,45 @@ export default function SystemSettings() {
             <Section title="通知与声音" icon={<Volume2 size={16} />}>
               <SettingRow
                 title="操作提示音"
-                desc="操作成功或失败时播放提示音（失败/警告也会响）"
+                desc="操作成功 / 警告 / 失败时分别播放对应的提示音"
                 extra={<Switch checked={soundEnabled} onChange={(v) => setSoundEnabled(v)} />}
               />
               <SettingRow
-                title="提示音类型"
-                desc="选择喜欢的提示音"
+                title="成功提示音"
+                desc="操作成功时播放"
                 extra={
                   <Select
-                    value={soundType}
-                    onChange={(v) => setSoundType(v)}
+                    value={successSound}
+                    onChange={(v) => setSuccessSound(v as string)}
                     disabled={!soundEnabled}
                     style={{ width: 160, height: 36 }}
-                    options={SOUND_OPTIONS}
+                    options={SUCCESS_SOUNDS}
+                  />
+                }
+              />
+              <SettingRow
+                title="警告提示音"
+                desc="出现警告时播放"
+                extra={
+                  <Select
+                    value={warningSound}
+                    onChange={(v) => setWarningSound(v as string)}
+                    disabled={!soundEnabled}
+                    style={{ width: 160, height: 36 }}
+                    options={WARNING_SOUNDS}
+                  />
+                }
+              />
+              <SettingRow
+                title="失败提示音"
+                desc="操作失败或出错时播放"
+                extra={
+                  <Select
+                    value={failureSound}
+                    onChange={(v) => setFailureSound(v as string)}
+                    disabled={!soundEnabled}
+                    style={{ width: 160, height: 36 }}
+                    options={FAILURE_SOUNDS}
                   />
                 }
               />
@@ -214,7 +256,6 @@ export default function SystemSettings() {
           </div>
         );
       case 'modules': return <SettingsPage />;
-      case 'statistics': return <Statistics />;
       case 'importExport': return <ImportExport />;
       case 'attachments': return <Attachments />;
       case 'operationLog': return <OperationLog />;

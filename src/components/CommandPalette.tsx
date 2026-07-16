@@ -4,7 +4,7 @@
  */
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, BarChart3, Download, Upload, Database, Clock, ArrowRight } from 'lucide-react';
+import { Search, Plus, Download, Upload, Database, Clock, ArrowRight } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
 import { MODULE_NAMES, DEPARTMENTS } from '../moduleConfig';
@@ -67,7 +67,6 @@ export default function CommandPalette({ open, onClose }: Props) {
     // 快捷命令
     const actions: CommandItem[] = [
       { id: 'act-new', label: '新建记录', sublabel: '打开新建表单', icon: <Plus size={16} />, type: 'action', action: () => { setCurrentPage('dashboard'); openModal('newRecord'); } },
-      { id: 'act-stats', label: '统计分析', sublabel: '查看数据统计', icon: <BarChart3 size={16} />, type: 'page', action: () => setCurrentPage('statistics') },
       { id: 'act-import', label: '导入数据', sublabel: '从 Excel 导入', icon: <Upload size={16} />, type: 'page', action: () => setCurrentPage('importExport') },
       { id: 'act-export', label: '导出数据', sublabel: '导出 Excel', icon: <Download size={16} />, type: 'page', action: () => setCurrentPage('importExport') },
       { id: 'act-backup', label: '备份恢复', sublabel: '数据备份与恢复', icon: <Database size={16} />, type: 'page', action: () => setCurrentPage('backup') },

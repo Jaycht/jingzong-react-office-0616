@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.17.0";
+export const APP_VERSION = "V2.18.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 17;
+export const VERSION_MINOR = 18;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.18.0 =====
+  "V2.18.0 重构 - 系统设置二次精简与提示音三态化：①删除「统计分析」页——其与工作台(Dashboard)的 ECharts 玫瑰图/柱状图/动态高度重复，移除侧边栏 PLATFORM_NAV 入口、AppLayout 路由、工作台跳转按钮、命令面板入口、系统设置标签、面包屑映射与 smoke 测试引用，并删除 Statistics.tsx；②操作提示音由单一「提示音类型」拆分为「成功/警告/失败」三类独立选择，每类 4 种自生成 wav 素材(public/audio 下 success-1~4/warning-1~4/failure-1~4)，showToast 按 toast 类型(success/warning/error)播放对应音效、info 不响，全部经 appStore 持久化",
   // ===== V2.17.0 =====
   "V2.17.0 重构 - 系统设置大瘦身（按用户复盘精简）:①删除导入导出页「数据统计报告(PDF)」占位死功能(从未实现);②操作日志页「导出日志」与导入导出页的「系统操作日志(JSON)」导出重复,移除前者(保留导入导出为唯一出口);③「清理孤儿附件」从模块与字段页移入附件档案页(归属更合理);④自动备份设置(开关/频率/范围/退出备份/附件路径/备份路径)从备份恢复页抽出独立组件 AutoBackupPanel 迁入「通用设置」,备份恢复页精简为数据概览+立即备份/恢复+历史+重置;通用设置新增:显示密度(标准/宽松大字号/紧凑)、操作提示音(接 public/audio 的 10 个 wav,成功/警告/失败提示)、列表默认排序(更新/创建时间/按模块)、启动打开(工作台/上次模块)、时间格式(YYYY-MM-DD 与 YYYY/MM/DD),全部经 appStore 持久化;显示密度以 data-density 根属性驱动 CSS 覆盖",
   // ===== V2.16.0 =====

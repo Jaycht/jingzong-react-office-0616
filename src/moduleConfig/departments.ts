@@ -3,7 +3,7 @@ import {
   CalendarClock, CalendarDays, ClipboardCheck, ClipboardList, DatabaseBackup, FileArchive,
   FileSearch, FileText, FolderKanban, Gavel, Handshake, Inbox, Landmark, LayoutDashboard,
   LayoutGrid, ListChecks, LockKeyhole, MapPinned, Megaphone, MessageSquareText, Network,
-  Package, PieChart, Radar, ScrollText, SearchCheck, Settings, Smartphone, Snowflake,
+  Package, Radar, ScrollText, SearchCheck, Settings, Smartphone, Snowflake,
   StickyNote, TableProperties, Target, Users, WalletCards, Workflow, LineChart
 } from 'lucide-react';
 
@@ -81,7 +81,6 @@ export const PLATFORM_NAV = {
   ],
   data: [
     { id: 'systemSettings', label: '系统设置', icon: Settings },
-    { id: 'statistics', label: '统计分析', icon: PieChart },
     { id: 'importExport', label: '导入导出', icon: TableProperties },
     { id: 'attachments', label: '附件档案', icon: FileArchive },
     { id: 'operationLog', label: '操作日志', icon: ScrollText },

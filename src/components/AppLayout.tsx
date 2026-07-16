@@ -17,7 +17,6 @@ import FloatingSearch from "./FloatingSearch";
 import { useReminderService } from "../hooks/useReminderService";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
-const Statistics = lazy(() => import("../pages/Statistics"));
 const SettingsPage = lazy(() => import("../pages/SettingsPage"));
 const OperationLog = lazy(() => import("../pages/OperationLog"));
 const ImportExport = lazy(() => import("../pages/ImportExport"));
@@ -33,7 +32,7 @@ const DailyNotes = lazy(() => import("../pages/DailyNotes"));
 const SystemSettings = lazy(() => import("../pages/SystemSettings"));
 
 const PAGES: Record<string, React.FC> = {
-  dashboard: Dashboard, statistics: Statistics,
+  dashboard: Dashboard,
   settings: SettingsPage, operationLog: OperationLog,
   importExport: ImportExport, backup: Backup, version: Version,
   attachments: Attachments,

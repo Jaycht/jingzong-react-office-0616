@@ -279,9 +279,6 @@ export default function Dashboard() {
           <button className="dash-action" onClick={() => setCurrentPage('timeline')}>
             <CalendarClock size={15} color="var(--color-primary)" /> 案件时间轴
           </button>
-          <button className="dash-action" onClick={() => setCurrentPage('statistics')}>
-            <BarChart3 size={15} color="var(--color-primary)" /> 统计分析
-          </button>
         </div>
       </motion.div>
 

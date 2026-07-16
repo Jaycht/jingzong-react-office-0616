@@ -42,11 +42,15 @@ export interface UiSlice {
   uiDensity: "standard" | "comfortable" | "compact";
   setUiDensity: (v: "standard" | "comfortable" | "compact") => void;
 
-  // 通用设置：操作提示音
+  // 通用设置：操作提示音（按状态三态）
   soundEnabled: boolean;
   setSoundEnabled: (v: boolean) => void;
-  soundType: string;
-  setSoundType: (v: string) => void;
+  successSound: string;
+  setSuccessSound: (v: string) => void;
+  warningSound: string;
+  setWarningSound: (v: string) => void;
+  failureSound: string;
+  setFailureSound: (v: string) => void;
 
   // 通用设置：列表默认排序 / 启动行为 / 时间格式
   listSort: "updatedDesc" | "updatedAsc" | "createdDesc" | "createdAsc" | "module";

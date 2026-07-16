@@ -9,10 +9,12 @@ export const createUiSlice: StateCreator<AppState, [], [], UiSlice> = (set, get)
   showToast: (message, type = "info") => {
     const id = String(++toastId);
     set((s) => ({ toasts: [...s.toasts, { id, message, type }] }));
-    // 操作提示音：info 不响，避免过于频繁；success/warning/error 响一声
+    // 操作提示音：info 不响；success/warning/error 按状态播放对应音效
     const st = get();
-    if (st.soundEnabled && type !== "info") {
-      playSound(st.soundType);
+    if (st.soundEnabled) {
+      if (type === "success") playSound(st.successSound);
+      else if (type === "warning") playSound(st.warningSound);
+      else if (type === "error") playSound(st.failureSound);
     }
     setTimeout(() => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
@@ -52,16 +54,26 @@ export const createUiSlice: StateCreator<AppState, [], [], UiSlice> = (set, get)
     set({ uiDensity: v });
   },
 
-  // ===== 通用设置：操作提示音 =====
+  // ===== 通用设置：操作提示音（成功/警告/失败 三态）=====
   soundEnabled: localStorageAdapter.getItem("jingzong.soundEnabled", false),
   setSoundEnabled: (v) => {
     localStorageAdapter.setItem("jingzong.soundEnabled", v);
     set({ soundEnabled: v });
   },
-  soundType: localStorageAdapter.getItem("jingzong.soundType", "QQ消息.wav"),
-  setSoundType: (v) => {
-    localStorageAdapter.setItem("jingzong.soundType", v);
-    set({ soundType: v });
+  successSound: localStorageAdapter.getItem("jingzong.successSound", "success-1.wav"),
+  setSuccessSound: (v) => {
+    localStorageAdapter.setItem("jingzong.successSound", v);
+    set({ successSound: v });
+  },
+  warningSound: localStorageAdapter.getItem("jingzong.warningSound", "warning-1.wav"),
+  setWarningSound: (v) => {
+    localStorageAdapter.setItem("jingzong.warningSound", v);
+    set({ warningSound: v });
+  },
+  failureSound: localStorageAdapter.getItem("jingzong.failureSound", "failure-1.wav"),
+  setFailureSound: (v) => {
+    localStorageAdapter.setItem("jingzong.failureSound", v);
+    set({ failureSound: v });
   },
 
   // ===== 通用设置：列表排序 / 启动行为 / 时间格式 =====
