@@ -174,6 +174,7 @@ export function evidenceFields(moduleId: string, _tab: string): FieldDefinition[
       f('conclusionDeepClue', '待深挖线索', 'textarea'),
       f('conclusionNextStep', '下一步工作', 'textarea'),
       f('attachConclusion', '附件材料（分析结论）', 'attachment'),
+      f('handleStatus', '办理状态', 'select', false, ['已办结', '办理中', '待补充']),
       f('filingDocNo', '受/立案文书号'),
     ];
   }

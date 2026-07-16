@@ -1613,3 +1613,35 @@ html[data-density="compact"] .panel { font-size: 12.5px; }
 html[data-density="compact"] .ant-table { font-size: 12px; }
 html[data-density="compact"] .ant-table-cell { padding-top: 6px !important; padding-bottom: 6px !important; }
 html[data-density="compact"] .ant-btn { height: 30px; font-size: 12px; }
+
+/* ===================== 打印优化（#131） ===================== */
+/* A4 友好：隐藏装饰性 chrome，内容区满宽浅底、保留配色、面板避免跨页断裂 */
+@media print {
+  html, body { background: #fff !important; }
+  .app-shell { height: auto !important; display: block !important; }
+
+  /* 隐藏电子标题栏 / 悬浮搜索 / 命令面板 / antd 弹窗与抽屉 */
+  .electron-titlebar,
+  .floating-search,
+  .command-overlay,
+  .ant-modal-root,
+  .ant-drawer { display: none !important; }
+
+  /* 主区改纵向，隐藏侧栏与右侧面板，仅保留内容区 */
+  .app-main-row { display: block !important; overflow: visible !important; height: auto !important; }
+  .app-main-row > *:not(.content-area) { display: none !important; }
+  .content-area { overflow: visible !important; padding: 0 !important; width: 100% !important; height: auto !important; background: #fff !important; }
+
+  /* 保留主题色（状态徽标 / 图表 / 表格底色） */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  /* 去重阴影、加细边框、避免跨页断裂 */
+  .wb-panel, .dash-hero, .dash-action, .wb-kpi, .wb-stat,
+  .tl-card, .tl-list-row, .mp-table, table, .cd-panel, .card {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  .wb-panel { border: 1px solid #e5e7eb !important; }
+  .dash, .content-area { background: #fff !important; }
+  a[href]::after { content: ""; }
+}

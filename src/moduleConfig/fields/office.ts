@@ -41,6 +41,7 @@ export function officeFields(moduleId: string, tab: string): FieldDefinition[] |
       f('feedbackStatus', '是否反馈', 'select', false, ['已反馈', '未反馈']),
       f('feedbackDate', '反馈日期', 'date'),
       f('feedbackResult', '反馈结果', 'textarea'),
+      f('handleStatus', '办理状态', 'select', false, ['已办结', '办理中', '待补充']),
       ...commonTail,
     ];
   }

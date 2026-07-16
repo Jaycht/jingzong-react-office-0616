@@ -65,6 +65,7 @@ export default function FloatingSearch({ onClick }: Props) {
 
   return (
     <div
+      className="floating-search"
       ref={dragRef}
       onMouseDown={handleMouseDown}
       style={{

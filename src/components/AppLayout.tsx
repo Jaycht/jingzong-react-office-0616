@@ -143,9 +143,10 @@ export default function AppLayout() {
   const Page = PAGES[currentPage] || ModulePage;
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5' }}>
+    <div className="app-shell" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: darkMode ? 'var(--stitch-surface-container-low)' : '#F0F2F5' }}>
       {isElectron && (
         <div
+          className="electron-titlebar"
           style={{
             height: 34, flexShrink: 0, display: 'flex', alignItems: 'center',
             WebkitAppRegion: 'drag',
@@ -165,7 +166,7 @@ export default function AppLayout() {
         </div>
       )}
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="app-main-row" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
       <Sidebar
         onOpenProfile={() => setProfileOpen(true)}
       />

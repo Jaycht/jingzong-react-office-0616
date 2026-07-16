@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.18.1";
+export const APP_VERSION = "V2.19.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 18;
-export const VERSION_PATCH = 1;
+export const VERSION_MINOR = 19;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.19.0 =====
+  "V2.19.0 新增 - 体检报告五项后续增强落地（#128~#131）：①全局检索接入工作台——将已就绪但未被引用的跨模块检索组件 GlobalSearch 落到 Dashboard 顶部，支持按身份证号/案件编号/姓名/手机号/附件名全字段检索、按部门·模块分组、关键词高亮、点击直达记录；②状态字段补齐——office-cluster 与 evidence-report 新增 handleStatus(办理状态：已办结/办理中/待补充)字段，徽标经 findStatusField 真实派生(已办结绿/其余黄)，mass-statistics 经既有 caseStatus 已覆盖无需改动；③时限扩展——legalDeadlines 新增「报表报送时限」规则(取 office-doc-report 的 deadline 上报截止日期)，续冻提醒由既有冻结到期规则覆盖、强制措施期限早已齐备；④报表统一——各模块日/周/月报经 ReportGenerator 已统一导出(本次确认已落地，无需改动)；⑤打印优化——index.css 新增 @media print：隐藏电子标题栏/侧栏/通知面板/悬浮搜索/命令面板等装饰元素，内容区满宽浅底、保留配色(exact)、面板避免跨页断裂，A4 友好",
   // ===== V2.18.1 =====
   "V2.18.1 优化 - 收尾两项历史任务：①L-15 悬浮(hover)交互统一规范——index.css 新增 --hover-transition/--hover-lift/--hover-bg/--hover-border/--hover-shadow 令牌，落地 .wb-hover-card/.wb-hover-row/.wb-hover-ghost 三个通用工具类供新页面复用；收敛残留硬编码色(深色 .btn-primary 写死 #2563EB、.dash-action-primary 渐变 #1D4ED8/#2563EB、.tl-card/.tl-list-row 的 #6B7280 fallback)与字面量过渡(0.4s cubic-bezier / 0.3s ease)到设计令牌，全站 hover 反馈统一为「主色边框+主色背景+轻微上浮+统一过渡」；②输出《部门模块体检报告》(部门模块体检报告.md)：梳理 5 部门 23 模块现状、已落地改造回顾(状态真实派生/时限提醒补齐/专属字段补齐/UI 高级化/列表关联增强)、及 5 项后续增强建议(全局检索/状态字段补齐/时限扩展/报表统一/打印优化)",
   // ===== V2.18.0 =====

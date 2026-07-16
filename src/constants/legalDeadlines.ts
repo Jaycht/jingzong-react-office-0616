@@ -84,6 +84,13 @@ export const LEGAL_DEADLINE_RULES: LegalDeadlineRule[] = [
     label: '冻结到期',
     calcDeadline: (d) => toDateStr(new Date(d)),
   },
+  {
+    id: 'report-submit-deadline',
+    moduleIds: ['office-doc-report'],
+    dateField: 'deadline',
+    label: '报表报送时限',
+    calcDeadline: (d) => toDateStr(new Date(d)),
+  },
 ];
 
 export type DeadlineSeverity = 'overdue' | 'critical' | 'warning' | 'normal';
