@@ -4,8 +4,8 @@ import { DatePicker, Dropdown, Empty, Modal, Select, Table, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import {
-  CalendarPlus, CheckCircle2, Clock, Columns3, Download, Eye, FileText, LayoutGrid,
-  List, Pen, Plus, RefreshCw, Rows3, Search, Trash2, Upload,
+  CalendarPlus, CheckCircle2, Clock, Columns3, Command, Download, Eye, FileText, LayoutGrid,
+  List, Pen, Plus, Printer, RefreshCw, Rows3, Search, Trash2, Upload,
 } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { findModule, filterVisibleFields, type FieldDefinition } from '../moduleConfig';
@@ -514,6 +514,20 @@ export default function ModulePage() {
     });
   };
 
+  const [printing, setPrinting] = useState(false);
+
+  const handlePrintList = () => {
+    setPrinting(true);
+    // 等待 printing 态重渲染（表格关闭分页、展示全部行）后再唤起打印
+    setTimeout(() => window.print(), 80);
+  };
+
+  useEffect(() => {
+    const onAfter = () => setPrinting(false);
+    window.addEventListener('afterprint', onAfter);
+    return () => window.removeEventListener('afterprint', onAfter);
+  }, []);
+
   return (
     <div>
       {/* 头部 */}
@@ -619,6 +633,9 @@ export default function ModulePage() {
               <button className="mp-btn"><FileText size={15} /> 生成报告</button>
             </Dropdown>
           )}
+          <button className="mp-btn" onClick={handlePrintList}>
+            <Printer size={15} /> 打印当前列表
+          </button>
         </div>
         <div className="mp-tb-sep" />
 
@@ -862,12 +879,16 @@ export default function ModulePage() {
                 size={dense ? 'small' : 'middle'}
                 columns={dynamicColumns}
                 dataSource={rows}
-                pagination={{
-                  pageSize: dense ? 15 : 10,
-                  showSizeChanger: true,
-                  pageSizeOptions: [10, 20, 50],
-                  showTotal: (t) => `共 ${t} 条`,
-                }}
+                pagination={
+                  printing
+                    ? false
+                    : {
+                        pageSize: dense ? 15 : 10,
+                        showSizeChanger: true,
+                        pageSizeOptions: [10, 20, 50],
+                        showTotal: (t) => `共 ${t} 条`,
+                      }
+                }
                 scroll={{ x: 'max-content' }}
                 rowSelection={{
                   selectedRowKeys,

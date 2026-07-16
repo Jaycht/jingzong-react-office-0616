@@ -15,7 +15,6 @@ import { useAppStore } from "../store/appStore";
 import { useDataChanged } from "../store/dataEvents";
 import { MODULE_NAMES } from "../moduleConfig";
 import EChartBox from "../components/EChartBox";
-import GlobalSearch from "../components/GlobalSearch";
 import { LEGAL_DEADLINE_RULES, getDeadlineSeverity } from '../constants/legalDeadlines';
 import { daysBetween } from '../utils/format';
 
@@ -282,11 +281,6 @@ export default function Dashboard() {
           </button>
         </div>
       </motion.div>
-
-      {/* ── 全局检索入口（#128 跨模块统一检索） ── */}
-      <div style={{ marginBottom: 16 }}>
-        <GlobalSearch />
-      </div>
 
       {/* ── KPI 概览 ── */}
       <div className="dash-kpi">

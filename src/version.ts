@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.19.0";
+export const APP_VERSION = "V2.20.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 19;
+export const VERSION_MINOR = 20;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.20.0 =====
+  "V2.20.0 新增 - 全局检索常驻化与列表打印优化：①全局检索上移顶部常驻栏——在 AppLayout 的 electron-titlebar 与 app-main-row 之间新增常驻顶栏(.app-topbar)，内嵌 GlobalSearch（跨 5 部门 23 模块全字段+附件名检索、按部门·模块分组、关键词高亮、点击直达记录），所有页面一屏可达，并移除 Dashboard 中重复的接入；②常驻栏右侧新增「命令面板 ⌘K」入口按钮（点击或 Ctrl/⌘+K 打开），保持导航可达；③移除右下角常驻悬浮搜索按钮(FloatingSearch)——其仅作为命令面板触发器，全局检索常驻后已冗余，删除组件及引用；④ModulePage 工具栏新增「打印当前列表」按钮——点击进入 printing 态关闭表格分页、渲染全部行后调用 window.print()，afterprint 自动复位；⑤@media print 增强——隐藏.app-topbar/.mp-toolbar/.mp-kpi-row/.breadcrumb，列表表格展开铺满、隐藏选择列与操作列、保留表头底色与单元格边框，A4 友好",
   // ===== V2.19.0 =====
   "V2.19.0 新增 - 体检报告五项后续增强落地（#128~#131）：①全局检索接入工作台——将已就绪但未被引用的跨模块检索组件 GlobalSearch 落到 Dashboard 顶部，支持按身份证号/案件编号/姓名/手机号/附件名全字段检索、按部门·模块分组、关键词高亮、点击直达记录；②状态字段补齐——office-cluster 与 evidence-report 新增 handleStatus(办理状态：已办结/办理中/待补充)字段，徽标经 findStatusField 真实派生(已办结绿/其余黄)，mass-statistics 经既有 caseStatus 已覆盖无需改动；③时限扩展——legalDeadlines 新增「报表报送时限」规则(取 office-doc-report 的 deadline 上报截止日期)，续冻提醒由既有冻结到期规则覆盖、强制措施期限早已齐备；④报表统一——各模块日/周/月报经 ReportGenerator 已统一导出(本次确认已落地，无需改动)；⑤打印优化——index.css 新增 @media print：隐藏电子标题栏/侧栏/通知面板/悬浮搜索/命令面板等装饰元素，内容区满宽浅底、保留配色(exact)、面板避免跨页断裂，A4 友好",
   // ===== V2.18.1 =====

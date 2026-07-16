@@ -13,7 +13,8 @@ import Breadcrumb from "./Breadcrumb";
 import ErrorBoundary from "./ErrorBoundary";
 import CommandPalette from "./CommandPalette";
 import NotificationPanel from "./NotificationPanel";
-import FloatingSearch from "./FloatingSearch";
+import GlobalSearch from "./GlobalSearch";
+import { Command } from "lucide-react";
 import { useReminderService } from "../hooks/useReminderService";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
@@ -166,6 +167,39 @@ export default function AppLayout() {
         </div>
       )}
 
+      {/* ── 顶部常驻栏：全局检索（常驻所有页面）+ 命令面板入口 ── */}
+      <div
+        className="app-topbar"
+        style={{
+          height: 'auto', flexShrink: 0, display: 'flex', alignItems: 'center',
+          gap: 16, padding: '10px 20px',
+          background: darkMode ? '#0e1626' : '#fff',
+          borderBottom: darkMode ? '1px solid rgba(163,201,255,0.1)' : '1px solid #E5E7EB',
+        }}
+      >
+        <div style={{ flex: 1, maxWidth: 720 }}>
+          <GlobalSearch />
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            className="wb-hover-ghost"
+            onClick={() => setCmdOpen(true)}
+            title="打开命令面板（Ctrl / ⌘ + K）"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              height: 36, padding: '0 12px', borderRadius: 10,
+              border: darkMode ? '1px solid rgba(163,201,255,0.18)' : '1px solid #E5E7EB',
+              background: 'transparent', color: darkMode ? '#c8ccd4' : '#4B5563',
+              fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            <Command size={15} />
+            <span>命令面板</span>
+            <kbd style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, border: darkMode ? '1px solid rgba(163,201,255,0.2)' : '1px solid #E5E7EB', color: darkMode ? '#8c919a' : '#9CA3AF' }}>⌘K</kbd>
+          </button>
+        </div>
+      </div>
+
       <div className="app-main-row" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
       <Sidebar
         onOpenProfile={() => setProfileOpen(true)}
@@ -204,7 +238,6 @@ export default function AppLayout() {
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
-      <FloatingSearch onClick={() => setCmdOpen(true)} />
     </div>
   );
 }

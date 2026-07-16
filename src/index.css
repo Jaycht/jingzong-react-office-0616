@@ -1643,5 +1643,24 @@ html[data-density="compact"] .ant-btn { height: 30px; font-size: 12px; }
   }
   .wb-panel { border: 1px solid #e5e7eb !important; }
   .dash, .content-area { background: #fff !important; }
+
+  /* 顶部常驻栏 / 工具栏 / KPI / 面包屑在打印时隐藏，仅留列表本身 */
+  .app-topbar,
+  .mp-toolbar,
+  .mp-kpi-row,
+  .breadcrumb { display: none !important; }
+
+  /* 列表表格：展开铺满、隐藏选择列与操作列、保留表头底色与边框 */
+  .mp-table-wrap,
+  .ant-table-container,
+  .ant-table-content,
+  .ant-table-body { overflow: visible !important; width: 100% !important; }
+  .ant-table { width: 100% !important; table-layout: auto !important; }
+  .ant-table-pagination { display: none !important; }
+  .ant-table-selection-column,
+  .mp-act-col { display: none !important; }
+  .ant-table-cell { border: 1px solid #e5e7eb !important; }
+  .ant-table-thead > tr > th { background: #F3F4F6 !important; }
+
   a[href]::after { content: ""; }
 }
