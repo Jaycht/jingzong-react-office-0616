@@ -83,6 +83,8 @@ export default function AppLayout() {
   const toggleDarkMode = useAppStore((s) => s.toggleDarkMode);
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
   const toggleLowPerfMode = useAppStore((s) => s.toggleLowPerfMode);
+  const userName = useAppStore((s) => s.userName);
+  const userDepartment = useAppStore((s) => s.userDepartment);
   const location = useLocation();
   const navigate = useNavigate();
   const currentPage = useAppStore((s) => s.currentPage);
@@ -222,6 +224,10 @@ export default function AppLayout() {
         <div style={{ WebkitAppRegion: 'no-drag', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <div title="点击查看个人资料" onClick={() => setProfileOpen(true)} style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${darkMode ? 'rgba(255,255,255,0.25)' : '#fff'}`, boxShadow: darkMode ? '0 2px 10px rgba(0,0,0,.45)' : '0 2px 10px rgba(15,23,42,.18)', flexShrink: 0 }}>
             <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <div onClick={() => setProfileOpen(true)} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', lineHeight: 1.25, cursor: 'pointer', paddingRight: 4, minWidth: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: darkMode ? '#E6EAF2' : '#1F2937', whiteSpace: 'nowrap' }}>{userName || '未登录'}</span>
+            <span style={{ fontSize: 11, color: darkMode ? '#8A94A6' : '#6B7280', whiteSpace: 'nowrap' }}>{userDepartment || '—'}</span>
           </div>
           <button className="wb-hover-ghost" onClick={() => setProfileOpen(true)} title="个人资料" style={topBtn()}>
             <User size={15} /><span>资料</span>

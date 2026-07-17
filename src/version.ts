@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.22.1";
+export const APP_VERSION = "V2.22.2";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 22;
-export const VERSION_PATCH = 1;
+export const VERSION_PATCH = 2;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.22.2 =====
+  "V2.22.2 优化 - 两处界面微调：①侧栏概览导航将「串并案分析」移至「案件时间轴」之下、「日常随手记」之上；②顶栏头像右侧新增显示当前登录用户名与所在科室(取自 sessionSlice 的 userName/userDepartment，点击仍跳转个人资料)",
   // ===== V2.22.1 =====
   "V2.22.1 优化 - 移除右上角命令面板：其记录搜索能力与顶栏全局检索重复(全局检索覆盖全字段+附件名+分组高亮，更全面)，故整体移除命令面板按钮、Ctrl/⌘+K 快捷键与组件，界面更精简；快捷入口(新建/导入导出/备份/时间轴/串并案)仍可从侧栏与各页面内直达",
   // ===== V2.22.0 =====

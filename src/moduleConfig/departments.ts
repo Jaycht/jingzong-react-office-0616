@@ -75,9 +75,9 @@ export const DEPARTMENTS: NavDepartment[] = [
 export const PLATFORM_NAV = {
   top: [
     { id: 'dashboard', label: '工作台', icon: LayoutDashboard },
-    { id: 'linkage', label: '串并案分析', icon: Waypoints },
     { id: 'graph', label: '案件图谱', icon: Network },
     { id: 'timeline', label: '案件时间轴', icon: CalendarClock },
+    { id: 'linkage', label: '串并案分析', icon: Waypoints },
     { id: 'dailyNotes', label: '日常随手记', icon: StickyNote },
   ],
   data: [
