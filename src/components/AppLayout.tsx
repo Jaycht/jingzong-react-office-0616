@@ -30,7 +30,6 @@ const ModulePage = lazy(() => import("../pages/ModulePage"));
 const CaseTimeline = lazy(() => import("../pages/CaseTimeline"));
 const CaseGraph = lazy(() => import("../pages/CaseGraph"));
 const CaseLinkage = lazy(() => import("../pages/CaseLinkage"));
-const FundPenetration = lazy(() => import("../pages/FundPenetration"));
 const DailyNotes = lazy(() => import("../pages/DailyNotes"));
 const SystemSettings = lazy(() => import("../pages/SystemSettings"));
 
@@ -42,11 +41,10 @@ const PAGES: Record<string, React.FC> = {
   timeline: CaseTimeline,
   graph: CaseGraph,
   linkage: CaseLinkage,
-  fund: FundPenetration,
   dailyNotes: DailyNotes,
   systemSettings: SystemSettings,
   interview: PlaceholderPage, meeting: PlaceholderPage, victim: PlaceholderPage,
-  clue: PlaceholderPage, fund: PlaceholderPage, daily: PlaceholderPage,
+  clue: PlaceholderPage, daily: PlaceholderPage,
   party: PlaceholderPage, report: PlaceholderPage, userSettings: PlaceholderPage,
   'legal-assessment': PlaceholderPage,
 };
