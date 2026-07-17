@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, AlertTriangle, CheckCircle2,
-  Activity, Zap, BarChart3, Plus, Network, CalendarClock, Waypoints, ArrowRight,
+  Activity, Zap, BarChart3, Plus, Network, CalendarClock, Waypoints, ArrowRight, Users,
 } from "lucide-react";
 import * as echarts from '../lib/echarts';
 import { getMassRecords, getMassRecordById } from "../store/massStore";
@@ -18,6 +18,7 @@ import EChartBox from "../components/EChartBox";
 import { LEGAL_DEADLINE_RULES, getDeadlineSeverity } from '../constants/legalDeadlines';
 import { daysBetween } from '../utils/format';
 import { detectLinkageClusters, KEY_LABEL } from '../utils/caseLinkage';
+import { buildMonthlyTrend, buildHandlerPerf } from '../utils/performanceStats';
 
 /* ===================== 到期预警计算 ===================== */
 
@@ -88,16 +89,19 @@ function KpiCard({ label, value, unit, icon: Icon, color, delay }: {
 
 /* ===================== 面板头部 ===================== */
 
-function PanelHead({ icon: Icon, color, tint, title, extra }: {
+function PanelHead({ icon: Icon, color, tint, title, sub, extra }: {
   icon: React.ComponentType<{ size?: number; color?: string }>;
-  color: string; tint: string; title: string; extra?: React.ReactNode;
+  color: string; tint: string; title: string; sub?: string; extra?: React.ReactNode;
 }) {
   return (
     <div className="wb-panel-head">
       <div className="wb-panel-ico" style={{ background: tint, color }}>
         <Icon size={16} color={color} />
       </div>
-      <span className="wb-panel-title">{title}</span>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', gap: 8, overflow: 'hidden' }}>
+        <span className="wb-panel-title">{title}</span>
+        {sub && <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</span>}
+      </div>
       {extra}
     </div>
   );
@@ -180,10 +184,8 @@ export default function Dashboard() {
 
   // 案件类型分布图表
   const caseTypes = useMemo(() => {
-    const targets = new Set(['mass-statistics', 'legal-report-case', 'legal-case-ledger', 'squad-case']);
     const map: Record<string, number> = {};
     for (const r of records) {
-      if (!targets.has(r.moduleId)) continue;
       const val = r.data?.caseType;
       if (typeof val === 'string' && val.trim()) map[val.trim()] = (map[val.trim()] || 0) + 1;
     }
@@ -238,6 +240,40 @@ export default function Dashboard() {
       label: { show: true, position: 'top' as const, fontSize: 11, fontWeight: 600, color: textColor },
     }],
   }), [moduleBarData, darkMode, textColor, mutedColor, BAR_PALETTE]);
+
+  // ── 趋势与绩效（P1-5） ──
+  const monthlyTrend = useMemo(() => buildMonthlyTrend(records), [records]);
+
+  // 超期记录集合（overdue / critical），供经办人超期率统计
+  const overdueRecordIds = useMemo(
+    () => new Set(warnings.filter((w) => w.severity === 'overdue' || w.severity === 'critical').map((w) => w.recordId)),
+    [warnings]
+  );
+  const handlerPerf = useMemo(() => buildHandlerPerf(records, overdueRecordIds), [records, overdueRecordIds]);
+
+  // 办案趋势：案件量（柱）+ 办结率（折线，右轴）
+  const trendOption = useMemo(() => ({
+    tooltip: { trigger: 'axis' as const, backgroundColor: darkMode ? '#1a1d25' : '#fff', borderColor: darkMode ? '#374151' : '#E5E7EB', textStyle: { color: textColor } },
+    legend: { data: ['案件量', '办结率'], textStyle: { color: mutedColor, fontSize: 11 }, top: 2, right: 4 },
+    grid: { left: 8, right: 14, top: 38, bottom: 26, containLabel: true },
+    xAxis: { type: 'category' as const, data: monthlyTrend.map((d) => d.label), axisLabel: { color: mutedColor, fontSize: 10 }, axisLine: { lineStyle: { color: darkMode ? '#374151' : '#E5E7EB' } } },
+    yAxis: [
+      { type: 'value' as const, name: '件', nameTextStyle: { color: mutedColor, fontSize: 10 }, splitLine: { lineStyle: { color: darkMode ? '#2a2e38' : '#F3F4F6' } }, axisLabel: { color: mutedColor, fontSize: 10 } },
+      { type: 'value' as const, name: '办结率', max: 100, nameTextStyle: { color: mutedColor, fontSize: 10 }, splitLine: { show: false }, axisLabel: { color: mutedColor, fontSize: 10, formatter: '{value}%' } },
+    ],
+    series: [
+      {
+        name: '案件量', type: 'bar' as const, yAxisIndex: 0, barWidth: 16,
+        data: monthlyTrend.map((d) => d.count),
+        itemStyle: { borderRadius: [4, 4, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#2563EB' }, { offset: 1, color: '#2563EB33' }]) },
+      },
+      {
+        name: '办结率', type: 'line' as const, yAxisIndex: 1, smooth: true, symbol: 'circle', symbolSize: 6,
+        data: monthlyTrend.map((d) => d.completionRate),
+        lineStyle: { width: 2.5, color: '#059669' }, itemStyle: { color: '#059669' },
+      },
+    ],
+  }), [monthlyTrend, darkMode, textColor, mutedColor]);
 
   // 欢迎区信息
   const now = new Date();
@@ -303,6 +339,14 @@ export default function Dashboard() {
           delay={0.15}
         />
       </div>
+
+      {/* ── 办案趋势（近 12 个月） ── */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="wb-panel">
+        <PanelHead icon={TrendingUp} color="#7C3AED" tint="rgba(124,58,237,0.12)" title="办案趋势（近 12 个月）" sub="案件量 + 办结率" />
+        <div className="wb-panel-body" style={{ minHeight: 240 }}>
+          <EChartBox option={trendOption} style={{ height: 250 }} />
+        </div>
+      </motion.div>
 
       {/* ── 主内容区：待办预警 + 数据概览 ── */}
       <div className="dash-grid-2">
@@ -456,6 +500,39 @@ export default function Dashboard() {
           </div>
         </motion.div>
       </div>
+
+      {/* ── 经办人绩效 ── */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="wb-panel">
+        <PanelHead icon={Users} color="#0EA5E9" tint="rgba(14,165,233,0.12)" title="经办人绩效" sub="负责案件数 / 超期率" />
+        <div className="wb-panel-body">
+          {handlerPerf.length === 0 ? (
+            <div style={{ padding: 28, textAlign: 'center', color: mutedColor, fontSize: 13 }}>暂无经办人信息</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {handlerPerf.map((h) => {
+                const rateColor = h.overdueRate >= 30 ? '#DC2626' : h.overdueRate > 0 ? '#D97706' : '#059669';
+                const trackBg = darkMode ? 'rgba(255,255,255,0.1)' : '#F1F5F9';
+                return (
+                  <div key={h.handler} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div className="truncate" style={{ width: 84, flexShrink: 0, fontSize: 14, fontWeight: 500, color: textColor }}>{h.handler}</div>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ flex: 1, height: 8, borderRadius: 4, background: trackBg, overflow: 'hidden' }}>
+                        <div style={{ width: `${h.overdueRate}%`, height: '100%', borderRadius: 4, background: rateColor, transition: 'width .3s' }} />
+                      </div>
+                      <div style={{ width: 168, flexShrink: 0, fontSize: 12, color: mutedColor, display: 'flex', justifyContent: 'space-between' }}>
+                        <span>负责 {h.total}</span>
+                        <span>超期 {h.overdue}</span>
+                        <span style={{ color: rateColor, fontWeight: 600 }}>{h.overdueRate}%</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </motion.div>
+
     </div>
   );
 }

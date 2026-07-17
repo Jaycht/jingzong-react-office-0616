@@ -7,7 +7,7 @@
 // 实际用途枚举见 Dashboard.tsx / Statistics.tsx / CaseGraph.tsx / EChartBox.tsx。
 // 新增图表或组件时，必须在此同步注册，否则对应图表会在运行期静默失效。
 import * as echarts from 'echarts/core';
-import { BarChart, PieChart, GraphChart } from 'echarts/charts';
+import { BarChart, PieChart, GraphChart, LineChart } from 'echarts/charts';
 import {
   TooltipComponent,
   LegendComponent,
@@ -20,6 +20,7 @@ echarts.use([
   BarChart,
   PieChart,
   GraphChart,
+  LineChart,
   TooltipComponent,
   LegendComponent,
   GridComponent,

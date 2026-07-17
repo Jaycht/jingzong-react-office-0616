@@ -1,10 +1,11 @@
-export const APP_VERSION = "V2.23.1";
+export const APP_VERSION = "V2.24.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 23;
-export const VERSION_PATCH = 1;
+export const VERSION_MINOR = 24;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
-  // ===== V2.23.1 =====
+  // ===== V2.24.0 =====
+  "V2.24.0 新增 - 趋势与绩效分析(P1-5)：工作台新增「办案趋势(近12个月)」双轴图(按月案件量柱状 + 办结率折线，复用新注册 LineChart)与「经办人绩效」面板(负责案件数/超期数/超期率，按超期率红橙绿着色)；办结与经办人字段跨模块多字段归一化(isRecordCompleted 命中 status/handleStatus 含办结/完成/已结，getRecordHandler 取 handler/leadOfficer/handlingOfficer/handlerPolice)；同步修复案件类型饼图长期缺陷(此前只统计 4 个案件类模块，现改为统计全部含 caseType 字段的记录)",
   "V2.23.1 移除 - 取消资金穿透/对手账户分析(P1-4)：经评估，真正的资金穿透需导入外部银行流水反馈压缩包(多银行 CSV、账户信息表)并做表格结构识别，复杂度过高、投入产出比低，故整体移除 V2.23.0 新增的 FundPenetration 页面、fundPenetration 引擎、工作台「资金穿透线索」面板及相关单测，侧栏导航恢复为「工作台→案件图谱→案件时间轴→串并案分析→日常随手记」",
   // ===== V2.23.0 =====
   "V2.23.0 新增 - 资金穿透/对手账户分析(P1-4)：新增引擎 src/utils/fundPenetration.ts，跨模块扫描全量记录，从资金查控(freezeAmount/executeAmount)、资金分析(penetrationItems 层级/接收/转出/余额/冻结、fundSources 上游→资金账号)、涉众收款账户(fundAccountDetail)、中队银行卡号(bankCardNo)及各类 bankAccount 字段抽取归一化银行账号，聚合为「账户画像」(含跨案件判定 isCounterparty=疑似对手账户/跑分归集账户)，并构建有向资金流向边(按穿透层级下行、上游→资金账号)；新增「资金穿透分析」页(FundPenetration：KPI 概览 + 资金流向有向图 + 账户雷达表格 + 疑似对手账户高亮 + 点击账户弹关联记录抽屉并复用 CaseDetail)，挂入侧栏概览，工作台新增「资金穿透线索」预警面板",
