@@ -4,7 +4,7 @@ import {
   FileSearch, FileText, FolderKanban, Gavel, Handshake, Inbox, Landmark, LayoutDashboard,
   LayoutGrid, ListChecks, LockKeyhole, MapPinned, Megaphone, MessageSquareText, Network,
   Package, Radar, ScrollText, SearchCheck, Settings, Smartphone, Snowflake,
-  StickyNote, TableProperties, Target, Users, WalletCards, Workflow, LineChart
+  StickyNote, TableProperties, Target, Users, WalletCards, Waypoints, Workflow, LineChart
 } from 'lucide-react';
 
 import type { NavDepartment } from './types';
@@ -75,6 +75,7 @@ export const DEPARTMENTS: NavDepartment[] = [
 export const PLATFORM_NAV = {
   top: [
     { id: 'dashboard', label: '工作台', icon: LayoutDashboard },
+    { id: 'linkage', label: '串并案分析', icon: Waypoints },
     { id: 'graph', label: '案件图谱', icon: Network },
     { id: 'timeline', label: '案件时间轴', icon: CalendarClock },
     { id: 'dailyNotes', label: '日常随手记', icon: StickyNote },

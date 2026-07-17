@@ -4,7 +4,7 @@
  */
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Download, Upload, Database, Clock, ArrowRight } from 'lucide-react';
+import { Search, Plus, Download, Upload, Database, Clock, ArrowRight, Waypoints } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
 import { MODULE_NAMES, DEPARTMENTS } from '../moduleConfig';
@@ -71,6 +71,7 @@ export default function CommandPalette({ open, onClose }: Props) {
       { id: 'act-export', label: '导出数据', sublabel: '导出 Excel', icon: <Download size={16} />, type: 'page', action: () => setCurrentPage('importExport') },
       { id: 'act-backup', label: '备份恢复', sublabel: '数据备份与恢复', icon: <Database size={16} />, type: 'page', action: () => setCurrentPage('backup') },
       { id: 'act-timeline', label: '案件时间轴', sublabel: '查看案件时间线', icon: <Clock size={16} />, type: 'page', action: () => setCurrentPage('timeline') },
+      { id: 'act-linkage', label: '串并案分析', sublabel: '跨模块身份关联线索', icon: <Waypoints size={16} />, type: 'page', action: () => setCurrentPage('linkage') },
     ];
 
     // 各模块快捷入口
