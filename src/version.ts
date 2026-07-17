@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.25.0";
+export const APP_VERSION = "V2.26.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 25;
+export const VERSION_MINOR = 26;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.26.0 =====
+  "V2.26.0 新增 - 离线文书库：新增「文书库」一级模块，内置公安行政法律文书式样(2012版)与刑事法律文书(最新修正版)共 60 份空白官方模板(PDF)，按行政/刑事分类、支持按文书名与式样号搜索、可一键预览(新窗口打开)与下载；PDF 经 pdftotext 识别内容重命名、续页(行政处罚告知笔录/治安调解协议书/行政处罚决定书)用 pypdf 合并为完整单文件，并以 manifest.json 驱动渲染。注意此为离线空白模板参考/下载库，非自动填充生成文书(内网有专门工具)",
   // ===== V2.25.0 =====
   "V2.25.0 增强 - 备份向导强化（用户选型）：①立即备份在 Electron 下改为弹出原生保存对话框，可自选任意路径（如 U 盘/备份文件夹）存储，浏览器环境回退下载到默认目录；②备份文件写入 appVersion 与 idbKeys 清单，恢复时按清单写回 IndexedDB（兼容旧备份回退 dailyNotes/mass.records + draft.*），消除未来新增存储键漏恢复风险；③新增预览解析 previewBackupFile，从文件恢复前弹确认框显示备份时间/软件版本/记录条数/附件数/文件大小与不可撤销警告；④恢复成功后自动重载应用，使会话与各 store 从新数据重新初始化、界面状态一致",
   // ===== V2.24.0 =====

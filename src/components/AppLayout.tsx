@@ -24,6 +24,7 @@ const ImportExport = lazy(() => import("../pages/ImportExport"));
 const Backup = lazy(() => import("../pages/Backup"));
 const Version = lazy(() => import("../pages/Version"));
 const Attachments = lazy(() => import("../pages/Attachments"));
+const LegalForms = lazy(() => import("../pages/LegalForms"));
 const PlaceholderPage = lazy(() => import("../pages/PlaceholderPage"));
 const ModulePage = lazy(() => import("../pages/ModulePage"));
 
@@ -38,6 +39,7 @@ const PAGES: Record<string, React.FC> = {
   settings: SettingsPage, operationLog: OperationLog,
   importExport: ImportExport, backup: Backup, version: Version,
   attachments: Attachments,
+  legalForms: LegalForms,
   timeline: CaseTimeline,
   graph: CaseGraph,
   linkage: CaseLinkage,

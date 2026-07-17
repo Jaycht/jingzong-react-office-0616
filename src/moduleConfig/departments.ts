@@ -79,6 +79,7 @@ export const PLATFORM_NAV = {
     { id: 'timeline', label: '案件时间轴', icon: CalendarClock },
     { id: 'linkage', label: '串并案分析', icon: Waypoints },
     { id: 'dailyNotes', label: '日常随手记', icon: StickyNote },
+    { id: 'legalForms', label: '文书库', icon: Gavel },
   ],
   data: [
     { id: 'systemSettings', label: '系统设置', icon: Settings },
