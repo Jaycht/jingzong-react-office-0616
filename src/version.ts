@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.22.0";
+export const APP_VERSION = "V2.22.1";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 22;
-export const VERSION_PATCH = 0;
+export const VERSION_PATCH = 1;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.22.1 =====
+  "V2.22.1 优化 - 移除右上角命令面板：其记录搜索能力与顶栏全局检索重复(全局检索覆盖全字段+附件名+分组高亮，更全面)，故整体移除命令面板按钮、Ctrl/⌘+K 快捷键与组件，界面更精简；快捷入口(新建/导入导出/备份/时间轴/串并案)仍可从侧栏与各页面内直达",
   // ===== V2.22.0 =====
   "V2.22.0 新增 - 串并案自动识别(P0-3)：新增检测引擎 src/utils/caseLinkage.ts，跨模块扫描全量记录，抽取三类强身份键(身份证号/统一社会信用代码/银行账号，含嫌疑人·报案人数组内字段)并做同类型精确归一化匹配，自动发现「同一身份键出现≥2条记录」的疑似关联线索；区分「疑似串并案」(跨模块或多案名，红色高优)与「疑似重复录入」(同模块同案名)，支持整簇一键双向关联(持久化至 record.data.linkedRecordIds)；新增「串并案分析」页(CaseLinkage，含概览统计/类型筛选/仅看跨模块/线索卡片/复用 CaseDetail 查看)，挂入侧栏概览与命令面板，工作台新增「串并案线索」预警面板",
   // ===== V2.21.5 =====

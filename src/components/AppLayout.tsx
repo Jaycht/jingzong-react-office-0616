@@ -11,10 +11,9 @@ import ModalNewUser from "./ModalNewUser";
 import Drawer from "./Drawer";
 import Breadcrumb from "./Breadcrumb";
 import ErrorBoundary from "./ErrorBoundary";
-import CommandPalette from "./CommandPalette";
 import NotificationPanel from "./NotificationPanel";
 import GlobalSearch from "./GlobalSearch";
-import { Command, User, LogOut, Sun, Moon, Gauge } from "lucide-react";
+import { User, LogOut, Sun, Moon, Gauge } from "lucide-react";
 import { BRAND } from "../constants/theme";
 import { useReminderService } from "../hooks/useReminderService";
 
@@ -134,7 +133,6 @@ export default function AppLayout() {
   const setEditRecord = useAppStore((s) => s.setEditRecord);
 
   const [profileOpen, setProfileOpen] = useState(false);
-  const [cmdOpen, setCmdOpen] = useState(false);
 
   const customAvatar = (() => { try { return localStorage.getItem("jingzong.avatar"); } catch { return null; } })();
   const avatarSrc = customAvatar || "/avatar-default.jpg";
@@ -171,17 +169,6 @@ export default function AppLayout() {
     ...extra,
   });
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        setCmdOpen((v) => !v);
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
   const Page = PAGES[currentPage] || ModulePage;
 
   return (
@@ -205,7 +192,7 @@ export default function AppLayout() {
         </div>
       )}
 
-      {/* ── 顶部常驻栏：品牌（最左） + 全局检索（绝对居中） + 个人信息/命令面板（最右） ── */}
+      {/* ── 顶部常驻栏：品牌（最左） + 全局检索（绝对居中） + 个人信息（最右） ── */}
       <div
         className="app-topbar"
         style={{
@@ -231,7 +218,7 @@ export default function AppLayout() {
           <GlobalSearch />
         </div>
 
-        {/* 右：个人信息 + 命令面板 */}
+        {/* 右：个人信息 */}
         <div style={{ WebkitAppRegion: 'no-drag', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <div title="点击查看个人资料" onClick={() => setProfileOpen(true)} style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${darkMode ? 'rgba(255,255,255,0.25)' : '#fff'}`, boxShadow: darkMode ? '0 2px 10px rgba(0,0,0,.45)' : '0 2px 10px rgba(15,23,42,.18)', flexShrink: 0 }}>
             <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -247,9 +234,6 @@ export default function AppLayout() {
           </button>
           <button className="wb-hover-ghost" onClick={handleLogout} title="退出登录" style={{ ...topBtn(), color: '#DC2626' }}>
             <LogOut size={15} /><span>退出</span>
-          </button>
-          <button className="wb-hover-ghost" onClick={() => setCmdOpen(true)} title="打开命令面板（Ctrl / ⌘ + K）" style={{ ...topBtn(), marginLeft: 4 }}>
-            <Command size={15} /><span>命令面板</span>
           </button>
         </div>
       </div>
@@ -289,7 +273,6 @@ export default function AppLayout() {
       {drawerOpen && <Drawer onClose={closeDrawer} />}
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
-      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
     </div>
   );
 }

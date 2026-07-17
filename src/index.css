@@ -467,31 +467,6 @@ body {
   animation: notification-pulse 2s ease-in-out infinite;
 }
 
-/* ── 命令面板 ── */
-.command-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1000;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 20vh;
-}
-.command-panel {
-  width: min(560px, 90vw);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  overflow: hidden;
-}
-.dark .command-panel {
-  background: var(--color-surface);
-}
-
 /* ============================================================
    Glass panel (tactical card)
    ============================================================ */
@@ -1626,10 +1601,9 @@ html[data-density="compact"] .ant-btn { height: 30px; font-size: 12px; }
   html, body { background: #fff !important; }
   .app-shell { height: auto !important; display: block !important; }
 
-  /* 隐藏电子标题栏 / 悬浮搜索 / 命令面板 / antd 弹窗与抽屉 */
+  /* 隐藏电子标题栏 / 悬浮搜索 / antd 弹窗与抽屉 */
   .electron-titlebar,
   .floating-search,
-  .command-overlay,
   .ant-modal-root,
   .ant-drawer { display: none !important; }
 
