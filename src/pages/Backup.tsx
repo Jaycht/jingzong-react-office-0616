@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
 import { Modal } from 'antd';
 import { useAppStore } from "../store/appStore"
-import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson } from '../utils/excelUtils';
+import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson, previewBackupFile } from '../utils/excelUtils';
 import { indexedDBAdapter } from '../store/adapter';
 import { clearAttachments } from '../store/attachmentStore';
 
@@ -68,10 +68,14 @@ export default function Backup() {
 
   useEffect(() => { loadData(); }, []);
 
-  const handleBackup = () => {
-    generateBackup();
-    showToast('备份已生成并下载', 'success');
-    setTimeout(loadData, 500);
+  const handleBackup = async () => {
+    const ok = await generateBackup();
+    if (ok) {
+      showToast('备份已生成', 'success');
+      setTimeout(loadData, 500);
+    } else {
+      showToast('已取消备份', 'info');
+    }
   };
 
   const handleRestore = () => {
@@ -84,19 +88,58 @@ export default function Backup() {
       setRestoring(true);
       setRestoreResult(null);
       try {
-        const result = await restoreFromJson(file);
-        setRestoreResult(result);
-        if (result.success) {
-          showToast(result.message, 'success');
-          loadData();
-        } else {
-          showToast(result.message, 'error');
+        const preview = await previewBackupFile(file);
+        if (!preview.valid) {
+          const msg = preview.error || '无效的备份文件';
+          setRestoreResult({ success: false, message: msg });
+          showToast(msg, 'error');
+          setRestoring(false);
+          return;
         }
+        Modal.confirm({
+          title: '确认从备份恢复？',
+          content: (
+            <div style={{ whiteSpace: 'pre-line', fontSize: 13, lineHeight: 1.9, color: 'var(--color-text-secondary)' }}>
+              {`备份时间：${preview.createdAt || '未知'}\n`}
+              {`软件版本：${preview.appVersion || '未知'}\n`}
+              {`记录条数：${preview.recordCount ?? '未知'}\n`}
+              {`附件数量：${preview.attachmentCount}\n`}
+              {`文件大小：${preview.sizeLabel}\n\n`}
+              <span style={{ color: 'var(--color-danger)', fontWeight: 600 }}>
+                ⚠️ 将覆盖当前全部数据并重新加载应用，此操作不可撤销！
+              </span>
+            </div>
+          ),
+          okText: '确认恢复',
+          okButtonProps: { danger: true },
+          cancelText: '取消',
+          onOk: async () => {
+            try {
+              const result = await restoreFromJson(file);
+              if (result.success) {
+                showToast(result.message, 'success');
+                // 恢复清空并重建了全部持久化数据，重载让会话与各 store 重新初始化，保证界面一致
+                setTimeout(() => window.location.reload(), 1200);
+              } else {
+                setRestoreResult(result);
+                showToast(result.message, 'error');
+                setRestoring(false);
+              }
+            } catch (err) {
+              const message = err instanceof Error ? err.message : '恢复失败';
+              setRestoreResult({ success: false, message });
+              showToast(`恢复失败: ${message}`, 'error');
+              setRestoring(false);
+            }
+          },
+          onCancel: () => {
+            setRestoring(false);
+          },
+        });
       } catch (err) {
-        const message = err instanceof Error ? err.message : '恢复失败';
+        const message = err instanceof Error ? err.message : '读取备份失败';
         setRestoreResult({ success: false, message });
-        showToast(`恢复失败: ${message}`, 'error');
-      } finally {
+        showToast(`读取备份失败: ${message}`, 'error');
         setRestoring(false);
       }
     };

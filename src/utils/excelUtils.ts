@@ -19,6 +19,7 @@ import { localStorageAdapter, indexedDBAdapter } from "../store/adapter";
 import type { MassRecord } from '../store/massStore';
 import { exportAttachmentSnapshot, importAttachmentSnapshot } from '../store/attachmentStore';
 import { notifyDataChanged } from '../store/dataEvents';
+import { APP_VERSION } from '../version';
 
 // ─── 类型 ─────────────────────────────────────────────
 
@@ -565,7 +566,12 @@ interface BackupMeta {
  * 生成全量 JSON 备份
  * 读取所有 jingzong.* 开头的 localStorage key + IndexedDB 中的数据
  */
-export async function generateBackup(): Promise<void> {
+/**
+ * 生成全量 JSON 备份
+ * 读取所有 jingzong.* 开头的 localStorage key + IndexedDB 中的数据
+ * @returns true=备份已生成，false=用户取消或失败
+ */
+export async function generateBackup(): Promise<boolean> {
   const data: RowData = {};
 
   // 1) 读取 localStorage
@@ -580,7 +586,7 @@ export async function generateBackup(): Promise<void> {
     }
   }
 
-  // 2) 读取 IndexedDB 中的数据（dailyNotes、massRecords、drafts）
+  // 2) 读取 IndexedDB 中的数据（dailyNotes、massRecords、drafts 等）
   const idbKeys = indexedDBAdapter.keys('jingzong.');
   for (const key of idbKeys) {
     try {
@@ -594,19 +600,84 @@ export async function generateBackup(): Promise<void> {
   const attachments = await exportAttachmentSnapshot();
 
   const backup = {
-    version: '2.0',
+    version: '2.1',
+    appVersion: APP_VERSION,
     createdAt: new Date().toISOString(),
+    idbKeys,
     data,
     attachments,
   };
 
   const json = JSON.stringify(backup, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
   const timestamp = new Date().toISOString().slice(0, 16).replace('T', '_');
-  saveAs(blob, `jingzong_备份_${timestamp}.json`);
+  const defaultName = `jingzong_备份_${timestamp}.json`;
 
-  // 记录到备份元信息
+  // Electron 环境：弹出原生保存对话框，让用户选择任意路径（如 U 盘/备份文件夹）
+  const api = typeof window !== 'undefined' ? window.electronAPI : undefined;
+  if (api?.showSaveDialog) {
+    try {
+      const buffer = Array.from(new TextEncoder().encode(json));
+      const res = await api.showSaveDialog(defaultName, buffer);
+      if (res.canceled) return false;
+      if (res.success) {
+        saveBackupMeta(timestamp);
+        return true;
+      }
+      // 写入失败则回退到浏览器下载
+    } catch {
+      // 回退到浏览器下载
+    }
+  }
+
+  // 浏览器环境（或非 Electron）回退：直接触发下载到默认下载目录
+  const blob = new Blob([json], { type: 'application/json' });
+  saveAs(blob, defaultName);
   saveBackupMeta(timestamp);
+  return true;
+}
+
+/** 备份文件头部预览信息（用于恢复前确认弹窗） */
+export interface BackupPreview {
+  valid: boolean;
+  createdAt?: string;
+  appVersion?: string;
+  recordCount?: number;
+  attachmentCount: number;
+  sizeLabel: string;
+  error?: string;
+}
+
+/** 解析备份文件头部，提取元信息（不依赖附件二进制大小，仅统计数量） */
+export async function previewBackupFile(file: File): Promise<BackupPreview> {
+  const sizeKB = file.size / 1024;
+  const sizeLabel = sizeKB < 1024 ? `${sizeKB.toFixed(0)}KB` : `${(sizeKB / 1024).toFixed(1)}MB`;
+  try {
+    const text = await file.text();
+    const backup = JSON.parse(text);
+    if (!backup || typeof backup !== 'object' || !backup.data) {
+      return { valid: false, attachmentCount: 0, sizeLabel, error: '无效的备份文件格式' };
+    }
+    const data = backup.data as Record<string, unknown>;
+    const records = Array.isArray(data['jingzong.mass.records'])
+      ? (data['jingzong.mass.records'] as unknown[]).length
+      : undefined;
+    const attachments = Array.isArray(backup.attachments) ? backup.attachments.length : 0;
+    return {
+      valid: true,
+      createdAt: backup.createdAt,
+      appVersion: backup.appVersion,
+      recordCount: records,
+      attachmentCount: attachments,
+      sizeLabel,
+    };
+  } catch (err) {
+    return {
+      valid: false,
+      attachmentCount: 0,
+      sizeLabel,
+      error: err instanceof Error ? err.message : '备份文件解析失败',
+    };
+  }
 }
 
 /** 记录备份到 localStorage 元信息列表 */
@@ -661,8 +732,11 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
 
     let count = 0;
 
-    // 需要写入 IndexedDB 的 key 列表
-    const idbKeys = new Set(['jingzong.dailyNotes', 'jingzong.mass.records']);
+    // 需要写回 IndexedDB 的 key 列表：优先使用备份时记录的清单，
+    // 旧备份无此字段则回退到已知键（dailyNotes/mass.records），并兜底 draft.*，避免漏恢复。
+    const backupIdbKeys: string[] = Array.isArray(backup.idbKeys)
+      ? backup.idbKeys
+      : ['jingzong.dailyNotes', 'jingzong.mass.records'];
 
     for (const [key, value] of Object.entries(backup.data)) {
       if (key.startsWith('jingzong.')) {
@@ -670,8 +744,8 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
         localStorageAdapter.setItem(key, value);
         count++;
 
-        // 写入 IndexedDB（dailyNotes、massRecords、drafts 等）
-        if (idbKeys.has(key) || key.startsWith('jingzong.draft.')) {
+        // 写入 IndexedDB（业务主存储）：以备份清单为准，兼容旧备份再兜底 draft.*
+        if (backupIdbKeys.includes(key) || key.startsWith('jingzong.draft.')) {
           indexedDBAdapter.setItem(key, value);
         }
       }

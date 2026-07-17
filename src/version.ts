@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.24.0";
+export const APP_VERSION = "V2.25.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 24;
+export const VERSION_MINOR = 25;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.25.0 =====
+  "V2.25.0 增强 - 备份向导强化（用户选型）：①立即备份在 Electron 下改为弹出原生保存对话框，可自选任意路径（如 U 盘/备份文件夹）存储，浏览器环境回退下载到默认目录；②备份文件写入 appVersion 与 idbKeys 清单，恢复时按清单写回 IndexedDB（兼容旧备份回退 dailyNotes/mass.records + draft.*），消除未来新增存储键漏恢复风险；③新增预览解析 previewBackupFile，从文件恢复前弹确认框显示备份时间/软件版本/记录条数/附件数/文件大小与不可撤销警告；④恢复成功后自动重载应用，使会话与各 store 从新数据重新初始化、界面状态一致",
   // ===== V2.24.0 =====
   "V2.24.0 新增 - 趋势与绩效分析(P1-5)：工作台新增「办案趋势(近12个月)」双轴图(按月案件量柱状 + 办结率折线，复用新注册 LineChart)与「经办人绩效」面板(负责案件数/超期数/超期率，按超期率红橙绿着色)；办结与经办人字段跨模块多字段归一化(isRecordCompleted 命中 status/handleStatus 含办结/完成/已结，getRecordHandler 取 handler/leadOfficer/handlingOfficer/handlerPolice)；同步修复案件类型饼图长期缺陷(此前只统计 4 个案件类模块，现改为统计全部含 caseType 字段的记录)",
   "V2.23.1 移除 - 取消资金穿透/对手账户分析(P1-4)：经评估，真正的资金穿透需导入外部银行流水反馈压缩包(多银行 CSV、账户信息表)并做表格结构识别，复杂度过高、投入产出比低，故整体移除 V2.23.0 新增的 FundPenetration 页面、fundPenetration 引擎、工作台「资金穿透线索」面板及相关单测，侧栏导航恢复为「工作台→案件图谱→案件时间轴→串并案分析→日常随手记」",
