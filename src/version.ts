@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.22.3";
+export const APP_VERSION = "V2.23.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 22;
-export const VERSION_PATCH = 3;
+export const VERSION_MINOR = 23;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.23.0 =====
+  "V2.23.0 新增 - 资金穿透/对手账户分析(P1-4)：新增引擎 src/utils/fundPenetration.ts，跨模块扫描全量记录，从资金查控(freezeAmount/executeAmount)、资金分析(penetrationItems 层级/接收/转出/余额/冻结、fundSources 上游→资金账号)、涉众收款账户(fundAccountDetail)、中队银行卡号(bankCardNo)及各类 bankAccount 字段抽取归一化银行账号，聚合为「账户画像」(含跨案件判定 isCounterparty=疑似对手账户/跑分归集账户)，并构建有向资金流向边(按穿透层级下行、上游→资金账号)；新增「资金穿透分析」页(FundPenetration：KPI 概览 + 资金流向有向图 + 账户雷达表格 + 疑似对手账户高亮 + 点击账户弹关联记录抽屉并复用 CaseDetail)，挂入侧栏概览，工作台新增「资金穿透线索」预警面板",
   // ===== V2.22.3 =====
   "V2.22.3 修复 - 会话刷新后信息丢失(顶栏显示“未登录”、资料页空白)：App.tsx 启动恢复逻辑此前仅在“勾选自动登录”时才把 jingzong.currentUser.v1 会话填回 store，导致未勾自动登录时刷新/重开落在 /app 直链场景下 userName/userDepartment 为空；现改为有会话即恢复(自动登录则直接进主界面，未勾但落在 /app 则恢复数据不踢出，无会话却直链 /app 则退回登录页)，注册填写的姓名/科室/警号/手机号登录后稳定回填",
   // ===== V2.22.2 =====

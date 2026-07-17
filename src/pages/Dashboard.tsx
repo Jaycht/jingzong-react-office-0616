@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, AlertTriangle, CheckCircle2,
-  Activity, Zap, BarChart3, Plus, Network, CalendarClock, Waypoints, ArrowRight,
+  Activity, Zap, BarChart3, Plus, Network, CalendarClock, Waypoints, ArrowRight, Landmark,
 } from "lucide-react";
 import * as echarts from '../lib/echarts';
 import { getMassRecords, getMassRecordById } from "../store/massStore";
@@ -18,6 +18,7 @@ import EChartBox from "../components/EChartBox";
 import { LEGAL_DEADLINE_RULES, getDeadlineSeverity } from '../constants/legalDeadlines';
 import { daysBetween } from '../utils/format';
 import { detectLinkageClusters, KEY_LABEL } from '../utils/caseLinkage';
+import { buildFundModel } from '../utils/fundPenetration';
 
 /* ===================== 到期预警计算 ===================== */
 
@@ -164,6 +165,12 @@ export default function Dashboard() {
   // 串并案线索（仅跨模块，取前 5，供工作台一屏预警）
   const linkageClusters = useMemo(
     () => detectLinkageClusters(records).filter((c) => c.isCrossModule).slice(0, 5),
+    [records]
+  );
+
+  // 资金穿透：疑似对手账户（取前 5，供工作台一屏预警）
+  const counterparties = useMemo(
+    () => buildFundModel(records).accounts.filter((a) => a.isCounterparty).slice(0, 5),
     [records]
   );
 
@@ -448,6 +455,42 @@ export default function Dashboard() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="truncate" style={{ fontSize: 14, fontWeight: 500 }}>{c.masked}</div>
                     <div style={{ fontSize: 12, color: mutedColor, marginTop: 2 }}>{c.moduleNames.join(' · ')} · {c.count} 条</div>
+                  </div>
+                  <ArrowRight size={15} color="var(--color-text-muted)" />
+                </div>
+              ))
+            )}
+          </div>
+        </motion.div>
+
+        {/* 资金穿透线索：疑似对手账户 */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="wb-panel">
+          <PanelHead
+            icon={Landmark}
+            color="#0EA5E9"
+            tint="rgba(14,165,233,0.12)"
+            title="资金穿透线索"
+            extra={counterparties.length > 0 ? (
+              <span className="badge badge-danger" style={{ marginLeft: 'auto' }}>{counterparties.length} 个</span>
+            ) : undefined}
+          />
+          <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+            {counterparties.length === 0 ? (
+              <div style={{ padding: 28, textAlign: 'center', color: mutedColor, fontSize: 13 }}>
+                暂未发现疑似对手账户
+              </div>
+            ) : (
+              counterparties.map((a) => (
+                <div
+                  key={a.account}
+                  onClick={() => setCurrentPage('fund')}
+                  className="hover-bg"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 4, borderRadius: 8, cursor: 'pointer' }}
+                >
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#F43F5E', background: 'rgba(244,63,94,0.12)', padding: '2px 8px', borderRadius: 6, flexShrink: 0 }}>对手</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="truncate" style={{ fontSize: 14, fontWeight: 500 }}>{a.masked}</div>
+                    <div style={{ fontSize: 12, color: mutedColor, marginTop: 2 }}>{a.counterpartyReason} · {a.moduleNames.join(' / ')}</div>
                   </div>
                   <ArrowRight size={15} color="var(--color-text-muted)" />
                 </div>

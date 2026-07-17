@@ -54,7 +54,7 @@ function normCreditCode(v: string): string {
   return '';
 }
 
-function normBank(v: string): string {
+export function normBank(v: string): string {
   const s = v.replace(/[\s-]/g, '').toUpperCase();
   const cleaned = s.replace(/[^0-9A-Z]/g, '');
   // 银行账号绝大多数为纯数字且长度≥10；要求含≥10位数字，排除手机号/邮箱类钱包账号

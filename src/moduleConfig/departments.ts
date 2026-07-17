@@ -78,6 +78,7 @@ export const PLATFORM_NAV = {
     { id: 'graph', label: '案件图谱', icon: Network },
     { id: 'timeline', label: '案件时间轴', icon: CalendarClock },
     { id: 'linkage', label: '串并案分析', icon: Waypoints },
+    { id: 'fund', label: '资金穿透分析', icon: Landmark },
     { id: 'dailyNotes', label: '日常随手记', icon: StickyNote },
   ],
   data: [
