@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.22.2";
+export const APP_VERSION = "V2.22.3";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 22;
-export const VERSION_PATCH = 2;
+export const VERSION_PATCH = 3;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.22.3 =====
+  "V2.22.3 修复 - 会话刷新后信息丢失(顶栏显示“未登录”、资料页空白)：App.tsx 启动恢复逻辑此前仅在“勾选自动登录”时才把 jingzong.currentUser.v1 会话填回 store，导致未勾自动登录时刷新/重开落在 /app 直链场景下 userName/userDepartment 为空；现改为有会话即恢复(自动登录则直接进主界面，未勾但落在 /app 则恢复数据不踢出，无会话却直链 /app 则退回登录页)，注册填写的姓名/科室/警号/手机号登录后稳定回填",
   // ===== V2.22.2 =====
   "V2.22.2 优化 - 两处界面微调：①侧栏概览导航将「串并案分析」移至「案件时间轴」之下、「日常随手记」之上；②顶栏头像右侧新增显示当前登录用户名与所在科室(取自 sessionSlice 的 userName/userDepartment，点击仍跳转个人资料)",
   // ===== V2.22.1 =====

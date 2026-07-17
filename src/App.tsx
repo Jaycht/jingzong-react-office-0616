@@ -51,7 +51,7 @@ function AppContent() {
     });
   }, []);
 
-  // 恢复持久化的用户登录状态（跨窗口/跨应用重启）
+  // 恢复持久化的用户登录状态（跨刷新/跨应用重启）
   useEffect(() => {
     // 先检查用户是否开启了「自动登录」
     let isAutoLogin = false;
@@ -64,17 +64,33 @@ function AppContent() {
     } catch { /* ignore */ }
 
     const saved = loadUserFromStorage();
-    if (saved && saved.name && isAutoLogin) {
-      useAppStore.getState().setUser(saved.name, saved.role, {
-        badge: saved.badge,
-        phone: saved.phone,
-        department: saved.department,
-      });
-      // 有持久化的用户且开启了自动登录 → 直接进入主界面
-      if (isElectron) {
-        window.electronAPI?.resizeToMain();
+    const here = window.location.hash || window.location.pathname;
+
+    if (saved && saved.name) {
+      if (isAutoLogin) {
+        // 勾选了自动登录：恢复会话并直接进入主界面
+        useAppStore.getState().setUser(saved.name, saved.role, {
+          badge: saved.badge,
+          phone: saved.phone,
+          department: saved.department,
+        });
+        if (isElectron) {
+          window.electronAPI?.resizeToMain();
+        }
+        navigate("/app/dashboard", { replace: true });
+      } else if (here.includes("/app")) {
+        // 未勾选自动登录，但刷新/重开时落在 /app（如地址栏直链）→ 恢复会话数据，
+        // 避免顶栏显示「未登录」、资料页空白
+        useAppStore.getState().setUser(saved.name, saved.role, {
+          badge: saved.badge,
+          phone: saved.phone,
+          department: saved.department,
+        });
       }
-      navigate("/app/dashboard", { replace: true });
+      // 否则停留在 /login，由用户手动登录（登录即无缝进入）
+    } else if (here.includes("/app")) {
+      // 无有效会话却直链到 /app：退回登录页，避免空会话进入主界面
+      navigate("/login", { replace: true });
     }
   }, []);
 
