@@ -826,6 +826,144 @@ export function GlobalCaseNoField({ field, subName }: {
     </Form.Item>
   );
 }
+/* ===================== 全局历史文本字段（按 field.id 独立池） ===================== */
+
+/**
+ * 通用全局历史字段：按 field.id 维护独立的历史输入池
+ * 用于线索调证的「线索名称 / 线索来源」等，与案件名称池互不干扰、各自全局共享
+ */
+export function GlobalHistoryField({ field, subName }: {
+  field: FieldDefinition;
+  subName?: number;
+}) {
+  const rules = field.required ? [{ required: true, message: `请填写${field.label}` }] : undefined;
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+  return (
+    <Form.Item name={fieldName} label={field.label} rules={rules}>
+      <InputWithHistory field={field} placeholder={`请输入${field.label}（历史记录可联想）`} />
+    </Form.Item>
+  );
+}
+
+/* ===================== 全局线索编号字段（XS- 前缀 + 历史联想） ===================== */
+
+/**
+ * 线索编号输入框：始终以 XS- 开头、仅收数字，存值恒为 XS-数字；
+ * 同时接入 clueNo 全局历史池，输入时可联想以往线索编号
+ */
+export function GlobalClueNoField({ field, subName }: {
+  field: FieldDefinition;
+  subName?: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const form = Form.useFormInstance();
+
+  const fieldName = subName !== undefined ? [subName, field.id] : field.id;
+  const nameKey = typeof fieldName === 'string' ? fieldName : fieldName[1];
+
+  const formValue: unknown = Form.useWatch(nameKey, form);
+  const syncedValue: string = (typeof formValue === 'string' ? formValue : '') || '';
+  const [localValue, setLocalValue] = useState(syncedValue);
+  useEffect(() => { setLocalValue(syncedValue); }, [syncedValue]);
+
+  const history = useMemo(() => {
+    void refreshKey;
+    return getFieldHistory('clueNo');
+  }, [refreshKey]);
+
+  const filtered = useMemo(() => {
+    if (!syncedValue) return history;
+    const q = syncedValue.toUpperCase();
+    return history.filter((item) => item.toUpperCase().includes(q));
+  }, [history, syncedValue]);
+
+  const handleChange = (val: string) => {
+    const digits = val.replace(/^XS-/, '').replace(/[^0-9]/g, '');
+    const next = 'XS-' + digits;
+    setLocalValue(next);
+    form.setFieldsValue({ [nameKey]: next });
+  };
+
+  const handleBlurSync = () => {
+    setTimeout(() => {
+      setOpen(false);
+      if (!form) return;
+      const current = form.getFieldValue(nameKey);
+      if (String(current || '') !== localValue) {
+        form.setFieldsValue({ [nameKey]: localValue });
+      }
+      if (/^XS-\d+$/.test(localValue)) recordFieldValue('clueNo', localValue);
+    }, 200);
+  };
+
+  const handleSelect = (val: string) => {
+    form.setFieldsValue({ [nameKey]: val });
+    setLocalValue(val);
+    setOpen(false);
+    recordFieldValue('clueNo', val);
+  };
+
+  const rules = field.required
+    ? [{ required: true, message: `请填写${field.label}` }, { pattern: /^XS-\d+$/, message: '请输入 XS- 后跟数字，例如 XS-001' }]
+    : [{ pattern: /^XS-\d+$/, message: '请输入 XS- 后跟数字，例如 XS-001' }];
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', height: 32, padding: '0 11px',
+    border: '1px solid #D9D9D9', borderRadius: 6,
+    fontSize: 14, color: '#333', outline: 'none',
+    fontFamily: 'inherit', boxSizing: 'border-box',
+    transition: 'border-color .2s, box-shadow .2s',
+  };
+
+  return (
+    <Form.Item name={fieldName} label={field.label} required={field.required} rules={rules}>
+      <div style={{ position: 'relative' }}>
+        <input
+          value={localValue}
+          onChange={(e) => handleChange(e.target.value)}
+          onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+          onBlur={handleBlurSync}
+          placeholder="XS- 后填写数字"
+          style={inputStyle}
+          onFocusCapture={(e) => {
+            e.currentTarget.style.borderColor = '#1677ff';
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
+          }}
+          onBlurCapture={(e) => {
+            e.currentTarget.style.borderColor = '#D9D9D9';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        />
+        {open && filtered.length > 0 && (
+          <div
+            style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+              marginTop: 2, background: '#fff', borderRadius: 6,
+              border: '1px solid #E5E7EB', boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+              maxHeight: 240, overflow: 'auto',
+            }}
+          >
+            {filtered.map((item) => (
+              <div
+                key={item}
+                style={{ display: 'flex', alignItems: 'center', padding: '6px 12px', fontSize: 13, color: '#1F2937', transition: 'background .1s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span
+                  onMouseDown={(e) => { e.preventDefault(); handleSelect(item); }}
+                  style={{ flex: 1, cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '2px 0' }}
+                >{item}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Form.Item>
+  );
+}
+
 /* ===================== 设备品牌字段（联动设备类型） ===================== */
 
 const HARDDRIVE_BRANDS = ['三星', '希捷', '西部数据', '铠侠', '东芝', '金士顿', '致钛', '英睿达', '闪迪', '威刚', '联想'];

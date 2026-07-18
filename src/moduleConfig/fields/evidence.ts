@@ -7,7 +7,7 @@ import { CASE_TYPES_FULL, CASE_TYPES_BASIC } from '../caseTypes';
 export const REQUEST_CASE_INFO: FieldDefinition[] = [
   f('caseNo', '案件编号'),
   f('caseName', '案件名称', 'text', false),
-  f('caseSource', '案件来源', 'select', false, ['群众报案', '举报', '上级交办', '部门移送', '工作发现', '自首']),
+  f('caseSource', '案件来源', 'select', false, ['群众报案', '举报', '上级交办', '部门移送', '工作发现', '自首'], 'evidence.request.caseSource'),
   f('caseType', '案件类型', 'select', false, CASE_TYPES_FULL, 'evidence.request.caseType'),
 ];
 export const REQUEST_CLUE_INFO: FieldDefinition[] = [

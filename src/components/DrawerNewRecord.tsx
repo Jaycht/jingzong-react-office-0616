@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button, DatePicker, Form, Input, InputNumber,
-  Modal, Segmented, Select, Space, Upload,
+  Modal, Radio, Select, Space, Tag, Upload,
   type FormInstance, type UploadFile,
 } from 'antd';
 import dayjs from 'dayjs';
@@ -17,6 +17,7 @@ import ErrorBoundary from './ErrorBoundary';
 import { recordFormFields, rebuildCaseIndex, rebuildSuspectIndex } from '../store/inputHistoryStore';
 import {
   GlobalCaseNameField, GlobalCaseNoField, GlobalSuspectField,
+  GlobalHistoryField, GlobalClueNoField,
   InputWithHistory,
   MultiPersonField, PersistedSelect, DeviceBrandField,
   IdNoField,
@@ -141,12 +142,9 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   // 调证登记：案件调证 / 线索调证 切换
   const handleModeChange = (mode: 'case' | 'clue') => {
     if (mode === requestMode) return;
-    const clearKeys = mode === 'clue'
-      ? ['caseNo', 'caseName', 'caseSource', 'caseType']
-      : ['clueNo', 'clueName', 'clueSource', 'clueType'];
+    // 切换模式不再清空已填值：两侧字段在表单中保留（编辑体验），仅确保进入线索模式时编号有 XS- 默认前缀
     const patch: Record<string, unknown> = {};
-    for (const k of clearKeys) patch[k] = undefined;
-    if (mode === 'clue') patch.clueNo = 'XS-'; // 线索编号默认带 XS- 前缀
+    if (mode === 'clue' && !form.getFieldValue('clueNo')) patch.clueNo = 'XS-';
     form.setFieldsValue(patch);
     setRequestMode(mode);
     safeSetDirty(true);
@@ -155,6 +153,14 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   const handleSubmit = async (keepOpen = false) => {
     try {
       const values = await form.validateFields();
+
+      // 调证登记：仅保留当前模式的前四项，避免案件/线索两套字段同时入库（切换不清空只影响编辑体验）
+      if (isEvidenceRequest) {
+        const inactiveModeKeys = requestMode === 'case'
+          ? ['clueNo', 'clueName', 'clueSource', 'clueType']
+          : ['caseNo', 'caseName', 'caseSource', 'caseType'];
+        for (const k of inactiveModeKeys) delete values[k];
+      }
 
       // 序列化 dayjs 对象为 ISO 字符串，避免传入 IndexedDB 后触发 antd clone 崩溃
       for (const key of Object.keys(values)) {
@@ -632,19 +638,20 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                         style={{ opacity: isVisible ? 1 : 0, transition: 'opacity 0.15s' }}
                       >
                       {si === 0 && isEvidenceRequest && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, padding: '12px 16px', background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', borderRadius: 8 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>调证类型</span>
-                          <Segmented
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 22, padding: '16px 20px', background: 'var(--color-surface-hover)', border: '2px solid var(--color-primary)', borderRadius: 12 }}>
+                          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-primary)' }}>请选择调证类型</span>
+                          <Radio.Group
                             value={requestMode}
-                            onChange={(v) => handleModeChange(v as 'case' | 'clue')}
-                            options={[
-                              { label: '案件调证', value: 'case' },
-                              { label: '线索调证', value: 'clue' },
-                            ]}
-                          />
-                          <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
-                            {requestMode === 'clue' ? '按线索登记调证，编号自动以 XS- 开头' : '按案件登记调证'}
-                          </span>
+                            onChange={(e) => handleModeChange(e.target.value as 'case' | 'clue')}
+                            buttonStyle="solid"
+                            size="large"
+                          >
+                            <Radio.Button value="case">案件调证</Radio.Button>
+                            <Radio.Button value="clue">线索调证</Radio.Button>
+                          </Radio.Group>
+                          <Tag color={requestMode === 'clue' ? 'blue' : 'default'} style={{ fontSize: 13, padding: '4px 10px', marginInlineEnd: 0 }}>
+                            {requestMode === 'clue' ? '已选「线索调证」· 编号自动以 XS- 开头' : '已选「案件调证」'}
+                          </Tag>
                         </div>
                       )}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14 }}>
@@ -660,22 +667,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                           }
                         >
                           {field.id === 'clueNo' && requestMode === 'clue' ? (
-                            <Form.Item
-                              label="线索编号"
-                              required
-                              name="clueNo"
-                              initialValue="XS-"
-                              style={{ marginBottom: 0 }}
-                              rules={[{ pattern: /^XS-\d+$/, message: '请输入 XS- 后跟数字，例如 XS-001' }]}
-                            >
-                              <Input
-                                placeholder="XS- 后填写数字"
-                                onChange={(e) => {
-                                  const digits = e.target.value.replace(/^XS-/, '').replace(/[^0-9]/g, '');
-                                  form.setFieldsValue({ clueNo: 'XS-' + digits });
-                                }}
-                              />
-                            </Form.Item>
+                            <GlobalClueNoField field={field} />
                           ) : (
                             <DynamicField field={field} moduleId={selectedModuleId} form={form} pendingAttachments={pendingAttachments} editRecord={editRecord} />
                           )}
@@ -709,8 +701,12 @@ function DynamicField({ field, moduleId, subName, form, pendingAttachments, edit
 
   // ─── 全局案件名称/编号联动 ───
   // 所有模块的 caseName/caseNo 都使用全局 AutoComplete，实现全软件数据共享
-  if (field.id === 'caseName' || field.id === 'clueName') {
+  if (field.id === 'caseName') {
     return <GlobalCaseNameField field={field} subName={subName} />;
+  }
+  if (field.id === 'clueName') {
+    // 线索名称使用独立全局池（与案件名称池互不干扰，各自全局共享）
+    return <GlobalHistoryField field={field} subName={subName} />;
   }
   if (field.id === 'caseNo') {
     return <GlobalCaseNoField field={field} subName={subName} />;

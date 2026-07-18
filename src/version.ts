@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.36.0";
+export const APP_VERSION = "V2.37.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 36;
+export const VERSION_MINOR = 37;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.37.0 =====
+  "V2.37.0 优化 - 调证登记案件/线索切换体验与全局数据共享：①切换按钮改为带主色边框横幅+大号实色单选按钮组（案件调证/线索调证），选中项实心高亮、配状态 Tag，更醒目不易漏看；②线索名称改用独立全局历史池（clueName，不再借案件名称池），与案件名称池互不干扰、各自全局共享；线索编号接入 clueNo 全局历史池（输入联想以往编号）；案件来源/案件类型/线索类型均配 customOptionKey 经 PersistedSelect 全局持久化自定义项，线索来源(text)经 InputWithHistory 全局共享；③切换模式不再清空已填值（编辑中不丢），提交时仅保留当前模式的四项字段，记录始终只有一套、列表沿用 case*/clue* 回退显示",
   // ===== V2.36.0 =====
   "V2.36.0 新增 - 调证登记新建窗口支持「案件调证 / 线索调证」切换：新建工作记录（evidence-request）步骤①顶部加分段切换钮；选案件调证显示案件编号/名称/来源/类型（原内容），选线索调证切换为线索编号（编号自动以 XS- 开头、用户仅填数字、存值恒为 XS-数字、正则校验 XS-后须含数字）/线索名称/线索来源(文本输入框)/线索类型(与案件类型同款下拉)；切换时自动清空另一侧字段避免串扰，编辑线索记录时按 clueNo 自动识别为线索模式；列表页对应列中性化为编号/名称/来源/类型并按记录实际取值在 case*/clue* 间回退显示，线索记录不再空白",
   // ===== V2.35.0 =====
