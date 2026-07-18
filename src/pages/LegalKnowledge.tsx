@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Scale, Search, BookOpen, ChevronLeft, ExternalLink, Layers, Hash, ScrollText, CalendarClock } from 'lucide-react';
+import { Scale, Search, BookOpen, ChevronLeft, ExternalLink, Layers, Hash, ScrollText, CalendarClock, Star } from 'lucide-react';
 import { Input } from 'antd';
 import { useAppStore } from '../store/appStore';
 import { BRAND } from '../constants/theme';
+import { useLawPrefsStore, noteKey } from '../store/lawPrefsStore';
 
 interface LawMeta {
   id: string;
@@ -15,6 +16,7 @@ interface LawMeta {
   version: string;
   effectiveDate: string;
   articles: number;
+  timeline?: { date: string; label: string }[];
 }
 interface Manifest {
   generatedAt: string;
@@ -101,6 +103,13 @@ export default function LegalKnowledge() {
   const [lawText, setLawText] = useState<string>('');
   const [lawLoading, setLawLoading] = useState(false);
   const [articleQ, setArticleQ] = useState('');
+  const [view, setView] = useState<'list' | 'mine'>('list');
+  const [showTimeline, setShowTimeline] = useState(false);
+  const [noteKeyActive, setNoteKeyActive] = useState<string | null>(null);
+  const favorites = useLawPrefsStore((s) => s.favorites);
+  const notes = useLawPrefsStore((s) => s.notes);
+  const toggleFavorite = useLawPrefsStore((s) => s.toggleFavorite);
+  const setNote = useLawPrefsStore((s) => s.setNote);
 
   useEffect(() => {
     let alive = true;
@@ -187,6 +196,14 @@ export default function LegalKnowledge() {
             <div className="dash-hero-greet">{parsed.title}</div>
             <div className="dash-hero-sub">{selected.categoryName} · 共 {selected.articles} 条</div>
           </div>
+          <button
+            className="dash-action"
+            style={{ marginLeft: 'auto', display: 'inline-flex', width: 'auto', flexShrink: 0, ...(favorites[selected.id] ? { background: '#FEF3C7', color: '#B45309', borderColor: '#FDE68A' } : {}) }}
+            onClick={(e) => { e.stopPropagation(); toggleFavorite(selected.id); }}
+            title={favorites[selected.id] ? '取消收藏' : '收藏本法'}
+          >
+            <Star size={15} fill={favorites[selected.id] ? '#F59E0B' : 'none'} /> {favorites[selected.id] ? '已收藏' : '收藏'}
+          </button>
         </div>
 
         {/* 来源信息 */}
@@ -202,6 +219,31 @@ export default function LegalKnowledge() {
             </a>
           )}
         </div>
+
+        {/* 立法 / 修正时间轴 */}
+        {selected.timeline && selected.timeline.length > 0 && (
+          <div className="wb-panel" style={{ padding: 16, marginBottom: 16, background: panelBg, border: `1px solid ${panelBorder}` }}>
+            <button
+              className="wb-hover-ghost"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: BRAND.primaryDark, fontSize: 14, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+              onClick={() => setShowTimeline((v) => !v)}
+            >
+              <CalendarClock size={15} /> 立法 / 修正时间轴（{selected.timeline.length}）
+              <span style={{ color: textMuted, fontSize: 12, fontWeight: 500 }}>{showTimeline ? '收起' : '展开'}</span>
+            </button>
+            {showTimeline && (
+              <div style={{ marginTop: 14, borderLeft: `2px solid ${BRAND.primaryLight}`, marginLeft: 6, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {selected.timeline.map((t, i) => (
+                  <div key={i} style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: -24, top: 4, width: 11, height: 11, borderRadius: '50%', background: BRAND.primary, boxShadow: `0 0 0 3px ${panelBg}` }} />
+                    <div style={{ fontSize: 12.5, color: BRAND.primaryDark, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{t.date}</div>
+                    <div style={{ fontSize: 13, color: textColor, lineHeight: 1.65 }}>{t.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 法条内搜索 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
@@ -243,20 +285,130 @@ export default function LegalKnowledge() {
               // article
               const matchQ = articleQ.trim();
               if (matchQ && !shownArticles.includes(b)) return null;
+              const nk = noteKey(selected.id, b.num);
+              const hasNote = !!notes[nk];
               return (
                 <div key={'art' + i} className="wb-panel" style={{ padding: '12px 16px', background: panelBg, border: `1px solid ${panelBorder}` }}>
-                  <div style={{ fontSize: 14.5, fontWeight: 800, color: BRAND.primaryDark, marginBottom: 6 }}>
-                    {highlight(b.num, matchQ)}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 800, color: BRAND.primaryDark }}>{highlight(b.num, matchQ)}</div>
+                    <button
+                      className="wb-hover-ghost"
+                      onClick={() => setNoteKeyActive(noteKeyActive === nk ? null : nk)}
+                      style={{ fontSize: 12, color: hasNote ? BRAND.primary : '#9CA3AF', background: 'transparent', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
+                      title={hasNote ? '查看/编辑笔记' : '为这一条添加笔记'}
+                    >
+                      <ScrollText size={13} /> {hasNote ? '笔记' : '加笔记'}
+                    </button>
                   </div>
                   {b.body.map((p, pi) => (
-                    <div key={pi} style={{ fontSize: 14.5, lineHeight: 1.95, color: textColor, whiteSpace: 'pre-wrap' }}>
+                    <div key={pi} style={{ fontSize: 14.5, lineHeight: 1.95, color: textColor, whiteSpace: 'pre-wrap', marginTop: 4 }}>
                       {highlight(p, matchQ)}
                     </div>
                   ))}
+                  {noteKeyActive === nk && (
+                    <textarea
+                      defaultValue={notes[nk] || ''}
+                      placeholder="写下你对这一条的笔记 / 办案提示…"
+                      onChange={(e) => setNote(nk, e.target.value)}
+                      style={{ marginTop: 10, width: '100%', minHeight: 72, borderRadius: 10, border: `1px solid ${panelBorder}`, padding: '8px 10px', fontSize: 13.5, lineHeight: 1.7, color: textColor, background: darkMode ? '#0b1220' : '#F8FAFC', resize: 'vertical', fontFamily: 'inherit' }}
+                    />
+                  )}
                 </div>
               );
             })}
           </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── 我的收藏 / 笔记视图 ──
+  if (view === 'mine') {
+    const favLaws = (manifest?.laws ?? []).filter((l) => favorites[l.id]);
+    const lawById = new Map((manifest?.laws ?? []).map((l) => [l.id, l]));
+    const noteEntries = Object.entries(notes)
+      .map(([k, text]) => {
+        const idx = k.indexOf('#');
+        const lawId = idx >= 0 ? k.slice(0, idx) : k;
+        const art = idx >= 0 ? k.slice(idx + 1) : '';
+        const law = lawById.get(lawId);
+        return law ? { law, art, text } : null;
+      })
+      .filter((n): n is { law: LawMeta; art: string; text: string } => n !== null);
+    return (
+      <div style={{ padding: '24px 28px 40px', maxWidth: 1080, margin: '0 auto', width: '100%' }}>
+        <button className="dash-action" style={{ marginBottom: 16 }} onClick={() => setView('list')}>
+          <ChevronLeft size={15} /> 返回法规库
+        </button>
+        <div className="dash-hero" style={{ marginBottom: 18 }}>
+          <span className="dash-hero-avatar" style={{ width: 52, height: 52, borderRadius: 14, background: `linear-gradient(135deg,#B45309,#F59E0B)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 8px 20px rgba(245,158,11,.3)' }}>
+            <Star size={26} />
+          </span>
+          <div>
+            <div className="dash-hero-greet">我的收藏 / 笔记</div>
+            <div className="dash-hero-sub">收藏 {favLaws.length} 部 · 条文笔记 {noteEntries.length} 条（本地离线保存）</div>
+          </div>
+        </div>
+
+        {favLaws.length === 0 && noteEntries.length === 0 ? (
+          <div style={{ padding: 60, textAlign: 'center', color: textMuted }}>还没有收藏或笔记。在法规详情页点击「收藏」或为某条点击「加笔记」即可。</div>
+        ) : (
+          <>
+            {favLaws.length > 0 && (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 800, color: textColor, margin: '6px 0 12px' }}>收藏的法规</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 14, marginBottom: 26 }}>
+                  {favLaws.map((l) => (
+                    <div
+                      key={l.id}
+                      className="wb-panel"
+                      style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, cursor: 'pointer', background: panelBg, border: `1px solid ${panelBorder}` }}
+                      onClick={() => { setView('list'); openLaw(l); }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                        <span style={{ width: 40, height: 40, borderRadius: 11, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(37,99,235,.12)', color: BRAND.primaryDark }}>
+                          <BookOpen size={20} />
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: textColor, lineHeight: 1.35 }}>{l.title}</div>
+                          <div style={{ display: 'flex', gap: 6, marginTop: 7, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 999, background: `${BRAND.primaryDark}1f`, color: BRAND.primaryDark, fontWeight: 600 }}>{l.categoryName}</span>
+                            <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 999, background: 'var(--color-surface-hover)', color: textMuted, border: `1px solid ${panelBorder}` }}>{l.articles} 条</span>
+                          </div>
+                        </div>
+                        <button
+                          className="wb-hover-ghost"
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }}
+                          style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', color: BRAND.primary, padding: 4 }}
+                          title="取消收藏"
+                        >
+                          <Star size={18} fill="#F59E0B" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {noteEntries.length > 0 && (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 800, color: textColor, margin: '6px 0 12px' }}>条文笔记</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {noteEntries.map((n, ni) => (
+                    <div
+                      key={ni}
+                      className="wb-panel"
+                      style={{ padding: '12px 16px', background: panelBg, border: `1px solid ${panelBorder}`, cursor: 'pointer' }}
+                      onClick={() => { setView('list'); openLaw(n.law); }}
+                    >
+                      <div style={{ fontSize: 13.5, fontWeight: 800, color: BRAND.primaryDark, marginBottom: 6 }}>{n.law.title} · {n.art}</div>
+                      <div style={{ fontSize: 13.5, lineHeight: 1.7, color: textColor, whiteSpace: 'pre-wrap' }}>{n.text}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         )}
       </div>
     );
@@ -273,7 +425,7 @@ export default function LegalKnowledge() {
           <div className="dash-hero-greet">典法查阅</div>
           <div className="dash-hero-sub">宪法 · 刑事 · 行政 · 公安专项 · 监察 · 两高司法解释，全量官方法条离线检索</div>
         </div>
-        <div className="dash-hero-actions" style={{ flex: '0 0 auto', width: 320, maxWidth: '40vw' }}>
+        <div className="dash-hero-actions" style={{ flex: '0 0 auto', width: 400, maxWidth: '48vw', display: 'flex', gap: 10 }}>
           <Input
             allowClear
             prefix={<Search size={15} />}
@@ -281,6 +433,13 @@ export default function LegalKnowledge() {
             value={kw}
             onChange={(e) => setKw(e.target.value)}
           />
+          <button
+            className="dash-action"
+            style={{ width: 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            onClick={() => setView('mine')}
+          >
+            <Star size={15} /> 我的收藏/笔记{(Object.keys(favorites).length > 0 || Object.keys(notes).length > 0) ? ` (${Object.keys(favorites).length + Object.keys(notes).length})` : ''}
+          </button>
         </div>
       </div>
 
@@ -340,6 +499,14 @@ export default function LegalKnowledge() {
                         <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 999, background: 'var(--color-surface-hover)', color: textMuted, border: `1px solid ${panelBorder}` }}>{l.articles} 条</span>
                       </div>
                     </div>
+                    <button
+                      className="wb-hover-ghost"
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }}
+                      style={{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', color: favorites[l.id] ? BRAND.primary : '#9CA3AF', padding: 4, alignSelf: 'flex-start' }}
+                      title={favorites[l.id] ? '取消收藏' : '收藏'}
+                    >
+                      <Star size={18} fill={favorites[l.id] ? '#F59E0B' : 'none'} />
+                    </button>
                   </div>
                   {l.version && (
                     <div style={{ fontSize: 12.5, color: textMuted, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
