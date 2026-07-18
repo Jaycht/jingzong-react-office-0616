@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.27.2";
+export const APP_VERSION = "V2.27.3";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 27;
-export const VERSION_PATCH = 2;
+export const VERSION_PATCH = 3;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.27.3 =====
+  "V2.27.3 修复 - 文书库行政文书标题按用户确认修正：笔录→勘验 检查 辨认 现场笔录、责令通知书→责令整改 停止通知书、行政处罚决定书（简）→行政处罚决定书，并删除重复的行政处罚决定书（用户源 _25 与 _26 内容重复，保留 _26 为行政处罚决定书），行政文书由 51 份减为 50 份、manifest 总条目 80→79；同时清理误建空壳路径 E:\\e\\Deployment\\WorkBuddy\\jingzong-react-office-0616（此前脚本路径拼错产生，仅空目录无文件）",
   // ===== V2.27.2 =====
   "V2.27.2 修复 - 文书库文档改用用户手动拆分的正确原文件（清单/登记表类表格结构保真、不再变形或分页）：撤销 V2.27.0 用 LibreOffice 拆分、V2.27.1 用 pypdf 重建 docx 的路线（二者分别导致命名错位与表格丢失）；改为直接使用用户目录 D:\\下载\\4202661 中已逐份拆分的 61 份文书（10 份汉字名直接用 + 51 份数字名按内容识别标题重命名），其中 51 份行政文书替换原错位文件、10 份刑事附件(附件1-10)替换旧版本，原 19 份刑事参考模板保留；manifest 据此重建为 80 条（行政 51 / 刑事 29），分类沿用通用/行政/刑事；全程不再依赖 LibreOffice 与 pdfplumber（已卸载清理）",
   // ===== V2.27.1 =====
