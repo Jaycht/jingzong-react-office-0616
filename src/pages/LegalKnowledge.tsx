@@ -16,6 +16,7 @@ interface LawMeta {
   version: string;
   effectiveDate: string;
   articles: number;
+  pending?: boolean;
   timeline?: { date: string; label: string }[];
 }
 interface Manifest {
@@ -143,8 +144,15 @@ export default function LegalKnowledge() {
   const openLaw = (law: LawMeta) => {
     setSelected(law);
     setArticleQ('');
-    setLawLoading(true);
     setLawText('');
+    setShowTimeline(false);
+    if (law.pending) {
+      // 原文待补充：不抓取 .md，直接展示占位详情
+      setLawLoading(false);
+      window.scrollTo({ top: 0 });
+      return;
+    }
+    setLawLoading(true);
     fetch(assetUrl('laws/' + law.file + '.md'))
       .then((r) => { if (!r.ok) throw new Error('法条读取失败 ' + r.status); return r.text(); })
       .then((t) => setLawText(t))
@@ -179,6 +187,67 @@ export default function LegalKnowledge() {
   const panelBorder = darkMode ? 'rgba(163,201,255,0.1)' : '#EAEFF5';
   const textColor = darkMode ? '#E6EAF2' : '#1F2937';
   const textMuted = darkMode ? '#8A94A6' : '#6B7280';
+
+  // ── 待补充原文详情视图（pending） ──
+  if (selected && selected.pending) {
+    return (
+      <div style={{ padding: '24px 28px 40px', maxWidth: 1080, margin: '0 auto', width: '100%' }}>
+        <button className="dash-action" style={{ marginBottom: 16 }} onClick={() => setSelected(null)}>
+          <ChevronLeft size={15} /> 返回法规库
+        </button>
+        <div className="dash-hero" style={{ marginBottom: 16 }}>
+          <span className="dash-hero-avatar" style={{ width: 52, height: 52, borderRadius: 14, background: `linear-gradient(135deg,${BRAND.primaryDark},${BRAND.primaryLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 8px 20px rgba(37,99,235,.3)' }}>
+            <Scale size={26} />
+          </span>
+          <div>
+            <div className="dash-hero-greet">{selected.title}</div>
+            <div className="dash-hero-sub">{selected.categoryName} · 原文待补充</div>
+          </div>
+          <span className="dash-action" style={{ marginLeft: 'auto', display: 'inline-flex', width: 'auto', flexShrink: 0, background: '#FEF3C7', color: '#B45309', borderColor: '#FDE68A' }}>
+            <ScrollText size={15} /> 待补充
+          </span>
+        </div>
+
+        <div className="wb-panel" style={{ padding: 16, marginBottom: 16, background: panelBg, border: `1px solid ${panelBorder}` }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 22px', fontSize: 13, color: textMuted }}>
+            {selected.source && <span><b style={{ color: textColor }}>来源：</b>{selected.source}</span>}
+            {selected.version && <span><b style={{ color: textColor }}>版本：</b>{selected.version}</span>}
+            {selected.effectiveDate && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><CalendarClock size={13} /> 施行：{selected.effectiveDate}</span>}
+          </div>
+          {selected.sourceUrl && (
+            <a href={selected.sourceUrl} target="_blank" rel="noopener noreferrer" className="dash-action" style={{ marginTop: 12, display: 'inline-flex', width: 'auto' }}>
+              <ExternalLink size={14} /> 查看官方原文
+            </a>
+          )}
+        </div>
+
+        {selected.timeline && selected.timeline.length > 0 && (
+          <div className="wb-panel" style={{ padding: 16, marginBottom: 16, background: panelBg, border: `1px solid ${panelBorder}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, color: BRAND.primaryDark, fontSize: 14 }}>
+              <CalendarClock size={15} /> 立法 / 修正时间轴（{selected.timeline.length}）
+            </div>
+            <div style={{ marginTop: 14, borderLeft: `2px solid ${BRAND.primaryLight}`, marginLeft: 6, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {selected.timeline.map((t, i) => (
+                <div key={i} style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: -24, top: 4, width: 11, height: 11, borderRadius: '50%', background: BRAND.primary, boxShadow: `0 0 0 3px ${panelBg}` }} />
+                  <div style={{ fontSize: 12.5, color: BRAND.primaryDark, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{t.date}</div>
+                  <div style={{ fontSize: 13, color: textColor, lineHeight: 1.65 }}>{t.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="wb-panel" style={{ padding: 24, marginBottom: 16, background: panelBg, border: `1px solid ${panelBorder}`, textAlign: 'center' }}>
+          <ScrollText size={30} color={textMuted} />
+          <div style={{ marginTop: 12, fontSize: 15, fontWeight: 800, color: textColor }}>本法原文待补充</div>
+          <div style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.8, color: textMuted, maxWidth: 580, margin: '8px auto 0' }}>
+            当前暂未收录逐字核对的官方全文（来源站点不可机器抓取，无法保证保真）。如需纳入，请提供可访问的官方源或原文文本，开发侧将把 .md 放入 <code style={{ background: 'var(--color-surface-hover)', padding: '1px 5px', borderRadius: 5 }}>public/laws/指导性文件/</code> 并取消「待补充」标记，即可在应用内阅读全文。
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ── 法条详情视图 ──
   if (selected && parsed) {
@@ -423,7 +492,7 @@ export default function LegalKnowledge() {
         </span>
         <div>
           <div className="dash-hero-greet">典法查阅</div>
-          <div className="dash-hero-sub">宪法 · 刑事 · 行政 · 公安专项 · 监察 · 两高司法解释，全量官方法条离线检索</div>
+          <div className="dash-hero-sub">宪法 · 刑事 · 行政 · 公安专项 · 监察 · 两高司法解释 · 指导性文件，全量官方法条离线检索</div>
         </div>
         <div className="dash-hero-actions" style={{ flex: '0 0 auto', width: 400, maxWidth: '48vw', display: 'flex', gap: 10 }}>
           <Input

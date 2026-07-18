@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-07-18",
-  "totalLaws": 26,
+  "totalLaws": 27,
   "categories": [
     {
       "id": "根本法",
@@ -41,6 +41,11 @@
       "id": "司法解释",
       "name": "司法解释",
       "count": 15
+    },
+    {
+      "id": "指导性文件",
+      "name": "指导性文件",
+      "count": 1
     }
   ],
   "laws": [
@@ -725,6 +730,25 @@
       {
         "date": "2016-12-01",
         "label": "施行（现行有效）"
+      }
+    ]
+  },
+  {
+    "id": "指导性文件/关于办理黑恶势力犯罪案件若干问题的指导意见",
+    "title": "关于办理黑恶势力犯罪案件若干问题的指导意见",
+    "category": "指导性文件",
+    "categoryName": "指导性文件",
+    "file": "指导性文件/关于办理黑恶势力犯罪案件若干问题的指导意见",
+    "source": "最高人民法院、最高人民检察院、公安部、司法部（制定机关）",
+    "sourceUrl": "http://jldffy.e-court.gov.cn/article/detail/2018/12/id/3596406.shtml",
+    "version": "法发〔2018〕1号，2018年1月16日印发，现行有效",
+    "effectiveDate": "",
+    "articles": 0,
+    "pending": true,
+    "timeline": [
+      {
+        "date": "2018-01-16",
+        "label": "印发（法发〔2018〕1号，最高人民法院、最高人民检察院、公安部、司法部）"
       }
     ]
   }
