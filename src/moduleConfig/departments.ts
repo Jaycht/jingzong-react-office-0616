@@ -4,7 +4,7 @@ import {
   FileSearch, FileText, FolderKanban, Gavel, Handshake, Inbox, Landmark, LayoutDashboard,
   LayoutGrid, ListChecks, LockKeyhole, MapPinned, Megaphone, MessageSquareText, Network,
   Package, Radar, ScrollText, SearchCheck, Settings, Smartphone, Snowflake,
-  StickyNote, TableProperties, Target, Users, WalletCards, Waypoints, Workflow, LineChart
+  StickyNote, TableProperties, Target, Users, WalletCards, Waypoints, Workflow, LineChart, Scale
 } from 'lucide-react';
 
 import type { NavDepartment } from './types';
@@ -80,6 +80,7 @@ export const PLATFORM_NAV = {
     { id: 'linkage', label: '串并案分析', icon: Waypoints },
     { id: 'dailyNotes', label: '日常随手记', icon: StickyNote },
     { id: 'legalForms', label: '文书库', icon: Gavel },
+    { id: 'legalKnowledge', label: '典法查阅', icon: Scale },
   ],
   data: [
     { id: 'systemSettings', label: '系统设置', icon: Settings },

@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.27.3";
+export const APP_VERSION = "V2.28.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 27;
-export const VERSION_PATCH = 3;
+export const VERSION_MINOR = 28;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.28.0 =====
+  "V2.28.0 新增 - 典法查阅模块：纯离线官方法规库，内置宪法(2018修正·143条)、刑法(含修正案十二·2024-03-01施行·452条)、治安管理处罚法(2025-06-27修订·2026-01-01施行·144条)及刑事诉讼法、监察法、公安机关办理刑事案件程序规定、两高司法解释等共 19 部/8 类，覆盖公安常用法律全谱系；以 public/laws/manifest.json + public/laws/<分类>/<法名>.md 静态资源随 dist 发布，全部条款标注官方来源与原文链接；页面含分类侧栏+卡片网格+KPI(部数/分类/法条数/司法解释件数)、本法内法条搜索高亮、查看官方原文外链、编章分节展示，与工作台风/文书库设计语言统一",
   // ===== V2.27.3 =====
   "V2.27.3 修复 - 文书库行政文书标题按用户确认修正：笔录→勘验 检查 辨认 现场笔录、责令通知书→责令整改 停止通知书、行政处罚决定书（简）→行政处罚决定书，并删除重复的行政处罚决定书（用户源 _25 与 _26 内容重复，保留 _26 为行政处罚决定书），行政文书由 51 份减为 50 份、manifest 总条目 80→79；同时清理误建空壳路径 E:\\e\\Deployment\\WorkBuddy\\jingzong-react-office-0616（此前脚本路径拼错产生，仅空目录无文件）",
   // ===== V2.27.2 =====

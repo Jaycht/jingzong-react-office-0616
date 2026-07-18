@@ -1,0 +1,276 @@
+{
+  "generatedAt": "2026-07-18",
+  "totalLaws": 19,
+  "categories": [
+    {
+      "id": "根本法",
+      "name": "宪法·根本法",
+      "count": 1
+    },
+    {
+      "id": "刑事",
+      "name": "刑事法律",
+      "count": 2
+    },
+    {
+      "id": "行政治安",
+      "name": "治安管理处罚法",
+      "count": 1
+    },
+    {
+      "id": "行政法律",
+      "name": "行政法律",
+      "count": 4
+    },
+    {
+      "id": "公安专项",
+      "name": "公安专项法律",
+      "count": 1
+    },
+    {
+      "id": "国家赔偿",
+      "name": "国家赔偿",
+      "count": 1
+    },
+    {
+      "id": "监察",
+      "name": "监察法",
+      "count": 1
+    },
+    {
+      "id": "司法解释",
+      "name": "司法解释",
+      "count": 8
+    }
+  ],
+  "laws": [
+    {
+      "id": "公安专项/中华人民共和国人民警察法",
+      "title": "中华人民共和国人民警察法",
+      "category": "公安专项",
+      "categoryName": "公安专项法律",
+      "file": "公安专项/中华人民共和国人民警察法.md",
+      "source": "衡阳市人民检察院（官方转载，制定机关：全国人大常委会）",
+      "sourceUrl": "https://www.hengyang.jcy.gov.cn/ycyw1/fgwj/202312/P020231215499452341460.pdf",
+      "version": "1995年通过，2012年修正，现行有效",
+      "effectiveDate": "",
+      "articles": 52
+    },
+    {
+      "id": "刑事/刑事诉讼法",
+      "title": "刑事诉讼法",
+      "category": "刑事",
+      "categoryName": "刑事法律",
+      "file": "刑事/刑事诉讼法.md",
+      "source": "中华人民共和国最高人民检察院（新华网发布）",
+      "sourceUrl": "https://www.spp.gov.cn/zdgz/201810/t20181027_396818.shtml",
+      "version": "2018年修正（现行有效）",
+      "effectiveDate": "",
+      "articles": 308
+    },
+    {
+      "id": "刑事/刑法",
+      "title": "刑法",
+      "category": "刑事",
+      "categoryName": "刑事法律",
+      "file": "刑事/刑法.md",
+      "source": "国家法律法规数据库（综合《刑法修正案（十二）》中国政府网公报）",
+      "sourceUrl": "https://www.gov.cn/yaowen/liebiao/202312/content_6923386.htm",
+      "version": "1979年通过，1997年修订，历经十二次修正至《刑法修正案（十二）》（2024年3月1日施行），现行有效，共452条",
+      "effectiveDate": "2024-03-01",
+      "articles": 452
+    },
+    {
+      "id": "司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释",
+      "title": "最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释",
+      "category": "司法解释",
+      "categoryName": "司法解释",
+      "file": "司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释.md",
+      "source": "最高人民法院（官方）",
+      "sourceUrl": "https://www.court.gov.cn/zixun/xiangqing/428482.html",
+      "version": "法释〔2024〕4号，2024年3月20日起施行，现行有效（含虚开增值税专用发票等）",
+      "effectiveDate": "2024-03-20",
+      "articles": 22
+    },
+    {
+      "id": "司法解释/最高人民法院、最高人民检察院关于办理掩饰、隐瞒犯罪所得、犯罪所得收益刑事案件适用法律若干问题的解释",
+      "title": "最高人民法院、最高人民检察院关于办理掩饰、隐瞒犯罪所得、犯罪所得收益刑事案件适用法律若干问题的解释",
+      "category": "司法解释",
+      "categoryName": "司法解释",
+      "file": "司法解释/最高人民法院、最高人民检察院关于办理掩饰、隐瞒犯罪所得、犯罪所得收益刑事案件适用法律若干问题的解释.md",
+      "source": "最高人民法院公报（官方）",
+      "sourceUrl": "http://gongbao.court.gov.cn/Details/a7d9d5f0849977db53ac8b872b5066.html",
+      "version": "法释〔2025〕13号，2025年8月26日起施行，现行有效（最新修正）",
+      "effectiveDate": "2025-08-26",
+      "articles": 12
+    },
+    {
+      "id": "司法解释/最高人民法院、最高人民检察院关于办理盗窃刑事案件适用法律若干问题的解释",
+      "title": "最高人民法院、最高人民检察院关于办理盗窃刑事案件适用法律若干问题的解释",
+      "category": "司法解释",
+      "categoryName": "司法解释",
+      "file": "司法解释/最高人民法院、最高人民检察院关于办理盗窃刑事案件适用法律若干问题的解释.md",
+      "source": "最高人民检察院（官方）",
+      "sourceUrl": "https://www.spp.gov.cn/zdgz/201304/t20130403_57894.shtml",
+      "version": "法释〔2013〕8号，2013年4月4日起施行，现行有效",
+      "effectiveDate": "2013-04-04",
+      "articles": 15
+    },
+    {
+      "id": "司法解释/最高人民法院、最高人民检察院关于办理诈骗刑事案件具体应用法律若干问题的解释",
+      "title": "最高人民法院、最高人民检察院关于办理诈骗刑事案件具体应用法律若干问题的解释",
+      "category": "司法解释",
+      "categoryName": "司法解释",
+      "file": "司法解释/最高人民法院、最高人民检察院关于办理诈骗刑事案件具体应用法律若干问题的解释.md",
+      "source": "江西法院网（官方）",
+      "sourceUrl": "https://afxfy.jxfy.gov.cn/article/detail/2011/04/id/1961889.shtml",
+      "version": "法释〔2011〕7号，2011年4月8日起施行，现行有效",
+      "effectiveDate": "2011-04-08",
+      "articles": 11
+    },
+    {
+      "id": "司法解释/最高人民法院、最高人民检察院关于办理贪污贿赂刑事案件适用法律若干问题的解释",
+      "title": "最高人民法院、最高人民检察院关于办理贪污贿赂刑事案件适用法律若干问题的解释",
+      "category": "司法解释",
+      "categoryName": "司法解释",
+      "file": "司法解释/最高人民法院、最高人民检察院关于办理贪污贿赂刑事案件适用法律若干问题的解释.md",
+      "source": "最高人民检察院（官方）",
+      "sourceUrl": "http://www.spp.gov.cn/zdgz/201604/t20160418_116334.shtml",
+      "version": "法释〔2016〕9号，2016年4月18日起施行，现行有效",
+      "effectiveDate": "2016-04-18",
+      "articles": 20
+    },
+    {
+      "id": "司法解释/最高人民法院、最高人民检察院关于办理非法集资刑事案件具体应用法律若干问题的解释",
+      "title": "最高人民法院、最高人民检察院关于办理非法集资刑事案件具体应用法律若干问题的解释",
+      "category": "司法解释",
+      "categoryName": "司法解释",
+      "file": "司法解释/最高人民法院、最高人民检察院关于办理非法集资刑事案件具体应用法律若干问题的解释.md",
+      "source": "最高人民法院（官方）",
+      "sourceUrl": "https://www.court.gov.cn/fabu/xiangqing/346901.html",
+      "version": "法释〔2022〕5号，2022年3月1日起施行，现行有效",
+      "effectiveDate": "2022-03-01",
+      "articles": 15
+    },
+    {
+      "id": "司法解释/最高人民法院关于审理毒品犯罪案件适用法律若干问题的解释",
+      "title": "最高人民法院关于审理毒品犯罪案件适用法律若干问题的解释",
+      "category": "司法解释",
+      "categoryName": "司法解释",
+      "file": "司法解释/最高人民法院关于审理毒品犯罪案件适用法律若干问题的解释.md",
+      "source": "最高人民法院（官方）",
+      "sourceUrl": "https://www.court.gov.cn/fabu/xiangqing/19122.html",
+      "version": "法释〔2016〕8号，2016年4月11日起施行，现行有效",
+      "effectiveDate": "2016-04-11",
+      "articles": 15
+    },
+    {
+      "id": "司法解释/最高人民法院关于适用《中华人民共和国刑事诉讼法》的解释",
+      "title": "最高人民法院关于适用《中华人民共和国刑事诉讼法》的解释",
+      "category": "司法解释",
+      "categoryName": "司法解释",
+      "file": "司法解释/最高人民法院关于适用《中华人民共和国刑事诉讼法》的解释.md",
+      "source": "最高人民法院（权威发布）",
+      "sourceUrl": "https://www.court.gov.cn/fabu/xiangqing/286491.html",
+      "version": "法释〔2021〕1号，2021年3月1日施行（共27章655条）",
+      "effectiveDate": "2021-03-01",
+      "articles": 655
+    },
+    {
+      "id": "国家赔偿/中华人民共和国国家赔偿法",
+      "title": "中华人民共和国国家赔偿法",
+      "category": "国家赔偿",
+      "categoryName": "国家赔偿",
+      "file": "国家赔偿/中华人民共和国国家赔偿法.md",
+      "source": "中央纪委国家监委驻生态环境部纪检监察组（来源：全国人大常委会）",
+      "sourceUrl": "https://jjjcz.mee.gov.cn/djfg/gjflfg/fl/201210/t20121001_444462.html",
+      "version": "1994年通过，2010年、2012年两次修正，现行有效",
+      "effectiveDate": "",
+      "articles": 42
+    },
+    {
+      "id": "根本法/宪法",
+      "title": "宪法",
+      "category": "根本法",
+      "categoryName": "宪法·根本法",
+      "file": "根本法/宪法.md",
+      "source": "江苏省自然资源厅（政府网站转载，制定机关：全国人民代表大会）",
+      "sourceUrl": "https://zrzy.jiangsu.gov.cn/xwzx/ztjc/gjxfr/flfg/2025/11/28193006175376.html",
+      "version": "2018年3月11日修正（现行有效），共143条",
+      "effectiveDate": "",
+      "articles": 143
+    },
+    {
+      "id": "监察/中华人民共和国监察法",
+      "title": "中华人民共和国监察法",
+      "category": "监察",
+      "categoryName": "监察法",
+      "file": "监察/中华人民共和国监察法.md",
+      "source": "阳江市公安局江城分局政府信息公开（现行有效）",
+      "sourceUrl": "https://www.jiangcheng.gov.cn/yjjcgaj/gkmlpt/content/0/955/post_955263.html",
+      "version": "2018年通过，2024年修正，2025年6月1日施行",
+      "effectiveDate": "2025-06-01",
+      "articles": 78
+    },
+    {
+      "id": "行政治安/治安管理处罚法",
+      "title": "治安管理处罚法",
+      "category": "行政治安",
+      "categoryName": "治安管理处罚法",
+      "file": "行政治安/治安管理处罚法.md",
+      "source": "深圳市公安局南山分局（政府网站，制定机关：全国人民代表大会常务委员会，主席令第四十九号）",
+      "sourceUrl": "https://www.szns.gov.cn/nsnsgafj/gkmlpt/content/12/12854/mpost_12854926.html",
+      "version": "2025年6月27日修订通过，2026年1月1日施行（现行有效），共144条",
+      "effectiveDate": "2026-01-01",
+      "articles": 144
+    },
+    {
+      "id": "行政法律/行政处罚法",
+      "title": "行政处罚法",
+      "category": "行政法律",
+      "categoryName": "行政法律",
+      "file": "行政法律/行政处罚法.md",
+      "source": "江苏省自然资源厅（政府网站）",
+      "sourceUrl": "https://zrzy.jiangsu.gov.cn/xwzx/ztjc/gjxfr/flfg/2025/11/28191557398587.html",
+      "version": "2021年修订，现行有效",
+      "effectiveDate": "",
+      "articles": 86
+    },
+    {
+      "id": "行政法律/行政复议法",
+      "title": "行政复议法",
+      "category": "行政法律",
+      "categoryName": "行政法律",
+      "file": "行政法律/行政复议法.md",
+      "source": "中国人大网（全国人大常委会）",
+      "sourceUrl": "http://www.npc.gov.cn/c2/c30834/202309/t20230901_431409.html",
+      "version": "2023年修订，现行有效",
+      "effectiveDate": "",
+      "articles": 90
+    },
+    {
+      "id": "行政法律/行政强制法",
+      "title": "行政强制法",
+      "category": "行政法律",
+      "categoryName": "行政法律",
+      "file": "行政法律/行政强制法.md",
+      "source": "最高人民法院（新华网受权播发）",
+      "sourceUrl": "https://www.court.gov.cn/zixun/xiangqing/2888.html",
+      "version": "2011年通过，现行有效",
+      "effectiveDate": "",
+      "articles": 71
+    },
+    {
+      "id": "行政法律/行政诉讼法",
+      "title": "行政诉讼法",
+      "category": "行政法律",
+      "categoryName": "行政法律",
+      "file": "行政法律/行政诉讼法.md",
+      "source": "中国政府网（国务院）",
+      "sourceUrl": "https://www.gov.cn/xinwen/2017-07/05/content_5243206.htm",
+      "version": "2017年修正，现行有效",
+      "effectiveDate": "",
+      "articles": 103
+    }
+  ]
+}
