@@ -2,6 +2,21 @@ import type { FieldDefinition } from '../types';
 import { f, commonTail, section } from '../fieldHelpers';
 import { CASE_TYPES_FULL, CASE_TYPES_BASIC } from '../caseTypes';
 
+// 调证登记首段：案件调证 / 线索调证 两套字段（由 DrawerNewRecord 按 requestMode 切换）
+// 默认（列表/报表/其它消费方）使用案件调证版，保持向后兼容
+export const REQUEST_CASE_INFO: FieldDefinition[] = [
+  f('caseNo', '案件编号'),
+  f('caseName', '案件名称', 'text', false),
+  f('caseSource', '案件来源', 'select', false, ['群众报案', '举报', '上级交办', '部门移送', '工作发现', '自首']),
+  f('caseType', '案件类型', 'select', false, CASE_TYPES_FULL, 'evidence.request.caseType'),
+];
+export const REQUEST_CLUE_INFO: FieldDefinition[] = [
+  f('clueNo', '线索编号', 'text', true),
+  f('clueName', '线索名称', 'text', false),
+  f('clueSource', '线索来源'),
+  f('clueType', '线索类型', 'select', false, CASE_TYPES_FULL, 'evidence.request.clueType'),
+];
+
 export function evidenceFields(moduleId: string, _tab: string): FieldDefinition[] | undefined {
   if (moduleId === 'evidence-clue') {
     return [
@@ -18,12 +33,9 @@ export function evidenceFields(moduleId: string, _tab: string): FieldDefinition[
 
   if (moduleId === 'evidence-request') {
     return [
-      // 第一阶段：线索/案件信息
+      // 第一阶段：线索/案件信息（案件调证默认；线索调证由 DrawerNewRecord 切换首段字段）
       section('线索/案件信息'),
-      f('caseNo', '案件编号'),
-      f('caseName', '案件名称', 'text', false),
-      f('caseSource', '案件来源', 'select', false, ['群众报案', '举报', '上级交办', '部门移送', '工作发现', '自首']),
-      f('caseType', '案件类型', 'select', false, CASE_TYPES_FULL, 'evidence.request.caseType'),
+      ...REQUEST_CASE_INFO,
 
       // 第二阶段：调证信息（可重复添加多条）
       section('调证信息', true, 'requestItems'),

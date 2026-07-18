@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button, DatePicker, Form, Input, InputNumber,
-  Modal, Select, Space, Upload,
+  Modal, Segmented, Select, Space, Upload,
   type FormInstance, type UploadFile,
 } from 'antd';
 import dayjs from 'dayjs';
@@ -10,6 +10,7 @@ import { InboxOutlined, PlusOutlined, LeftOutlined, RightOutlined } from '@ant-d
 import { useUnsavedChanges } from '../utils/useUnsavedChanges';
 import { useAppStore } from '../store/appStore';
 import { findModule, filterVisibleFields, type FieldDefinition } from '../moduleConfig';
+import { REQUEST_CASE_INFO, REQUEST_CLUE_INFO } from '../moduleConfig/fields/evidence';
 import { useCustomModules } from '../customModules';
 import { saveMassRecord, updateMassRecord, getMassRecords } from '../store/massStore';
 import ErrorBoundary from './ErrorBoundary';
@@ -49,6 +50,10 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   const [isDirty, setIsDirty] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [formKey, setFormKey] = useState(0);
+  // 调证登记：案件调证 / 线索调证 模式（仅 evidence-request 生效）
+  const [requestMode, setRequestMode] = useState<'case' | 'clue'>(() =>
+    editRecord?.data?.clueNo ? 'clue' : 'case'
+  );
   const [form] = Form.useForm();
   // 组件挂载跟踪，防止卸载后 setState
   const mountedRef = useRef(true);
@@ -61,7 +66,18 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
   const selectedModule = findModule(selectedModuleId, allModules) || allModules[0];
   const selectedTab = selectedModule?.tabs.find((tab) => tab.id === selectedTabId) || selectedModule?.tabs[0];
-  const allFields = useMemo(() => filterVisibleFields(selectedTab?.fields ?? [], userRole), [selectedTab, userRole]);
+  const allFields = useMemo(() => {
+    const base = filterVisibleFields(selectedTab?.fields ?? [], userRole);
+    if (selectedModuleId !== 'evidence-request') return base;
+    // 按调证模式替换首段（线索/案件信息）字段
+    const firstIdx = base.findIndex((f) => f.type === 'section');
+    if (firstIdx === -1) return base;
+    const nextIdx = base.findIndex((f, i) => i > firstIdx && f.type === 'section');
+    const before = base.slice(0, firstIdx + 1);
+    const after = nextIdx === -1 ? [] : base.slice(nextIdx);
+    const info = requestMode === 'clue' ? REQUEST_CLUE_INFO : REQUEST_CASE_INFO;
+    return [...before, ...info, ...after];
+  }, [selectedTab, userRole, selectedModuleId, requestMode]);
 
   // Build steps from section fields
   const steps = useMemo(() => {
@@ -88,6 +104,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   // flatMode：基本信息 + 一个 repeatable section 不分步，内容同时渲染在同一页
   // 排除中队案件管理（squad-case），它需要明确的步骤1/步骤2分隔
   const isSquadCase = currentPage === 'squad-case';
+  const isEvidenceRequest = selectedModuleId === 'evidence-request';
   const flatMode = steps.length === 2 && steps[1].repeatable && !isSquadCase;
   const hasSections = flatMode ? false : steps.length > 1;
   const totalSteps = steps.length;
@@ -117,7 +134,22 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     setSelectedTabId(nextModule?.tabs[0]?.id || '');
     form.resetFields();
     safeSetDirty(false);
+    setRequestMode('case');
     setCurrentStep(0);
+  };
+
+  // 调证登记：案件调证 / 线索调证 切换
+  const handleModeChange = (mode: 'case' | 'clue') => {
+    if (mode === requestMode) return;
+    const clearKeys = mode === 'clue'
+      ? ['caseNo', 'caseName', 'caseSource', 'caseType']
+      : ['clueNo', 'clueName', 'clueSource', 'clueType'];
+    const patch: Record<string, unknown> = {};
+    for (const k of clearKeys) patch[k] = undefined;
+    if (mode === 'clue') patch.clueNo = 'XS-'; // 线索编号默认带 XS- 前缀
+    form.setFieldsValue(patch);
+    setRequestMode(mode);
+    safeSetDirty(true);
   };
 
   const handleSubmit = async (keepOpen = false) => {
@@ -521,7 +553,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                 </Form.Item>
                 {showTemplateSelector && (
                   <Form.Item label="记录模板" style={{ marginBottom: 0 }}>
-                    <Select value={selectedTabId} onChange={(value) => { setSelectedTabId(value); form.resetFields(); setCurrentStep(0); }} style={{ width: 220 }}>
+                    <Select value={selectedTabId} onChange={(value) => { setSelectedTabId(value); form.resetFields(); setRequestMode('case'); setCurrentStep(0); }} style={{ width: 220 }}>
                       {selectedModule?.tabs.map((tab) => (
                         <Select.Option key={tab.id} value={tab.id}>{tab.label}</Select.Option>
                       ))}
@@ -599,6 +631,22 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                       <div
                         style={{ opacity: isVisible ? 1 : 0, transition: 'opacity 0.15s' }}
                       >
+                      {si === 0 && isEvidenceRequest && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, padding: '12px 16px', background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', borderRadius: 8 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>调证类型</span>
+                          <Segmented
+                            value={requestMode}
+                            onChange={(v) => handleModeChange(v as 'case' | 'clue')}
+                            options={[
+                              { label: '案件调证', value: 'case' },
+                              { label: '线索调证', value: 'clue' },
+                            ]}
+                          />
+                          <span style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
+                            {requestMode === 'clue' ? '按线索登记调证，编号自动以 XS- 开头' : '按案件登记调证'}
+                          </span>
+                        </div>
+                      )}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14 }}>
                       {step.fields.map((field) => (
                         <div
@@ -611,7 +659,26 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
                                 : { gridColumn: 'span 3' })
                           }
                         >
-                          <DynamicField field={field} moduleId={selectedModuleId} form={form} pendingAttachments={pendingAttachments} editRecord={editRecord} />
+                          {field.id === 'clueNo' && requestMode === 'clue' ? (
+                            <Form.Item
+                              label="线索编号"
+                              required
+                              name="clueNo"
+                              initialValue="XS-"
+                              style={{ marginBottom: 0 }}
+                              rules={[{ pattern: /^XS-\d+$/, message: '请输入 XS- 后跟数字，例如 XS-001' }]}
+                            >
+                              <Input
+                                placeholder="XS- 后填写数字"
+                                onChange={(e) => {
+                                  const digits = e.target.value.replace(/^XS-/, '').replace(/[^0-9]/g, '');
+                                  form.setFieldsValue({ clueNo: 'XS-' + digits });
+                                }}
+                              />
+                            </Form.Item>
+                          ) : (
+                            <DynamicField field={field} moduleId={selectedModuleId} form={form} pendingAttachments={pendingAttachments} editRecord={editRecord} />
+                          )}
                         </div>
                       ))}
                     </div>

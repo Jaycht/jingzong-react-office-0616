@@ -305,21 +305,37 @@ export default function ModulePage() {
   const dynamicColumns = useMemo<ColumnsType<DynamicRow>>(() => {
     const base: ColumnsType<DynamicRow> = [
       { title: '编号', dataIndex: 'code', ...(printing ? {} : { width: 60, fixed: 'left' as const }), sorter: (a: DynamicRow, b: DynamicRow) => Number(a.code) - Number(b.code) },
-      ...dataFields.map((f) => ({
-        title: f.label,
-        dataIndex: f.id,
-        ...(printing ? {} : { width: 120, ellipsis: true }),
-        sorter: (a: DynamicRow, b: DynamicRow) => {
-          const va = a[f.id];
-          const vb = b[f.id];
-          if (va == null && vb == null) return 0;
-          if (va == null) return -1;
-          if (vb == null) return 1;
-          if (f.type === 'number') return Number(va) - Number(vb);
-          return String(va).localeCompare(String(vb));
-        },
-        defaultSortOrder: f.type === 'date' ? ('descend' as const) : undefined,
-      })),
+      ...dataFields.map((f) => {
+        // 调证登记：案件/线索调证共用列表列，按记录实际取值在 case*/clue* 间回退，避免线索记录空白
+        const isRequestInfo = module.id === 'evidence-request' && ['caseNo', 'caseName', 'caseSource', 'caseType'].includes(f.id);
+        const neutralTitle = isRequestInfo
+          ? ({ caseNo: '编号', caseName: '名称', caseSource: '来源', caseType: '类型' } as Record<string, string>)[f.id]
+          : f.label;
+        return {
+          title: neutralTitle,
+          dataIndex: f.id,
+          ...(printing ? {} : { width: 120, ellipsis: true }),
+          render: isRequestInfo
+            ? (_v: unknown, record: DynamicRow) => {
+                const main = (record as Record<string, unknown>)[f.id];
+                if (main != null && main !== '') return String(main);
+                const clueKey = 'clue' + f.id.slice(4);
+                const alt = (record as Record<string, unknown>)[clueKey];
+                return alt != null && alt !== '' ? String(alt) : '';
+              }
+            : undefined,
+          sorter: (a: DynamicRow, b: DynamicRow) => {
+            const va = a[f.id];
+            const vb = b[f.id];
+            if (va == null && vb == null) return 0;
+            if (va == null) return -1;
+            if (vb == null) return 1;
+            if (f.type === 'number') return Number(va) - Number(vb);
+            return String(va).localeCompare(String(vb));
+          },
+          defaultSortOrder: f.type === 'date' ? ('descend' as const) : undefined,
+        };
+      }),
       ...(module.departmentId === 'office'
         ? [{ title: '经办人' as const, dataIndex: '_handler' as const, ...(printing ? {} : { width: 80, ellipsis: true }),
             sorter: (a: DynamicRow, b: DynamicRow) => a._handler.localeCompare(b._handler) }]
