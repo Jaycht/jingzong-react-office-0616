@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.30.0";
+export const APP_VERSION = "V2.30.1";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 30;
-export const VERSION_PATCH = 0;
+export const VERSION_PATCH = 1;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.30.1 =====
+  "V2.30.1 修复 - 典法查阅打开法条全部报错「未找到匹配的法条」：根因为 Vite 8 开发服务器对「中文文件名」的静态文件请求一律回退到 SPA 首页(index.html)，fetch 取到的是 HTML 而非法条文本，parseLaw 解析不出任何条文；生产版( Electron 读本地文件)不受影响，仅 dev 测不出。修复方式为法条文本不再经 HTTP 静态获取，改为构建期 import.meta.glob('?raw') 随包内联( dev/prod 一致、中文文件名无碍)，manifest 仍走静态 JSON；同时将法规文件扩展名由 .md 改为 .txt（解析逻辑与扩展名无关，dev/prod 均可正常服务）。另按内网离线需求，移除详情页与待补充视图中的「查看官方原文」外链按钮(无法访问互联网)，保留来源/版本/施行日期等离线可读信息",
   // ===== V2.30.0 =====
   "V2.30.0 新增 - 典法查阅新增「指导性文件」分类并占位收录《关于办理黑恶势力犯罪案件若干问题的指导意见》（法发〔2018〕1号）：该文为最高人民法院、最高人民检察院、公安部、司法部两高两部联合发文，非严格两高司法解释；因官方源（e-court 网页 / 昆明五华区检察院 PDF）WebFetch 均无法逐字提取，为保证法规保真（「来源必须官方、逐字核对」铁律）暂不收录原文，仅占位并标记 pending。LegalKnowledge 新增 pending 详情视图：展示制定机关/版本/立法时间轴/官方原文外链，并提示「原文待补充」与后续补全方式（提供可访问官方源或原文文本即可放入 public/laws/指导性文件/ 并取消标记）；法规库总条目 26→27 部、分类 8→9 类",
   // ===== V2.29.0 =====

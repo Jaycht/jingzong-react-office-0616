@@ -34,6 +34,13 @@ type Block = ArticleBlock | SectionBlock | IntroBlock;
 const base = import.meta.env.BASE_URL || '/';
 const assetUrl = (file: string) => base + file.replace(/^\//, '');
 
+// 离线打包：法条文本随构建内联（?raw），避免 dev/prod 静态服务对「中文文件名」路径处理不一致导致取不到文件
+const lawTextModules = import.meta.glob('../../public/laws/**/*.txt', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+
 const ART_RE = /^第([一二三四五六七八九十百零〇两]+)条(之一)?[　 \t]*(.*)$/;
 const SECTION_RE = /^第([一二三四五六七八九十百零〇两]+)(编|章)[　 \t]*(.*)$/;
 
@@ -146,20 +153,22 @@ export default function LegalKnowledge() {
     setArticleQ('');
     setLawText('');
     setShowTimeline(false);
+    // 返回列表时滚动到顶部
+    window.scrollTo({ top: 0 });
     if (law.pending) {
-      // 原文待补充：不抓取 .md，直接展示占位详情
+      // 原文待补充：直接展示占位详情
       setLawLoading(false);
-      window.scrollTo({ top: 0 });
       return;
     }
     setLawLoading(true);
-    fetch(assetUrl('laws/' + law.file + '.md'))
-      .then((r) => { if (!r.ok) throw new Error('法条读取失败 ' + r.status); return r.text(); })
-      .then((t) => setLawText(t))
-      .catch((e) => showToast('法条加载失败: ' + (e instanceof Error ? e.message : '未知错误'), 'error'))
-      .finally(() => setLawLoading(false));
-    // 返回列表时清空选择
-    window.scrollTo({ top: 0 });
+    const entry = Object.entries(lawTextModules).find(([k]) => k.endsWith(law.file));
+    if (entry && entry[1]) {
+      setLawText(entry[1]);
+      setLawLoading(false);
+    } else {
+      showToast('法条读取失败：未找到 ' + law.file, 'error');
+      setLawLoading(false);
+    }
   };
 
   const parsed = useMemo(() => (lawText ? parseLaw(lawText) : null), [lawText]);
@@ -214,11 +223,6 @@ export default function LegalKnowledge() {
             {selected.version && <span><b style={{ color: textColor }}>版本：</b>{selected.version}</span>}
             {selected.effectiveDate && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><CalendarClock size={13} /> 施行：{selected.effectiveDate}</span>}
           </div>
-          {selected.sourceUrl && (
-            <a href={selected.sourceUrl} target="_blank" rel="noopener noreferrer" className="dash-action" style={{ marginTop: 12, display: 'inline-flex', width: 'auto' }}>
-              <ExternalLink size={14} /> 查看官方原文
-            </a>
-          )}
         </div>
 
         {selected.timeline && selected.timeline.length > 0 && (
@@ -282,11 +286,6 @@ export default function LegalKnowledge() {
             {selected.version && <span><b style={{ color: textColor }}>版本：</b>{selected.version}</span>}
             {selected.effectiveDate && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><CalendarClock size={13} /> 施行：{selected.effectiveDate}</span>}
           </div>
-          {selected.sourceUrl && (
-            <a href={selected.sourceUrl} target="_blank" rel="noopener noreferrer" className="dash-action" style={{ marginTop: 12, display: 'inline-flex', width: 'auto' }}>
-              <ExternalLink size={14} /> 查看官方原文
-            </a>
-          )}
         </div>
 
         {/* 立法 / 修正时间轴 */}
