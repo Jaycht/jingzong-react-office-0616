@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.30.1";
+export const APP_VERSION = "V2.31.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 30;
-export const VERSION_PATCH = 1;
+export const VERSION_MINOR = 31;
+export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.31.0 =====
+  "V2.31.0 新增 - 典法查阅新增「经侦77类」专项：将用户提供的《经侦管辖的77类案件》（即最高检、公安部《关于公安机关管辖的刑事案件立案追诉标准的规定（二）》公通字〔2022〕12号，77条）转为离线法条文档入「经侦管辖」新分类（法规库 27→28 部、分类 9→10 类）。专项视图以 77 类案件为索引，每张卡片显示罪名+对应刑法条文徽标+关联司法解释标签；点开案件详情可见「立案追诉标准」全文、「跳转刑法第X条」（直达刑法对应条文）、「关联司法解释」（已收录的洗钱/非法集资/危害税收征管/虚假诉讼/非法买卖外汇等解释可一键打开）。专项与现有收藏/笔记/时间轴体系打通，全部离线随 dist 发布",
   // ===== V2.30.1 =====
   "V2.30.1 修复 - 典法查阅打开法条全部报错「未找到匹配的法条」：根因为 Vite 8 开发服务器对「中文文件名」的静态文件请求一律回退到 SPA 首页(index.html)，fetch 取到的是 HTML 而非法条文本，parseLaw 解析不出任何条文；生产版( Electron 读本地文件)不受影响，仅 dev 测不出。修复方式为法条文本不再经 HTTP 静态获取，改为构建期 import.meta.glob('?raw') 随包内联( dev/prod 一致、中文文件名无碍)，manifest 仍走静态 JSON；同时将法规文件扩展名由 .md 改为 .txt（解析逻辑与扩展名无关，dev/prod 均可正常服务）。另按内网离线需求，移除详情页与待补充视图中的「查看官方原文」外链按钮(无法访问互联网)，保留来源/版本/施行日期等离线可读信息",
   // ===== V2.30.0 =====

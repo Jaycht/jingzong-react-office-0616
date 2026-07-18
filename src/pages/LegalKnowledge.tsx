@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Scale, Search, BookOpen, ChevronLeft, ExternalLink, Layers, Hash, ScrollText, CalendarClock, Star } from 'lucide-react';
+import { Scale, Search, BookOpen, ChevronLeft, ExternalLink, Layers, Hash, ScrollText, CalendarClock, Star, ArrowRight, Link2 } from 'lucide-react';
 import { Input } from 'antd';
 import { useAppStore } from '../store/appStore';
 import { BRAND } from '../constants/theme';
@@ -40,6 +40,37 @@ const lawTextModules = import.meta.glob('../../public/laws/**/*.txt', {
   import: 'default',
   eager: true,
 }) as Record<string, string>;
+
+// ── 经侦管辖77类案件专项 ──
+interface EcCase {
+  seq: number;
+  num: string; // 第X条
+  name: string; // 罪名
+  criminalLawClause: string; // 「刑法（...）」整段
+  criminalLawArticle: string; // 第X条（用于跳转刑法）
+  standard: string[]; // 立案追诉标准正文
+  relatedIds: string[];
+}
+// 已收录的关联司法解释映射（seq → law id）；其余案件待补充司法解释
+const EC_RELATED: Record<number, string[]> = {
+  23: ['司法解释/最高人民法院、最高人民检察院关于办理非法集资刑事案件具体应用法律若干问题的解释'],
+  43: ['司法解释/最高人民法院、最高人民检察院关于办理洗钱刑事案件适用法律若干问题的解释'],
+  44: ['司法解释/最高人民法院、最高人民检察院关于办理非法集资刑事案件具体应用法律若干问题的解释'],
+  52: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  55: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  56: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  57: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  58: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  59: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  60: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  61: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  62: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  63: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  64: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  65: ['司法解释/最高人民法院、最高人民检察院关于办理危害税收征管刑事案件适用法律若干问题的解释'],
+  71: ['司法解释/最高人民法院、最高人民检察院关于办理非法从事资金支付结算业务、非法买卖外汇刑事案件适用法律若干问题的解释'],
+  77: ['司法解释/最高人民法院、最高人民检察院关于办理虚假诉讼刑事案件适用法律若干问题的解释'],
+};
 
 const ART_RE = /^第([一二三四五六七八九十百零〇两]+)条(之一)?[　 \t]*(.*)$/;
 const SECTION_RE = /^第([一二三四五六七八九十百零〇两]+)(编|章)[　 \t]*(.*)$/;
@@ -111,7 +142,9 @@ export default function LegalKnowledge() {
   const [lawText, setLawText] = useState<string>('');
   const [lawLoading, setLawLoading] = useState(false);
   const [articleQ, setArticleQ] = useState('');
-  const [view, setView] = useState<'list' | 'mine'>('list');
+  const [view, setView] = useState<'list' | 'mine' | 'ec77'>('list');
+  const [ecQ, setEcQ] = useState('');
+  const [selectedCase, setSelectedCase] = useState<EcCase | null>(null);
   const [showTimeline, setShowTimeline] = useState(false);
   const [noteKeyActive, setNoteKeyActive] = useState<string | null>(null);
   const favorites = useLawPrefsStore((s) => s.favorites);
@@ -147,6 +180,45 @@ export default function LegalKnowledge() {
       return l.title.toLowerCase().includes(k) || (l.source || '').toLowerCase().includes(k);
     });
   }, [manifest, catFilter, kw]);
+
+  // 经侦77类专项：解析《立案追诉标准（二）》
+  const ecLaw = useMemo(() => (manifest ? manifest.laws.find((l) => l.category === '经侦管辖') ?? null : null), [manifest]);
+  const ecCases = useMemo<EcCase[]>(() => {
+    if (!ecLaw) return [];
+    const entry = Object.entries(lawTextModules).find(([k]) => k.endsWith(ecLaw.file));
+    if (!entry || !entry[1]) return [];
+    const parsedEc = parseLaw(entry[1]);
+    const articles = parsedEc.blocks.filter((b): b is ArticleBlock => b.kind === 'article');
+    return articles.map((a, i) => {
+      const titleLine = a.body[0] || '';
+      const name = titleLine.split(/[（(]/)[0].trim();
+      const clauseM = titleLine.match(/刑法(.+?)[）)]/);
+      const clause = clauseM ? clauseM[1].trim() : '';
+      const artM = clause.match(/第[一二三四五六七八九十百零〇两]+条(?:之一)?/);
+      const article = artM ? artM[0] : '';
+      return {
+        seq: i + 1,
+        num: a.num,
+        name,
+        criminalLawClause: clause,
+        criminalLawArticle: article,
+        standard: a.body,
+        relatedIds: EC_RELATED[i + 1] || [],
+      };
+    });
+  }, [ecLaw, manifest]);
+
+  const criminalLaw = useMemo(
+    () => (manifest ? manifest.laws.find((l) => l.id === '刑事/刑法' || l.title === '刑法') ?? null : null),
+    [manifest]
+  );
+  const gotoCriminalLaw = (article: string) => {
+    if (!criminalLaw) return;
+    setSelectedCase(null);
+    setSelected(null);
+    openLaw(criminalLaw);
+    setArticleQ(article);
+  };
 
   const openLaw = (law: LawMeta) => {
     setSelected(law);
@@ -482,6 +554,142 @@ export default function LegalKnowledge() {
     );
   }
 
+  // ── 经侦77类专项：案件详情 ──
+  if (view === 'ec77' && selectedCase) {
+    const c = selectedCase;
+    const lawById = new Map((manifest?.laws ?? []).map((l) => [l.id, l]));
+    const related = c.relatedIds.map((id) => lawById.get(id)).filter((x): x is LawMeta => !!x);
+    return (
+      <div style={{ padding: '24px 28px 40px', maxWidth: 1080, margin: '0 auto', width: '100%' }}>
+        <button className="dash-action" style={{ marginBottom: 16 }} onClick={() => setSelectedCase(null)}>
+          <ChevronLeft size={15} /> 返回77类案件
+        </button>
+        <div className="dash-hero" style={{ marginBottom: 16 }}>
+          <span className="dash-hero-avatar" style={{ width: 52, height: 52, borderRadius: 14, background: `linear-gradient(135deg,${BRAND.primaryDark},${BRAND.primaryLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 8px 20px rgba(37,99,235,.3)' }}>
+            <Scale size={26} />
+          </span>
+          <div>
+            <div className="dash-hero-greet">{c.name}</div>
+            <div className="dash-hero-sub">经侦管辖第 {String(c.seq).padStart(2, '0')} 类 · {c.num}</div>
+          </div>
+          {c.criminalLawClause && (
+            <span className="dash-action" style={{ marginLeft: 'auto', display: 'inline-flex', width: 'auto', flexShrink: 0, background: 'rgba(37,99,235,.1)', color: BRAND.primaryDark, borderColor: 'rgba(37,99,235,.25)' }}>
+              <BookOpen size={15} /> 刑法{c.criminalLawClause}
+            </span>
+          )}
+        </div>
+
+        <div className="wb-panel" style={{ padding: 18, marginBottom: 16, background: panelBg, border: `1px solid ${panelBorder}` }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: BRAND.primaryDark, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ScrollText size={15} /> 立案追诉标准（规定（二）{c.num}）
+          </div>
+          {c.standard.map((p, pi) => (
+            <div key={pi} style={{ fontSize: 14.5, lineHeight: 1.95, color: textColor, whiteSpace: 'pre-wrap', marginTop: 4 }}>
+              {p}
+            </div>
+          ))}
+        </div>
+
+        {c.criminalLawArticle && (
+          <div style={{ marginBottom: 16 }}>
+            <button className="dash-action" style={{ width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => gotoCriminalLaw(c.criminalLawArticle)}>
+              <BookOpen size={15} /> 跳转刑法{c.criminalLawArticle} <ArrowRight size={14} />
+            </button>
+          </div>
+        )}
+
+        <div className="wb-panel" style={{ padding: 18, background: panelBg, border: `1px solid ${panelBorder}` }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: BRAND.primaryDark, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Link2 size={15} /> 关联司法解释（{related.length}）
+          </div>
+          {related.length === 0 ? (
+            <div style={{ fontSize: 13.5, color: textMuted, lineHeight: 1.8 }}>
+              本类案件暂无已收录的关联司法解释。可在「法规库」补充相关两高解释后自动关联；建议补充清单见更新说明。
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {related.map((r) => (
+                <div
+                  key={r.id}
+                  className="wb-panel"
+                  style={{ padding: '12px 14px', cursor: 'pointer', background: darkMode ? '#0b1220' : '#F8FAFC', border: `1px solid ${panelBorder}` }}
+                  onClick={() => { setSelectedCase(null); openLaw(r); }}
+                >
+                  <div style={{ fontSize: 14.5, fontWeight: 700, color: textColor }}>{r.title}</div>
+                  <div style={{ fontSize: 12.5, color: textMuted, marginTop: 4 }}>{r.version}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── 经侦77类专项：案件索引 ──
+  if (view === 'ec77') {
+    const q = ecQ.trim();
+    const list = ecCases.filter((c) => {
+      if (!q) return true;
+      return c.name.includes(q) || c.num.includes(q) || c.criminalLawClause.includes(q);
+    });
+    const lawById = new Map((manifest?.laws ?? []).map((l) => [l.id, l]));
+    return (
+      <div style={{ padding: '24px 28px 40px', maxWidth: 1240, margin: '0 auto', width: '100%' }}>
+        <div className="dash-hero" style={{ marginBottom: 18 }}>
+          <span className="dash-hero-avatar" style={{ width: 52, height: 52, borderRadius: 14, background: `linear-gradient(135deg,${BRAND.primaryDark},${BRAND.primaryLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 8px 20px rgba(37,99,235,.3)' }}>
+            <Scale size={26} />
+          </span>
+          <div>
+            <div className="dash-hero-greet">经侦管辖 · 77类案件</div>
+            <div className="dash-hero-sub">围绕77类案件的立案追诉标准、对应刑法条文与关联司法解释（离线专项）</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+          <Input
+            allowClear
+            prefix={<Search size={15} />}
+            placeholder="搜索罪名 / 刑法条文（如：洗钱、第一百九十一条）"
+            value={ecQ}
+            onChange={(e) => setEcQ(e.target.value)}
+            style={{ maxWidth: 520 }}
+          />
+          <button className="dash-action" style={{ width: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => setView('list')}>
+            <ChevronLeft size={15} /> 返回法规库
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: 12 }}>
+          {list.map((c) => {
+            const related = c.relatedIds.map((id) => lawById.get(id)).filter((x): x is LawMeta => !!x);
+            return (
+              <div
+                key={c.seq}
+                className="wb-panel"
+                style={{ padding: 14, cursor: 'pointer', background: panelBg, border: `1px solid ${panelBorder}`, display: 'flex', flexDirection: 'column', gap: 10 }}
+                onClick={() => setSelectedCase(c)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: '#fff', background: BRAND.primary, borderRadius: 8, padding: '3px 8px', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{String(c.seq).padStart(2, '0')}</span>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: textColor, lineHeight: 1.35 }}>{c.name}</div>
+                </div>
+                {c.criminalLawClause && (
+                  <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 999, background: `${BRAND.primaryDark}1f`, color: BRAND.primaryDark, fontWeight: 600, alignSelf: 'flex-start' }}>刑法{c.criminalLawClause}</span>
+                )}
+                {related.length > 0 && (
+                  <span style={{ fontSize: 11.5, padding: '2px 8px', borderRadius: 999, background: 'var(--color-surface-hover)', color: textMuted, border: `1px solid ${panelBorder}`, alignSelf: 'flex-start' }}>
+                    关联司法解释 ×{related.length}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   // ── 法规库列表视图 ──
   return (
     <div style={{ padding: '24px 28px 40px', maxWidth: 1240, margin: '0 auto', width: '100%' }}>
@@ -503,8 +711,15 @@ export default function LegalKnowledge() {
           />
           <button
             className="dash-action"
+            style={{ width: 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6, ...(view === 'ec77' ? { background: BRAND.primary, color: '#fff', borderColor: BRAND.primary } : {}) }}
+            onClick={() => { setSelected(null); setSelectedCase(null); setEcQ(''); setView('ec77'); }}
+          >
+            <Scale size={15} /> 经侦77类
+          </button>
+          <button
+            className="dash-action"
             style={{ width: 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
-            onClick={() => setView('mine')}
+            onClick={() => { setSelected(null); setSelectedCase(null); setView('mine'); }}
           >
             <Star size={15} /> 我的收藏/笔记{(Object.keys(favorites).length > 0 || Object.keys(notes).length > 0) ? ` (${Object.keys(favorites).length + Object.keys(notes).length})` : ''}
           </button>
