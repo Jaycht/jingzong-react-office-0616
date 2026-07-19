@@ -28,7 +28,11 @@ function currentUser(): string {
 }
 
 export function getDailyNotes(): DailyNote[] {
-  return indexedDBAdapter.getItem<DailyNote[]>(STORAGE_KEY, []);
+  // 返回副本而非适配器缓存引用：createDailyNote 用 unshift 原地修改，若返回同一引用，
+  // 则 setAllNotes(getDailyNotes()) 拿到同引用导致 React 跳过更新、useMemo 不重算，
+  // 卡片不刷新（重启才显示）。返回新数组可强制刷新（V2.41.20 修复 #2）
+  const raw = indexedDBAdapter.getItem<DailyNote[]>(STORAGE_KEY, []);
+  return Array.isArray(raw) ? [...raw] : [];
 }
 
 export function getCustomTypes(): string[] {

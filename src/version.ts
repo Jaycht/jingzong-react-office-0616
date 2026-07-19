@@ -1,9 +1,10 @@
-export const APP_VERSION = "V2.41.19";
+export const APP_VERSION = "V2.41.20";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 19;
+export const VERSION_PATCH = 20;
 
 export const CHANGELOG: string[] = [
+  "V2.41.20 修复 - 用户实测 V2.41.19 后 #1 托盘图标与 #2 随手记卡片仍不显示的根因修复：① 托盘图标——根因 app.ico 同时配在 build.extraResources(app.ico) 与 build.files(electron/**/* + app.ico) 导致打包后 asar 内外落点错乱，主进程所有路径候选 + fs.readFileSync 兜底均读不到、返回空图、Tray 静默不创建；现改为将 app.ico 以 base64 内联(新增 electron/app-icon.cjs)，resolveAppIcon 首选 nativeImage.createFromBuffer(Buffer.from(base64)) 解析、彻底摆脱打包后路径依赖，createTray 内 resize(32×32) 加 try/catch 兜底；② 随手记卡片——根因 indexedDBAdapter.getItem 返回内存缓存同一引用、createDailyNote 用 unshift 原地修改该数组，使 setAllNotes(getDailyNotes()) 拿到同引用导致 React 跳过重渲染、useMemo 不重算(重启才显示)；getDailyNotes 改为返回 [...raw] 副本，确保每次新引用强制刷新卡片（另补 #2 副本语义回归测试）",
   "V2.41.19 修复 - 集中修复用户实测反馈的 5 项问题：① 系统托盘图标不显示——根因 app.ico 源图仅有 256/128px 尺寸、缺 16/32px 小尺寸，Windows 系统托盘会忽略无小尺寸的图标而静默不显示；createTray() 现从源图 resize 出 32x32 图标给托盘使用，确保图标可见并可点击恢复主窗口；② 日常随手记新建/编辑后卡片不显示——原 useMemo(refreshKey) 刷新链在 Electron 异步时序下不可靠，改为本地 allNotes state，保存/删除/导入/便签同步后显式 setAllNotes(getDailyNotes()) 同步重读，确保「建库即见」；③ 桌面便签真圆角在 Windows 透明窗口上失效（方角残留），按用户意见改为直角处理（--radius:0 并移除 clip-path 圆角裁剪、折叠态圆角归零、主进程便签窗口 roundedCorners 关闭）；④ 系统设置「关闭窗口时的行为」默认值统一改为「每次询问我」（App.tsx / SystemSettings.tsx / 主进程三处默认 'tray' → 'ask'）；⑤ 全局搜索框在窗口最大化时未真正居中——顶栏由 grid 三列（左右不对称）改为 flex 两端分布、搜索框绝对定位 left:50% 水平居中，最大化时仍居中",
   "V2.41.18 修复 - 随手记保存健壮性补强（#1 收尾）：将提醒数据构造（reminderTime.toISOString() 等）整体移入 try 块，确保即便构造异常，finally 中的 onSaved() 仍会刷新列表，杜绝「建库成功但卡片不显示」；新增 dailyNotesStore 同步读写回归测试（建/改/删后立即可读），锁定「建库即见」语义，防止回归",
   "V2.41.17 修复 - 集中修复 V2.41.16 生产包 6 项问题：① 关闭窗口行为失效（点 X 直接退出）——根因 app.ico 被打进 asar 内使 new Tray() 抛错、关闭处理器随 createTray 中断；现关闭处理器无条件注册到 createWindow，托盘图标改 resolveAppIcon() 多级兜底（extraResources 外置 app.ico + asar 内 buffer 回退）并 try/catch 包裹 new Tray；② 退出/恢复后数据丢失与「恢复失败: Internal error.」——restoreFromJson 原「先清空再写回」在附件导入失败时整库清空，现改为恢复前快照当前数据、写回失败整体回滚、附件导入失败非致命，绝不丢数据；③ 软件启动变慢——新增单实例锁 requestSingleInstanceLock 防止重复进程抢占资源；④ 默认头像丢失——顶栏与资料弹窗默认头像由生产包 404 的 /avatar-default.jpg 改为 Vite 模块导入的警徽 badge-icon.png；⑤ 随手记带提醒新记录卡片不显示——卡片 motion.div 改 initial={false} 避免初始 opacity:0 卡死，且保存逻辑 try/finally 确保始终刷新列表",

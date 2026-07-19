@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, Menu, dialog, shell, Tray, nativeImage, Not
 const path = require("path");
 const fs = require("fs");
 const fsp = require("fs/promises");
+// 内联图标 base64（避免打包后 app.ico 在 asar 内外落点错乱导致托盘不显示，V2.41.20 修复 #1）
+const APP_ICO_BASE64 = require("./app-icon.cjs");
 
 const isDev = !app.isPackaged;
 let mainWindow = null;
@@ -63,6 +65,15 @@ function getAttachmentsDir() {
 // 直接 path.join(__dirname,'..','app.ico') 在 asar 内会指向不存在的 resources/app.asar/app.ico，
 // 导致 new Tray() 抛错而中断 createTray，进而关闭处理器无法注册。这里做多级兜底解析。
 function resolveAppIcon() {
+  // 首选：内联 base64 图标，彻底摆脱打包后 app.ico 在 asar 内外落点错乱的问题（V2.41.20 修复 #1）
+  try {
+    const buf = Buffer.from(APP_ICO_BASE64, "base64");
+    const img = nativeImage.createFromBuffer(buf);
+    if (!img.isEmpty()) return img;
+  } catch (e) {
+    console.error("[icon] 内联 base64 图标解析失败：", e);
+  }
+  // 兜底：外部 resources/app.ico（extraResources）与 asar 内 app.ico
   const candidates = app.isPackaged
     ? [path.join(process.resourcesPath, "app.ico"), path.join(__dirname, "..", "app.ico")]
     : [path.join(__dirname, "..", "app.ico")];
@@ -74,7 +85,6 @@ function resolveAppIcon() {
       }
     } catch {}
   }
-  // 兜底：某些打包结构下 asar 内路径可被 readFile 读取，用 buffer 重建
   try {
     const asarPath = path.join(__dirname, "..", "app.ico");
     if (fs.existsSync(asarPath)) {
@@ -433,7 +443,11 @@ function createTray() {
     }
     // Windows 系统托盘需要 16/32px 尺寸图标：源 app.ico 多为 256/128px，
     // 若缺小尺寸会被系统忽略导致托盘不显示。这里从源图缩放为 32x32 保证可见（V2.41.19 修复 #1）
-    const trayIcon = base.resize({ width: 32, height: 32 });
+    let trayIcon = base;
+    try {
+      const r = base.resize({ width: 32, height: 32 });
+      if (!r.isEmpty()) trayIcon = r;
+    } catch {}
     tray = new Tray(trayIcon);
   } catch (err) {
     console.error('[tray] 创建托盘图标失败，将不启用托盘：', err);
