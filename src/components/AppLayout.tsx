@@ -169,8 +169,8 @@ export default function AppLayout() {
   const topBtn = (extra?: React.CSSProperties): React.CSSProperties => ({
     display: "flex", alignItems: "center", gap: 6,
     height: 34, padding: "0 10px", borderRadius: 9,
-    border: darkMode ? "1px solid rgba(163,201,255,0.18)" : "1px solid #E5E7EB",
-    background: "transparent", color: darkMode ? "#c8ccd4" : "#4B5563",
+    border: "1px solid rgba(255,255,255,0.28)",
+    background: "transparent", color: "rgba(255,255,255,0.92)",
     fontSize: 13, cursor: "pointer", fontFamily: "inherit", flexShrink: 0,
     ...extra,
   });
@@ -185,9 +185,9 @@ export default function AppLayout() {
           style={{
             height: 34, flexShrink: 0, display: 'flex', alignItems: 'center',
             WebkitAppRegion: 'drag',
-            background: darkMode ? '#0a1a2e' : '#F0F2F5',
+            background: darkMode ? 'linear-gradient(135deg,#13325c,#1d4ed8)' : 'linear-gradient(135deg,#155A8A,#2563EB)',
             paddingLeft: 14,
-            borderBottom: darkMode ? 'none' : '1px solid #E5E7EB',
+            borderBottom: 'none',
           }}
         >
           <div style={{ WebkitAppRegion: 'no-drag', display: 'flex', gap: 2, paddingRight: 4 }}>
@@ -204,18 +204,18 @@ export default function AppLayout() {
         style={{
           position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           gap: 16, padding: '12px 22px',
-          background: darkMode ? '#0e1626' : '#fff',
-          borderBottom: darkMode ? '1px solid rgba(163,201,255,0.1)' : '1px solid #E5E7EB',
+          background: darkMode ? 'linear-gradient(135deg,#13325c,#1d4ed8)' : 'linear-gradient(135deg,#155A8A,#2563EB)',
+          borderBottom: darkMode ? '1px solid rgba(163,201,255,0.12)' : '1px solid rgba(13,42,84,0.35)',
         }}
       >
         {/* 左：品牌标识 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, WebkitAppRegion: 'drag', minWidth: 0 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 11, background: `linear-gradient(135deg, ${BRAND.primaryLight}, ${BRAND.primaryDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 20, flexShrink: 0, boxShadow: '0 3px 12px rgba(37,99,235,.32)' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 11, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1d4ed8', fontWeight: 800, fontSize: 20, flexShrink: 0, boxShadow: '0 3px 12px rgba(255,255,255,.35)' }}>
             经
           </div>
           <div style={{ lineHeight: 1.2, minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: darkMode ? '#E6EAF2' : '#1F2937', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>经侦工作记录</div>
-            <div style={{ fontSize: 11, color: darkMode ? '#8A94A6' : '#6B7280', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>ECONOMIC INVESTIGATION</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>经侦工作记录</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>ECONOMIC INVESTIGATION</div>
           </div>
         </div>
 
@@ -230,8 +230,8 @@ export default function AppLayout() {
             <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <div onClick={() => setProfileOpen(true)} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', lineHeight: 1.25, cursor: 'pointer', paddingRight: 4, minWidth: 0 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: darkMode ? '#E6EAF2' : '#1F2937', whiteSpace: 'nowrap' }}>{userName || '未登录'}</span>
-            <span style={{ fontSize: 11, color: darkMode ? '#8A94A6' : '#6B7280', whiteSpace: 'nowrap' }}>{userDepartment || '—'}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>{userName || '未登录'}</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap' }}>{userDepartment || '—'}</span>
           </div>
           <button className="wb-hover-ghost" onClick={() => setProfileOpen(true)} title="个人资料" style={topBtn()}>
             <User size={15} /><span>资料</span>
@@ -246,7 +246,7 @@ export default function AppLayout() {
               {lowPerfMode ? '低性能' : '高性能'}
             </span>
           </button>
-          <button className="wb-hover-ghost" onClick={handleLogout} title="退出登录" style={{ ...topBtn(), color: '#DC2626' }}>
+          <button className="wb-hover-ghost" onClick={handleLogout} title="退出登录" style={{ ...topBtn(), color: '#FCA5A5' }}>
             <LogOut size={15} /><span>退出</span>
           </button>
         </div>

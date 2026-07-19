@@ -192,6 +192,11 @@ body {
   border-color: var(--hover-border);
   color: var(--color-primary);
 }
+.app-topbar .wb-hover-ghost:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.45);
+  color: #fff;
+}
 .hover-bg-primary:hover {
   background: var(--color-primary-bg);
 }
