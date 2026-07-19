@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.41.8";
+export const APP_VERSION = "V2.41.9";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 8;
+export const VERSION_PATCH = 9;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.41.9 =====
+  "V2.41.9 优化 - 新建弹窗标题前警徽图标调大至 28×28（原 24×24 偏小），与 17px 标题字号相比更醒目协调",
   // ===== V2.41.8 =====
   "V2.41.8 修复 - 深色模式表单控件统一规则真正生效并补警徽图标：V2.41.7 规则 specificity 不足导致部分 Input 仍为白底，追加 `.ant-form` 高优先级强制统一（覆盖 antd 6 variant / css-in-js）；同时在 `DrawerNewRecord.tsx` 新建弹窗蓝渐变标题前加入警徽图标 `/badge-icon.png`，提升辨识度",
   // ===== V2.41.7 =====
