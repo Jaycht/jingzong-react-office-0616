@@ -35,6 +35,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
   const showToast = useAppStore((s) => s.showToast);
   const currentTabId = useAppStore((s) => s.currentTabId);
   const userRole = useAppStore((s) => s.userRole);
+  const darkMode = useAppStore((s) => s.darkMode);
   const { allModules } = useCustomModules();
   const currentModule = useMemo(() => findModule(currentPage, allModules), [allModules, currentPage]);
   const [selectedModuleId, setSelectedModuleId] = useState(
@@ -449,16 +450,12 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     <Modal
       open
       width={960}
-      closable
+      closable={false}
       maskClosable={false}
       onCancel={handleClose}
       centered
-      title={
-        <span style={{ fontWeight: 700, fontSize: 16 }}>
-          {isEditing ? '编辑工作记录' : '新建工作记录'} · {selectedModule?.label}
-        </span>
-      }
-      styles={{ body: { height: '72vh', overflow: 'auto', padding: 0 } }}
+      title={null}
+      styles={{ body: { height: '72vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' } }}
       footer={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Space>
@@ -506,82 +503,102 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
         </div>
       }
     >
-      {/* ===== Top step indicator ===== */}
-      {hasSections && (
-        <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
-          {steps.map((step, i) => {
-            const active = i === currentStep;
-            const done = i < currentStep;
-            return (
-              <div
-                key={i}
-                onClick={() => setCurrentStep(i)}
-                style={{
-                  flex: 1, padding: '8px 12px', borderRadius: 6, cursor: 'pointer',
-                  textAlign: 'center', fontSize: 13,
-                  background: active ? 'var(--color-primary-bg)' : done ? 'var(--color-success-bg)' : 'var(--color-surface-hover)',
-                  color: active ? 'var(--color-primary)' : done ? 'var(--color-success)' : 'var(--color-text-muted)',
-                  fontWeight: active ? 700 : 400,
-                  border: active ? '1px solid var(--color-primary)' : '1px solid transparent',
-                  transition: 'all .15s',
-                }}
-              >
-                <div style={{ fontSize: 11, opacity: 0.7 }}>
-                  {done ? '✓ ' : ''}步骤 {i + 1}
-                </div>
-                <div style={{ marginTop: 2 }}>{step.label}</div>
-              </div>
-            );
-          })}
+      {/* ===== 蓝渐变头部横幅（铺满标题到基本信息上方） ===== */}
+      <div style={{ flexShrink: 0, background: darkMode ? 'linear-gradient(to bottom,#13325c,#1d4ed8)' : 'linear-gradient(to bottom,#155A8A,#2563EB)', padding: '16px 24px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>
+            {isEditing ? '编辑工作记录' : '新建工作记录'} · {selectedModule?.label}
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            title="关闭"
+            style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: 'rgba(255,255,255,0.14)', border: 'none', color: '#fff', fontSize: 18, lineHeight: 1, flexShrink: 0 }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.26)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.14)'; }}
+          >
+            ×
+          </button>
         </div>
-      )}
-      <div style={{ overflow: 'auto', padding: '0 24px 16px' }}>
-        {/* Module/Template selector */}
-            <div style={{
-              background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)', borderRadius: 8,
-              padding: 14, marginBottom: 20,
-            }}>
-              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
-                {selectedModule?.departmentLabel} · {selectedModule?.label} · {selectedTab?.label}
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', marginBottom: 8 }}>
-                {flatMode ? `${steps[0]?.label} · ${steps[1]?.label}` : (hasSections ? steps[currentStep]?.label : '基本信息')}
-              </div>
-              <div style={{ display: 'flex', gap: 14 }}>
-                <Form.Item label="所属模块" style={{ marginBottom: 0 }}>
-                  <Select value={selectedModuleId} onChange={handleModuleChange} showSearch optionFilterProp="label" style={{ width: 280 }}>
-                    {scopedModules.map((mod) => (
-                      <Select.Option key={mod.id} value={mod.id} label={`${mod.departmentLabel} ${mod.label}`}>
-                        {mod.departmentLabel} · {mod.label}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-                {showTemplateSelector && (
-                  <Form.Item label="记录模板" style={{ marginBottom: 0 }}>
-                    <Select value={selectedTabId} onChange={(value) => { setSelectedTabId(value); form.resetFields(); setRequestMode('case'); setCurrentStep(0); }} style={{ width: 220 }}>
-                      {selectedModule?.tabs.map((tab) => (
-                        <Select.Option key={tab.id} value={tab.id}>{tab.label}</Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                )}
-                {hasSections && !flatMode && (
-                  <div style={{ marginLeft: 'auto', fontSize: 12, color: '#94A3B8', alignSelf: 'flex-end', paddingBottom: 4 }}>
-                    {stepFields.length} 个字段 · 第 {currentStep + 1}/{totalSteps} 步
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* Fields for current step */}
-            <Form
-              key={formKey}
-              form={form}
-              layout="vertical"
-              requiredMark="optional"
-              onValuesChange={() => { if (mountedRef.current) { setIsDirty(true); setChangeCount((c) => c + 1); } }}
-            >
+        {hasSections && (
+          <div style={{ display: 'flex', gap: 4, marginTop: 14 }}>
+            {steps.map((step, i) => {
+              const active = i === currentStep;
+              const done = i < currentStep;
+              return (
+                <div
+                  key={i}
+                  onClick={() => setCurrentStep(i)}
+                  style={{
+                    flex: 1, padding: '8px 12px', borderRadius: 6, cursor: 'pointer',
+                    textAlign: 'center', fontSize: 13,
+                    background: active ? '#fff' : 'rgba(255,255,255,0.16)',
+                    color: active ? '#155A8A' : 'rgba(255,255,255,0.92)',
+                    fontWeight: active ? 700 : 400,
+                    border: active ? '1px solid #fff' : '1px solid transparent',
+                    transition: 'all .15s',
+                  }}
+                >
+                  <div style={{ fontSize: 11, opacity: 0.8 }}>
+                    {done ? '✓ ' : ''}步骤 {i + 1}
+                  </div>
+                  <div style={{ marginTop: 2 }}>{step.label}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Module/Template selector（放在蓝头内，像资料弹窗一样铺满） */}
+        <div style={{
+          background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 10,
+          padding: 14, marginTop: 16,
+        }}>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', marginBottom: 6 }}>
+            {selectedModule?.departmentLabel} · {selectedModule?.label} · {selectedTab?.label}
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 12 }}>
+            {flatMode ? `${steps[0]?.label} · ${steps[1]?.label}` : (hasSections ? steps[currentStep]?.label : '基本信息')}
+          </div>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>所属模块</label>
+              <Select value={selectedModuleId} onChange={handleModuleChange} showSearch optionFilterProp="label" style={{ width: 280 }}>
+                {scopedModules.map((mod) => (
+                  <Select.Option key={mod.id} value={mod.id} label={`${mod.departmentLabel} ${mod.label}`}>
+                    {mod.departmentLabel} · {mod.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+            {showTemplateSelector && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <label style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>记录模板</label>
+                <Select value={selectedTabId} onChange={(value) => { setSelectedTabId(value); form.resetFields(); setRequestMode('case'); setCurrentStep(0); }} style={{ width: 220 }}>
+                  {selectedModule?.tabs.map((tab) => (
+                    <Select.Option key={tab.id} value={tab.id}>{tab.label}</Select.Option>
+                  ))}
+                </Select>
+              </div>
+            )}
+            {hasSections && !flatMode && (
+              <div style={{ marginLeft: 'auto', fontSize: 12, color: 'rgba(255,255,255,0.7)', paddingBottom: 6 }}>
+                {stepFields.length} 个字段 · 第 {currentStep + 1}/{totalSteps} 步
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px 24px 16px' }}>
+        <Form
+          key={formKey}
+          form={form}
+          layout="vertical"
+          requiredMark="optional"
+          onValuesChange={() => { if (mountedRef.current) { setIsDirty(true); setChangeCount((c) => c + 1); } }}
+        >
               {/* 所有步骤字段同时渲染、用 display 切换可见性，保证 antd Form.Item / Form.List 永不卸载 */}
               {steps.map((step, si) => {
                 const isVisible = flatMode ? true : (si === currentStep);
