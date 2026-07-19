@@ -1,9 +1,10 @@
-export const APP_VERSION = "V2.41.17";
+export const APP_VERSION = "V2.41.18";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 17;
+export const VERSION_PATCH = 18;
 
 export const CHANGELOG: string[] = [
+  "V2.41.18 修复 - 随手记保存健壮性补强（#1 收尾）：将提醒数据构造（reminderTime.toISOString() 等）整体移入 try 块，确保即便构造异常，finally 中的 onSaved() 仍会刷新列表，杜绝「建库成功但卡片不显示」；新增 dailyNotesStore 同步读写回归测试（建/改/删后立即可读），锁定「建库即见」语义，防止回归",
   "V2.41.17 修复 - 集中修复 V2.41.16 生产包 6 项问题：① 关闭窗口行为失效（点 X 直接退出）——根因 app.ico 被打进 asar 内使 new Tray() 抛错、关闭处理器随 createTray 中断；现关闭处理器无条件注册到 createWindow，托盘图标改 resolveAppIcon() 多级兜底（extraResources 外置 app.ico + asar 内 buffer 回退）并 try/catch 包裹 new Tray；② 退出/恢复后数据丢失与「恢复失败: Internal error.」——restoreFromJson 原「先清空再写回」在附件导入失败时整库清空，现改为恢复前快照当前数据、写回失败整体回滚、附件导入失败非致命，绝不丢数据；③ 软件启动变慢——新增单实例锁 requestSingleInstanceLock 防止重复进程抢占资源；④ 默认头像丢失——顶栏与资料弹窗默认头像由生产包 404 的 /avatar-default.jpg 改为 Vite 模块导入的警徽 badge-icon.png；⑤ 随手记带提醒新记录卡片不显示——卡片 motion.div 改 initial={false} 避免初始 opacity:0 卡死，且保存逻辑 try/finally 确保始终刷新列表",
   "V2.41.16 修复 - 集中修复 V2.41.15 四项未真正生效的问题：① AppLayout 顶栏关闭按钮移除旧的硬编码确认弹窗，改为直接交给 Electron 主进程按「关闭窗口时的行为」设置（exit/tray/ask）处理；② 新建弹窗警徽图标改用 Vite 模块导入（src/assets/badge-icon.png），避免 Electron 生产包中绝对路径 /badge-icon.png 解析失败；③ 顶栏网格布局改为「左侧 1fr / 中间 1fr（搜索框最大 720px）/ 右侧 auto」，让全局搜索随窗口化自适应收缩，右侧个人信息区不再被挤压；④ 桌面便签移除 header 的 -webkit-app-region:drag，改由 JS 实现拖拽，避免 Windows 把 header 当非客户区导致顶部圆角失效；保留 roundedCorners:true 与 clip-path 保险裁剪",
   // ===== V2.41.14 =====

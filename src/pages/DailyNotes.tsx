@@ -412,26 +412,28 @@ function NoteModal({ note, customTypes, onClose, onSaved }: { note: DailyNote | 
 
   const handleSave = () => {
     if (!title.trim()) { showToast('请输入标题', 'warning'); return; }
-    const reminderData = reminderEnabled
-      ? { enabled: true, time: reminderTime.toISOString(), repeat: reminderRepeat, sound: reminderSound }
-      : { enabled: false, time: '', repeat: 'none', sound: reminderSound };
-    const data = {
-      date: date.format('YYYY-MM-DD'),
-      title: title.trim(),
-      type,
-      priority,
-      contents: contents.filter((c) => c.trim()),
-      reminder: reminderData,
-      notes: notesText,
-    };
     try {
+      // 数据构造与落库一起放在 try 内：即便 reminderTime.toISOString() 等构造异常，
+      // 也会被 catch 捕获，finally 中的 onSaved() 仍会执行，保证列表刷新（V2.41.17 修复 #1）
+      const reminderData = reminderEnabled
+        ? { enabled: true, time: reminderTime.toISOString(), repeat: reminderRepeat, sound: reminderSound }
+        : { enabled: false, time: '', repeat: 'none', sound: reminderSound };
+      const data = {
+        date: date.format('YYYY-MM-DD'),
+        title: title.trim(),
+        type,
+        priority,
+        contents: contents.filter((c) => c.trim()),
+        reminder: reminderData,
+        notes: notesText,
+      };
       if (note) { updateDailyNote(note.id, data); showToast('已更新', 'success'); }
       else { createDailyNote(data); showToast('已创建', 'success'); }
     } catch (err) {
       console.error('[DailyNotes] 保存随手记失败：', err);
       showToast('保存失败，请重试', 'error');
     } finally {
-      // 无论保存是否抛错都刷新列表，确保新建/编辑后卡片立即出现（V2.41.17 修复 #1）
+      // 无论保存或数据构造是否抛错都刷新列表，确保新建/编辑后卡片立即出现（V2.41.17 修复 #1）
       onSaved();
     }
   };
