@@ -100,30 +100,8 @@ function AppContent() {
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
   const { modal } = AntApp.useApp();
 
-  // Electron 自动更新检查
-  useEffect(() => {
-    if (!isElectron || !window.electronAPI?.checkForUpdates) return;
-    const timer = setTimeout(async () => {
-      try {
-        const result = await window.electronAPI.checkForUpdates();
-        if (result?.available) {
-          modal.confirm({
-            title: `发现新版本 v${result.version}`,
-            content: '是否下载并安装更新？',
-            okText: '更新',
-            cancelText: '稍后',
-            onOk: async () => {
-              await window.electronAPI.downloadUpdate();
-              window.electronAPI.installUpdate();
-            },
-          });
-        }
-      } catch {
-        // 静默失败，不影响正常使用
-      }
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [isElectron]);
+  // 本软件为纯单机离线版，不再提示/下载自动更新（V2.41.14 取消）
+  // useEffect(() => { ... }, [isElectron]);
 
   const handleLogin = (name: string, role: string, extra?: { badge?: string; phone?: string; department?: string }) => {
     setUser(name, role, extra);

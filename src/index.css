@@ -1222,13 +1222,16 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
 .tl-search input:focus { border-color: var(--color-primary-border); background: var(--color-surface); box-shadow: 0 0 0 3px var(--color-primary-bg); }
 .tl-search input::placeholder { color: var(--color-text-muted); }
 .tl-search svg { position: absolute; left: 11px; top: 11px; color: var(--color-text-secondary); pointer-events: none; }
-.tl-select { position: relative; }
-.tl-select select { height: 44px; min-width: 280px; max-width: 340px; border-radius: 11px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: 14px; font-weight: 500; padding: 0 36px 0 14px; font-family: inherit; outline: none; cursor: pointer; appearance: none; transition: all .18s; box-shadow: var(--shadow-sm); }
-.tl-select select:focus { border-color: var(--color-primary-border); background: var(--color-surface); box-shadow: 0 0 0 3px var(--color-primary-bg); }
-.tl-select select.empty { border-color: var(--color-primary); background: var(--color-primary-bg); color: var(--color-primary); font-weight: 600; animation: tl-pulse 1.9s ease-in-out infinite; }
-.tl-select select.empty option { color: var(--color-text); font-weight: 400; }
-.tl-select svg { position: absolute; right: 12px; top: 14px; color: var(--color-text-secondary); pointer-events: none; }
-.tl-select svg.tl-caret-hint { color: var(--color-primary); }
+.tl-select { position: relative; min-width: 280px; max-width: 340px; }
+.tl-select .ant-select { width: 100%; }
+.tl-select .ant-select-selector { height: 44px !important; border-radius: 11px !important; border: 1px solid var(--color-border) !important; background: var(--color-surface) !important; color: var(--color-text) !important; font-size: 14px !important; font-weight: 500 !important; padding: 0 14px !important; font-family: inherit !important; box-shadow: var(--shadow-sm) !important; }
+.tl-select .ant-select-selection-placeholder { color: var(--color-text-muted) !important; }
+.tl-select .ant-select-selection-item { line-height: 42px !important; }
+.tl-select .ant-select-focused .ant-select-selector { border-color: var(--color-primary-border) !important; background: var(--color-surface) !important; box-shadow: 0 0 0 3px var(--color-primary-bg) !important; }
+.tl-select .ant-select-arrow { color: var(--color-text-secondary) !important; }
+.tl-select.tl-select-empty .ant-select-selector { border-color: var(--color-primary) !important; background: var(--color-primary-bg) !important; color: var(--color-primary) !important; font-weight: 600 !important; animation: tl-pulse 1.9s ease-in-out infinite; }
+.tl-select.tl-select-empty .ant-select-selection-placeholder { color: var(--color-primary) !important; }
+.tl-select.tl-select-empty .ant-select-arrow { color: var(--color-primary) !important; }
 @keyframes tl-pulse {
   0% { box-shadow: 0 0 0 0 rgba(21, 90, 138, .38); }
   70% { box-shadow: 0 0 0 8px rgba(21, 90, 138, 0); }

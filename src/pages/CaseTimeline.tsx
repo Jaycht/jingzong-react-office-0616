@@ -10,10 +10,11 @@ import { motion } from 'framer-motion';
 import {
   Clock, CalendarDays, FileText, Gavel, SearchCheck, Users, Shield, Database,
   Landmark, BriefcaseBusiness, ChevronRight, ChevronDown, List, CalendarRange,
-  X, ArrowUpDown, Search, ChevronDown as CaretDown,
+  X, ArrowUpDown, Search,
   FileJson, Sheet, MousePointerClick,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { Select } from 'antd';
 import { formatChineseDate } from '../utils/format';
 import { useAppStore } from '../store/appStore';
 import { getMassRecords } from '../store/massStore';
@@ -413,18 +414,14 @@ export default function CaseTimeline() {
 
       {/* 案件选择 + 工具栏 */}
       <div className="tl-toolbar">
-        <div className="tl-select">
-          <select
-            className={selectedCase ? '' : 'empty'}
-            value={selectedCase}
-            onChange={(e) => { setSelectedCase(e.target.value); setExpandedId(null); }}
-          >
-            <option value="">请选择案件查看时间线…</option>
-            {allCaseNames.map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
-          <CaretDown size={15} className={selectedCase ? '' : 'tl-caret-hint'} />
+        <div className={selectedCase ? 'tl-select' : 'tl-select tl-select-empty'}>
+          <Select
+            value={selectedCase || undefined}
+            placeholder="请选择案件查看时间线…"
+            onChange={(v) => { setSelectedCase(v || ''); setExpandedId(null); }}
+            options={allCaseNames.map((n) => ({ value: n, label: n }))}
+            style={{ minWidth: 280, maxWidth: 340, width: '100%' }}
+          />
         </div>
 
         {!selectedCase && (

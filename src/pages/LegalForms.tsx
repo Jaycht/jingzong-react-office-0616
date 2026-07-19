@@ -3,6 +3,7 @@ import { Gavel, Search, Eye, Download, FileText, FileType, Scale } from 'lucide-
 import { Input, Segmented } from 'antd';
 import { useAppStore } from '../store/appStore';
 import { BRAND } from '../constants/theme';
+import { saveAs } from 'file-saver';
 
 interface LegalForm {
   title: string;
@@ -77,22 +78,23 @@ export default function LegalForms() {
     if (!w) showToast('浏览器拦截了新窗口，请允许弹出窗口后重试', 'warning');
   };
 
-  const downloadFile = (f: LegalForm, kind: 'pdf' | 'word') => {
+  const downloadFile = async (f: LegalForm, kind: 'pdf' | 'word') => {
     const isPdf = kind === 'pdf';
     const path = isPdf ? f.file : f.word;
     if (!path) {
       showToast('该文书暂未提供 Word 版', 'warning');
       return;
     }
-    const url = assetUrl(path);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${f.title}.${isPdf ? 'pdf' : 'docx'}`;
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    showToast(`已开始下载：${f.title}.${isPdf ? 'pdf' : 'docx'}`, 'success');
+    const fileName = `${f.title}.${isPdf ? 'pdf' : 'docx'}`.replace(/[<>"/\\|?*]/g, '_');
+    try {
+      const res = await fetch(assetUrl(path));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      saveAs(blob, fileName);
+      showToast(`已下载：${fileName}`, 'success');
+    } catch (e) {
+      showToast('下载失败：' + (e instanceof Error ? e.message : '未知错误'), 'error');
+    }
   };
 
   const Kpi = ({ label, val, ico, grad }: { label: string; val: number; ico: React.ReactNode; grad: string }) => (

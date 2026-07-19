@@ -513,7 +513,20 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       <div style={{ flexShrink: 0, borderRadius: '8px 8px 0 0', background: darkMode ? 'linear-gradient(to bottom,#13325c,#1d4ed8)' : 'linear-gradient(to bottom,#155A8A,#2563EB)', padding: '16px 24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>
-            <img src="/badge-icon.png" alt="" style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35))' }} />
+            <svg width="56" height="56" viewBox="0 0 56 56" style={{ flexShrink: 0, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35))' }}>
+              <defs>
+                <linearGradient id="badgeGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#facc15" />
+                  <stop offset="100%" stopColor="#eab308" />
+                </linearGradient>
+              </defs>
+              {/* 盾牌轮廓 */}
+              <path d="M28 3 C14 3 6 9 6 16 L6 28 C6 42 28 52 28 52 C28 52 50 42 50 28 L50 16 C50 9 42 3 28 3 Z" fill="url(#badgeGrad)" stroke="#b45309" strokeWidth="1.5" />
+              {/* 国徽红星 */}
+              <polygon points="28,12 30.5,20.5 39.5,20.5 32,26 34.8,34.5 28,29.5 21.2,34.5 24,26 16.5,20.5 25.5,20.5" fill="#dc2626" />
+              {/* 底部穗带 */}
+              <path d="M18 40 C22 44 34 44 38 40" fill="none" stroke="#b45309" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
             {isEditing ? '编辑工作记录' : '新建工作记录'} · {selectedModule?.label}
           </div>
           <button

@@ -1,11 +1,12 @@
-export const APP_VERSION = "V2.41.13";
+export const APP_VERSION = "V2.41.14";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 13;
+export const VERSION_PATCH = 14;
 
 export const CHANGELOG: string[] = [
+  "V2.41.14 修复 - 集中修复用户反馈 9 项问题：①取消离线版自动更新弹窗（App.tsx 移除检查逻辑 + main.cjs 关闭 quit 时自动安装）；②窗口化时顶栏全局搜索改为 Grid 布局避免遮挡头像；③桌面便签重设计（24px 真圆角/玻璃拟态/柔和阴影/SVG 图标替代 emoji）；④DailyNotes 编辑 Modal 补回 antd Modal import 修复 Modal is not defined；⑤备份默认文件名替换 Windows 非法字符（冒号等）；⑥案件时间轴原生 select 改为 antd Select 使下拉菜单正确跟随深色主题；⑦文书库下载改为 fetch+blob+file-saver 确保真正保存到磁盘；⑧新建弹窗警徽图标改为内联 SVG（原 /badge-icon.png 丢失）；⑨Electron 窗口控制按钮移到标题栏最右侧",
+  // ===== V2.41.13 =====
   "V2.41.13 清理 - 收尾优化：删除磁盘残留与零引用死代码（format.ts/theme.ts 废弃函数、src/constants/caseTypes.ts）；将散落各处的 isElectron 内联判断统一收敛到 lib/env（AppLayout/LoginPage/SystemSettings/DailyNotes/useUnsavedChanges/attachmentStore）；合并 reportGenerator/reportUtils 私有日期格式到 format.formatChineseDate；修复 ModulePage 表格 rowKey 与 Dashboard/OperationLog 动态列表稳定 key；Modal 静态方法统一改 App.useApp() 使暗色/品牌主题生效",
-  // ===== V2.41.12 =====
   "V2.41.12 修复 - 深色模式下自定义原生输入框仍为白底的问题：为 InputWithHistory / GlobalCaseNameField / GlobalCaseNoField / GlobalClueNoField 的原生 input 及下拉面板添加统一 CSS 类，深色模式下强制背景/文字/边框/placeholder/focus 统一",
   // ===== V2.41.11 =====
   "V2.41.11 优化 - 新建弹窗标题前警徽图标改为纯图标无衬底、放大至 56×56，并加 drop-shadow 图形阴影（移除白底圆角衬底）",

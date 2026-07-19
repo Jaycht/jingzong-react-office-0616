@@ -20,7 +20,7 @@ if (!isDev) {
     const { autoUpdater: updater } = require("electron-updater");
     autoUpdater = updater;
     autoUpdater.autoDownload = false;
-    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.autoInstallOnAppQuit = false;
   } catch {
     // electron-updater 未安装，跳过自动更新
   }

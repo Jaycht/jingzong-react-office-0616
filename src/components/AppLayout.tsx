@@ -185,10 +185,11 @@ export default function AppLayout() {
         <div
           className="electron-titlebar"
           style={{
-            height: 34, flexShrink: 0, display: 'flex', alignItems: 'center',
+            height: 34, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
             WebkitAppRegion: 'drag',
             background: darkMode ? 'linear-gradient(135deg,#13325c,#1d4ed8)' : 'linear-gradient(135deg,#155A8A,#2563EB)',
             paddingLeft: 14,
+            paddingRight: 14,
             borderBottom: 'none',
           }}
         >
@@ -200,11 +201,12 @@ export default function AppLayout() {
         </div>
       )}
 
-      {/* ── 顶部常驻栏：品牌（最左） + 全局检索（绝对居中） + 个人信息（最右） ── */}
+      {/* ── 顶部常驻栏：品牌（最左） + 全局检索（居中） + 个人信息（最右） ── */}
       <div
         className="app-topbar"
         style={{
-          position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'relative', flexShrink: 0, display: 'grid', alignItems: 'center',
+          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 720px) minmax(0, 1fr)',
           gap: 16, padding: '12px 22px',
           background: darkMode ? 'linear-gradient(135deg,#13325c,#1d4ed8)' : 'linear-gradient(135deg,#155A8A,#2563EB)',
           borderBottom: darkMode ? '1px solid rgba(163,201,255,0.12)' : '1px solid rgba(13,42,84,0.35)',
@@ -221,13 +223,13 @@ export default function AppLayout() {
           </div>
         </div>
 
-        {/* 中：全局检索（始终绝对居中） */}
-        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: '100%', maxWidth: 720, WebkitAppRegion: 'no-drag' }}>
+        {/* 中：全局检索 */}
+        <div style={{ width: '100%', maxWidth: 720, justifySelf: 'center', WebkitAppRegion: 'no-drag' }}>
           <GlobalSearch />
         </div>
 
         {/* 右：个人信息 */}
-        <div style={{ WebkitAppRegion: 'no-drag', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <div style={{ WebkitAppRegion: 'no-drag', justifySelf: 'end', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <div title="点击查看个人资料" onClick={() => setProfileOpen(true)} style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${darkMode ? 'rgba(255,255,255,0.25)' : '#fff'}`, boxShadow: darkMode ? '0 2px 10px rgba(0,0,0,.45)' : '0 2px 10px rgba(15,23,42,.18)', flexShrink: 0 }}>
             <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>

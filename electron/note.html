@@ -5,63 +5,82 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-family:"Segoe UI","PingFang SC","Microsoft YaHei UI",system-ui,sans-serif}
-.note{width:100%;height:100%;display:flex;flex-direction:column;border-radius:18px;overflow:hidden;position:relative;
-  box-shadow:0 18px 50px rgba(15,23,42,.20),0 4px 14px rgba(15,23,42,.10),inset 0 1px 0 rgba(255,255,255,.55);
-  transition:box-shadow .25s var(--ease, ease);}
-.note::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
-  box-shadow:inset 0 0 0 .5px rgba(0,0,0,.05);}
-.note:hover{box-shadow:0 24px 64px rgba(15,23,42,.26),0 6px 18px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.6)}
-.header{height:42px;min-height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 6px 0 12px;
-  border-bottom:1px solid rgba(0,0,0,.05);position:relative;z-index:10;-webkit-app-region:drag;
-  background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0));}
-.header-left{display:flex;align-items:center;gap:8px;pointer-events:none;min-width:0;flex:1}
-.color-indicator{pointer-events:auto;-webkit-app-region:no-drag;width:14px;height:14px;border-radius:50%;
-  border:2px solid rgba(255,255,255,.85);box-shadow:0 1px 4px rgba(0,0,0,.18),inset 0 1px 1px rgba(255,255,255,.5);
-  cursor:pointer;flex-shrink:0;transition:transform .15s var(--ease, ease)}
-.color-indicator:hover{transform:scale(1.18)}
-.type-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;
-  background:rgba(0,0,0,.10);color:rgba(0,0,0,.66);pointer-events:none;-webkit-app-region:no-drag;white-space:nowrap;flex-shrink:0;
+:root{
+  --radius:24px;
+  --header-h:46px;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+.note{width:100%;height:100%;display:flex;flex-direction:column;border-radius:var(--radius);overflow:hidden;position:relative;
+  box-shadow:0 28px 70px rgba(15,23,42,.18),0 10px 28px rgba(15,23,42,.10),inset 0 1px 0 rgba(255,255,255,.55);
+  transition:box-shadow .25s var(--ease),transform .18s var(--ease);
+  /* 真圆角：用伪元素边框 + 背景渐变，避免假角 */
+  background:linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.62) 40%, rgba(255,255,255,.72));
+  border:1px solid rgba(255,255,255,.55);
+  backdrop-filter:blur(30px) saturate(150%);-webkit-backdrop-filter:blur(30px) saturate(150%);
+}
+.note::before{content:"";position:absolute;inset:0;border-radius:var(--radius);pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.55), inset 0 -1px 0 rgba(0,0,0,.04);z-index:5}
+.note:hover{box-shadow:0 32px 80px rgba(15,23,42,.22),0 12px 32px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.6)}
+
+.header{height:var(--header-h);min-height:var(--header-h);display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 14px;
+  position:relative;z-index:10;-webkit-app-region:drag;
+  background:linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0));
+  border-bottom:1px solid rgba(0,0,0,.05)}
+.header-left{display:flex;align-items:center;gap:10px;pointer-events:none;min-width:0;flex:1}
+.color-indicator{pointer-events:auto;-webkit-app-region:no-drag;width:16px;height:16px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.9);box-shadow:0 1px 5px rgba(0,0,0,.18),inset 0 1px 2px rgba(255,255,255,.5);
+  cursor:pointer;flex-shrink:0;transition:transform .15s var(--ease)}
+.color-indicator:hover{transform:scale(1.15)}
+.type-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3.5px 10px;border-radius:999px;
+  background:rgba(0,0,0,.08);color:rgba(0,0,0,.68);pointer-events:none;-webkit-app-region:no-drag;white-space:nowrap;flex-shrink:0;
   letter-spacing:.02em;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.type-tag .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.4)}
-.meta-label{font-size:12.5px;font-weight:600;opacity:.82;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;-webkit-app-region:no-drag}
-.header-right{display:flex;align-items:center;gap:2px;opacity:0;transition:opacity .18s var(--ease, ease);-webkit-app-region:no-drag}
+.type-tag .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.45)}
+.meta-label{font-size:12.5px;font-weight:600;opacity:.85;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;-webkit-app-region:no-drag}
+.header-right{display:flex;align-items:center;gap:2px;opacity:0;transition:opacity .18s var(--ease);-webkit-app-region:no-drag}
 .note:hover .header-right,.note.minimized .header-right{opacity:1}
 .hbtn{width:30px;height:30px;border:none;border-radius:9px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  color:rgba(0,0,0,.62);transition:background .14s,color .14s,-webkit-transform .14s;transform:translateY(0);-webkit-app-region:no-drag}
-.hbtn:hover{background:rgba(0,0,0,.09);color:rgba(0,0,0,.92);transform:translateY(-1px)}
+  color:rgba(0,0,0,.55);transition:background .14s,color .14s,transform .12s;transform:translateY(0);-webkit-app-region:no-drag}
+.hbtn:hover{background:rgba(0,0,0,.08);color:rgba(0,0,0,.92);transform:translateY(-1px)}
 .hbtn:active{transform:translateY(0) scale(.94)}
 .hbtn.close:hover{background:rgba(214,40,40,.92);color:#fff}
-.hbtn svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.8;fill:none}
+.hbtn svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
 .body{flex:1;position:relative;overflow:hidden}
-.textarea{width:100%;height:100%;border:none;outline:none;resize:none;background:transparent;font-size:14.5px;line-height:1.82;
+.textarea{width:100%;height:100%;border:none;outline:none;resize:none;background:transparent;font-size:14.5px;line-height:1.78;
   padding:14px 18px 16px;font-family:inherit;letter-spacing:.01em;overflow-y:auto;-webkit-app-region:no-drag;color:inherit}
 .textarea::placeholder{color:rgba(0,0,0,.22)}
-.textarea::-webkit-scrollbar{width:6px}
+.textarea::-webkit-scrollbar{width:5px}
 .textarea::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:3px}
 .textarea::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.22)}
-.statusbar{height:26px;min-height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;
-  font-size:10.5px;color:rgba(0,0,0,.4);border-top:1px solid rgba(0,0,0,.05);
-  background:linear-gradient(0deg, rgba(0,0,0,.03), rgba(0,0,0,0));user-select:none;-webkit-app-region:no-drag}
-.statusbar .save-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(34,160,90,.8);margin-right:5px;vertical-align:middle;
+
+.statusbar{height:28px;min-height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;
+  font-size:10.5px;color:rgba(0,0,0,.42);border-top:1px solid rgba(0,0,0,.05);
+  background:linear-gradient(0deg, rgba(0,0,0,.04), rgba(0,0,0,0));user-select:none;-webkit-app-region:no-drag}
+.statusbar .save-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(34,160,90,.85);margin-right:5px;vertical-align:middle;
   box-shadow:0 0 0 3px rgba(34,160,90,.16);transition:background .2s}
-.statusbar .save-dot.saving{background:rgba(220,150,30,.9);box-shadow:0 0 0 3px rgba(220,150,30,.16)}
-.color-picker{position:absolute;top:46px;left:10px;display:none;gap:8px;padding:9px 11px;background:rgba(255,255,255,.92);
-  backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border-radius:14px;
-  box-shadow:0 10px 30px rgba(15,23,42,.20),0 0 0 .5px rgba(15,23,42,.08);z-index:100;animation:popIn .16s var(--ease, ease);-webkit-app-region:no-drag}
+.statusbar .save-dot.saving{background:rgba(220,150,30,.95);box-shadow:0 0 0 3px rgba(220,150,30,.16)}
+
+.color-picker{position:absolute;top:50px;left:10px;display:none;gap:8px;padding:10px 12px;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border-radius:16px;
+  box-shadow:0 12px 34px rgba(15,23,42,.18),0 0 0 .5px rgba(15,23,42,.07);z-index:100;animation:popIn .16s var(--ease);-webkit-app-region:no-drag}
 .color-picker.show{display:flex}
-.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.8);box-shadow:0 1px 4px rgba(0,0,0,.14);transition:transform .12s var(--ease, ease)}
-.color-dot:hover{transform:scale(1.16)}
-.color-dot.active{border-color:rgba(15,23,42,.35);transform:scale(1.16);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 1px 4px rgba(0,0,0,.18)}
-.opacity-bar{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:10px;padding:7px 14px;
+.color-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.85);box-shadow:0 1px 5px rgba(0,0,0,.14);transition:transform .12s var(--ease)}
+.color-dot:hover{transform:scale(1.14)}
+.color-dot.active{border-color:rgba(15,23,42,.35);transform:scale(1.14);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 1px 5px rgba(0,0,0,.18)}
+
+.opacity-bar{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:10px;padding:8px 15px;
   background:rgba(255,255,255,.92);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);
-  border-radius:12px;box-shadow:0 8px 22px rgba(15,23,42,.18),0 0 0 .5px rgba(15,23,42,.08);z-index:100;animation:popIn .16s var(--ease, ease);-webkit-app-region:no-drag}
+  border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.16),0 0 0 .5px rgba(15,23,42,.07);z-index:100;animation:popIn .16s var(--ease);-webkit-app-region:no-drag}
 .opacity-bar.show{display:flex}
 .opacity-bar label{font-size:11px;color:#444;white-space:nowrap;font-weight:500}
-.opacity-slider{-webkit-appearance:none;width:90px;height:4px;border-radius:2px;background:rgba(15,23,42,.14);outline:none}
+.opacity-slider{-webkit-appearance:none;width:96px;height:4px;border-radius:2px;background:rgba(15,23,42,.14);outline:none}
 .opacity-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 5px rgba(15,23,42,.3);cursor:pointer;border:1px solid rgba(15,23,42,.08)}
+
 .note.minimized .body,.note.minimized .statusbar{display:none}
 .note.minimized .header{border-bottom:none}
-.ctx-menu{position:fixed;z-index:1000;min-width:204px;padding:6px;background:rgba(255,255,255,.95);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border-radius:14px;box-shadow:0 14px 40px rgba(15,23,42,.22),0 0 0 .5px rgba(15,23,42,.07);animation:popIn .14s var(--ease, ease);font-size:13px;-webkit-app-region:no-drag}
+.note.minimized{border-radius:var(--radius) var(--radius) 18px 18px}
+
+.ctx-menu{position:fixed;z-index:1000;min-width:204px;padding:6px;background:rgba(255,255,255,.95);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border-radius:14px;box-shadow:0 14px 40px rgba(15,23,42,.20),0 0 0 .5px rgba(15,23,42,.07);animation:popIn .14s var(--ease);font-size:13px;-webkit-app-region:no-drag}
 .ctx-item{padding:8px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:rgba(15,23,42,.84);transition:background .12s}
 .ctx-item:hover{background:rgba(15,23,42,.06)}
 .ctx-item.danger{color:#c42b1c}
@@ -79,10 +98,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-fam
       <span class="meta-label" id="meta-label"></span>
     </div>
     <div class="header-right">
-      <button class="hbtn" id="btn-min" title="折叠/展开 (Ctrl+M)"><svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6"></line></svg></button>
-      <button class="hbtn" id="btn-opacity" title="调整透明度">👁</button>
-      <button class="hbtn" id="btn-pin" title="置顶切换">📌</button>
-      <button class="hbtn close" id="btn-close" title="关闭便签"><svg viewBox="0 0 12 12"><line x1="2.5" y1="2.5" x2="9.5" y2="9.5"></line><line x1="9.5" y1="2.5" x2="2.5" y2="9.5"></line></svg></button>
+      <button class="hbtn" id="btn-min" title="折叠/展开 (Ctrl+M)"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+      <button class="hbtn" id="btn-opacity" title="调整透明度"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg></button>
+      <button class="hbtn" id="btn-pin" title="置顶切换"><svg viewBox="0 0 24 24"><path d="M16 3v7.17c0 1.1-.68 2.08-1.7 2.47l-1.54.62a2.5 2.5 0 0 1-3.52-3.52l.62-1.54A2.5 2.5 0 0 1 13.83 6H21"></path><line x1="8" y1="13" x2="2" y2="19"></line><line x1="13" y1="11" x2="19" y2="5"></line></svg></button>
+      <button class="hbtn close" id="btn-close" title="关闭便签"><svg viewBox="0 0 24 24"><line x1="5" y1="5" x2="19" y2="19"></line><line x1="19" y1="5" x2="5" y2="19"></line></svg></button>
     </div>
   </div>
   <div class="color-picker" id="color-picker"></div>
@@ -145,8 +164,8 @@ function buildColorPicker(){
 function applyMinimized(min){
   document.getElementById('note').classList.toggle('minimized',!!min);
   const btn=document.getElementById('btn-min');
-  if(min){btn.innerHTML='<svg viewBox="0 0 12 12"><rect x="2" y="2" width="8" height="8" rx="1"></rect></svg>';btn.title='展开 (Ctrl+M)';}
-  else{btn.innerHTML='<svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6"></line></svg>';btn.title='折叠 (Ctrl+M)';}
+  if(min){btn.innerHTML='<svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>';btn.title='展开 (Ctrl+M)';}
+  else{btn.innerHTML='<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>';btn.title='折叠 (Ctrl+M)';}
 }
 
 function updateHeader(){

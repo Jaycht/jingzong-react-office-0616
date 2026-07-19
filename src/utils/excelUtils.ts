@@ -609,8 +609,8 @@ export async function generateBackup(): Promise<boolean> {
   };
 
   const json = JSON.stringify(backup, null, 2);
-  const timestamp = new Date().toISOString().slice(0, 16).replace('T', '_');
-  const defaultName = `jingzong_备份_${timestamp}.json`;
+  const timestamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(/:/g, '-');
+  const defaultName = `jingzong_备份_${timestamp}.json`.replace(/[\\/:*?"<>|]/g, '-');
 
   // Electron 环境：弹出原生保存对话框，让用户选择任意路径（如 U 盘/备份文件夹）
   const api = typeof window !== 'undefined' ? window.electronAPI : undefined;

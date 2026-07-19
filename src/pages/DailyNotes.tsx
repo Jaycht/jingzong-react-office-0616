@@ -9,7 +9,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { StickyNote, Plus, Trash2, Download, Upload, X, Pen, Pin, Bell, Search, Check, ArrowDownWideNarrow, ArrowUpWideNarrow, Flag, Clock, AlignLeft } from 'lucide-react';
-import { App, Input, Select, DatePicker, Switch } from 'antd';
+import { App, Input, Modal, Select, DatePicker, Switch } from 'antd';
 import { getDailyNotes, createDailyNote, updateDailyNote, deleteDailyNote, getCustomTypes, saveCustomTypes, type DailyNote } from '../store/dailyNotesStore';
 import { useAppStore } from '../store/appStore';
 import { saveAs } from 'file-saver';
