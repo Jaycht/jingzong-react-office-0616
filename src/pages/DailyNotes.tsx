@@ -9,12 +9,13 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { StickyNote, Plus, Trash2, Download, Upload, X, Pen, Pin, Bell, Search, Check, ArrowDownWideNarrow, ArrowUpWideNarrow, Flag, Clock, AlignLeft } from 'lucide-react';
-import { Modal, Input, Select, DatePicker, Switch } from 'antd';
+import { App, Input, Select, DatePicker, Switch } from 'antd';
 import { getDailyNotes, createDailyNote, updateDailyNote, deleteDailyNote, getCustomTypes, saveCustomTypes, type DailyNote } from '../store/dailyNotesStore';
 import { useAppStore } from '../store/appStore';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import dayjs from 'dayjs';
+import { isElectron as isElectronEnv } from '../lib/env';
 
 const REPEAT_OPTIONS = [
   { value: 'none', label: '不重复' }, { value: '30min', label: '每30分钟' },
@@ -49,6 +50,7 @@ const PRIORITY_LABEL: Record<string, string> = { normal: '普通', important: '�
 const PRIORITY_COLOR: Record<string, string> = { normal: '#6B7280', important: '#D97706', urgent: '#DC2626' };
 
 export default function DailyNotes() {
+  const { modal } = App.useApp();
   const showToast = useAppStore((s) => s.showToast);
   const [refreshKey, setRefreshKey] = useState(0);
   const [filterText, setFilterText] = useState('');
@@ -111,7 +113,7 @@ export default function DailyNotes() {
   }, [allNotes, activeType, filterText, sortOrder]);
 
   const handleDelete = useCallback((id: string, title: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: `确定要删除记录「${title || '无标题'}」吗？删除后不可恢复。`,
       okText: '删除', okButtonProps: { danger: true }, cancelText: '取消',
@@ -126,7 +128,7 @@ export default function DailyNotes() {
 
   const handleBatchDelete = useCallback(() => {
     if (selectedKeys.length === 0) return;
-    Modal.confirm({
+    modal.confirm({
       title: '确认批量删除',
       content: `确定要删除选中的 ${selectedKeys.length} 条记录吗？删除后不可恢复。`,
       okText: '删除', okButtonProps: { danger: true }, cancelText: '取消',
@@ -188,7 +190,7 @@ export default function DailyNotes() {
   };
 
   const handleOpenSticky = (rec: DailyNote) => {
-    const isElectron = typeof window !== 'undefined' && window.electronAPI?.createNoteWindow;
+    const isElectron = isElectronEnv();
     if (isElectron) {
       const content = [
         rec.title ? `【${rec.title}】` : '',

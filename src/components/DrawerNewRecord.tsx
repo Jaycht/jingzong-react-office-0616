@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Button, DatePicker, Form, Input, InputNumber,
-  Modal, Radio, Select, Space, Tag, Upload,
+  Modal, Radio, Select, Space, Tag, Upload, App,
   type FormInstance, type UploadFile,
 } from 'antd';
 import dayjs from 'dayjs';
@@ -29,6 +29,7 @@ import { saveDraft, getDraft, deleteDraft } from '../store/draftStore';
 interface Props { onClose: () => void; editRecord?: import('../store/massStore').MassRecord | null; }
 
 export default function DrawerNewRecord({ onClose, editRecord }: Props) {
+  const { modal } = App.useApp();
   useUnsavedChanges(true);
   
     const currentPage = useAppStore((s) => s.currentPage);
@@ -115,7 +116,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
 
   const handleClose = () => {
     if (isDirty) {
-      Modal.confirm({
+      modal.confirm({
         title: '信息未保存',
         content: '您填写的记录信息尚未保存，确定要退出吗？',
         okText: '确定退出',
@@ -417,7 +418,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       if (!mountedRef.current) return;
       const draft = getDraft(selectedModuleId, selectedTabId);
       if (draft && Object.keys(draft.data).length > 0) {
-        Modal.confirm({
+        modal.confirm({
           title: '发现未保存的草稿',
           content: `上次在 ${new Date(draft.savedAt).toLocaleString('zh-CN')} 自动保存了草稿，是否恢复？`,
           okText: '恢复草稿',

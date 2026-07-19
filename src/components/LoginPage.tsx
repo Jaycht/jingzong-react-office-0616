@@ -5,6 +5,7 @@ import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { APP_VERSION } from "../version";
 import { useAppStore } from "../store/appStore";
 import { verifyPassword } from "../utils/crypto";
+import { isElectron as isElectronEnv } from "../lib/env";
 
 interface Props {
   onLogin: (name: string, role: string, extra?: { badge?: string; phone?: string; department?: string }) => void;
@@ -350,7 +351,7 @@ export default function LoginPage({ onLogin, onRegister }: Props) {
         backgroundSize: "32px 32px, 128px 128px, 128px 128px",
       };
 
-  const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
+  const isElectron = isElectronEnv();
 
   const handleCloseLoginPage = () => {
     if (window.electronAPI?.close) {

@@ -2,7 +2,7 @@
  * 工作台 Dashboard — 高级感现代风
  * 顶部欢迎区 + 快捷入口 · KPI 概览 · 待办预警 · 数据概览 · 最近动态 · 模块活跃度
  */
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp, AlertTriangle, CheckCircle2,
@@ -107,6 +107,17 @@ function PanelHead({ icon: Icon, color, tint, title, sub, extra }: {
   );
 }
 
+/* 顶部欢迎区实时时钟（精确到秒，独立重渲染不影响父组件） */
+function HeroClock() {
+  const [t, setT] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setT(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const timeStr = t.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  return <span>{timeStr}</span>;
+}
+
 /* ===================== 主组件 ===================== */
 
 export default function Dashboard() {
@@ -157,6 +168,7 @@ export default function Dashboard() {
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
       .slice(0, 8)
       .map(r => ({
+        id: r.id,
         moduleId: r.moduleId,
         moduleName: MODULE_NAMES[r.moduleId] || r.moduleId,
         title: String(r.data?.caseName || r.data?.suspect || r.data?.title || ''),
@@ -310,7 +322,7 @@ export default function Dashboard() {
         <div className="dash-hero-avatar">{avatarText}</div>
         <div>
           <div className="dash-hero-greet">{greet}，{displayName}</div>
-          <div className="dash-hero-sub">{subParts.join('　·　')}</div>
+          <div className="dash-hero-sub">{subParts.join('　·　')}　·　<HeroClock /></div>
         </div>
         <div className="dash-hero-actions">
           <button className="dash-action dash-action-primary" onClick={() => openModal('newRecord')}>
@@ -437,7 +449,7 @@ export default function Dashboard() {
               <div style={{ position: 'relative', padding: '10px 18px 10px 36px' }}>
                 <div style={{ position: 'absolute', left: 20, top: 14, bottom: 14, width: 1.5, background: 'var(--color-primary)', opacity: 0.22 }} />
                 {recentActivity.map((a, i) => (
-                  <div key={i} style={{ position: 'relative', paddingBottom: i < recentActivity.length - 1 ? 14 : 0, borderBottom: i < recentActivity.length - 1 ? '1px solid var(--color-border-light)' : 'none' }}>
+                  <div key={a.id} style={{ position: 'relative', paddingBottom: i < recentActivity.length - 1 ? 14 : 0, borderBottom: i < recentActivity.length - 1 ? '1px solid var(--color-border-light)' : 'none' }}>
                     <div style={{ position: 'absolute', left: -24, top: 6, width: 9, height: 9, borderRadius: '50%', background: i < 3 ? 'var(--color-primary)' : 'var(--color-border)', border: '2px solid var(--color-surface)' }} />
                     <div style={{ fontSize: 12, color: mutedColor }}>
                       <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>{a.moduleName}</span>

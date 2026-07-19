@@ -1,9 +1,10 @@
-export const APP_VERSION = "V2.41.12";
+export const APP_VERSION = "V2.41.13";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 12;
+export const VERSION_PATCH = 13;
 
 export const CHANGELOG: string[] = [
+  "V2.41.13 清理 - 收尾优化：删除磁盘残留与零引用死代码（format.ts/theme.ts 废弃函数、src/constants/caseTypes.ts）；将散落各处的 isElectron 内联判断统一收敛到 lib/env（AppLayout/LoginPage/SystemSettings/DailyNotes/useUnsavedChanges/attachmentStore）；合并 reportGenerator/reportUtils 私有日期格式到 format.formatChineseDate；修复 ModulePage 表格 rowKey 与 Dashboard/OperationLog 动态列表稳定 key；Modal 静态方法统一改 App.useApp() 使暗色/品牌主题生效",
   // ===== V2.41.12 =====
   "V2.41.12 修复 - 深色模式下自定义原生输入框仍为白底的问题：为 InputWithHistory / GlobalCaseNameField / GlobalCaseNoField / GlobalClueNoField 的原生 input 及下拉面板添加统一 CSS 类，深色模式下强制背景/文字/边框/placeholder/focus 统一",
   // ===== V2.41.11 =====

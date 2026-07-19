@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Database, Download, Upload, RefreshCw, Trash2, Clock, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
-import { Modal } from 'antd';
+import { App } from 'antd';
 import { useAppStore } from "../store/appStore"
 import { generateBackup, getBackupMetas, deleteBackupMeta, restoreFromJson, previewBackupFile } from '../utils/excelUtils';
 import { indexedDBAdapter } from '../store/adapter';
@@ -55,6 +55,7 @@ function getRecordStats(): Record<string, number> {
 }
 
 export default function Backup({ noHeader }: { noHeader?: boolean }) {
+  const { modal } = App.useApp();
   const showToast = useAppStore((s) => s.showToast);
   const [backups, setBackups] = useState<BackupMeta[]>(() => getBackupMetas());
   const [restoring, setRestoring] = useState(false);
@@ -96,7 +97,7 @@ export default function Backup({ noHeader }: { noHeader?: boolean }) {
           setRestoring(false);
           return;
         }
-        Modal.confirm({
+        modal.confirm({
           title: '确认从备份恢复？',
           content: (
             <div style={{ whiteSpace: 'pre-line', fontSize: 13, lineHeight: 1.9, color: 'var(--color-text-secondary)' }}>
@@ -355,7 +356,7 @@ export default function Backup({ noHeader }: { noHeader?: boolean }) {
         </p>
         <button
           onClick={() => {
-            Modal.confirm({
+            modal.confirm({
               title: '确认重置所有数据？',
               content: '此操作将清除所有工作记录、附件、设置和用户数据，不可恢复！',
               okText: '确认重置',

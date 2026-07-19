@@ -7,6 +7,7 @@ import { getMassRecords } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import type { WorkModule } from '../moduleConfig';
 import { escapeHtml } from './htmlUtils';
+import { formatChineseDate } from './format';
 
 type ReportType = 'daily' | 'weekly' | 'monthly';
 
@@ -47,10 +48,6 @@ function getPeriodRange(type: ReportType): { start: Date; end: Date; label: stri
 
   const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   return { start, end, label: `${fmt(start)} ~ ${fmt(end)}` };
-}
-
-function fmtDate(d: Date): string {
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
 /**
@@ -168,11 +165,11 @@ ${tabDetails || '<p style="color:#999;">无详细记录数据。</p>'}
 
 <div class="footer">
   <hr style="border-top:1px dashed #ccc;margin:30px 0 10px;" />
-  <div>报告生成日期：${fmtDate(now)}</div>
+  <div>报告生成日期：${formatChineseDate(now)}</div>
   <div class="sign">
     <div class="sign-item"><div>填报人：</div><div class="sign-line">（签名）</div></div>
     <div class="sign-item"><div>审核人：</div><div class="sign-line">（签名）</div></div>
-    <div class="sign-item"><div>日期：</div><div class="sign-line">${fmtDate(now)}</div></div>
+    <div class="sign-item"><div>日期：</div><div class="sign-line">${formatChineseDate(now)}</div></div>
   </div>
   <div style="margin-top:20px;">本报告由经侦大队工作记录管理系统自动生成</div>
 </div>

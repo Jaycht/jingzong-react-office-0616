@@ -39,21 +39,6 @@ export function daysBetween(a: Date, b: Date): number {
   return Math.floor((end.getTime() - start.getTime()) / 86400000);
 }
 
-/** ISO 字符串 → 'YYYY-MM-DD'（失败返回原始值） */
-export function formatDate(value: unknown): string {
-  if (typeof value !== 'string' || !value) return '';
-  const m = value.match(/^\d{4}-\d{2}-\d{2}/);
-  return m ? m[0] : value;
-}
-
-/** ISO 字符串 → 'YYYY-MM-DD HH:mm'（失败返回原始值） */
-export function formatDateTime(value: unknown): string {
-  if (typeof value !== 'string' || !value) return '';
-  const m = value.match(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?/);
-  if (!m) return value;
-  return (m[1] ? value.slice(0, 16) : value.slice(0, 10) + ' 00:00').replace('T', ' ');
-}
-
 /**
  * 将任意字段值安全转为可读字符串：
  * 对象/数组序列化，日期时间统一格式化为 YYYY-MM-DD HH:mm，其余转字符串；用于列表/详情展示。

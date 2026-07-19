@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Modal, Form, Input, Select, Divider } from "antd";
+import { Modal, Form, Input, Select, Divider, App } from "antd";
 import { UserCog, Lock, Camera, X, ShieldCheck, Trash2 } from "lucide-react";
 import { useAppStore } from "../store/appStore";
 import { hashPassword, verifyPassword } from "../utils/crypto";
@@ -19,6 +19,7 @@ const fieldLabel: React.CSSProperties = {
 };
 
 export default function ProfileModal({ open, onClose }: Props) {
+  const { modal } = App.useApp();
   const userName = useAppStore((s) => s.userName);
   const userBadge = useAppStore((s) => s.userBadge);
   const userPhone = useAppStore((s) => s.userPhone);
@@ -67,7 +68,7 @@ export default function ProfileModal({ open, onClose }: Props) {
   // 删除自定义头像：清除 localStorage，回退默认警徽；仅在已设自定义头像时可点
   const handleDeleteAvatar = () => {
     if (!avatar) return;
-    Modal.confirm({
+    modal.confirm({
       title: "恢复默认头像",
       content: "将删除自定义头像，恢复为默认警徽头像。确定继续吗？",
       okText: "恢复默认",
@@ -146,7 +147,7 @@ export default function ProfileModal({ open, onClose }: Props) {
       onClose();
       return;
     }
-    Modal.confirm({
+    modal.confirm({
       title: "未保存的修改",
       content: "资料页面有未保存的内容，确定要退出吗？",
       okText: "退出",

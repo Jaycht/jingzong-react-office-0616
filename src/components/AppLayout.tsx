@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Modal } from "antd";
+import { App } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore"
 import Sidebar from "./Sidebar";
@@ -16,6 +16,7 @@ import GlobalSearch from "./GlobalSearch";
 import { User, LogOut, Sun, Moon, Gauge } from "lucide-react";
 import { BRAND } from "../constants/theme";
 import { useReminderService } from "../hooks/useReminderService";
+import { isElectron as isElectronEnv } from "../lib/env";
 
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const SettingsPage = lazy(() => import("../pages/SettingsPage"));
@@ -53,31 +54,32 @@ const PAGES: Record<string, React.FC> = {
   'legal-assessment': PlaceholderPage,
 };
 
-const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
-
-const winControls = {
-  min: () => window.electronAPI?.minimize(),
-  max: () => window.electronAPI?.maximize(),
-  close: () => {
-    Modal.confirm({
-      title: '确认退出？',
-      content: '确定要关闭程序吗？未保存的数据将会丢失。',
-      okText: '退出',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: () => {
-        if (window.electronAPI?.close) {
-          window.electronAPI.close();
-        } else {
-          try { window.close(); } catch {}
-        }
-      },
-    });
-  },
-};
+const isElectron = isElectronEnv();
 
 export default function AppLayout() {
   useReminderService();
+  const { modal } = App.useApp();
+
+  const winControls = {
+    min: () => window.electronAPI?.minimize(),
+    max: () => window.electronAPI?.maximize(),
+    close: () => {
+      modal.confirm({
+        title: '确认退出？',
+        content: '确定要关闭程序吗？未保存的数据将会丢失。',
+        okText: '退出',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk: () => {
+          if (window.electronAPI?.close) {
+            window.electronAPI.close();
+          } else {
+            try { window.close(); } catch {}
+          }
+        },
+      });
+    },
+  };
 
   const modalId = useAppStore((s) => s.modalId);
   const closeModal = useAppStore((s) => s.closeModal);
@@ -144,7 +146,7 @@ export default function AppLayout() {
   const avatarSrc = customAvatar || "/avatar-default.jpg";
 
   const handleLogout = () => {
-    Modal.confirm({
+    modal.confirm({
       title: "确认退出登录？",
       content: "退出后需要重新登录。",
       okText: "退出",

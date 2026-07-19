@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ConfigProvider, Modal } from "antd";
+import { ConfigProvider, App as AntApp } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { motion, MotionConfig } from "framer-motion";
 import { HashRouter, Route, Routes, useNavigate } from "react-router-dom";
@@ -98,6 +98,7 @@ function AppContent() {
   const toasts = useAppStore((s) => s.toasts);
   const removeToast = useAppStore((s) => s.removeToast);
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
+  const { modal } = AntApp.useApp();
 
   // Electron 自动更新检查
   useEffect(() => {
@@ -106,7 +107,7 @@ function AppContent() {
       try {
         const result = await window.electronAPI.checkForUpdates();
         if (result?.available) {
-          Modal.confirm({
+          modal.confirm({
             title: `发现新版本 v${result.version}`,
             content: '是否下载并安装更新？',
             okText: '更新',
@@ -214,9 +215,11 @@ export default function App() {
   }, [uiDensity]);
   return (
     <ConfigProvider locale={zhCN} theme={darkMode ? DARK_THEME : LIGHT_THEME}>
-      <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AppContent />
-      </HashRouter>
+      <AntApp>
+        <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <AppContent />
+        </HashRouter>
+      </AntApp>
     </ConfigProvider>
   );
 }

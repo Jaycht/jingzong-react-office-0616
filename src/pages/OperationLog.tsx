@@ -114,7 +114,7 @@ export default function OperationLog() {
             </div>
           ) : logs.map((log, i) => (
             <motion.div
-              key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+              key={log.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 + i * 0.06 }}
               whileHover={{ background: 'var(--color-surface-hover)' }}
               style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', borderBottom: i < logs.length - 1 ? '1px solid var(--color-surface-hover)' : 'none' }}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { DatePicker, Dropdown, Empty, Modal, Select, Table, Tabs } from 'antd';
+import { App, DatePicker, Dropdown, Empty, Select, Table, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import {
@@ -115,6 +115,7 @@ function fmtTime(iso: string): string {
 }
 
 export default function ModulePage() {
+  const { modal } = App.useApp();
   const currentPage = useAppStore((s) => s.currentPage);
   const openModal = useAppStore((s) => s.openModal);
   const showToast = useAppStore((s) => s.showToast);
@@ -454,7 +455,7 @@ export default function ModulePage() {
 
   // ─── 删除处理 ─────────────────────────────────
   const handleDeleteSingle = (record: MassRecord) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: `确定要删除该记录吗？删除后不可恢复。`,
       okText: '删除',
@@ -471,7 +472,7 @@ export default function ModulePage() {
   const handleBatchDelete = () => {
     const ids = selectedRowKeys as string[];
     if (ids.length === 0) return;
-    Modal.confirm({
+    modal.confirm({
       title: '批量删除',
       content: `确定要删除选中的 ${ids.length} 条记录吗？删除后不可恢复。`,
       okText: '删除',
@@ -508,7 +509,7 @@ export default function ModulePage() {
     const opts = (sf.options || []).map((o) =>
       typeof o === 'string' ? { label: o, value: o } : { label: (o as { label: string }).label, value: (o as { value: string }).value }
     );
-    Modal.confirm({
+    modal.confirm({
       title: '批量修改状态',
       content: (
         <Select
@@ -957,6 +958,7 @@ export default function ModulePage() {
                 size={dense ? 'small' : 'middle'}
                 columns={dynamicColumns}
                 dataSource={rows}
+                rowKey="key"
                 pagination={
                   printing
                     ? false

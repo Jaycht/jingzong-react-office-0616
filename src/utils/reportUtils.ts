@@ -6,6 +6,7 @@
 import { buildDocReport } from './docReport';
 import { getMassRecords } from '../store/massStore';
 import { formatDateValue, safeHtml } from './htmlUtils';
+import { formatChineseDate } from './format';
 
 const MODULE_ID = 'evidence-report';
 type ReportData = Record<string, unknown>;
@@ -123,8 +124,7 @@ function buildReportHtml(data: ReportData): string {
   const conclusionDeepClue = safeHtml(data.conclusionDeepClue, '');
   const conclusionNextStep = safeHtml(data.conclusionNextStep, '');
 
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+  const dateStr = formatChineseDate(new Date());
 
   return `<!DOCTYPE html>
 <html xmlns:o='urn:schemas-microsoft-com:office:office'

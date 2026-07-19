@@ -12,6 +12,7 @@ import SettingsPage from './SettingsPage';
 import Attachments from './Attachments';
 import Version from './Version';
 import DataManagement from './DataManagement';
+import { isElectron as isElectronEnv } from '../lib/env';
 
 const SUCCESS_SOUNDS = [
   { value: 'success-1.wav', label: '上行琶音' },
@@ -32,7 +33,7 @@ const FAILURE_SOUNDS = [
   { value: 'failure-4.wav', label: '低落双音' },
 ];
 
-const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
+const isElectron = isElectronEnv();
 
 type TabId = 'general' | 'modules' | 'data' | 'attachments' | 'about';
 

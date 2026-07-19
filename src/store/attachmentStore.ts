@@ -4,6 +4,8 @@
  * - 浏览器模式：完整文件二进制存 IndexedDB
  */
 
+import { isElectron } from '../lib/env';
+
 const DB_NAME = 'jingzong-attachments';
 const DB_VERSION = 2;
 const STORE_NAME = 'files';
@@ -45,11 +47,6 @@ export interface AttachmentBackupItem {
   fileSize: number;
   uploadedAt: string;
   dataBase64: string;
-}
-
-/** 判断是否运行在 Electron 环境 */
-function isElectron(): boolean {
-  return typeof window !== 'undefined' && !!window.electronAPI?.isElectron;
 }
 
 function openDB(): Promise<IDBDatabase> {
