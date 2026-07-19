@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.41.5";
+export const APP_VERSION = "V2.41.6";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 5;
+export const VERSION_PATCH = 6;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.41.6 =====
+  "V2.41.6 修复 - 新建弹窗蓝渐变头顶部恢复圆角：V2.41.5 清零 container padding 后顶部圆角被内容区顶成直角，给蓝头 div 加 `borderRadius: 8px 8px 0 0` 使其自带顶部圆角，视觉上与弹窗外框圆角一致",
   // ===== V2.41.5 =====
   "V2.41.5 修复 - 新建弹窗蓝渐变头铺满根因：antd 6 已移除 `.ant-modal-content` 层，白边实际来自 `.ant-modal-container` 的 contentPadding；此前 V2.41.3/41.4 针对 .ant-modal-content 的选择器全部未命中。改用 Modal 的 classNames.container 加专属类 `.dnr-modal-container` 并以 `padding:0 !important` 强制清零容器内边距，蓝渐变头现在真正顶满弹窗上下左右；index.css 同步修正选择器，保留 footer padding 覆盖",
   // ===== V2.41.4 =====

@@ -509,7 +509,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       }
     >
       {/* ===== 蓝渐变头部横幅（铺满标题到基本信息上方） ===== */}
-      <div style={{ flexShrink: 0, background: darkMode ? 'linear-gradient(to bottom,#13325c,#1d4ed8)' : 'linear-gradient(to bottom,#155A8A,#2563EB)', padding: '16px 24px 20px' }}>
+      <div style={{ flexShrink: 0, borderRadius: '8px 8px 0 0', background: darkMode ? 'linear-gradient(to bottom,#13325c,#1d4ed8)' : 'linear-gradient(to bottom,#155A8A,#2563EB)', padding: '16px 24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>
             {isEditing ? '编辑工作记录' : '新建工作记录'} · {selectedModule?.label}
