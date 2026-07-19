@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.37.0";
+export const APP_VERSION = "V2.38.0";
 export const VERSION_MAJOR = 2;
-export const VERSION_MINOR = 37;
+export const VERSION_MINOR = 38;
 export const VERSION_PATCH = 0;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.38.0 =====
+  "V2.38.0 新增 - 典法查阅补入《关于办理商业贿赂刑事案件适用法律若干问题的意见》（法发〔2008〕33号，2008-11-20印发，共11条），覆盖经侦77类第10/11/12类（非国家工作人员受贿、对非国家工作人员行贿、对外国公职人员/国际公共组织官员行贿）；EC_RELATED 新增 10/11/12 关联；法规库 78→79 部、司法解释 33→34 部（走私刑事案件解释待用户补发源文件后单独入）",
   // ===== V2.37.0 =====
   "V2.37.0 优化 - 调证登记案件/线索切换体验与全局数据共享：①切换按钮改为带主色边框横幅+大号实色单选按钮组（案件调证/线索调证），选中项实心高亮、配状态 Tag，更醒目不易漏看；②线索名称改用独立全局历史池（clueName，不再借案件名称池），与案件名称池互不干扰、各自全局共享；线索编号接入 clueNo 全局历史池（输入联想以往编号）；案件来源/案件类型/线索类型均配 customOptionKey 经 PersistedSelect 全局持久化自定义项，线索来源(text)经 InputWithHistory 全局共享；③切换模式不再清空已填值（编辑中不丢），提交时仅保留当前模式的四项字段，记录始终只有一套、列表沿用 case*/clue* 回退显示",
   // ===== V2.36.0 =====
