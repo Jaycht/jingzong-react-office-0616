@@ -35,6 +35,7 @@ declare global {
       onTriggerQuitBackup: (callback: () => void) => () => void;
       getAutoStart: () => Promise<boolean>;
       setAutoStart: (enabled: boolean) => Promise<boolean>;
+      setCloseBehavior: (behavior: 'exit' | 'tray' | 'ask') => void;
       createNoteWindow: (noteData: { id: string; title: string; text: string; date: string; type?: string; priority?: string }) => Promise<{ success: boolean; error?: string }>;
       // 提醒系统（M-15：去除 as any 后 useReminderService/DailyNotes 的调用需要真实签名）
       showReminder: (title: string, body: string, soundFile: string, noteId: string, extra?: { type?: string; priority?: string; date?: string }) => Promise<{ success: boolean; error?: string }>;

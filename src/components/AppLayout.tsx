@@ -229,7 +229,7 @@ export default function AppLayout() {
         </div>
 
         {/* 右：个人信息 */}
-        <div style={{ WebkitAppRegion: 'no-drag', justifySelf: 'end', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <div style={{ WebkitAppRegion: 'no-drag', justifySelf: 'end', display: 'flex', alignItems: 'center', gap: 8, minWidth: 'fit-content', flexShrink: 0 }}>
           <div title="点击查看个人资料" onClick={() => setProfileOpen(true)} style={{ width: 44, height: 44, borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', border: `2px solid ${darkMode ? 'rgba(255,255,255,0.25)' : '#fff'}`, boxShadow: darkMode ? '0 2px 10px rgba(0,0,0,.45)' : '0 2px 10px rgba(15,23,42,.18)', flexShrink: 0 }}>
             <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>

@@ -69,8 +69,13 @@ export default function SystemSettings() {
 
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [autoStart, setAutoStart] = useState(false);
-  const [closeToTray, setCloseToTray] = useState(() => {
-    try { return localStorage.getItem('jingzong.closeToTray') !== 'false'; } catch { return true; }
+  const [closeBehavior, setCloseBehavior] = useState<'exit' | 'tray' | 'ask'>(() => {
+    try {
+      const v = localStorage.getItem('jingzong.closeBehavior');
+      if (v === 'exit' || v === 'tray' || v === 'ask') return v;
+      // 兼容旧版 closeToTray 开关
+      return localStorage.getItem('jingzong.closeToTray') === 'false' ? 'exit' : 'tray';
+    } catch { return 'tray'; }
   });
   const [loading, setLoading] = useState(false);
 
@@ -91,9 +96,15 @@ export default function SystemSettings() {
     setLoading(false);
   };
 
-  const handleCloseToTray = (checked: boolean) => {
-    setCloseToTray(checked);
-    try { localStorage.setItem('jingzong.closeToTray', String(checked)); } catch {}
+  const handleCloseBehavior = (value: 'exit' | 'tray' | 'ask') => {
+    setCloseBehavior(value);
+    try {
+      localStorage.setItem('jingzong.closeBehavior', value);
+      localStorage.removeItem('jingzong.closeToTray');
+    } catch {}
+    if (isElectron && window.electronAPI?.setCloseBehavior) {
+      window.electronAPI.setCloseBehavior(value);
+    }
   };
 
   const textColor = darkMode ? '#E6EAF2' : '#1F2937';
@@ -121,9 +132,20 @@ export default function SystemSettings() {
               />
               {isElectron && (
                 <SettingRow
-                  title="关闭时最小化到托盘"
-                  desc="点击关闭按钮时隐藏到系统托盘，双击托盘图标恢复"
-                  extra={<Switch checked={closeToTray} onChange={handleCloseToTray} />}
+                  title="关闭窗口时的行为"
+                  desc="决定点击标题栏关闭按钮后程序如何响应"
+                  extra={
+                    <Select
+                      value={closeBehavior}
+                      onChange={(v) => handleCloseBehavior(v as 'exit' | 'tray' | 'ask')}
+                      style={{ width: 180, height: 36 }}
+                      options={[
+                        { label: '直接退出软件', value: 'exit' },
+                        { label: '最小化到系统托盘', value: 'tray' },
+                        { label: '每次询问我', value: 'ask' },
+                      ]}
+                    />
+                  }
                 />
               )}
               <SettingRow

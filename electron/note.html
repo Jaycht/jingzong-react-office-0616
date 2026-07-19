@@ -10,17 +10,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-fam
   --header-h:46px;
   --ease:cubic-bezier(.2,.8,.2,1);
 }
+.note-shell{width:100%;height:100%;display:flex;padding:0;filter:drop-shadow(0 18px 50px rgba(15,23,42,.18)) drop-shadow(0 6px 16px rgba(15,23,42,.10));}
 .note{width:100%;height:100%;display:flex;flex-direction:column;border-radius:var(--radius);overflow:hidden;position:relative;
-  box-shadow:0 28px 70px rgba(15,23,42,.18),0 10px 28px rgba(15,23,42,.10),inset 0 1px 0 rgba(255,255,255,.55);
-  transition:box-shadow .25s var(--ease),transform .18s var(--ease);
-  /* 真圆角：用伪元素边框 + 背景渐变，避免假角 */
+  transition:filter .25s var(--ease),transform .18s var(--ease);
+  /* 真圆角：clip-path 做最终裁剪保险，避免 Windows 透明窗口方角覆盖 */
   background:linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.62) 40%, rgba(255,255,255,.72));
   border:1px solid rgba(255,255,255,.55);
   backdrop-filter:blur(30px) saturate(150%);-webkit-backdrop-filter:blur(30px) saturate(150%);
+  clip-path:inset(0 round var(--radius));
 }
 .note::before{content:"";position:absolute;inset:0;border-radius:var(--radius);pointer-events:none;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.55), inset 0 -1px 0 rgba(0,0,0,.04);z-index:5}
-.note:hover{box-shadow:0 32px 80px rgba(15,23,42,.22),0 12px 32px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.6)}
+.note-shell:hover{filter:drop-shadow(0 22px 60px rgba(15,23,42,.22)) drop-shadow(0 8px 20px rgba(15,23,42,.12));}
 
 .header{height:var(--header-h);min-height:var(--header-h);display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 14px;
   position:relative;z-index:10;-webkit-app-region:drag;
@@ -90,6 +91,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-fam
 </style>
 </head>
 <body>
+<div class="note-shell">
 <div class="note" id="note">
   <div class="header" id="header">
     <div class="header-left">
@@ -116,6 +118,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-fam
     <span id="save-state"><span class="save-dot"></span>已保存</span>
     <span id="word-count">0 字</span>
   </div>
+</div>
 </div>
 
 <script>

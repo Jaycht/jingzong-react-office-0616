@@ -335,6 +335,15 @@ if (autoUpdater) {
   });
 }
 
+// 关闭窗口行为：'exit' 直接退出 | 'tray' 最小化到托盘 | 'ask' 弹窗询问
+let appCloseBehavior = 'tray';
+
+ipcMain.on('set-close-behavior', (_event, behavior) => {
+  if (behavior === 'exit' || behavior === 'tray' || behavior === 'ask') {
+    appCloseBehavior = behavior;
+  }
+});
+
 // ======================== 托盘功能 ========================
 function createTray() {
   const iconPath = path.join(__dirname, "..", "app.ico");
@@ -366,11 +375,43 @@ function createTray() {
     }
   });
 
-  // 窗口关闭时最小化到托盘
+  // 窗口关闭行为：根据用户设置处理（V2.41.15）
   if (mainWindow) {
     mainWindow.on("close", (e) => {
-      if (!app.isQuitting) {
-        e.preventDefault();
+      if (app.isQuitting) return;
+      e.preventDefault();
+
+      const doQuit = () => {
+        app.isQuitting = true;
+        if (mainWindow && mainWindow.webContents) {
+          mainWindow.webContents.send("trigger-quit-backup");
+          setTimeout(() => { app.quit(); }, 3000);
+        } else {
+          app.quit();
+        }
+      };
+
+      if (appCloseBehavior === 'exit') {
+        doQuit();
+      } else if (appCloseBehavior === 'ask') {
+        const { dialog } = require('electron');
+        const choice = dialog.showMessageBoxSync(mainWindow, {
+          type: 'question',
+          buttons: ['最小化到托盘', '退出软件'],
+          defaultId: 0,
+          cancelId: 0,
+          title: '关闭程序',
+          message: '您希望如何关闭本程序？',
+          detail: '选择「最小化到托盘」可保留后台运行，双击托盘图标恢复。',
+          noLink: true,
+        });
+        if (choice === 1) {
+          doQuit();
+        } else {
+          mainWindow.hide();
+        }
+      } else {
+        // 默认 'tray'
         mainWindow.hide();
       }
     });
@@ -504,7 +545,7 @@ function createNoteWindow(noteData) {
 
   const win = new BrowserWindow({
     x: data.x, y: data.y, width: data.w, height: data.h,
-    frame: false, transparent: true, alwaysOnTop: true,
+    frame: false, transparent: true, roundedCorners: true, alwaysOnTop: true,
     skipTaskbar: true, hasShadow: false,
     resizable: true, minWidth: 200, minHeight: 100,
     webPreferences: {

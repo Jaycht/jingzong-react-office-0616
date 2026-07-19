@@ -100,8 +100,14 @@ function AppContent() {
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
   const { modal } = AntApp.useApp();
 
-  // 本软件为纯单机离线版，不再提示/下载自动更新（V2.41.14 取消）
-  // useEffect(() => { ... }, [isElectron]);
+  // 把关闭行为设置同步给 Electron 主进程（主进程无法直接读 localStorage）
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI?.setCloseBehavior) return;
+    try {
+      const behavior = localStorage.getItem('jingzong.closeBehavior') || 'tray';
+      window.electronAPI.setCloseBehavior(behavior as 'exit' | 'tray' | 'ask');
+    } catch { /* ignore */ }
+  }, [isElectron]);
 
   const handleLogin = (name: string, role: string, extra?: { badge?: string; phone?: string; department?: string }) => {
     setUser(name, role, extra);

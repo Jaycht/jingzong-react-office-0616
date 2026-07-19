@@ -67,6 +67,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAutoStart: () => ipcRenderer.invoke('get-auto-start'),
   setAutoStart: (enabled) => ipcRenderer.invoke('set-auto-start', enabled),
 
+  // 关闭窗口行为（V2.41.15）
+  setCloseBehavior: (behavior) => ipcRenderer.send('set-close-behavior', behavior),
+
   // 提醒系统
   showReminder: (title, body, soundFile, noteId, extra) => ipcRenderer.invoke('show-reminder', { title, body, soundFile, noteId, extra: extra || {} }),
   cancelReminder: (id) => ipcRenderer.invoke('cancel-reminder', { id }),
