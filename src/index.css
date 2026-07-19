@@ -786,6 +786,35 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
 }
 
+/* 深色模式：自定义原生输入框（InputWithHistory / GlobalCaseNameField / GlobalCaseNoField / GlobalClueNoField） */
+.dark .wb-input-like {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+.dark .wb-input-like::placeholder {
+  color: var(--color-text-muted) !important;
+}
+.dark .wb-input-like:hover {
+  border-color: var(--color-primary) !important;
+}
+.dark .wb-input-like:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+.dark .wb-input-like-dropdown {
+  background: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
+}
+.dark .wb-input-like-dropdown > div {
+  color: var(--color-text) !important;
+  transition: background .1s;
+}
+.dark .wb-input-like-dropdown > div:hover {
+  background: var(--color-surface-hover) !important;
+}
+
 /* ============================================================
    低性能模式 — 禁用所有动画和特效
    ============================================================ */

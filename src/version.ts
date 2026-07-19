@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.41.11";
+export const APP_VERSION = "V2.41.12";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 11;
+export const VERSION_PATCH = 12;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.41.12 =====
+  "V2.41.12 修复 - 深色模式下自定义原生输入框仍为白底的问题：为 InputWithHistory / GlobalCaseNameField / GlobalCaseNoField / GlobalClueNoField 的原生 input 及下拉面板添加统一 CSS 类，深色模式下强制背景/文字/边框/placeholder/focus 统一",
   // ===== V2.41.11 =====
   "V2.41.11 优化 - 新建弹窗标题前警徽图标改为纯图标无衬底、放大至 56×56，并加 drop-shadow 图形阴影（移除白底圆角衬底）",
   // ===== V2.41.10 =====

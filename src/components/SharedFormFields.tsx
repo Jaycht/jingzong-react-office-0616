@@ -347,19 +347,20 @@ export function InputWithHistory({ field, placeholder, extraOptions, onSelect, v
 
   return (
     <div style={{ position: 'relative' }}>
-      <input
-        value={displayValue}
-        onChange={(e) => handleInputChange(e.target.value)}
-        onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
-        onBlur={() => setTimeout(() => setOpen(false), 200)}
-        placeholder={placeholder || `请输入${field.label}`}
-        style={{
-          width: '100%', height: 32, padding: '0 11px',
-          border: '1px solid #D9D9D9', borderRadius: 6,
-          fontSize: 14, color: '#333', outline: 'none',
-          fontFamily: 'inherit', boxSizing: 'border-box',
-          transition: 'border-color .2s, box-shadow .2s',
-        }}
+        <input
+          value={displayValue}
+          onChange={(e) => handleInputChange(e.target.value)}
+          onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          placeholder={placeholder || `请输入${field.label}`}
+          className="wb-input-like"
+          style={{
+            width: '100%', height: 32, padding: '0 11px',
+            border: '1px solid #D9D9D9', borderRadius: 6,
+            fontSize: 14, color: '#333', outline: 'none',
+            fontFamily: 'inherit', boxSizing: 'border-box',
+            transition: 'border-color .2s, box-shadow .2s',
+          }}
         onFocusCapture={(e) => {
           e.currentTarget.style.borderColor = '#1677ff';
           e.currentTarget.style.boxShadow = '0 0 0 2px rgba(22,119,255,0.1)';
@@ -602,6 +603,7 @@ export function GlobalCaseNameField({ field, subName }: {
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={handleBlurSync}
           placeholder="请输入案件名称（全软件数据共享）"
+          className="wb-input-like"
           style={{
             width: '100%', height: 32, padding: '0 11px',
             border: '1px solid #D9D9D9', borderRadius: 6,
@@ -620,6 +622,7 @@ export function GlobalCaseNameField({ field, subName }: {
         />
         {open && filteredOptions.length > 0 && (
           <div
+            className="wb-input-like-dropdown"
             style={{
               position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
               marginTop: 2, background: '#fff', borderRadius: 6,
@@ -752,6 +755,7 @@ export function GlobalCaseNoField({ field, subName }: {
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={handleBlurSync}
           placeholder="请输入案件编号（全软件数据共享）"
+          className="wb-input-like"
           style={{
             width: '100%', height: 32, padding: '0 11px',
             border: '1px solid #D9D9D9', borderRadius: 6,
@@ -770,6 +774,7 @@ export function GlobalCaseNoField({ field, subName }: {
         />
         {open && filteredOptions.length > 0 && (
           <div
+            className="wb-input-like-dropdown"
             style={{
               position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
               marginTop: 2, background: '#fff', borderRadius: 6,
@@ -925,6 +930,7 @@ export function GlobalClueNoField({ field, subName }: {
           onFocus={() => { setOpen(true); setRefreshKey((k) => k + 1); }}
           onBlur={handleBlurSync}
           placeholder="XS- 后填写数字"
+          className="wb-input-like"
           style={inputStyle}
           onFocusCapture={(e) => {
             e.currentTarget.style.borderColor = '#1677ff';
@@ -937,6 +943,7 @@ export function GlobalClueNoField({ field, subName }: {
         />
         {open && filtered.length > 0 && (
           <div
+            className="wb-input-like-dropdown"
             style={{
               position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
               marginTop: 2, background: '#fff', borderRadius: 6,
@@ -1176,6 +1183,7 @@ export function GlobalSuspectField({ field, subName, listName }: {
         />
         {open && filteredOptions.length > 0 && (
           <div
+            className="wb-input-like-dropdown"
             style={{
               position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
               marginTop: 2, background: '#fff', borderRadius: 6,
@@ -1337,6 +1345,7 @@ export function HolderAutoComplete({ field, subName }: {
         />
         {open && filteredOptions.length > 0 && (
           <div
+            className="wb-input-like-dropdown"
             style={{
               position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
               marginTop: 2, background: '#fff', borderRadius: 6,
