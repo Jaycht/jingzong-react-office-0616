@@ -740,6 +740,52 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
   background: var(--color-surface-hover) !important;
 }
 
+/* 深色模式：表单内强制统一（更高优先级，覆盖 antd 6 variant / css-in-js） */
+.dark .ant-form .ant-input,
+.dark .ant-form textarea.ant-input,
+.dark .ant-form .ant-input-outlined,
+.dark .ant-form .ant-input-filled,
+.dark .ant-form .ant-input-borderless,
+.dark .ant-form .ant-input-affix-wrapper,
+.dark .ant-form .ant-input-number,
+.dark .ant-form .ant-input-number-input,
+.dark .ant-form .ant-select .ant-select-selector,
+.dark .ant-form .ant-select-outlined .ant-select-selector,
+.dark .ant-form .ant-picker,
+.dark .ant-form .ant-picker-input > input,
+.dark .ant-form .ant-mentions,
+.dark .ant-form .ant-mentions > textarea {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+.dark .ant-form .ant-input::placeholder,
+.dark .ant-form .ant-input-affix-wrapper input::placeholder,
+.dark .ant-form .ant-input-number-input::placeholder,
+.dark .ant-form .ant-select-selection-placeholder,
+.dark .ant-form .ant-picker-input > input::placeholder,
+.dark .ant-form .ant-mentions::placeholder,
+.dark .ant-form .ant-mentions > textarea::placeholder {
+  color: var(--color-text-muted) !important;
+}
+.dark .ant-form .ant-input:hover,
+.dark .ant-form .ant-input-affix-wrapper:hover,
+.dark .ant-form .ant-input-number:hover,
+.dark .ant-form .ant-select:hover .ant-select-selector,
+.dark .ant-form .ant-picker:hover,
+.dark .ant-form .ant-mentions:hover {
+  border-color: var(--color-primary) !important;
+}
+.dark .ant-form .ant-input:focus,
+.dark .ant-form .ant-input-affix-wrapper-focused,
+.dark .ant-form .ant-input-number-focused,
+.dark .ant-form .ant-select-focused .ant-select-selector,
+.dark .ant-form .ant-picker-focused,
+.dark .ant-form .ant-mentions-focused {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
 /* ============================================================
    低性能模式 — 禁用所有动画和特效
    ============================================================ */

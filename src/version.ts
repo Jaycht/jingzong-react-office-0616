@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.41.7";
+export const APP_VERSION = "V2.41.8";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 7;
+export const VERSION_PATCH = 8;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.41.8 =====
+  "V2.41.8 修复 - 深色模式表单控件统一规则真正生效并补警徽图标：V2.41.7 规则 specificity 不足导致部分 Input 仍为白底，追加 `.ant-form` 高优先级强制统一（覆盖 antd 6 variant / css-in-js）；同时在 `DrawerNewRecord.tsx` 新建弹窗蓝渐变标题前加入警徽图标 `/badge-icon.png`，提升辨识度",
   // ===== V2.41.7 =====
   "V2.41.7 优化 - 深色模式统一表单控件样式：修复 Input 白底与 Select/DatePicker 深底不统一的问题，统一覆盖 Input / InputNumber / Select / DatePicker 的背景、文字、边框、placeholder、hover/focus、下拉浮层、日期面板、选中高亮等 token，深色模式下所有输入类控件风格一致",
   // ===== V2.41.6 =====
