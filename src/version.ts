@@ -1,10 +1,10 @@
-export const APP_VERSION = "V2.41.15";
+export const APP_VERSION = "V2.41.16";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 15;
+export const VERSION_PATCH = 16;
 
 export const CHANGELOG: string[] = [
-  "V2.41.15 修复 - 集中修复用户反馈 4 项问题：①窗口化时顶栏右侧个人信息区加 min-width/flex-shrink:0 防止被搜索区挤压头像；②桌面便签真圆角优化（electron/main.cjs 显式 roundedCorners:true + note.html 增加 note-shell 阴影层与 clip-path 保险裁剪）；③新建弹窗警徽图标改用用户提供的 public/badge-icon.png；④系统设置新增「关闭窗口时的行为」选项：直接退出/最小化到托盘/每次询问，并同步到 Electron 主进程 close 事件",
+  "V2.41.16 修复 - 集中修复 V2.41.15 四项未真正生效的问题：① AppLayout 顶栏关闭按钮移除旧的硬编码确认弹窗，改为直接交给 Electron 主进程按「关闭窗口时的行为」设置（exit/tray/ask）处理；② 新建弹窗警徽图标改用 Vite 模块导入（src/assets/badge-icon.png），避免 Electron 生产包中绝对路径 /badge-icon.png 解析失败；③ 顶栏网格布局改为「左侧 1fr / 中间 1fr（搜索框最大 720px）/ 右侧 auto」，让全局搜索随窗口化自适应收缩，右侧个人信息区不再被挤压；④ 桌面便签移除 header 的 -webkit-app-region:drag，改由 JS 实现拖拽，避免 Windows 把 header 当非客户区导致顶部圆角失效；保留 roundedCorners:true 与 clip-path 保险裁剪",
   // ===== V2.41.14 =====
   "V2.41.13 清理 - 收尾优化：删除磁盘残留与零引用死代码（format.ts/theme.ts 废弃函数、src/constants/caseTypes.ts）；将散落各处的 isElectron 内联判断统一收敛到 lib/env（AppLayout/LoginPage/SystemSettings/DailyNotes/useUnsavedChanges/attachmentStore）；合并 reportGenerator/reportUtils 私有日期格式到 format.formatChineseDate；修复 ModulePage 表格 rowKey 与 Dashboard/OperationLog 动态列表稳定 key；Modal 静态方法统一改 App.useApp() 使暗色/品牌主题生效",
   "V2.41.12 修复 - 深色模式下自定义原生输入框仍为白底的问题：为 InputWithHistory / GlobalCaseNameField / GlobalCaseNoField / GlobalClueNoField 的原生 input 及下拉面板添加统一 CSS 类，深色模式下强制背景/文字/边框/placeholder/focus 统一",

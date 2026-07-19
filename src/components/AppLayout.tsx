@@ -64,20 +64,12 @@ export default function AppLayout() {
     min: () => window.electronAPI?.minimize(),
     max: () => window.electronAPI?.maximize(),
     close: () => {
-      modal.confirm({
-        title: '确认退出？',
-        content: '确定要关闭程序吗？未保存的数据将会丢失。',
-        okText: '退出',
-        okType: 'danger',
-        cancelText: '取消',
-        onOk: () => {
-          if (window.electronAPI?.close) {
-            window.electronAPI.close();
-          } else {
-            try { window.close(); } catch {}
-          }
-        },
-      });
+      // 关闭行为统一交给 Electron 主进程处理（exit / tray / ask）
+      if (window.electronAPI?.close) {
+        window.electronAPI.close();
+      } else {
+        try { window.close(); } catch {}
+      }
     },
   };
 
@@ -206,7 +198,7 @@ export default function AppLayout() {
         className="app-topbar"
         style={{
           position: 'relative', flexShrink: 0, display: 'grid', alignItems: 'center',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 720px) minmax(0, 1fr)',
+          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) auto',
           gap: 16, padding: '12px 22px',
           background: darkMode ? 'linear-gradient(135deg,#13325c,#1d4ed8)' : 'linear-gradient(135deg,#155A8A,#2563EB)',
           borderBottom: darkMode ? '1px solid rgba(163,201,255,0.12)' : '1px solid rgba(13,42,84,0.35)',

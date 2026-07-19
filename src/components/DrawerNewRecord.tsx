@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import { InboxOutlined, PlusOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
 
 import { useUnsavedChanges } from '../utils/useUnsavedChanges';
+import badgeIcon from '../assets/badge-icon.png';
 import { useAppStore } from '../store/appStore';
 import { findModule, filterVisibleFields, type FieldDefinition } from '../moduleConfig';
 import { REQUEST_CASE_INFO, REQUEST_CLUE_INFO } from '../moduleConfig/fields/evidence';
@@ -513,7 +514,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       <div style={{ flexShrink: 0, borderRadius: '8px 8px 0 0', background: darkMode ? 'linear-gradient(to bottom,#13325c,#1d4ed8)' : 'linear-gradient(to bottom,#155A8A,#2563EB)', padding: '16px 24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>
-            <img src="/badge-icon.png" alt="" style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35))' }} />
+            <img src={badgeIcon} alt="" style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35))' }} />
             {isEditing ? '编辑工作记录' : '新建工作记录'} · {selectedModule?.label}
           </div>
           <button
