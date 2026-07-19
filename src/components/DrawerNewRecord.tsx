@@ -512,9 +512,7 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       <div style={{ flexShrink: 0, borderRadius: '8px 8px 0 0', background: darkMode ? 'linear-gradient(to bottom,#13325c,#1d4ed8)' : 'linear-gradient(to bottom,#155A8A,#2563EB)', padding: '16px 24px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fff', fontWeight: 700, fontSize: 17, letterSpacing: '-0.01em' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: '#fff', borderRadius: 14, padding: 7, boxShadow: '0 2px 8px rgba(0,0,0,0.18)' }}>
-              <img src="/badge-icon.png" alt="" style={{ width: 46, height: 46, objectFit: 'contain', display: 'block' }} />
-            </span>
+            <img src="/badge-icon.png" alt="" style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.35))' }} />
             {isEditing ? '编辑工作记录' : '新建工作记录'} · {selectedModule?.label}
           </div>
           <button
