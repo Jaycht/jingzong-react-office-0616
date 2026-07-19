@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Modal, Form, Input, Select, Divider } from "antd";
-import { UserCog, Lock, Camera, X, ShieldCheck } from "lucide-react";
+import { UserCog, Lock, Camera, X, ShieldCheck, Trash2 } from "lucide-react";
 import { useAppStore } from "../store/appStore";
 import { hashPassword, verifyPassword } from "../utils/crypto";
 
@@ -62,6 +62,24 @@ export default function ProfileModal({ open, onClose }: Props) {
       showToast("头像已更新", "success");
     };
     reader.readAsDataURL(file);
+  };
+
+  // 删除自定义头像：清除 localStorage，回退默认警徽；仅在已设自定义头像时可点
+  const handleDeleteAvatar = () => {
+    if (!avatar) return;
+    Modal.confirm({
+      title: "恢复默认头像",
+      content: "将删除自定义头像，恢复为默认警徽头像。确定继续吗？",
+      okText: "恢复默认",
+      cancelText: "取消",
+      centered: true,
+      onOk: () => {
+        try { localStorage.removeItem("jingzong.avatar"); } catch { /* ignore */ }
+        setAvatar(null);
+        setDirty(true);
+        showToast("已恢复默认头像（警徽）", "success");
+      },
+    });
   };
 
   // 修改密码：校验原密码并更新到对应存储（注册用户→jingzong.users.v1；内置账号→登录凭据）
@@ -284,6 +302,32 @@ export default function ProfileModal({ open, onClose }: Props) {
             }}
           >
             {account ? `账号：${account}` : "本地账户"}
+          </div>
+
+          {/* 头像操作：更换 / 删除（默认头像时删除禁用） */}
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                height: 30, padding: "0 14px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
+                border: "1px solid rgba(255,255,255,0.55)", background: "rgba(255,255,255,0.16)", color: "#fff",
+                fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5,
+              }}
+            >
+              <Camera size={13} /> 更换头像
+            </button>
+            <button
+              onClick={handleDeleteAvatar}
+              disabled={!avatar}
+              title={avatar ? "删除自定义头像，恢复默认警徽" : "当前为默认头像，无需删除"}
+              style={{
+                height: 30, padding: "0 14px", borderRadius: 8, cursor: avatar ? "pointer" : "not-allowed", fontFamily: "inherit",
+                border: "1px solid rgba(255,255,255,0.35)", background: "transparent", color: "#fff",
+                fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5, opacity: avatar ? 1 : 0.55,
+              }}
+            >
+              <Trash2 size={13} /> 删除头像
+            </button>
           </div>
         </div>
       </div>

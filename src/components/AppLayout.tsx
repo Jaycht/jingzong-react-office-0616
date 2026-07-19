@@ -239,8 +239,12 @@ export default function AppLayout() {
           <button className="wb-hover-ghost" onClick={toggleDarkMode} title={darkMode ? '切换为浅色' : '切换为深色'} style={topBtn()}>
             {darkMode ? <Sun size={15} /> : <Moon size={15} />}<span>{darkMode ? '浅色' : '深色'}</span>
           </button>
-          <button className="wb-hover-ghost" onClick={toggleLowPerfMode} title={lowPerfMode ? '切换为高性能模式' : '切换为低性能模式'} style={topBtn()}>
-            <Gauge size={15} /><span>性能</span>
+          <button className="wb-hover-ghost" onClick={toggleLowPerfMode} title={lowPerfMode ? '当前：低性能模式（点击切换为高性能）' : '当前：高性能模式（点击切换为低性能）'} style={topBtn()}>
+            <Gauge size={15} color={lowPerfMode ? '#F59E0B' : '#10B981'} />
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: lowPerfMode ? '#F59E0B' : '#10B981', boxShadow: `0 0 0 2px ${lowPerfMode ? 'rgba(245,158,11,.25)' : 'rgba(16,185,129,.25)'}` }} />
+              {lowPerfMode ? '低性能' : '高性能'}
+            </span>
           </button>
           <button className="wb-hover-ghost" onClick={handleLogout} title="退出登录" style={{ ...topBtn(), color: '#DC2626' }}>
             <LogOut size={15} /><span>退出</span>
