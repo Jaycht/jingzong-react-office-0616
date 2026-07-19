@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.41.6";
+export const APP_VERSION = "V2.41.7";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 6;
+export const VERSION_PATCH = 7;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.41.7 =====
+  "V2.41.7 优化 - 深色模式统一表单控件样式：修复 Input 白底与 Select/DatePicker 深底不统一的问题，统一覆盖 Input / InputNumber / Select / DatePicker 的背景、文字、边框、placeholder、hover/focus、下拉浮层、日期面板、选中高亮等 token，深色模式下所有输入类控件风格一致",
   // ===== V2.41.6 =====
   "V2.41.6 修复 - 新建弹窗蓝渐变头顶部恢复圆角：V2.41.5 清零 container padding 后顶部圆角被内容区顶成直角，给蓝头 div 加 `borderRadius: 8px 8px 0 0` 使其自带顶部圆角，视觉上与弹窗外框圆角一致",
   // ===== V2.41.5 =====

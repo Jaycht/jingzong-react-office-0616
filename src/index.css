@@ -669,6 +669,77 @@ button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 
 .dark .ant-tabs-tab { color: var(--color-text-secondary) !important; }
 .dark .ant-tabs-tab-active .ant-tabs-tab-btn { color: var(--color-primary) !important; }
 
+/* 深色模式：统一表单控件背景/文字/边框（Input / Select / DatePicker / InputNumber） */
+.dark .ant-input,
+.dark .ant-input-affix-wrapper,
+.dark .ant-input-number,
+.dark .ant-input-number-input,
+.dark .ant-select .ant-select-selector,
+.dark .ant-picker {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+.dark .ant-input::placeholder,
+.dark .ant-input-affix-wrapper input::placeholder,
+.dark .ant-input-number-input::placeholder,
+.dark .ant-select-selection-placeholder,
+.dark .ant-picker-input > input::placeholder {
+  color: var(--color-text-muted) !important;
+}
+.dark .ant-input:hover,
+.dark .ant-input-affix-wrapper:hover,
+.dark .ant-input-number:hover,
+.dark .ant-select:hover .ant-select-selector,
+.dark .ant-picker:hover {
+  border-color: var(--color-primary) !important;
+}
+.dark .ant-input:focus,
+.dark .ant-input-affix-wrapper-focused,
+.dark .ant-input-number-focused,
+.dark .ant-select-focused .ant-select-selector,
+.dark .ant-picker-focused {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* 深色模式：下拉浮层 / 日期面板统一 */
+.dark .ant-select-dropdown,
+.dark .ant-picker-dropdown,
+.dark .ant-picker-panel-container,
+.dark .ant-picker-panel {
+  background: var(--color-surface) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
+}
+.dark .ant-select-item,
+.dark .ant-picker-content th,
+.dark .ant-picker-cell,
+.dark .ant-picker-header,
+.dark .ant-picker-header-view,
+.dark .ant-picker-header > button,
+.dark .ant-picker-input > input,
+.dark .ant-picker-suffix,
+.dark .ant-picker-clear,
+.dark .ant-select-arrow {
+  color: var(--color-text) !important;
+}
+.dark .ant-select-item-option-active,
+.dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background: var(--color-surface-hover) !important;
+}
+.dark .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+.dark .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.dark .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+}
+.dark .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  border-color: var(--color-primary) !important;
+}
+.dark .ant-picker-cell:hover:not(.ant-picker-cell-selected):not(.ant-picker-cell-disabled) .ant-picker-cell-inner {
+  background: var(--color-surface-hover) !important;
+}
+
 /* ============================================================
    低性能模式 — 禁用所有动画和特效
    ============================================================ */
