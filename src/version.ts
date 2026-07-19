@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.41.9";
+export const APP_VERSION = "V2.41.10";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 9;
+export const VERSION_PATCH = 10;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.41.10 =====
+  "V2.41.10 优化 - 新建弹窗标题前警徽图标放大至 46×46（白底圆角衬底 60×60 + 轻阴影），与 17px 标题形成明显视觉重点",
   // ===== V2.41.9 =====
   "V2.41.9 优化 - 新建弹窗标题前警徽图标调大至 28×28（原 24×24 偏小），与 17px 标题字号相比更醒目协调",
   // ===== V2.41.8 =====
