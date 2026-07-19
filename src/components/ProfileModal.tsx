@@ -3,6 +3,7 @@ import { Modal, Form, Input, Select, Divider, App } from "antd";
 import { UserCog, Lock, Camera, X, ShieldCheck, Trash2 } from "lucide-react";
 import { useAppStore } from "../store/appStore";
 import { hashPassword, verifyPassword } from "../utils/crypto";
+import badgeIcon from '../assets/badge-icon.png';
 
 interface Props {
   open: boolean;
@@ -252,7 +253,7 @@ export default function ProfileModal({ open, onClose }: Props) {
             }}
           >
             <img
-              src={avatar || "/avatar-default.jpg"}
+              src={avatar || badgeIcon}
               alt="avatar"
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />

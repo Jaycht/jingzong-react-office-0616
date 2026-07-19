@@ -311,7 +311,7 @@ export default function DailyNotes() {
             return (
               <motion.div
                 key={n.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i, 12) * 0.02 }}
                 className="note-card"
@@ -424,8 +424,16 @@ function NoteModal({ note, customTypes, onClose, onSaved }: { note: DailyNote | 
       reminder: reminderData,
       notes: notesText,
     };
-    if (note) { updateDailyNote(note.id, data); showToast('已更新', 'success'); } else { createDailyNote(data); showToast('已创建', 'success'); }
-    onSaved();
+    try {
+      if (note) { updateDailyNote(note.id, data); showToast('已更新', 'success'); }
+      else { createDailyNote(data); showToast('已创建', 'success'); }
+    } catch (err) {
+      console.error('[DailyNotes] 保存随手记失败：', err);
+      showToast('保存失败，请重试', 'error');
+    } finally {
+      // 无论保存是否抛错都刷新列表，确保新建/编辑后卡片立即出现（V2.41.17 修复 #1）
+      onSaved();
+    }
   };
 
   const summary = reminderEnabled

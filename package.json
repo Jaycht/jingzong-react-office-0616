@@ -1,7 +1,7 @@
 {
   "name": "jingzong-work-log",
   "private": true,
-  "version": "2.41.16",
+  "version": "2.41.17",
   "description": "经侦大队工作记录管理系统",
   "author": "陈洪涛",
   "license": "MIT",
@@ -23,6 +23,9 @@
   "build": {
     "appId": "com.jingzong.worklog",
     "productName": "经侦大队工作记录管理系统",
+    "extraResources": [
+      "app.ico"
+    ],
     "files": [
       "dist/**/*",
       "electron/**/*",

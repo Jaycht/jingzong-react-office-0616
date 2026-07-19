@@ -1,9 +1,10 @@
-export const APP_VERSION = "V2.41.16";
+export const APP_VERSION = "V2.41.17";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 16;
+export const VERSION_PATCH = 17;
 
 export const CHANGELOG: string[] = [
+  "V2.41.17 修复 - 集中修复 V2.41.16 生产包 6 项问题：① 关闭窗口行为失效（点 X 直接退出）——根因 app.ico 被打进 asar 内使 new Tray() 抛错、关闭处理器随 createTray 中断；现关闭处理器无条件注册到 createWindow，托盘图标改 resolveAppIcon() 多级兜底（extraResources 外置 app.ico + asar 内 buffer 回退）并 try/catch 包裹 new Tray；② 退出/恢复后数据丢失与「恢复失败: Internal error.」——restoreFromJson 原「先清空再写回」在附件导入失败时整库清空，现改为恢复前快照当前数据、写回失败整体回滚、附件导入失败非致命，绝不丢数据；③ 软件启动变慢——新增单实例锁 requestSingleInstanceLock 防止重复进程抢占资源；④ 默认头像丢失——顶栏与资料弹窗默认头像由生产包 404 的 /avatar-default.jpg 改为 Vite 模块导入的警徽 badge-icon.png；⑤ 随手记带提醒新记录卡片不显示——卡片 motion.div 改 initial={false} 避免初始 opacity:0 卡死，且保存逻辑 try/finally 确保始终刷新列表",
   "V2.41.16 修复 - 集中修复 V2.41.15 四项未真正生效的问题：① AppLayout 顶栏关闭按钮移除旧的硬编码确认弹窗，改为直接交给 Electron 主进程按「关闭窗口时的行为」设置（exit/tray/ask）处理；② 新建弹窗警徽图标改用 Vite 模块导入（src/assets/badge-icon.png），避免 Electron 生产包中绝对路径 /badge-icon.png 解析失败；③ 顶栏网格布局改为「左侧 1fr / 中间 1fr（搜索框最大 720px）/ 右侧 auto」，让全局搜索随窗口化自适应收缩，右侧个人信息区不再被挤压；④ 桌面便签移除 header 的 -webkit-app-region:drag，改由 JS 实现拖拽，避免 Windows 把 header 当非客户区导致顶部圆角失效；保留 roundedCorners:true 与 clip-path 保险裁剪",
   // ===== V2.41.14 =====
   "V2.41.13 清理 - 收尾优化：删除磁盘残留与零引用死代码（format.ts/theme.ts 废弃函数、src/constants/caseTypes.ts）；将散落各处的 isElectron 内联判断统一收敛到 lib/env（AppLayout/LoginPage/SystemSettings/DailyNotes/useUnsavedChanges/attachmentStore）；合并 reportGenerator/reportUtils 私有日期格式到 format.formatChineseDate；修复 ModulePage 表格 rowKey 与 Dashboard/OperationLog 动态列表稳定 key；Modal 静态方法统一改 App.useApp() 使暗色/品牌主题生效",

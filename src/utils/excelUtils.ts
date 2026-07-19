@@ -722,15 +722,9 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
     const text = await file.text();
     const backup = JSON.parse(text);
 
-    if (!backup.version || !backup.data) {
+    if (!backup.version || !backup.data || typeof backup.data !== 'object') {
       return { success: false, message: '无效的备份文件格式' };
     }
-
-    // 清空 localStorage 和 IndexedDB
-    localStorageAdapter.clear('jingzong.');
-    indexedDBAdapter.clear('jingzong.');
-
-    let count = 0;
 
     // 需要写回 IndexedDB 的 key 列表：优先使用备份时记录的清单，
     // 旧备份无此字段则回退到已知键（dailyNotes/mass.records），并兜底 draft.*，避免漏恢复。
@@ -738,41 +732,77 @@ export async function restoreFromJson(file: File): Promise<{ success: boolean; m
       ? backup.idbKeys
       : ['jingzong.dailyNotes', 'jingzong.mass.records'];
 
-    for (const [key, value] of Object.entries(backup.data)) {
-      if (key.startsWith('jingzong.')) {
-        // 写入 localStorage
-        localStorageAdapter.setItem(key, value);
-        count++;
+    // —— 非破坏性恢复（V2.41.17 修复 #3/#4）——
+    // 1) 先对当前数据做内存快照；写回失败则整体回滚，绝不「先清空再失败」导致数据全丢。
+    const snapshotLocal: Record<string, unknown> = {};
+    const snapshotIdb: Record<string, unknown> = {};
+    for (const k of localStorageAdapter.keys('jingzong.')) {
+      snapshotLocal[k] = localStorageAdapter.getItem(k, null);
+    }
+    for (const k of indexedDBAdapter.keys('jingzong.')) {
+      snapshotIdb[k] = indexedDBAdapter.getItem(k, null);
+    }
+    const rollback = () => {
+      localStorageAdapter.clear('jingzong.');
+      indexedDBAdapter.clear('jingzong.');
+      for (const [k, v] of Object.entries(snapshotLocal)) {
+        if (v !== null && v !== undefined) localStorageAdapter.setItem(k, v);
+      }
+      for (const [k, v] of Object.entries(snapshotIdb)) {
+        if (v !== null && v !== undefined) indexedDBAdapter.setItem(k, v);
+      }
+    };
 
-        // 写入 IndexedDB（业务主存储）：以备份清单为准，兼容旧备份再兜底 draft.*
-        if (backupIdbKeys.includes(key) || key.startsWith('jingzong.draft.')) {
-          indexedDBAdapter.setItem(key, value);
+    try {
+      // 2) 清空并写回备份数据
+      localStorageAdapter.clear('jingzong.');
+      indexedDBAdapter.clear('jingzong.');
+
+      let count = 0;
+      for (const [key, value] of Object.entries(backup.data)) {
+        if (key.startsWith('jingzong.') && value !== undefined) {
+          // 写入 localStorage
+          localStorageAdapter.setItem(key, value);
+          count++;
+
+          // 写入 IndexedDB（业务主存储）：以备份清单为准，兼容旧备份再兜底 draft.*
+          if (backupIdbKeys.includes(key) || key.startsWith('jingzong.draft.')) {
+            indexedDBAdapter.setItem(key, value);
+          }
         }
       }
-    }
 
-    // 重建索引
-    try {
-      const { rebuildCaseIndex, rebuildSuspectIndex } = await import('../store/inputHistoryStore');
-      const records = indexedDBAdapter.getItem('jingzong.mass.records', []);
-      if (Array.isArray(records) && records.length > 0) {
-        rebuildCaseIndex(records);
-        rebuildSuspectIndex(records);
+      // 3) 重建索引
+      try {
+        const { rebuildCaseIndex, rebuildSuspectIndex } = await import('../store/inputHistoryStore');
+        const records = indexedDBAdapter.getItem('jingzong.mass.records', []);
+        if (Array.isArray(records) && records.length > 0) {
+          rebuildCaseIndex(records);
+          rebuildSuspectIndex(records);
+        }
+      } catch { /* ignore */ }
+
+      // 4) 附件恢复：失败不致命，仅提示，不再因附件问题导致整库数据丢失
+      let attachmentMessage = '';
+      if (Array.isArray(backup.attachments)) {
+        try {
+          const attachmentCount = await importAttachmentSnapshot(backup.attachments);
+          attachmentMessage = `，${attachmentCount} 个附件`;
+        } catch (attErr) {
+          console.warn('[restore] 附件恢复失败，已保留其他数据：', attErr);
+          attachmentMessage = '（附件恢复失败，已保留其余数据）';
+        }
       }
-    } catch { /* ignore */ }
 
-    const attachmentCount = Array.isArray(backup.attachments)
-      ? await importAttachmentSnapshot(backup.attachments)
-      : 0;
+      // 通知各依赖 getMassRecords() 的组件重新读取（仪表盘/预警等）
+      notifyDataChanged();
 
-    const attachmentMessage = Array.isArray(backup.attachments)
-      ? `，${attachmentCount} 个附件`
-      : '';
-
-    // 通知各依赖 getMassRecords() 的组件重新读取（仪表盘/预警等）
-    notifyDataChanged();
-
-    return { success: true, message: `成功恢复 ${count} 项数据${attachmentMessage}` };
+      return { success: true, message: `成功恢复 ${count} 项数据${attachmentMessage}` };
+    } catch (writeErr) {
+      // 写回阶段出错：回滚到快照，原数据不丢失
+      try { rollback(); } catch { /* ignore */ }
+      return { success: false, message: `恢复失败，已回滚至恢复前状态（原数据未丢失）：${getErrorMessage(writeErr)}` };
+    }
   } catch (err) {
     return { success: false, message: `恢复失败: ${getErrorMessage(err)}` };
   }

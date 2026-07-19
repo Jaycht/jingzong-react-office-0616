@@ -58,6 +58,32 @@ function getAttachmentsDir() {
   return path.join(app.getPath("userData"), "attachments");
 }
 
+// ======================== 应用图标解析 ========================
+// 生产环境下 app.ico 通过 electron-builder 的 extraResources 放到 asar 外（resources/app.ico），
+// 直接 path.join(__dirname,'..','app.ico') 在 asar 内会指向不存在的 resources/app.asar/app.ico，
+// 导致 new Tray() 抛错而中断 createTray，进而关闭处理器无法注册。这里做多级兜底解析。
+function resolveAppIcon() {
+  const candidates = app.isPackaged
+    ? [path.join(process.resourcesPath, "app.ico"), path.join(__dirname, "..", "app.ico")]
+    : [path.join(__dirname, "..", "app.ico")];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        const img = nativeImage.createFromPath(p);
+        if (!img.isEmpty()) return img;
+      }
+    } catch {}
+  }
+  // 兜底：某些打包结构下 asar 内路径可被 readFile 读取，用 buffer 重建
+  try {
+    const asarPath = path.join(__dirname, "..", "app.ico");
+    if (fs.existsSync(asarPath)) {
+      return nativeImage.createFromBuffer(fs.readFileSync(asarPath));
+    }
+  } catch {}
+  return nativeImage.createEmpty();
+}
+
 const ATTACHMENTS_DIR = getAttachmentsDir();
 
 // 保存附件路径配置
@@ -90,7 +116,7 @@ function createWindow() {
     resizable: true,
     frame: false,
     backgroundColor: "#0B0F1A",
-    icon: path.join(__dirname, "..", "app.ico"),
+    icon: resolveAppIcon(),
     show: false,
     title: "经侦大队工作记录管理系统",
     webPreferences: {
@@ -99,6 +125,9 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
+
+  // 关闭行为处理器：无条件注册，不再依赖 createTray 是否成功（V2.41.17 修复 #2）
+  registerCloseHandler(mainWindow);
 
   mainWindow.center();
 
@@ -344,10 +373,63 @@ ipcMain.on('set-close-behavior', (_event, behavior) => {
   }
 });
 
+// ======================== 关闭行为 ========================
+// 窗口关闭处理器：独立于托盘创建，无论托盘是否可用都会注册（V2.41.17 修复 #2）
+function registerCloseHandler(win) {
+  if (!win) return;
+  win.on("close", (e) => {
+    if (app.isQuitting) return;
+    e.preventDefault();
+
+    const doQuit = () => {
+      app.isQuitting = true;
+      if (win && win.webContents) {
+        win.webContents.send("trigger-quit-backup");
+        setTimeout(() => { app.quit(); }, 3000);
+      } else {
+        app.quit();
+      }
+    };
+
+    if (appCloseBehavior === 'exit') {
+      doQuit();
+    } else if (appCloseBehavior === 'ask') {
+      const { dialog } = require('electron');
+      const choice = dialog.showMessageBoxSync(win, {
+        type: 'question',
+        buttons: ['最小化到托盘', '退出软件'],
+        defaultId: 0,
+        cancelId: 0,
+        title: '关闭程序',
+        message: '您希望如何关闭本程序？',
+        detail: '选择「最小化到托盘」可保留后台运行，双击托盘图标恢复。',
+        noLink: true,
+      });
+      if (choice === 1) {
+        doQuit();
+      } else {
+        win.hide();
+      }
+    } else {
+      // 默认 'tray'：托盘可用则最小化到托盘；托盘缺失（极罕见）则直接退出，避免无窗无托盘的孤儿进程
+      if (tray) {
+        win.hide();
+      } else {
+        doQuit();
+      }
+    }
+  });
+}
+
 // ======================== 托盘功能 ========================
 function createTray() {
-  const iconPath = path.join(__dirname, "..", "app.ico");
-  tray = new Tray(iconPath);
+  try {
+    tray = new Tray(resolveAppIcon());
+  } catch (err) {
+    console.error('[tray] 创建托盘图标失败，将不启用托盘：', err);
+    tray = null;
+    return;
+  }
   tray.setToolTip("经侦大队工作记录管理系统");
 
   const contextMenu = Menu.buildFromTemplate([
@@ -374,48 +456,6 @@ function createTray() {
       mainWindow.focus();
     }
   });
-
-  // 窗口关闭行为：根据用户设置处理（V2.41.15）
-  if (mainWindow) {
-    mainWindow.on("close", (e) => {
-      if (app.isQuitting) return;
-      e.preventDefault();
-
-      const doQuit = () => {
-        app.isQuitting = true;
-        if (mainWindow && mainWindow.webContents) {
-          mainWindow.webContents.send("trigger-quit-backup");
-          setTimeout(() => { app.quit(); }, 3000);
-        } else {
-          app.quit();
-        }
-      };
-
-      if (appCloseBehavior === 'exit') {
-        doQuit();
-      } else if (appCloseBehavior === 'ask') {
-        const { dialog } = require('electron');
-        const choice = dialog.showMessageBoxSync(mainWindow, {
-          type: 'question',
-          buttons: ['最小化到托盘', '退出软件'],
-          defaultId: 0,
-          cancelId: 0,
-          title: '关闭程序',
-          message: '您希望如何关闭本程序？',
-          detail: '选择「最小化到托盘」可保留后台运行，双击托盘图标恢复。',
-          noLink: true,
-        });
-        if (choice === 1) {
-          doQuit();
-        } else {
-          mainWindow.hide();
-        }
-      } else {
-        // 默认 'tray'
-        mainWindow.hide();
-      }
-    });
-  }
 }
 
 // ======================== 开机自启 ========================
@@ -651,14 +691,28 @@ ipcMain.on("note-copy-text", (_event, { text }) => {
 });
 
 // ======================== 启动逻辑 ========================
-app.whenReady().then(() => {
-  // 确保附件目录存在
-  if (!fs.existsSync(ATTACHMENTS_DIR)) {
-    fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
-  }
-  createWindow();
-  createTray();
-});
+// 单实例锁：防止重复启动多个进程（多实例会抢占资源、拖慢启动，V2.41.17 修复 #5）
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  app.whenReady().then(() => {
+    // 确保附件目录存在
+    if (!fs.existsSync(ATTACHMENTS_DIR)) {
+      fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
+    }
+    createWindow();
+    createTray();
+  });
+}
 
 app.on("window-all-closed", () => {
   // 不关闭，保持在托盘

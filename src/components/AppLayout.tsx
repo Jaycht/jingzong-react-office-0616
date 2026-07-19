@@ -13,6 +13,7 @@ import Breadcrumb from "./Breadcrumb";
 import ErrorBoundary from "./ErrorBoundary";
 import NotificationPanel from "./NotificationPanel";
 import GlobalSearch from "./GlobalSearch";
+import badgeIcon from '../assets/badge-icon.png';
 import { User, LogOut, Sun, Moon, Gauge } from "lucide-react";
 import { BRAND } from "../constants/theme";
 import { useReminderService } from "../hooks/useReminderService";
@@ -135,7 +136,7 @@ export default function AppLayout() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const customAvatar = (() => { try { return localStorage.getItem("jingzong.avatar"); } catch { return null; } })();
-  const avatarSrc = customAvatar || "/avatar-default.jpg";
+  const avatarSrc = customAvatar || badgeIcon;
 
   const handleLogout = () => {
     modal.confirm({
