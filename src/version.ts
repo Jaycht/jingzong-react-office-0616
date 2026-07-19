@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.41.2";
+export const APP_VERSION = "V2.41.3";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 2;
+export const VERSION_PATCH = 3;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.41.3 =====
+  "V2.41.3 优化 - 新建弹窗蓝渐变头真正顶满：清除 antd Modal `.ant-modal-content` 默认内边距，使蓝渐变头部从弹窗内容区最上、最左、最右完全铺满；footer 单独补 padding，表单区仍保留白底与原 padding；修复之前蓝头四周仍有白边的问题",
   // ===== V2.41.2 =====
   "V2.41.2 优化 - 新建工作记录弹窗头部蓝渐变铺满：把标题栏、步骤条、模块/模板选择器（含面包屑、基本信息标题、所属模块、记录模板）统一纳入一块蓝色渐变横幅，从标题到「基本信息」上方完全铺满；渐变方向由 135° 左右渐变改为上下渐变（to bottom），与资料弹窗头部的视觉方向一致；横幅内文字、面包屑、步骤标签、字段标签全部改为白色或半透明白，选择器卡片用白半透明边框和背景，下拉框保持白底可辨识；基本信息及以下字段区恢复白底，上下分层清晰",
   // ===== V2.41.1 =====

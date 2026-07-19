@@ -455,7 +455,11 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       onCancel={handleClose}
       centered
       title={null}
-      styles={{ body: { height: '72vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' } }}
+      styles={{
+        content: { padding: 0 },
+        body: { height: '72vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' },
+        footer: { padding: '12px 24px 24px', margin: 0 },
+      }}
       footer={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Space>
