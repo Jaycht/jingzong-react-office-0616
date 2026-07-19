@@ -21,7 +21,7 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '未知错误';
 }
 
-export default function ImportExport() {
+export default function ImportExport({ noHeader }: { noHeader?: boolean }) {
     const showToast = useAppStore((s) => s.showToast);
   const [importResult, setImportResult] = useState<{
     show: boolean;
@@ -100,6 +100,7 @@ export default function ImportExport() {
 
   return (
     <div>
+      {!noHeader && (
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
         style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
@@ -111,6 +112,7 @@ export default function ImportExport() {
           <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>支持 Excel / CSV / JSON 格式</div>
         </div>
       </motion.div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
         {/* 导入区 */}

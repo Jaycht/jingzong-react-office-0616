@@ -2,19 +2,16 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Settings, Power, Monitor, ShieldCheck, Boxes,
-  TableProperties, FileArchive, ScrollText, DatabaseBackup,
+  FileArchive, DatabaseBackup,
   Volume2, ListOrdered, Clock,
 } from 'lucide-react';
 import { Switch, Select } from 'antd';
 import { useAppStore } from '../store/appStore';
 
 import SettingsPage from './SettingsPage';
-import ImportExport from './ImportExport';
 import Attachments from './Attachments';
-import OperationLog from './OperationLog';
-import Backup from './Backup';
 import Version from './Version';
-import AutoBackupPanel from '../components/AutoBackupPanel';
+import DataManagement from './DataManagement';
 
 const SUCCESS_SOUNDS = [
   { value: 'success-1.wav', label: '上行琶音' },
@@ -37,15 +34,13 @@ const FAILURE_SOUNDS = [
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
-type TabId = 'general' | 'modules' | 'importExport' | 'attachments' | 'operationLog' | 'backup' | 'about';
+type TabId = 'general' | 'modules' | 'data' | 'attachments' | 'about';
 
 const TABS: { id: TabId; label: string; icon: React.ComponentType<{ size?: number; color?: string }>; tint: string }[] = [
   { id: 'general', label: '通用设置', icon: Settings, tint: '#6366F1' },
   { id: 'modules', label: '模块与字段', icon: Boxes, tint: '#8B5CF6' },
-  { id: 'importExport', label: '导入导出', icon: TableProperties, tint: '#14B8A6' },
+  { id: 'data', label: '数据管理', icon: DatabaseBackup, tint: '#10B981' },
   { id: 'attachments', label: '附件档案', icon: FileArchive, tint: '#F59E0B' },
-  { id: 'operationLog', label: '操作日志', icon: ScrollText, tint: '#64748B' },
-  { id: 'backup', label: '备份恢复', icon: DatabaseBackup, tint: '#10B981' },
   { id: 'about', label: '关于软件', icon: ShieldCheck, tint: '#2563EB' },
 ];
 
@@ -111,7 +106,7 @@ export default function SystemSettings() {
       case 'general':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 760 }}>
-            <Section title="启动与窗口" icon={<Power size={16} />}>
+            <Section title="系统外观与行为" icon={<Power size={16} />}>
               <SettingRow
                 title="开机自动启动"
                 desc="系统启动时自动运行程序"
@@ -130,8 +125,6 @@ export default function SystemSettings() {
                   extra={<Switch checked={closeToTray} onChange={handleCloseToTray} />}
                 />
               )}
-            </Section>
-            <Section title="显示" icon={<Monitor size={16} />}>
               <SettingRow
                 title="深色模式"
                 desc="切换浅色/深色界面主题"
@@ -154,7 +147,7 @@ export default function SystemSettings() {
                 }
               />
             </Section>
-            <Section title="通知与声音" icon={<Volume2 size={16} />}>
+            <Section title="声音与提示" icon={<Volume2 size={16} />}>
               <SettingRow
                 title="操作提示音"
                 desc="操作成功 / 警告 / 失败时分别播放对应的提示音"
@@ -200,7 +193,7 @@ export default function SystemSettings() {
                 }
               />
             </Section>
-            <Section title="列表与启动" icon={<ListOrdered size={16} />}>
+            <Section title="列表与偏好" icon={<ListOrdered size={16} />}>
               <SettingRow
                 title="列表默认排序"
                 desc="各模块记录列表的默认排列顺序"
@@ -234,8 +227,6 @@ export default function SystemSettings() {
                   />
                 }
               />
-            </Section>
-            <Section title="时间格式" icon={<Clock size={16} />}>
               <SettingRow
                 title="日期显示格式"
                 desc="列表中日期的统一展示格式"
@@ -252,14 +243,11 @@ export default function SystemSettings() {
                 }
               />
             </Section>
-            <AutoBackupPanel />
           </div>
         );
       case 'modules': return <SettingsPage />;
-      case 'importExport': return <ImportExport />;
+      case 'data': return <DataManagement />;
       case 'attachments': return <Attachments />;
-      case 'operationLog': return <OperationLog />;
-      case 'backup': return <Backup />;
       case 'about': return <Version />;
       default: return null;
     }
@@ -274,7 +262,7 @@ export default function SystemSettings() {
         </div>
         <div>
           <div style={{ fontSize: 20, fontWeight: 800, color: textColor }}>系统设置</div>
-          <div style={{ fontSize: 12.5, color: textMuted, marginTop: 1 }}>通用 · 模块 · 数据 · 备份 · 关于</div>
+          <div style={{ fontSize: 12.5, color: textMuted, marginTop: 1 }}>通用 · 模块 · 数据 · 附件 · 关于</div>
         </div>
       </motion.div>
 

@@ -54,7 +54,7 @@ function getRecordStats(): Record<string, number> {
   }
 }
 
-export default function Backup() {
+export default function Backup({ noHeader }: { noHeader?: boolean }) {
   const showToast = useAppStore((s) => s.showToast);
   const [backups, setBackups] = useState<BackupMeta[]>(() => getBackupMetas());
   const [restoring, setRestoring] = useState(false);
@@ -159,6 +159,7 @@ export default function Backup() {
 
   return (
     <div>
+      {!noHeader && (
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
         style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
@@ -167,9 +168,10 @@ export default function Backup() {
         </motion.div>
         <div>
           <div style={{ fontSize: 19, fontWeight: 700 }}>备份与恢复</div>
-          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>数据备份 · 恢复点管理 · 自动备份请在「通用设置」中配置</div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 1 }}>数据备份 · 恢复点管理 · 自动备份请见下方配置</div>
         </div>
       </motion.div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
         {/* 左侧 */}
