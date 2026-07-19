@@ -43,26 +43,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('trigger-quit-backup', handler);
   },
 
-  // 自动更新
-  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
-  downloadUpdate: () => ipcRenderer.invoke('download-update'),
-  installUpdate: () => ipcRenderer.invoke('install-update'),
-  onUpdateAvailable: (callback) => {
-    const handler = (_event, data) => callback(data);
-    ipcRenderer.on('update-available', handler);
-    return () => ipcRenderer.removeListener('update-available', handler);
-  },
-  onUpdateProgress: (callback) => {
-    const handler = (_event, data) => callback(data);
-    ipcRenderer.on('update-progress', handler);
-    return () => ipcRenderer.removeListener('update-progress', handler);
-  },
-  onUpdateDownloaded: (callback) => {
-    const handler = () => callback();
-    ipcRenderer.on('update-downloaded', handler);
-    return () => ipcRenderer.removeListener('update-downloaded', handler);
-  },
-
   // 开机自启
   getAutoStart: () => ipcRenderer.invoke('get-auto-start'),
   setAutoStart: (enabled) => ipcRenderer.invoke('set-auto-start', enabled),

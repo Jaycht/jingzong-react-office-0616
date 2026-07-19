@@ -24,9 +24,6 @@ declare global {
       checkAttachmentFile: (filePath: string) => Promise<{ success: boolean; exists: boolean; error?: string }>;
       getAttachmentsDir: () => Promise<string>;
       showSaveDialog: (defaultName: string, buffer: number[]) => Promise<{ success: boolean; canceled?: boolean; filePath?: string; error?: string }>;
-      checkForUpdates: () => Promise<{ available: boolean; version?: string; error?: string }>;
-      downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
-      installUpdate: () => void;
       // 以下为 M-15 补全：此前未在 d.ts 声明，导致 Backup/SystemSettings/DailyNotes/
       // useReminderService 等处的直接调用（及去除 as any 后）编译报错。
       getDocumentsDir: () => Promise<string>;
