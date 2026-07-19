@@ -104,7 +104,7 @@ function AppContent() {
   useEffect(() => {
     if (!isElectron || !window.electronAPI?.setCloseBehavior) return;
     try {
-      const behavior = localStorage.getItem('jingzong.closeBehavior') || 'tray';
+      const behavior = localStorage.getItem('jingzong.closeBehavior') || 'ask';
       window.electronAPI.setCloseBehavior(behavior as 'exit' | 'tray' | 'ask');
     } catch { /* ignore */ }
   }, [isElectron]);

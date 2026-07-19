@@ -198,8 +198,8 @@ export default function AppLayout() {
       <div
         className="app-topbar"
         style={{
-          position: 'relative', flexShrink: 0, display: 'grid', alignItems: 'center',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) auto',
+          position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between',
           gap: 16, padding: '12px 22px',
           background: darkMode ? 'linear-gradient(135deg,#13325c,#1d4ed8)' : 'linear-gradient(135deg,#155A8A,#2563EB)',
           borderBottom: darkMode ? '1px solid rgba(163,201,255,0.12)' : '1px solid rgba(13,42,84,0.35)',
@@ -216,8 +216,8 @@ export default function AppLayout() {
           </div>
         </div>
 
-        {/* 中：全局检索 */}
-        <div style={{ width: '100%', maxWidth: 720, justifySelf: 'center', WebkitAppRegion: 'no-drag' }}>
+        {/* 中：全局检索 — 绝对定位真正水平居中于整个顶栏（窗口），避免 grid 左右列不对称导致偏移（V2.41.19 修复 #5） */}
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: '100%', maxWidth: 720, WebkitAppRegion: 'no-drag' }}>
           <GlobalSearch />
         </div>
 

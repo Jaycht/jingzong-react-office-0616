@@ -6,7 +6,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-family:"Segoe UI","PingFang SC","Microsoft YaHei UI",system-ui,sans-serif}
 :root{
-  --radius:24px;
+  --radius:0;
   --header-h:46px;
   --ease:cubic-bezier(.2,.8,.2,1);
 }
@@ -17,7 +17,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-fam
   background:linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,255,255,.62) 40%, rgba(255,255,255,.72));
   border:1px solid rgba(255,255,255,.55);
   backdrop-filter:blur(30px) saturate(150%);-webkit-backdrop-filter:blur(30px) saturate(150%);
-  clip-path:inset(0 round var(--radius));
 }
 .note::before{content:"";position:absolute;inset:0;border-radius:var(--radius);pointer-events:none;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.55), inset 0 -1px 0 rgba(0,0,0,.04);z-index:5}
@@ -79,7 +78,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent;font-fam
 
 .note.minimized .body,.note.minimized .statusbar{display:none}
 .note.minimized .header{border-bottom:none}
-.note.minimized{border-radius:var(--radius) var(--radius) 18px 18px}
+.note.minimized{border-radius:0}
 
 .ctx-menu{position:fixed;z-index:1000;min-width:204px;padding:6px;background:rgba(255,255,255,.95);backdrop-filter:blur(24px) saturate(160%);-webkit-backdrop-filter:blur(24px) saturate(160%);border-radius:14px;box-shadow:0 14px 40px rgba(15,23,42,.20),0 0 0 .5px rgba(15,23,42,.07);animation:popIn .14s var(--ease);font-size:13px;-webkit-app-region:no-drag}
 .ctx-item{padding:8px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:rgba(15,23,42,.84);transition:background .12s}

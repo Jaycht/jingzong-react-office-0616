@@ -75,7 +75,7 @@ export default function SystemSettings() {
       if (v === 'exit' || v === 'tray' || v === 'ask') return v;
       // 兼容旧版 closeToTray 开关
       return localStorage.getItem('jingzong.closeToTray') === 'false' ? 'exit' : 'tray';
-    } catch { return 'tray'; }
+    } catch { return 'ask'; }
   });
   const [loading, setLoading] = useState(false);
 

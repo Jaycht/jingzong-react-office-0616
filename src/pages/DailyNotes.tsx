@@ -52,7 +52,8 @@ const PRIORITY_COLOR: Record<string, string> = { normal: '#6B7280', important: '
 export default function DailyNotes() {
   const { modal } = App.useApp();
   const showToast = useAppStore((s) => s.showToast);
-  const [refreshKey, setRefreshKey] = useState(0);
+  // 直接用 state 持有列表数据，避免 useMemo([refreshKey]) 在 Electron 异步时序下刷新链不可靠（V2.41.19 修复 #2）
+  const [allNotes, setAllNotes] = useState<DailyNote[]>(() => getDailyNotes());
   const [filterText, setFilterText] = useState('');
   const [activeType, setActiveType] = useState<string | 'all'>('all');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
@@ -76,13 +77,11 @@ export default function DailyNotes() {
         div.innerHTML = text;
         const plainText = div.textContent || div.innerText || '';
         updateDailyNote(noteId, { contents: plainText ? [plainText] : note.contents });
-        setRefreshKey((k) => k + 1);
+        setAllNotes(getDailyNotes());
       }
     });
     return () => { if (typeof off === 'function') off(); };
   }, []);
-
-  const allNotes = useMemo(() => { void refreshKey; return getDailyNotes(); }, [refreshKey]);
 
   const todayStr = dayjs().format('YYYY-MM-DD');
 
@@ -120,7 +119,7 @@ export default function DailyNotes() {
       onOk: () => {
         deleteDailyNote(id);
         setSelectedKeys((prev) => prev.filter((k) => k !== id));
-        setRefreshKey((k) => k + 1);
+        setAllNotes(getDailyNotes());
         showToast('已删除', 'success');
       },
     });
@@ -135,7 +134,7 @@ export default function DailyNotes() {
       onOk: () => {
         for (const key of selectedKeys) deleteDailyNote(key);
         setSelectedKeys([]);
-        setRefreshKey((k) => k + 1);
+        setAllNotes(getDailyNotes());
         showToast(`已删除 ${selectedKeys.length} 条记录`, 'success');
       },
     });
@@ -168,7 +167,7 @@ export default function DailyNotes() {
           createDailyNote({ date: r['日期'] || dayjs().format('YYYY-MM-DD'), title: r['标题'] || '', type: r['类型'] || '一般工作', priority: (Object.keys(PRIORITY_LABEL).find((k) => PRIORITY_LABEL[k] === r['优先级']) as DailyNote['priority']) || 'normal', contents: r['内容'] ? String(r['内容']).split('\n') : [''], notes: r['备注'] || '' });
           count++;
         }
-        setRefreshKey((k) => k + 1);
+        setAllNotes(getDailyNotes());
         showToast(`成功导入 ${count} 条记录`, 'success');
       } catch { showToast('导入失败', 'error'); }
     };
@@ -349,7 +348,7 @@ export default function DailyNotes() {
       {(showNew || editingNote) && (
         <NoteModal note={editingNote} customTypes={customTypes}
           onClose={() => { setShowNew(false); setEditingNote(null); }}
-          onSaved={() => { setRefreshKey((k) => k + 1); setShowNew(false); setEditingNote(null); }} />
+          onSaved={() => { setAllNotes(getDailyNotes()); setShowNew(false); setEditingNote(null); }} />
       )}
 
       {showTypeManager && (

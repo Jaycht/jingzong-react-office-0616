@@ -365,7 +365,8 @@ if (autoUpdater) {
 }
 
 // 关闭窗口行为：'exit' 直接退出 | 'tray' 最小化到托盘 | 'ask' 弹窗询问
-let appCloseBehavior = 'tray';
+// 默认改为 'ask'（每次询问），与系统设置默认项一致（V2.41.19 修复 #4）
+let appCloseBehavior = 'ask';
 
 ipcMain.on('set-close-behavior', (_event, behavior) => {
   if (behavior === 'exit' || behavior === 'tray' || behavior === 'ask') {
@@ -424,7 +425,16 @@ function registerCloseHandler(win) {
 // ======================== 托盘功能 ========================
 function createTray() {
   try {
-    tray = new Tray(resolveAppIcon());
+    const base = resolveAppIcon();
+    if (base.isEmpty()) {
+      console.error('[tray] 未找到有效的托盘图标资源，将不启用托盘');
+      tray = null;
+      return;
+    }
+    // Windows 系统托盘需要 16/32px 尺寸图标：源 app.ico 多为 256/128px，
+    // 若缺小尺寸会被系统忽略导致托盘不显示。这里从源图缩放为 32x32 保证可见（V2.41.19 修复 #1）
+    const trayIcon = base.resize({ width: 32, height: 32 });
+    tray = new Tray(trayIcon);
   } catch (err) {
     console.error('[tray] 创建托盘图标失败，将不启用托盘：', err);
     tray = null;
@@ -585,7 +595,7 @@ function createNoteWindow(noteData) {
 
   const win = new BrowserWindow({
     x: data.x, y: data.y, width: data.w, height: data.h,
-    frame: false, transparent: true, roundedCorners: true, alwaysOnTop: true,
+    frame: false, transparent: true, roundedCorners: false, alwaysOnTop: true,
     skipTaskbar: true, hasShadow: false,
     resizable: true, minWidth: 200, minHeight: 100,
     webPreferences: {
