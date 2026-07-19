@@ -456,8 +456,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
       centered
       title={null}
       className="drawer-new-record-modal"
+      classNames={{ container: 'dnr-modal-container' }}
       styles={{
-        content: { padding: 0 },
         body: { height: '72vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' },
         footer: { padding: '12px 24px 24px', margin: 0 },
       }}

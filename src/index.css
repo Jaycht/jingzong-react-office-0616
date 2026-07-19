@@ -198,8 +198,9 @@ body {
   color: #fff;
 }
 
-/* ── 新建弹窗：去掉 Modal content 默认 padding，让蓝头真正铺满 ── */
-.drawer-new-record-modal .ant-modal-content {
+/* ── 新建弹窗：去掉 Modal container 默认 padding，让蓝头真正铺满 ── */
+/* antd 6 已无 .ant-modal-content，容器为 .ant-modal-container（contentPadding） */
+.dnr-modal-container {
   padding: 0 !important;
 }
 .drawer-new-record-modal .ant-modal-footer {

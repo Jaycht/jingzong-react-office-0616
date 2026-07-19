@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.41.4";
+export const APP_VERSION = "V2.41.5";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 4;
+export const VERSION_PATCH = 5;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.41.5 =====
+  "V2.41.5 修复 - 新建弹窗蓝渐变头铺满根因：antd 6 已移除 `.ant-modal-content` 层，白边实际来自 `.ant-modal-container` 的 contentPadding；此前 V2.41.3/41.4 针对 .ant-modal-content 的选择器全部未命中。改用 Modal 的 classNames.container 加专属类 `.dnr-modal-container` 并以 `padding:0 !important` 强制清零容器内边距，蓝渐变头现在真正顶满弹窗上下左右；index.css 同步修正选择器，保留 footer padding 覆盖",
   // ===== V2.41.4 =====
   "V2.41.4 优化 - 新建弹窗蓝渐变头用 CSS !important 强制去边距：因 antd Modal 默认 .ant-modal-content padding 优先级高于 inline styles.content，改用自定义 CSS 类 `.drawer-new-record-modal .ant-modal-content { padding:0 !important }` 强制铺满，footer padding 同步用 !important 补齐，蓝头现在真正贴到弹窗上下左右",
   // ===== V2.41.3 =====
