@@ -1,9 +1,10 @@
-export const APP_VERSION = "V2.41.20";
+export const APP_VERSION = "V2.41.21";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 20;
+export const VERSION_PATCH = 21;
 
 export const CHANGELOG: string[] = [
+  "V2.41.21 修复 - 两项用户实测问题：① 受害人信息 CSV 导出表头与数据挤在同一行（缺换行）——根因 excelUtils.exportCsv 用 csvRows.join('') 空串拼接；现抽 csvToString 纯函数并用 '\\r\\n' 分行，含逗号/引号/换行的字段自动双引号包裹，导出表头一行、每条信息一行、各项落入对应表头列（补 4 条单测锁定）；② 附件保存路径「修改不可用」——根因主进程把附件目录算成模块级常量 ATTACHMENTS_DIR，set-attachments-path 只写 path-config.json 从不更新该常量，改完路径新附件仍存旧目录；现改为运行时可变变量 attachmentsDir，切换时同步更新并保留旧目录在 allowedAttachmentDirs（safePath 遍历允许集），旧附件仍可正常读取，UI 显示当前真实路径并改后即时刷新",
   "V2.41.20 修复 - 用户实测 V2.41.19 后 #1 托盘图标与 #2 随手记卡片仍不显示的根因修复：① 托盘图标——根因 app.ico 同时配在 build.extraResources(app.ico) 与 build.files(electron/**/* + app.ico) 导致打包后 asar 内外落点错乱，主进程所有路径候选 + fs.readFileSync 兜底均读不到、返回空图、Tray 静默不创建；现改为将 app.ico 以 base64 内联(新增 electron/app-icon.cjs)，resolveAppIcon 首选 nativeImage.createFromBuffer(Buffer.from(base64)) 解析、彻底摆脱打包后路径依赖，createTray 内 resize(32×32) 加 try/catch 兜底；② 随手记卡片——根因 indexedDBAdapter.getItem 返回内存缓存同一引用、createDailyNote 用 unshift 原地修改该数组，使 setAllNotes(getDailyNotes()) 拿到同引用导致 React 跳过重渲染、useMemo 不重算(重启才显示)；getDailyNotes 改为返回 [...raw] 副本，确保每次新引用强制刷新卡片（另补 #2 副本语义回归测试）",
   "V2.41.19 修复 - 集中修复用户实测反馈的 5 项问题：① 系统托盘图标不显示——根因 app.ico 源图仅有 256/128px 尺寸、缺 16/32px 小尺寸，Windows 系统托盘会忽略无小尺寸的图标而静默不显示；createTray() 现从源图 resize 出 32x32 图标给托盘使用，确保图标可见并可点击恢复主窗口；② 日常随手记新建/编辑后卡片不显示——原 useMemo(refreshKey) 刷新链在 Electron 异步时序下不可靠，改为本地 allNotes state，保存/删除/导入/便签同步后显式 setAllNotes(getDailyNotes()) 同步重读，确保「建库即见」；③ 桌面便签真圆角在 Windows 透明窗口上失效（方角残留），按用户意见改为直角处理（--radius:0 并移除 clip-path 圆角裁剪、折叠态圆角归零、主进程便签窗口 roundedCorners 关闭）；④ 系统设置「关闭窗口时的行为」默认值统一改为「每次询问我」（App.tsx / SystemSettings.tsx / 主进程三处默认 'tray' → 'ask'）；⑤ 全局搜索框在窗口最大化时未真正居中——顶栏由 grid 三列（左右不对称）改为 flex 两端分布、搜索框绝对定位 left:50% 水平居中，最大化时仍居中",
   "V2.41.18 修复 - 随手记保存健壮性补强（#1 收尾）：将提醒数据构造（reminderTime.toISOString() 等）整体移入 try 块，确保即便构造异常，finally 中的 onSaved() 仍会刷新列表，杜绝「建库成功但卡片不显示」；新增 dailyNotesStore 同步读写回归测试（建/改/删后立即可读），锁定「建库即见」语义，防止回归",

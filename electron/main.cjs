@@ -94,7 +94,9 @@ function resolveAppIcon() {
   return nativeImage.createEmpty();
 }
 
-const ATTACHMENTS_DIR = getAttachmentsDir();
+let attachmentsDir = getAttachmentsDir();
+// 历史附件目录集合：切换路径后旧目录仍允许读取，避免旧附件打不开（数据安全）
+const allowedAttachmentDirs = new Set([attachmentsDir]);
 
 // 保存附件路径配置
 function savePathConfig(key, value) {
@@ -205,7 +207,7 @@ ipcMain.on("window-close", (event) => {
 ipcMain.handle("save-attachment-file", async (_event, { buffer, fileName, moduleId }) => {
   try {
     const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${fileName.replace(/[<>:"/\\|?*]/g, "_")}`;
-    const filePath = path.join(ATTACHMENTS_DIR, safeName);
+    const filePath = path.join(attachmentsDir, safeName);
     await fsp.writeFile(filePath, Buffer.from(buffer));
     return { success: true, filePath };
   } catch (err) {
@@ -216,10 +218,11 @@ ipcMain.handle("save-attachment-file", async (_event, { buffer, fileName, module
 /** 校验路径位于附件目录下，防止渲染进程访问任意磁盘文件 */
 function safePath(filePath) {
   const resolved = path.resolve(filePath);
-  if (!resolved.startsWith(path.resolve(ATTACHMENTS_DIR))) {
-    throw new Error('Access denied: path outside attachments directory');
+  // 允许当前目录及所有历史目录（切换路径前的旧附件仍可读取）
+  for (const dir of allowedAttachmentDirs) {
+    if (resolved.startsWith(path.resolve(dir))) return resolved;
   }
-  return resolved;
+  throw new Error('Access denied: path outside attachments directory');
 }
 
 // 附件文件操作 — 从硬盘读取文件
@@ -247,16 +250,19 @@ ipcMain.handle("delete-attachment-file", async (_event, filePath) => {
 
 // 获取附件目录路径
 ipcMain.handle("get-attachments-dir", () => {
-  return ATTACHMENTS_DIR;
+  return attachmentsDir;
 });
 
 // 获取/设置附件保存路径（用户可自定义）
 ipcMain.handle("get-attachments-path", () => {
-  return getPathConfig("attachmentsDir") || ATTACHMENTS_DIR;
+  return getPathConfig("attachmentsDir") || attachmentsDir;
 });
 
 ipcMain.handle("set-attachments-path", (_event, newPath) => {
   if (newPath && fs.existsSync(newPath)) {
+    allowedAttachmentDirs.add(attachmentsDir); // 旧目录仍允许读取，避免旧附件打不开
+    attachmentsDir = newPath;
+    allowedAttachmentDirs.add(newPath);
     savePathConfig("attachmentsDir", newPath);
     return { success: true, path: newPath };
   }
@@ -730,8 +736,8 @@ if (!gotSingleInstanceLock) {
 
   app.whenReady().then(() => {
     // 确保附件目录存在
-    if (!fs.existsSync(ATTACHMENTS_DIR)) {
-      fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
+    if (!fs.existsSync(attachmentsDir)) {
+      fs.mkdirSync(attachmentsDir, { recursive: true });
     }
     createWindow();
     createTray();

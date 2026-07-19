@@ -818,23 +818,29 @@ export function exportOperationLog(): void {
   saveAs(blob, `操作日志_${new Date().toISOString().slice(0, 10)}.json`);
 }
 
-/** 导出 CSV 文件（用于"受害人信息CSV"等场景） */
-export function exportCsv(headers: string[], rows: RowData[], filename: string): void {
+/** 将表头与行数据序列化为 CSV 文本（表头为第一行，每条数据一行，\r\n 分隔，确保每项信息落在对应表头列） */
+export function csvToString(headers: string[], rows: RowData[], options?: { withBom?: boolean }): string {
   const csvRows = [headers.join(',')];
   for (const row of rows) {
     const vals = headers.map((h) => {
       const v = row[h] ?? '';
       const str = String(v);
-      // 含逗号或引号时包裹
-      if (str.includes(',') || str.includes('"')) {
+      // 含逗号、引号或换行时包裹，避免破坏列结构
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
         return `"${str.replace(/"/g, '""')}"`;
       }
       return str;
     });
     csvRows.push(vals.join(','));
   }
+  const text = csvRows.join('\r\n');
+  return options?.withBom ? '\uFEFF' + text : text;
+}
+
+/** 导出 CSV 文件（用于"受害人信息CSV"等场景） */
+export function exportCsv(headers: string[], rows: RowData[], filename: string): void {
   const bom = '\uFEFF'; // UTF-8 BOM for Excel
-  const blob = new Blob([bom + csvRows.join('')], { type: 'text/csv;charset=utf-8' });
+  const blob = new Blob([csvToString(headers, rows, { withBom: true })], { type: 'text/csv;charset=utf-8' });
   saveAs(blob, `${filename}_${new Date().toISOString().slice(0, 10)}.csv`);
 }
 

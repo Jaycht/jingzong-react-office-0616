@@ -45,6 +45,13 @@ export default function AutoBackupPanel() {
   const showToast = useAppStore((s) => s.showToast);
   const [settings, setSettings] = useState<AutoBackupSettings>(() => loadSettings());
   const [customPath, setCustomPath] = useState(settings.backupPath);
+  const [currentAttachmentsPath, setCurrentAttachmentsPath] = useState('');
+  useEffect(() => {
+    const api = window.electronAPI;
+    if (api?.getAttachmentsPath) {
+      api.getAttachmentsPath().then((p: string) => setCurrentAttachmentsPath(p || '')).catch(() => {});
+    }
+  }, []);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const allModules = getBaseModules();
 
@@ -135,6 +142,7 @@ export default function AutoBackupPanel() {
           if (window.electronAPI?.setAttachmentsPath) {
             const r = await window.electronAPI.setAttachmentsPath(result.path);
             if (r.success) {
+              setCurrentAttachmentsPath(result.path);
               showToast(`附件保存路径已切换到: ${result.path}`, 'success');
             } else {
               showToast(r.error || '设置失败', 'error');
@@ -220,14 +228,14 @@ export default function AutoBackupPanel() {
       <div style={{ marginBottom: 14 }}>
         <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 6 }}>附件保存路径</label>
         <div style={{ display: 'flex', gap: 6 }}>
-          <div style={{ flex: 1, height: 34, padding: '0 10px', borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: 12, fontFamily: 'inherit', display: 'flex', alignItems: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title="点击右侧按钮修改">
-            附件存储在软件自动检测的磁盘路径下
+          <div style={{ flex: 1, height: 34, padding: '0 10px', borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: 12, fontFamily: 'inherit', display: 'flex', alignItems: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={currentAttachmentsPath || '点击右侧按钮修改'}>
+            {currentAttachmentsPath || '附件存储在软件自动检测的磁盘路径下'}
           </div>
           <button onClick={handleBrowseAttachmentsPath} style={{ height: 34, padding: '0 10px', borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontFamily: 'inherit', color: 'var(--color-text-secondary)' }}>
             <FolderOpen size={13} /> 修改
           </button>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>附件默认保存到非C盘（如D:\jingzong_data\attachments），可手动切换</div>
+        <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 4 }}>修改后新附件即保存到所选目录（已存附件仍在原目录，可正常打开）</div>
       </div>
 
       {/* 备份路径 */}
