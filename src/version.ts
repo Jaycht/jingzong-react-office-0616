@@ -1,9 +1,11 @@
-export const APP_VERSION = "V2.41.3";
+export const APP_VERSION = "V2.41.4";
 export const VERSION_MAJOR = 2;
 export const VERSION_MINOR = 41;
-export const VERSION_PATCH = 3;
+export const VERSION_PATCH = 4;
 
 export const CHANGELOG: string[] = [
+  // ===== V2.41.4 =====
+  "V2.41.4 优化 - 新建弹窗蓝渐变头用 CSS !important 强制去边距：因 antd Modal 默认 .ant-modal-content padding 优先级高于 inline styles.content，改用自定义 CSS 类 `.drawer-new-record-modal .ant-modal-content { padding:0 !important }` 强制铺满，footer padding 同步用 !important 补齐，蓝头现在真正贴到弹窗上下左右",
   // ===== V2.41.3 =====
   "V2.41.3 优化 - 新建弹窗蓝渐变头真正顶满：清除 antd Modal `.ant-modal-content` 默认内边距，使蓝渐变头部从弹窗内容区最上、最左、最右完全铺满；footer 单独补 padding，表单区仍保留白底与原 padding；修复之前蓝头四周仍有白边的问题",
   // ===== V2.41.2 =====

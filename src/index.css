@@ -197,6 +197,15 @@ body {
   border-color: rgba(255,255,255,0.45);
   color: #fff;
 }
+
+/* ── 新建弹窗：去掉 Modal content 默认 padding，让蓝头真正铺满 ── */
+.drawer-new-record-modal .ant-modal-content {
+  padding: 0 !important;
+}
+.drawer-new-record-modal .ant-modal-footer {
+  padding: 12px 24px 24px !important;
+  margin: 0 !important;
+}
 .hover-bg-primary:hover {
   background: var(--color-primary-bg);
 }
