@@ -1,4 +1,5 @@
 import { useAppStore, loadUserFromStorage, clearUserFromStorage } from "../store/appStore";
+import { describe, it, expect, beforeEach } from "vitest";
 
 describe("会话持久化（注册信息回填基石）", () => {
   beforeEach(() => {

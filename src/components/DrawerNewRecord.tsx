@@ -5,13 +5,14 @@ import {
   type FormInstance, type UploadFile,
 } from 'antd';
 import dayjs from 'dayjs';
-import { InboxOutlined, PlusOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { InboxOutlined, PlusOutlined, LeftOutlined, RightOutlined, FileExcelOutlined } from '@ant-design/icons';
 
 import { useUnsavedChanges } from '../utils/useUnsavedChanges';
 import badgeIcon from '../assets/badge-icon.png';
 import { useAppStore } from '../store/appStore';
 import { findModule, filterVisibleFields, type FieldDefinition } from '../moduleConfig';
 import { REQUEST_CASE_INFO, REQUEST_CLUE_INFO } from '../moduleConfig/fields/evidence';
+import PlatformImportModal from './PlatformImportModal';
 import { useCustomModules } from '../customModules';
 import { saveMassRecord, updateMassRecord, getMassRecords } from '../store/massStore';
 import ErrorBoundary from './ErrorBoundary';
@@ -26,6 +27,8 @@ import {
 import { saveAttachment, relinkAttachment, getAttachment } from '../store/attachmentStore';
 import { ATTACHMENT_CATEGORIES } from '../constants/attachmentCategories';
 import { saveDraft, getDraft, deleteDraft } from '../store/draftStore';
+import { toDateStr } from '../utils/format';
+import { REQUEST_STATUS_FIELD, splitStatusAndRemarks } from '../utils/requestLedger';
 
 interface Props { onClose: () => void; editRecord?: import('../store/massStore').MassRecord | null; }
 
@@ -59,6 +62,8 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
     editRecord?.data?.clueNo ? 'clue' : 'case'
   );
   const [form] = Form.useForm();
+  // 「从平台粘贴导入」弹窗（仅 调证登记 使用）
+  const [importOpen, setImportOpen] = useState(false);
   // 组件挂载跟踪，防止卸载后 setState
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -163,13 +168,45 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           ? ['clueNo', 'clueName', 'clueSource', 'clueType']
           : ['caseNo', 'caseName', 'caseSource', 'caseType'];
         for (const k of inactiveModeKeys) delete values[k];
+
+        // 「反馈结果」页填了反馈信息（成功数 / 失败数，或填了反馈时间）
+        // →「调证状态」自动置「已反馈」。
+        // 唯一保护：只在**本次真的动过反馈字段**时才改 —— 编辑旧记录随手保存，
+        // 不会把平台带来的「已发送」冲掉。（备注是独立字段，不会再被这条规则波及。）
+        const num = (v: unknown) => {
+          const n = Number(v);
+          return Number.isFinite(n) ? n : 0;
+        };
+        const prevData = (editRecord?.data || {}) as Record<string, unknown>;
+        const changed = (key: string) => String(values[key] ?? '') !== String(prevData[key] ?? '');
+        const hasFeedback =
+          num(values.feedbackSuccess) > 0 || num(values.feedbackFail) > 0 || !!values.feedbackDate;
+        const feedbackTouched = editRecord
+          ? changed('feedbackSuccess') || changed('feedbackFail') || changed('feedbackDate')
+          : true;
+        if (hasFeedback && feedbackTouched) {
+          values[REQUEST_STATUS_FIELD] = '已反馈';
+        }
       }
 
-      // 序列化 dayjs 对象为 ISO 字符串，避免传入 IndexedDB 后触发 antd clone 崩溃
+      // 日期字段存「本地日期串 yyyy-MM-dd」，其余 dayjs 存 ISO。
+      // 不能用 toISOString 存日期：本地 0 点会被写成前一天 16:00Z，
+      // 列表显示与台账导出（申请时间 / 反馈时间）都会差一天。
+      const dateFieldIds = new Set(allFields.filter((f) => f.type === 'date').map((f) => f.id));
+      const serializeDayjs = (
+        fieldId: string,
+        v: { isValid?: () => boolean; toDate?: () => Date; toISOString?: () => string; $d?: unknown },
+      ): string => {
+        if (typeof v.isValid === 'function' && !v.isValid()) return String(v.$d);
+        if (dateFieldIds.has(fieldId) && typeof v.toDate === 'function') return toDateStr(v.toDate());
+        return typeof v.toISOString === 'function' ? v.toISOString() : String(v.$d);
+      };
+
+      // 序列化 dayjs 对象，避免传入 IndexedDB 后触发 antd clone 崩溃
       for (const key of Object.keys(values)) {
         const v = values[key];
         if (v && typeof v === 'object' && v.$L !== undefined && v.$d !== undefined) {
-          values[key] = (typeof v.isValid === 'function' && v.isValid()) ? v.toISOString() : String(v.$d);
+          values[key] = serializeDayjs(key, v);
         }
         // 处理 repeatable section 中的 dayjs 对象
         if (Array.isArray(v)) {
@@ -178,9 +215,9 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               for (const k of Object.keys(item)) {
                 const val = item[k];
                 if (val && typeof val === 'object') {
-                  const dv = val as { $L?: unknown; $d?: unknown; isValid?: () => boolean; toISOString?: () => string };
+                  const dv = val as { $L?: unknown; $d?: unknown; isValid?: () => boolean; toDate?: () => Date; toISOString?: () => string };
                   if (dv.$L !== undefined && dv.$d !== undefined) {
-                    item[k] = (dv.isValid && dv.isValid()) ? dv.toISOString!() : String(dv.$d);
+                    item[k] = serializeDayjs(k, dv);
                   }
                 }
               }
@@ -341,6 +378,14 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             formData[f.id] = raw;
           }
 
+          // 调证登记：状态与备注拆开 —— 旧数据把状态塞在「备注」里（「申请状态：X；报文状态：Y」），
+          // 打开抽屉即迁移：状态进「调证状态」下拉，备注留空；用户手写的自由备注则原样保留。
+          if (selectedModuleId === 'evidence-request') {
+            const split = splitStatusAndRemarks(formData as Record<string, unknown>);
+            if (split.status) formData[REQUEST_STATUS_FIELD] = split.status;
+            formData.remarks = split.remarks;
+          }
+
           // 过滤：只设置表单识别的字段
           const validFieldIds = new Set(
             allFields.filter(f => f.type !== 'section').map(f => f.id)
@@ -352,6 +397,27 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
           for (const key of Object.keys(formData)) {
             if (validFieldIds.has(key) || sectionListNames.has(key)) {
               safeData[key] = formData[key];
+            }
+          }
+          // 调证登记旧数据迁移：申请信息早期存放在可重复段 requestItems 中，现已扁平化。
+          // 编辑旧记录时把 requestItems[0] 的申请信息补进扁平字段，保存后即完成迁移，
+          // 避免旧记录打开后「申请时间 / 申请单号 / 查控类型」等显示为空。
+          if (selectedModuleId === 'evidence-request' && editRecord?.data) {
+            const legacyItems = editRecord.data.requestItems;
+            const first = Array.isArray(legacyItems) ? (legacyItems[0] as Record<string, unknown> | undefined) : undefined;
+            if (first) {
+              for (const key of ['requestDate', 'applyReason', 'applicant', 'requestNo', 'controlType', 'requester']) {
+                const cur = safeData[key];
+                const legacy = first[key];
+                if ((cur == null || cur === '') && legacy != null && legacy !== '') {
+                  if (key === 'requestDate') {
+                    const d = dayjs(String(legacy));
+                    safeData[key] = d.isValid() ? d : legacy;
+                  } else {
+                    safeData[key] = legacy;
+                  }
+                }
+              }
             }
           }
           form.setFieldsValue(safeData);
@@ -596,6 +662,18 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
               </div>
             )}
           </div>
+          {isEvidenceRequest && (
+            <div style={{ marginTop: 12 }}>
+              <Button
+                type="default"
+                icon={<FileExcelOutlined />}
+                onClick={() => setImportOpen(true)}
+                style={{ background: 'rgba(255,255,255,0.92)', border: 'none', fontWeight: 600 }}
+              >
+                从平台粘贴导入（资金查控平台）
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -707,6 +785,15 @@ export default function DrawerNewRecord({ onClose, editRecord }: Props) {
             </Form>
           </div>
       </Modal>
+
+      <PlatformImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={() => {
+          setImportOpen(false);
+          onClose();
+        }}
+      />
     </ErrorBoundary>
   );
 }

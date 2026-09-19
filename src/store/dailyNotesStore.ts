@@ -21,6 +21,8 @@ export interface DailyNote {
   attachments: Array<Record<string, unknown>>;
   createdAt: string;
   updatedAt: string;
+  /** 演示数据标记（V2.49.0）：一键生成的示例条目，可被「清除演示数据」识别并移除 */
+  demo?: boolean;
 }
 
 function currentUser(): string {
@@ -58,6 +60,7 @@ export function createDailyNote(data: Partial<DailyNote>): DailyNote {
     attachments: data.attachments || [],
     createdAt: now,
     updatedAt: now,
+    demo: !!data.demo,
   };
   notes.unshift(note);
   indexedDBAdapter.setItem(STORAGE_KEY, notes);

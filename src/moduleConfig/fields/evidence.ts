@@ -1,12 +1,13 @@
 import type { FieldDefinition } from '../types';
 import { f, commonTail, section } from '../fieldHelpers';
 import { CASE_TYPES_FULL, CASE_TYPES_BASIC } from '../caseTypes';
+import { REQUEST_STATUS_OPTIONS } from '../../utils/requestLedger';
 
 // 调证登记首段：案件调证 / 线索调证 两套字段（由 DrawerNewRecord 按 requestMode 切换）
 // 默认（列表/报表/其它消费方）使用案件调证版，保持向后兼容
 export const REQUEST_CASE_INFO: FieldDefinition[] = [
   f('caseNo', '案件编号'),
-  f('caseName', '案件名称', 'text', false),
+  f('caseName', '案件（线索）名称', 'text', false),
   f('caseSource', '案件来源', 'select', false, ['群众报案', '举报', '上级交办', '部门移送', '工作发现', '自首'], 'evidence.request.caseSource'),
   f('caseType', '案件类型', 'select', false, CASE_TYPES_FULL, 'evidence.request.caseType'),
 ];
@@ -33,25 +34,38 @@ export function evidenceFields(moduleId: string, _tab: string): FieldDefinition[
 
   if (moduleId === 'evidence-request') {
     return [
-      // 第一阶段：线索/案件信息（案件调证默认；线索调证由 DrawerNewRecord 切换首段字段）
-      section('线索/案件信息'),
+      // 第一步：案件/线索信息（案件调证默认；线索调证由 DrawerNewRecord 按 requestMode 切换首段字段）
+      section('案件（线索）信息'),
       ...REQUEST_CASE_INFO,
 
-      // 第二阶段：调证信息（可重复添加多条）
-      section('调证信息', true, 'requestItems'),
+      // 第二步：申请信息 —— 对应台账「申请时间 / 申请事由 / 申请人 / 申请单号」
+      section('申请信息'),
+      f('requestDate', '申请时间', 'date', false),
+      f('applyReason', '申请事由', 'text', false),
+      f('applicant', '申请人', 'text', false),
+      f('requestNo', '申请单号', 'text', false),
+      f('controlType', '查控类型', 'select', false, ['常规查询', '冻结申请', '继续冻结申请', '解除冻结申请']),
+      f('requester', '请求查控人', 'text', false),
+
+      // 第三步：反馈结果 —— 对应台账「反馈时间 / 查控结果 / 备注」
+      section('反馈结果'),
+      f('feedbackDate', '反馈时间', 'date', false),
+      f('feedbackPending', '未反馈数', 'number'),
+      f('feedbackSuccess', '反馈成功数', 'number'),
+      f('feedbackFail', '反馈失败数', 'number'),
+      // 调证状态（四档）与备注分开存：
+      // requestStatus = 状态，列表「备注」列展示/编辑的就是它；
+      // remarks = 自由备注（V2.47 曾把状态塞进这里，读取时自动回退解析，打开抽屉即迁移）。
+      f('requestStatus', '调证状态', 'select', false, [...REQUEST_STATUS_OPTIONS], 'evidence.request.requestStatus'),
+      f('remarks', '备注', 'textarea'),
+
+      // 第四步：协查信息（台账之外的扩展字段）
+      section('协查信息'),
       f('cooperateUnit', '协查单位', 'select', false, ['一中队', '二中队', '三中队', '涉众办', '法制室', '大队领导', '刑警大队', '治安大队', '直属大队', '政保大队', '城区派出所', '南麻派出所', '东里派出所', '悦庄派出所', '西里派出所', '大张庄派出所', '中庄派出所', '张家坡派出所', '鲁村派出所', '南鲁山派出所', '燕崖派出所', '石桥派出所', '开发区派出所'], 'evidence.request.cooperateUnit'),
       f('target', '调证对象', 'text', false),
       f('accountNo', '调证账号'),
       f('platform', '调证平台', 'select', false, ['经侦云', '警综平台', '微信', '支付宝', '第三方支付平台'], 'evidence.request.platform'),
-      f('requestNo', '调证编号'),
       f('timeRange', '调证时间范围'),
-      f('requestDate', '调证日期', 'date', false),
-
-      // 第三阶段：反馈结果
-      section('反馈结果'),
-      f('feedbackDate', '反馈时间', 'date', false),
-      f('feedbackSuccess', '反馈成功数', 'number'),
-      f('feedbackFail', '反馈失败数', 'number'),
       f('deliveredToUnit', '是否交付协查单位', 'select', false, ['是', '否']),
       f('deliveryStatus', '交付情况'),
       f('attachment', '附件材料', 'attachment'),

@@ -13,3 +13,12 @@ _fix*.b64
 *.log
 $null
 codex*
+
+# 本地数据 / 构建缓存（不进公网仓库）
+.workbuddy/
+_dist_stale_*/
+output/
+
+# 误入资源 / 分析产物（仅排除仓库根目录，保留 public/audio 等项目资源）
+/stitch_vibrant_smart_worksphere/
+/audio/

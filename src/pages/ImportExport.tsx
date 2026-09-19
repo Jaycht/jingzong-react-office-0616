@@ -5,6 +5,7 @@ import { useAppStore } from "../store/appStore"
 import {
   exportAllModulesToExcel,
   exportCasesToExcel,
+  exportRequestLedger,
   exportOperationLog,
   importExcelToModule,
   downloadModuleTemplate,
@@ -27,6 +28,7 @@ export default function ImportExport({ noHeader }: { noHeader?: boolean }) {
     show: boolean;
     success: number;
     failed: number;
+    skipped: number;
     errors: string[];
   } | null>(null);
 
@@ -47,6 +49,7 @@ export default function ImportExport({ noHeader }: { noHeader?: boolean }) {
         show: true,
         success: result.success,
         failed: result.failed,
+        skipped: result.skipped,
         errors: result.errors,
       });
       if (result.success > 0) {
@@ -113,6 +116,26 @@ export default function ImportExport({ noHeader }: { noHeader?: boolean }) {
         </div>
       </motion.div>
       )}
+
+      {/* 使用说明：空白模板快捷录入（V2.52.0 新增） */}
+      <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        style={{
+          marginBottom: 18, padding: '16px 20px', borderRadius: 12,
+          background: 'linear-gradient(135deg, #EAF3FB, #F4F8FC)',
+          border: '1px solid #C9E0F3', display: 'flex', gap: 14,
+        }}>
+        <div style={{ flexShrink: 0, width: 38, height: 38, borderRadius: 10, background: '#1B5E9B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <FileText size={20} color="#fff" />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#1B5E9B', marginBottom: 6 }}>空白模板快捷录入（推荐新手）</div>
+          <div style={{ fontSize: 12.5, color: 'var(--color-text-secondary)', lineHeight: 1.85 }}>
+            每个模块都提供了「导入模板」：在左侧导入区下方点对应模块即可下载。模板是<span style={{ color: '#1B5E9B', fontWeight: 600 }}>空表</span>，填好后回到本页选同一模块导入，即可一键生成记录——比在软件里逐条手填快得多。<br />
+            <b>三步流程：</b>① 下载某模块导入模板 → ② 在 Excel 里按列填好（每列即一个字段，日期写 yyyy-MM-dd；一个记录下有多条明细的已按「段名|字段名|序号」展开为编号列）→ ③ 回到本页选同一模块导入。<br />
+            <b>两个提醒：</b>导入会自动跳过与已有记录<span style={{ color: '#E67E22', fontWeight: 600 }}>完全相同</span>的行（防止把导出文件原样再导一遍变成重复），其余一律新增；导出已有数据后修改再导入，被改动的行会作为新记录追加（旧记录仍保留，可手动删除）。
+          </div>
+        </div>
+      </motion.div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
         {/* 导入区 */}
@@ -196,6 +219,7 @@ export default function ImportExport({ noHeader }: { noHeader?: boolean }) {
               </div>
               <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
                 成功 {importResult.success} 条
+                {importResult.skipped > 0 && `，跳过重复 ${importResult.skipped} 条`}
                 {importResult.failed > 0 && `，失败 ${importResult.failed} 条`}
               </div>
               {importResult.errors.length > 0 && (
@@ -278,6 +302,15 @@ export default function ImportExport({ noHeader }: { noHeader?: boolean }) {
               }}
             />
             <ExportItem
+              label="资金查控情况登记台账（周五报送）"
+              desc="按单位模板导出 · 自动拼接查控结果"
+              format="xlsx"
+              onClick={() => {
+                exportRequestLedger();
+                showToast('正在生成资金查控台账...', 'info');
+              }}
+            />
+            <ExportItem
               label="受害人信息（CSV）"
               desc="涉众案件受害人信息 · 含投资详情"
               format="csv"
@@ -292,6 +325,9 @@ export default function ImportExport({ noHeader }: { noHeader?: boolean }) {
                 showToast('正在导出操作日志...', 'info');
               }}
             />
+          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--color-text-muted)', marginTop: 4, lineHeight: 1.7 }}>
+            提示：需要批量录入却没有现成数据时，可在左侧「数据导入」区下载对应模块的<span style={{ color: '#1B5E9B' }}>空白导入模板</span>，填好后导入即可快速生成记录（详见上方「空白模板快捷录入」说明）。
           </div>
         </motion.div>
       </div>

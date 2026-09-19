@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Scale, Search, BookOpen, ChevronLeft, ExternalLink, Layers, Hash, ScrollText, CalendarClock, Star, ArrowRight, Link2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Scale, Search, BookOpen, ChevronLeft, ChevronUp, ExternalLink, Layers, Hash, ScrollText, CalendarClock, Star, ArrowRight, Link2, ShieldCheck, Upload } from 'lucide-react';
 import { Input } from 'antd';
 import { useAppStore } from '../store/appStore';
 import { BRAND } from '../constants/theme';
 import { useLawPrefsStore, noteKey } from '../store/lawPrefsStore';
+import { mergeLawManifest, getLibrary, type LawManifest } from '../store/legalLibraryStore';
+import LegalLibraryManager from '../components/LegalLibraryManager';
 
 interface LawMeta {
   id: string;
@@ -18,6 +20,8 @@ interface LawMeta {
   articles: number;
   pending?: boolean;
   timeline?: { date: string; label: string }[];
+  /** 是否为用户上传的自定义条目（false 表示内置） */
+  builtin?: boolean;
 }
 interface Manifest {
   generatedAt: string;
@@ -30,6 +34,12 @@ interface ArticleBlock { kind: 'article'; num: string; body: string[]; }
 interface SectionBlock { kind: 'section'; title: string; }
 interface IntroBlock { kind: 'intro'; text: string; }
 type Block = ArticleBlock | SectionBlock | IntroBlock;
+
+interface Heading { id: string; label: string; blockIndex: number; }
+// 扁平（无章）且很长的法条：均匀取最多这么多可点击章节点，避免几百个圆点挤成一团
+const FLAT_MAX_DOTS = 40;
+// 阅读进度导轨的竖向轨道高度（px）
+const RAIL_HEIGHT = 220;
 
 const base = import.meta.env.BASE_URL || '/';
 const assetUrl = (file: string) => base + file.replace(/^\//, '');
@@ -167,10 +177,195 @@ function highlight(text: string, q: string) {
   );
 }
 
+// 探测真正的滚动容器：本应用正文在 .content-area（overflow:auto）内滚动，而非 window
+function findScrollParent(el: HTMLElement | null): HTMLElement | Window {
+  let node: HTMLElement | null = el;
+  while (node && node !== document.documentElement && node !== document.body) {
+    const s = getComputedStyle(node);
+    const oy = s.overflowY;
+    if ((oy === 'auto' || oy === 'scroll') && node.scrollHeight > node.clientHeight) return node;
+    node = node.parentElement;
+  }
+  return window;
+}
+
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+// ── 法条阅读进度导轨：右侧「目录章节点 + 进度条 + 回到顶部」 ──
+function ReadingRail({
+  headings,
+  headingRefs,
+  containerRef,
+  darkMode,
+  brand,
+}: {
+  headings: Heading[];
+  headingRefs: React.MutableRefObject<Map<string, HTMLElement>>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  darkMode: boolean;
+  brand: { primary: string; primaryLight: string };
+}) {
+  const [progress, setProgress] = useState(0);
+  const [activeId, setActiveId] = useState<string | null>(headings[0]?.id ?? null);
+  const readLineRatio = 0.3;
+
+  useEffect(() => {
+    const getScroller = () => findScrollParent(containerRef.current);
+    const onScroll = () => {
+      const cont = containerRef.current;
+      if (!cont) return;
+      const vh = window.innerHeight;
+      const readLine = vh * readLineRatio;
+      const rect = cont.getBoundingClientRect();
+      const passed = readLine - rect.top;
+      setProgress(clamp01(passed / Math.max(rect.height, 1)));
+      let act: string | null = null;
+      for (const h of headings) {
+        const el = headingRefs.current.get(h.id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= readLine) act = h.id;
+      }
+      if (!act) act = headings[0]?.id ?? null;
+      setActiveId(act);
+    };
+    const scroller = getScroller();
+    const targets = new Set<EventTarget>([window, scroller]);
+    targets.forEach((t) => t.addEventListener('scroll', onScroll, { passive: true } as EventListenerOptions));
+    onScroll();
+    return () => targets.forEach((t) => t.removeEventListener('scroll', onScroll));
+  }, [headings, containerRef, headingRefs]);
+
+  const trackBg = darkMode ? 'rgba(163,201,255,0.14)' : '#E4E9F0';
+  const idleDot = darkMode ? '#46506A' : '#C4CDDB';
+  const activeHalo = darkMode ? 'rgba(37,99,235,0.35)' : 'rgba(37,99,235,0.2)';
+
+  const onJump = (id: string) => {
+    const el = headingRefs.current.get(id);
+    if (!el || !el.isConnected) return;
+    const scroller = findScrollParent(containerRef.current);
+    const readLine = window.innerHeight * readLineRatio;
+    const top = Math.max(
+      0,
+      scroller === window
+        ? el.getBoundingClientRect().top + window.scrollY - readLine + 12
+        : el.getBoundingClientRect().top - (scroller as HTMLElement).getBoundingClientRect().top + (scroller as HTMLElement).scrollTop - readLine + 12,
+    );
+    if (scroller === window) window.scrollTo({ top, behavior: 'smooth' });
+    else (scroller as HTMLElement).scrollTo({ top, behavior: 'smooth' });
+  };
+
+  const onBackTop = () => {
+    const scroller = findScrollParent(containerRef.current);
+    if (scroller === window) window.scrollTo({ top: 0, behavior: 'smooth' });
+    else (scroller as HTMLElement).scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const n = headings.length;
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 92,
+        width: 40,
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 12,
+        userSelect: 'none',
+        paddingTop: 2,
+      }}
+    >
+      <div style={{ position: 'relative', width: 16, height: RAIL_HEIGHT }} title="阅读进度与章节点（点击跳转）">
+        {/* 轨道 */}
+        <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 3, transform: 'translateX(-50%)', borderRadius: 3, background: trackBg }} />
+        {/* 进度填充 */}
+        <div
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: 0,
+            width: 3,
+            transform: 'translateX(-50%)',
+            height: `${progress * 100}%`,
+            borderRadius: 3,
+            background: brand.primary,
+            transition: 'height 0.08s linear',
+          }}
+        />
+        {/* 章节点 */}
+        {headings.map((h, i) => {
+          const top = n > 1 ? (i / (n - 1)) * 100 : 0;
+          const active = h.id === activeId;
+          return (
+            <button
+              key={h.id}
+              title={h.label}
+              onClick={() => onJump(h.id)}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: `${top}%`,
+                transform: 'translate(-50%, -50%)',
+                width: active ? 12 : 8,
+                height: active ? 12 : 8,
+                borderRadius: '50%',
+                padding: 0,
+                border: `2px solid ${active ? brand.primary : 'var(--color-surface)'}`,
+                background: active ? brand.primary : idleDot,
+                cursor: 'pointer',
+                boxShadow: active ? `0 0 0 4px ${activeHalo}` : 'none',
+                transition: 'all 0.15s',
+              }}
+            />
+          );
+        })}
+      </div>
+      <button
+        onClick={onBackTop}
+        title="回到顶部"
+        style={{
+          display: 'inline-flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          color: darkMode ? '#8A94A6' : '#6B7280',
+          fontSize: 11,
+          padding: 2,
+        }}
+      >
+        <span
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 9,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: darkMode ? 'rgba(163,201,255,0.1)' : '#EEF2F7',
+            border: `1px solid ${darkMode ? 'rgba(163,201,255,0.16)' : '#E1E7EF'}`,
+          }}
+        >
+          <ChevronUp size={16} />
+        </span>
+        顶部
+      </button>
+    </div>
+  );
+}
+
 export default function LegalKnowledge() {
   const showToast = useAppStore((s) => s.showToast);
   const darkMode = useAppStore((s) => s.darkMode);
-  const [manifest, setManifest] = useState<Manifest | null>(null);
+  const [builtinManifest, setBuiltinManifest] = useState<Manifest | null>(null);
+  // libTick：管理面板改动（新增/编辑/删除/恢复）后自增，触发清单重新合并
+  const [libTick, setLibTick] = useState(0);
+  const [managerOpen, setManagerOpen] = useState(false);
+  // 'upload' = 只弹上传表单；'manage' = 弹管理页面（条目 / 回收站）
+  const [managerMode, setManagerMode] = useState<'manage' | 'upload'>('manage');
   const [loading, setLoading] = useState(true);
   const [catFilter, setCatFilter] = useState<string>('全部');
   const [kw, setKw] = useState('');
@@ -193,11 +388,17 @@ export default function LegalKnowledge() {
     let alive = true;
     fetch(assetUrl('laws/manifest.json'))
       .then((r) => { if (!r.ok) throw new Error('清单读取失败 ' + r.status); return r.json(); })
-      .then((data: Manifest) => { if (alive) setManifest(data); })
+      .then((data: Manifest) => { if (alive) setBuiltinManifest(data); })
       .catch((e) => showToast('法规清单加载失败: ' + (e instanceof Error ? e.message : '未知错误'), 'error'))
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [showToast]);
+
+  // 最终清单 = 内置清单 + 本地覆盖层（自定义新增 / 编辑覆盖 / 删除隐藏）
+  const manifest = useMemo(
+    () => mergeLawManifest(builtinManifest as LawManifest | null, getLibrary()) as Manifest | null,
+    [builtinManifest, libTick],
+  );
 
   const totalArticles = useMemo(
     () => (manifest ? manifest.laws.reduce((s, l) => s + (l.articles || 0), 0) : 0),
@@ -270,14 +471,30 @@ export default function LegalKnowledge() {
       return;
     }
     setLawLoading(true);
-    const entry = Object.entries(lawTextModules).find(([k]) => k.endsWith(law.file));
-    if (entry && entry[1]) {
-      setLawText(entry[1]);
-      setLawLoading(false);
-    } else {
-      showToast('法条读取失败：未找到 ' + law.file, 'error');
-      setLawLoading(false);
+    // 内置法条：正文随构建内联（?raw），按相对路径匹配
+    if (law.builtin !== false) {
+      const entry = Object.entries(lawTextModules).find(([k]) => k.endsWith(law.file));
+      if (entry && entry[1]) {
+        setLawText(entry[1]);
+        setLawLoading(false);
+        return;
+      }
     }
+    // 自定义条目（上传的 txt 落在数据目录）经主进程读取，内置条目未命中内联时同样兜底走这里
+    void (async () => {
+      try {
+        const res = await window.electronAPI?.readAttachmentFile?.(law.file);
+        if (res && res.success && res.buffer) {
+          setLawText(new TextDecoder('utf-8').decode(res.buffer));
+        } else {
+          showToast('法条读取失败：' + (res?.error || `未找到 ${law.file}`), 'error');
+        }
+      } catch (e) {
+        showToast('法条读取失败：' + (e instanceof Error ? e.message : '未知错误'), 'error');
+      } finally {
+        setLawLoading(false);
+      }
+    })();
   };
 
   const parsed = useMemo(() => (lawText ? parseLaw(lawText) : null), [lawText]);
@@ -290,6 +507,33 @@ export default function LegalKnowledge() {
     if (!q) return articleBlocks;
     return articleBlocks.filter((a) => (a.num + ' ' + a.body.join(' ')).includes(q));
   }, [articleBlocks, articleQ]);
+
+  // ── 右侧阅读进度导轨：章节点（目录）计算 ──
+  const articleContainerRef = useRef<HTMLDivElement | null>(null);
+  const headingRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const headings = useMemo<Heading[]>(() => {
+    if (!parsed) return [];
+    const blocks = parsed.blocks;
+    const secs = blocks.map((b, i) => ({ b, i })).filter(({ b }) => b.kind === 'section');
+    if (secs.length) {
+      // 有「编/章」结构的法条：以章为章节点
+      return secs.map(({ b, i }) => ({ id: 'h-' + i, label: (b as SectionBlock).title, blockIndex: i }));
+    }
+    const arts = blocks.map((b, i) => ({ b, i })).filter(({ b }) => b.kind === 'article');
+    if (arts.length === 0) return [];
+    if (arts.length <= FLAT_MAX_DOTS) {
+      // 扁平但条数不多：每条一个章节点
+      return arts.map(({ b, i }) => ({ id: 'h-' + i, label: (b as ArticleBlock).num, blockIndex: i }));
+    }
+    // 扁平且很长（如刑法 452 条）：均匀取点，保证可点击的目录章节点
+    const picked: Heading[] = [];
+    for (let k = 0; k < FLAT_MAX_DOTS; k++) {
+      const idx = arts[Math.round((k * (arts.length - 1)) / (FLAT_MAX_DOTS - 1))].i;
+      picked.push({ id: 'h-' + idx, label: (blocks[idx] as ArticleBlock).num, blockIndex: idx });
+    }
+    return picked;
+  }, [parsed]);
+  const headingBlockIdx = useMemo(() => new Set(headings.map((h) => h.blockIndex)), [headings]);
 
   const Kpi = ({ label, val, ico, grad, unit }: { label: string; val: number; ico: React.ReactNode; grad: string; unit?: string }) => (
     <div className="wb-kpi" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -440,59 +684,80 @@ export default function LegalKnowledge() {
         {lawLoading ? (
           <div style={{ padding: 60, textAlign: 'center', color: textMuted }}>正在加载法条…</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {shownArticles.length === 0 && (
-              <div style={{ padding: 50, textAlign: 'center', color: textMuted }}>未找到匹配的法条</div>
-            )}
-            {parsed.blocks.map((b, i) => {
-              if (b.kind === 'intro') {
-                return (
-                  <div key={'intro' + i} style={{ padding: '4px 2px', color: textMuted, fontSize: 14, lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
-                    {b.text}
-                  </div>
-                );
-              }
-              if (b.kind === 'section') {
-                return (
-                  <div key={'sec' + i} style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${panelBorder}`, fontSize: 16, fontWeight: 800, color: BRAND.primaryDark, letterSpacing: '0.02em' }}>
-                    {b.title}
-                  </div>
-                );
-              }
-              // article
-              const matchQ = articleQ.trim();
-              if (matchQ && !shownArticles.includes(b)) return null;
-              const nk = noteKey(selected.id, b.num);
-              const hasNote = !!notes[nk];
-              return (
-                <div key={'art' + i} className="wb-panel" style={{ padding: '12px 16px', background: panelBg, border: `1px solid ${panelBorder}` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <div style={{ fontSize: 14.5, fontWeight: 800, color: BRAND.primaryDark }}>{highlight(b.num, matchQ)}</div>
-                    <button
-                      className="wb-hover-ghost"
-                      onClick={() => setNoteKeyActive(noteKeyActive === nk ? null : nk)}
-                      style={{ fontSize: 12, color: hasNote ? BRAND.primary : '#9CA3AF', background: 'transparent', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
-                      title={hasNote ? '查看/编辑笔记' : '为这一条添加笔记'}
-                    >
-                      <ScrollText size={13} /> {hasNote ? '笔记' : '加笔记'}
-                    </button>
-                  </div>
-                  {b.body.map((p, pi) => (
-                    <div key={pi} style={{ fontSize: 14.5, lineHeight: 1.95, color: textColor, whiteSpace: 'pre-wrap', marginTop: 4 }}>
-                      {highlight(p, matchQ)}
+          <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
+            <div ref={articleContainerRef} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {shownArticles.length === 0 && (
+                <div style={{ padding: 50, textAlign: 'center', color: textMuted }}>未找到匹配的法条</div>
+              )}
+              {parsed.blocks.map((b, i) => {
+                if (b.kind === 'intro') {
+                  return (
+                    <div key={'intro' + i} style={{ padding: '4px 2px', color: textMuted, fontSize: 14, lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>
+                      {b.text}
                     </div>
-                  ))}
-                  {noteKeyActive === nk && (
-                    <textarea
-                      defaultValue={notes[nk] || ''}
-                      placeholder="写下你对这一条的笔记 / 办案提示…"
-                      onChange={(e) => setNote(nk, e.target.value)}
-                      style={{ marginTop: 10, width: '100%', minHeight: 72, borderRadius: 10, border: `1px solid ${panelBorder}`, padding: '8px 10px', fontSize: 13.5, lineHeight: 1.7, color: textColor, background: darkMode ? '#0b1220' : '#F8FAFC', resize: 'vertical', fontFamily: 'inherit' }}
-                    />
-                  )}
-                </div>
-              );
-            })}
+                  );
+                }
+                if (b.kind === 'section') {
+                  return (
+                    <div
+                      key={'sec' + i}
+                      ref={(el) => { if (el) headingRefs.current.set('h-' + i, el); else headingRefs.current.delete('h-' + i); }}
+                      style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${panelBorder}`, fontSize: 16, fontWeight: 800, color: BRAND.primaryDark, letterSpacing: '0.02em' }}
+                    >
+                      {b.title}
+                    </div>
+                  );
+                }
+                // article
+                const matchQ = articleQ.trim();
+                if (matchQ && !shownArticles.includes(b)) return null;
+                const nk = noteKey(selected.id, b.num);
+                const hasNote = !!notes[nk];
+                const isHeading = headingBlockIdx.has(i);
+                return (
+                  <div
+                    key={'art' + i}
+                    ref={(el) => { if (isHeading) { if (el) headingRefs.current.set('h-' + i, el); else headingRefs.current.delete('h-' + i); } }}
+                    className="wb-panel"
+                    style={{ padding: '12px 16px', background: panelBg, border: `1px solid ${panelBorder}` }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <div style={{ fontSize: 14.5, fontWeight: 800, color: BRAND.primaryDark }}>{highlight(b.num, matchQ)}</div>
+                      <button
+                        className="wb-hover-ghost"
+                        onClick={() => setNoteKeyActive(noteKeyActive === nk ? null : nk)}
+                        style={{ fontSize: 12, color: hasNote ? BRAND.primary : '#9CA3AF', background: 'transparent', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
+                        title={hasNote ? '查看/编辑笔记' : '为这一条添加笔记'}
+                      >
+                        <ScrollText size={13} /> {hasNote ? '笔记' : '加笔记'}
+                      </button>
+                    </div>
+                    {b.body.map((p, pi) => (
+                      <div key={pi} style={{ fontSize: 14.5, lineHeight: 1.95, color: textColor, whiteSpace: 'pre-wrap', marginTop: 4 }}>
+                        {highlight(p, matchQ)}
+                      </div>
+                    ))}
+                    {noteKeyActive === nk && (
+                      <textarea
+                        defaultValue={notes[nk] || ''}
+                        placeholder="写下你对这一条的笔记 / 办案提示…"
+                        onChange={(e) => setNote(nk, e.target.value)}
+                        style={{ marginTop: 10, width: '100%', minHeight: 72, borderRadius: 10, border: `1px solid ${panelBorder}`, padding: '8px 10px', fontSize: 13.5, lineHeight: 1.7, color: textColor, background: darkMode ? '#0b1220' : '#F8FAFC', resize: 'vertical', fontFamily: 'inherit' }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {articleBlocks.length > 0 && (
+              <ReadingRail
+                headings={headings}
+                headingRefs={headingRefs}
+                containerRef={articleContainerRef}
+                darkMode={darkMode}
+                brand={BRAND}
+              />
+            )}
           </div>
         )}
       </div>
@@ -738,7 +1003,7 @@ export default function LegalKnowledge() {
           <div className="dash-hero-greet">典法查阅</div>
           <div className="dash-hero-sub">宪法 · 刑事 · 行政 · 公安专项 · 监察 · 两高司法解释 · 指导性文件，全量官方法条离线检索</div>
         </div>
-        <div className="dash-hero-actions" style={{ flex: '0 0 auto', width: 400, maxWidth: '48vw', display: 'flex', gap: 10 }}>
+        <div className="dash-hero-actions" style={{ flex: '0 0 auto', width: 470, maxWidth: '52vw', display: 'flex', gap: 10 }}>
           <Input
             allowClear
             prefix={<Search size={15} />}
@@ -748,7 +1013,7 @@ export default function LegalKnowledge() {
           />
           <button
             className="dash-action"
-            style={{ width: 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6, ...(view === 'ec77' ? { background: BRAND.primary, color: '#fff', borderColor: BRAND.primary } : {}) }}
+            style={{ width: 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
             onClick={() => { setSelected(null); setSelectedCase(null); setEcQ(''); setView('ec77'); }}
           >
             <Scale size={15} /> 经侦77类
@@ -759,6 +1024,22 @@ export default function LegalKnowledge() {
             onClick={() => { setSelected(null); setSelectedCase(null); setView('mine'); }}
           >
             <Star size={15} /> 我的收藏/笔记{(Object.keys(favorites).length > 0 || Object.keys(notes).length > 0) ? ` (${Object.keys(favorites).length + Object.keys(notes).length})` : ''}
+          </button>
+          <button
+            className="dash-action"
+            style={{ width: 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            onClick={() => { setManagerMode('upload'); setManagerOpen(true); }}
+            title="上传新法条（无需密码）"
+          >
+            <Upload size={15} /> 上传
+          </button>
+          <button
+            className="dash-action"
+            style={{ width: 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            onClick={() => { setManagerMode('manage'); setManagerOpen(true); }}
+            title="编辑 / 删除 / 回收站（需管理员密码）"
+          >
+            <ShieldCheck size={15} /> 管理
           </button>
         </div>
       </div>
@@ -844,6 +1125,15 @@ export default function LegalKnowledge() {
           )}
         </div>
       </div>
+
+      {/* 上传（免密）/ 管理（编辑 · 删除 · 回收站，需管理员密码）——两个入口互不叠加 */}
+      <LegalLibraryManager
+        open={managerOpen}
+        onClose={() => setManagerOpen(false)}
+        kind="law"
+        mode={managerMode}
+        onChanged={() => setLibTick((t) => t + 1)}
+      />
     </div>
   );
 }

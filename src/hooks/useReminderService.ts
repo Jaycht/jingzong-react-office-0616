@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { getDailyNotes } from '../store/dailyNotesStore';
-import { getMassRecords, type MassRecord } from '../store/massStore';
+import { getMassRecords, isDemoRecord, type MassRecord } from '../store/massStore';
 
 import { isElectron as isElectronEnv } from '../lib/env';
 import { LEGAL_DEADLINE_RULES } from '../constants/legalDeadlines';
@@ -8,6 +8,23 @@ import { LEGAL_DEADLINE_RULES } from '../constants/legalDeadlines';
 const DISMISSED_KEY = 'jingzong.reminder.dismissed';
 const TRIGGERED_KEY = 'jingzong.reminder.triggered';
 const SNOOZED_KEY = 'jingzong.reminder.snoozed';
+
+/**
+ * 会话标识：渲染进程每次加载（= 每次启动软件）都不同。
+ * 「下次登录提醒」就是把提醒标记成「本会话内不再提醒」，下次启动时会话标识变了、
+ * 标记自然失效，提醒重新弹出 —— 不需要额外的定时器或持久化清理。
+ */
+const SESSION_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+/**
+ * 「下次登录提醒」的哨兵值。
+ * 复用既有的 notif-snooze 通道回传（minutes 语义上表示稍后几分钟），
+ * 用 -1 表示「本次不再提醒，下次登录再提醒」，避免为一个按钮新增一条 IPC 通道。
+ */
+export const SNOOZE_UNTIL_NEXT_LAUNCH = -1;
+
+/** 稍后提醒存的是绝对时间戳；「下次登录提醒」存的是当前会话标识 */
+type SnoozeValue = number | { session: string };
 
 function getDismissed(): Set<string> {
   try { const raw = localStorage.getItem(DISMISSED_KEY); return raw ? new Set(JSON.parse(raw)) : new Set(); }
@@ -29,18 +46,32 @@ function markTriggered(id: string) {
   try { localStorage.setItem(TRIGGERED_KEY, JSON.stringify(s)); } catch {}
 }
 
-function getSnoozed(): Record<string, number> {
+function getSnoozed(): Record<string, SnoozeValue> {
   try { const raw = localStorage.getItem(SNOOZED_KEY); return raw ? JSON.parse(raw) : {}; }
   catch { return {}; }
 }
 
-function setSnoozed(id: string, untilMs: number) {
+function setSnoozed(id: string, value: SnoozeValue) {
   const s = getSnoozed();
-  s[id] = untilMs;
+  s[id] = value;
   try { localStorage.setItem(SNOOZED_KEY, JSON.stringify(s)); } catch {}
 }
 
+/** 该提醒当前是否处于「不再提醒」状态（定时稍后 或 本次登录内不再提醒） */
+function isSnoozed(id: string, snoozed: Record<string, SnoozeValue>, now: number): boolean {
+  const v = snoozed[id];
+  if (v === undefined || v === null) return false;
+  if (typeof v === 'number') return now < v;
+  if (typeof v === 'object' && typeof v.session === 'string') return v.session === SESSION_ID;
+  return false;
+}
+
 export function snoozeReminder(id: string, minutes: number) {
+  if (minutes === SNOOZE_UNTIL_NEXT_LAUNCH) {
+    // 「下次登录提醒」：本次运行不再打扰，下次启动重新提醒
+    setSnoozed(id, { session: SESSION_ID });
+    return;
+  }
   setSnoozed(id, Date.now() + minutes * 60 * 1000);
 }
 
@@ -51,6 +82,8 @@ export function dismissReminder(id: string) {
 function checkLegalDeadlines(records: MassRecord[]): Array<{ id: string; title: string; body: string }> {
   const alerts: Array<{ id: string; title: string; body: string }> = [];
   for (const rec of records) {
+    // 演示数据不产生到期预警（一键生成演示数据后不该瞬间弹出一屏预警）
+    if (isDemoRecord(rec)) continue;
     const data = (rec.data || rec) as Record<string, unknown>;
     const suspects = (data.suspects as unknown[]) || [];
     // 统一以 legalDeadlines 单一数据源为准（C-M2）：含模块范围与正确的日期字段
@@ -113,7 +146,7 @@ export function useReminderService() {
         for (const note of notes) {
           if (!note.reminder?.enabled || !note.reminder?.time) continue;
           if (dismissed.has(note.id)) continue;
-          if (snoozed[note.id] && now < snoozed[note.id]) continue;
+          if (isSnoozed(note.id, snoozed, now)) continue;
 
           const reminderTime = new Date(note.reminder.time).getTime();
           if (isNaN(reminderTime)) continue;
@@ -149,9 +182,12 @@ export function useReminderService() {
           const alerts = checkLegalDeadlines(records);
           for (const alert of alerts) {
             if (dismissed.has(alert.id)) continue;
+            if (isSnoozed(alert.id, snoozed, now)) continue;
             const lastTriggered = triggered[alert.id] || 0;
             if (now - lastTriggered < 24 * 60 * 60 * 1000) continue;
-            api.showReminder(alert.title, alert.body, '', '');
+            // noteId 传预警 id：通知窗口据此提供「不再提醒 / 下次登录提醒」，
+            // kind=legal 让窗口渲染这两档（而非随手记的「稍后 5 分钟」）
+            api.showReminder(alert.title, alert.body, '', alert.id, { kind: 'legal' });
             markTriggered(alert.id);
           }
         }

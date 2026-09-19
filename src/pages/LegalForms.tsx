@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Gavel, Search, Eye, Download, FileText, FileType, Scale } from 'lucide-react';
+import { Gavel, Search, Eye, Download, FileText, FileType, Scale, ShieldCheck, Upload } from 'lucide-react';
 import { Input, Segmented } from 'antd';
 import { useAppStore } from '../store/appStore';
 import { BRAND } from '../constants/theme';
 import { saveAs } from 'file-saver';
+import { mergeForms, getLibrary, type FormEntry } from '../store/legalLibraryStore';
+import LegalLibraryManager from '../components/LegalLibraryManager';
 
 interface LegalForm {
+  id?: string;
   title: string;
   category: string[];
   shiyang: string;
   file: string;
   word?: string;
+  /** false 表示用户上传的自定义条目（文件在数据目录，需经主进程读取/打开） */
+  builtin?: boolean;
 }
 
 type CatFilter = '全部' | '行政' | '刑事' | '通用';
@@ -35,7 +40,12 @@ function matchCat(f: LegalForm, cat: CatFilter): boolean {
 
 export default function LegalForms() {
   const showToast = useAppStore((s) => s.showToast);
-  const [forms, setForms] = useState<LegalForm[]>([]);
+  const [builtinForms, setBuiltinForms] = useState<LegalForm[]>([]);
+  // libTick：管理面板改动后自增，触发清单重新合并
+  const [libTick, setLibTick] = useState(0);
+  const [managerOpen, setManagerOpen] = useState(false);
+  // 'upload' = 只弹上传表单；'manage' = 弹管理页面（条目 / 回收站）
+  const [managerMode, setManagerMode] = useState<'manage' | 'upload'>('manage');
   const [loading, setLoading] = useState(true);
   const [cat, setCat] = useState<CatFilter>('全部');
   const [kw, setKw] = useState('');
@@ -47,11 +57,25 @@ export default function LegalForms() {
         if (!r.ok) throw new Error('清单读取失败 ' + r.status);
         return r.json();
       })
-      .then((data: LegalForm[]) => { if (alive) setForms(data); })
+      .then((data: LegalForm[]) => {
+        if (!alive) return;
+        // 内置清单没有 id 字段，用 PDF 相对路径作为稳定标识（编辑/删除/回收站都靠它）
+        setBuiltinForms((Array.isArray(data) ? data : []).map((f, i) => ({
+          ...f,
+          id: f.file || `form-${i}`,
+          builtin: true,
+        })));
+      })
       .catch((e) => showToast('文书清单加载失败: ' + (e instanceof Error ? e.message : '未知错误'), 'error'))
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [showToast]);
+
+  // 最终清单 = 内置清单 + 本地覆盖层（自定义新增 / 编辑覆盖 / 删除隐藏）
+  const forms = useMemo(
+    () => mergeForms(builtinForms as FormEntry[], getLibrary()) as unknown as LegalForm[],
+    [builtinForms, libTick],
+  );
 
   const stats = useMemo(() => ({
     total: forms.length,
@@ -73,6 +97,13 @@ export default function LegalForms() {
   }, [forms, cat, kw]);
 
   const openPreview = (f: LegalForm) => {
+    // 自定义文书：文件落在数据目录，交给系统默认程序打开
+    if (f.builtin === false && f.file) {
+      Promise.resolve(window.electronAPI?.openLegalPath?.(f.file))
+        .then((r) => { if (r && !r.success) showToast('打开失败：' + (r.error || '未知错误'), 'error'); })
+        .catch(() => showToast('打开失败', 'error'));
+      return;
+    }
     const url = assetUrl(f.file);
     const w = window.open(url, '_blank', 'noopener,noreferrer');
     if (!w) showToast('浏览器拦截了新窗口，请允许弹出窗口后重试', 'warning');
@@ -87,10 +118,20 @@ export default function LegalForms() {
     }
     const fileName = `${f.title}.${isPdf ? 'pdf' : 'docx'}`.replace(/[<>"/\\|?*]/g, '_');
     try {
-      const res = await fetch(assetUrl(path));
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
-      saveAs(blob, fileName);
+      if (f.builtin === false) {
+        // 自定义文书：经主进程读出文件内容
+        const res = await window.electronAPI?.readAttachmentFile?.(path);
+        if (!res || !res.success || !res.buffer) throw new Error(res?.error || '读取文件失败');
+        const mime = isPdf
+          ? 'application/pdf'
+          : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        saveAs(new Blob([res.buffer], { type: mime }), fileName);
+      } else {
+        const res = await fetch(assetUrl(path));
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        saveAs(blob, fileName);
+      }
       showToast(`已下载：${fileName}`, 'success');
     } catch (e) {
       showToast('下载失败：' + (e instanceof Error ? e.message : '未知错误'), 'error');
@@ -118,7 +159,7 @@ export default function LegalForms() {
           <div className="dash-hero-greet">文书库</div>
           <div className="dash-hero-sub">公安行政 / 刑事法律文书式样 · 离线空白模板，支持 PDF 与 Word 双格式下载</div>
         </div>
-        <div className="dash-hero-actions" style={{ flex: '0 0 auto', width: 320, maxWidth: '40vw' }}>
+        <div className="dash-hero-actions" style={{ flex: '0 0 auto', width: 470, maxWidth: '48vw', display: 'flex', gap: 10 }}>
           <Input
             allowClear
             prefix={<Search size={15} />}
@@ -126,6 +167,22 @@ export default function LegalForms() {
             value={kw}
             onChange={(e) => setKw(e.target.value)}
           />
+          <button
+            className="dash-action"
+            style={{ width: 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            onClick={() => { setManagerMode('upload'); setManagerOpen(true); }}
+            title="上传新文书（无需密码）"
+          >
+            <Upload size={15} /> 上传
+          </button>
+          <button
+            className="dash-action"
+            style={{ width: 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            onClick={() => { setManagerMode('manage'); setManagerOpen(true); }}
+            title="编辑 / 删除 / 回收站（需管理员密码）"
+          >
+            <ShieldCheck size={15} /> 管理
+          </button>
         </div>
       </div>
 
@@ -174,6 +231,9 @@ export default function LegalForms() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.35 }}>{f.title}</div>
                   <div style={{ display: 'flex', gap: 6, marginTop: 7, flexWrap: 'wrap' }}>
+                    {f.builtin === false && (
+                      <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 999, background: 'rgba(37,99,235,.14)', color: BRAND.primaryDark, fontWeight: 600 }}>自定义</span>
+                    )}
                     {f.shiyang && (
                       <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 999, background: 'var(--color-surface-hover)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>{f.shiyang}</span>
                     )}
@@ -201,6 +261,15 @@ export default function LegalForms() {
           ))}
         </div>
       )}
+
+      {/* 上传（免密）/ 管理（编辑 · 删除 · 回收站，需管理员密码）——两个入口互不叠加 */}
+      <LegalLibraryManager
+        open={managerOpen}
+        onClose={() => setManagerOpen(false)}
+        kind="form"
+        mode={managerMode}
+        onChanged={() => setLibTick((t) => t + 1)}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { addOperationLog } from './operationLogStore';
 import { useAppStore } from './appStore';
 import { rebuildCaseIndex, rebuildSuspectIndex } from './inputHistoryStore';
 import { deleteAttachmentsByRecord, getAllAttachments, deleteAttachment } from './attachmentStore';
+import { notifyDataChanged } from './dataEvents';
 
 const STORAGE_KEY = 'jingzong.mass.records';
 const MIGRATION_KEY = 'jingzong.mass.migratedToIDB.v1';
@@ -21,6 +22,30 @@ export interface MassRecord {
   data: MassRecordData;
   createdAt: string;
   updatedAt: string;
+  /**
+   * 演示数据标记（V2.50.0）。
+   * 刻意放在记录顶层而不是写进 data —— 早期版本把标记写在 data.__demo 里，
+   * 结果因为时间轴 / 案件详情是「遍历 data 的所有键」来展示字段的，
+   * 这个内部标记就被当成一条业务字段显示出来（`__demo` 在界面里渲染成「—demo」）。
+   * 放到顶层后展示层天然看不到它，标签/详情/导出/时间轴一并干净。
+   */
+  demo?: boolean;
+}
+
+/** 内部元数据键前缀：`__xxx` 只服务程序内部，不是业务字段，展示层一律跳过 */
+export const INTERNAL_KEY_PREFIX = '__';
+
+/** 是否为程序内部元数据键（如 __oldCaseId），列表 / 时间轴 / 详情 / 关联匹配都不应展示 */
+export function isInternalKey(key: string): boolean {
+  return key.startsWith(INTERNAL_KEY_PREFIX);
+}
+
+/**
+ * 是否为演示数据。
+ * V2.50.0 起标记写在记录顶层 `demo`；同时兼容 V2.49.0 生成的旧演示数据（data.__demo）。
+ */
+export function isDemoRecord(record: MassRecord): boolean {
+  return record.demo === true || record.data?.__demo !== undefined;
 }
 
 function currentUser(): string {
@@ -41,7 +66,16 @@ export function getMassRecordById(id: string): MassRecord | undefined {
   return indexedDBAdapter.getItem<MassRecord[]>(STORAGE_KEY, []).find((record) => record.id === id);
 }
 
-export function saveMassRecord(moduleId: string, tabId: string, data: MassRecordData): MassRecord {
+/**
+ * 新建记录。
+ * @param opts.demo 标记为演示数据（不写进 data，见 MassRecord.demo）
+ */
+export function saveMassRecord(
+  moduleId: string,
+  tabId: string,
+  data: MassRecordData,
+  opts?: { demo?: boolean },
+): MassRecord {
   const records = getMassRecords();
   const now = new Date().toISOString();
   const record: MassRecord = {
@@ -51,6 +85,7 @@ export function saveMassRecord(moduleId: string, tabId: string, data: MassRecord
     data,
     createdAt: now,
     updatedAt: now,
+    ...(opts?.demo ? { demo: true } : {}),
   };
 
   records.unshift(record);
@@ -87,6 +122,22 @@ export function updateMassRecord(id: string, data: MassRecordData): MassRecord |
   });
 
   return records[index];
+}
+
+/**
+ * 全库全局索引重建：从 IndexedDB 全量记录重算「案件/线索 ⇄ 编号」与「嫌疑人」两个联动池，
+ * 并广播数据变更事件让依赖 getMassRecords 的页面刷新。
+ *
+ * 凡是不经过抽屉表单的**批量写入**（平台粘贴导入 / Excel 导入 / 备份恢复等）都必须
+ * 写完调用它一次：否则新写入的案件、线索、嫌疑人不会进入全局池 ——
+ * 其它模块的案件名称/编号下拉看不到、选不中，也就谈不上「选中后自动填充」。
+ * 单条写入由调用方（抽屉保存、列表行内编辑）就地重建，不走这里以免重复全量扫描。
+ */
+export function rebuildGlobalIndexes(): void {
+  const records = getMassRecords();
+  rebuildCaseIndex(records);
+  rebuildSuspectIndex(records);
+  notifyDataChanged();
 }
 
 export function deleteMassRecord(id: string): void {

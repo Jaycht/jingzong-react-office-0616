@@ -4,8 +4,8 @@ import { App, DatePicker, Dropdown, Empty, Select, Table, Tabs } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import {
-  CalendarPlus, CheckCircle2, Clock, Columns3, Command, Download, Eye, FileText, LayoutGrid,
-  List, Pen, Plus, Printer, RefreshCw, Rows3, Search, Trash2, Upload,
+  CalendarPlus, Check, CheckCircle2, Clock, Columns3, Download, Eye, FileText, LayoutGrid,
+  List, Pen, Plus, Printer, RefreshCw, Rows3, Search, Trash2, Upload, X,
 } from 'lucide-react';
 import { useAppStore } from "../store/appStore"
 import { findModule, filterVisibleFields, type FieldDefinition } from '../moduleConfig';
@@ -13,10 +13,13 @@ import { useCustomModules } from '../customModules';
 import { deleteMassRecord, deleteMassRecords, getMassRecords, updateMassRecord } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import { exportModuleToExcel, exportSelectedRecords, importExcelToModule } from '../utils/excelUtils';
+import { rebuildCaseIndex, rebuildSuspectIndex, recordFieldValues } from '../store/inputHistoryStore';
 import { exportModuleReport } from '../utils/reportGenerator';
 import { generateFundReport } from '../utils/reportUtils';
 import CaseDetail from './CaseDetail';
-import { formatValue, formatBySetting } from '../utils/format';
+import InlineEditCell from '../components/InlineEditCell';
+import { formatValue, formatBySetting, toDateStr } from '../utils/format';
+import { buildLedgerDraft, ledgerEditField, mergeInlineEdit, REQUEST_LIST_COLUMNS } from '../utils/requestLedger';
 
 type FieldValue = string | number | boolean | null | undefined | string[] | Record<string, unknown>;
 
@@ -74,6 +77,14 @@ function getDataFields(fields: FieldDefinition[], n = 6): FieldDefinition[] {
   }
   return dataFields.slice(0, n);
 }
+
+/**
+ * 调证登记列表列 = 录入工作列（序号 / 案件（线索）名称 / 线索·案件编号 / 申请时间 /
+ * 申请单位 / 申请人 / 申请单号 / 反馈时间 / 查控结果 / 请求查控人 / 备注）。
+ * 列定义（标题 / 取值 / 行内编辑元数据）统一来自 utils/requestLedger 的
+ * REQUEST_LIST_COLUMNS —— **列表只为录入效率服务，导出模板不受影响**：
+ * 导出仍按单位《资金查控情况登记台账（周五报送）》十列（LEDGER_HEADERS）。
+ */
 
 /** 从记录中获取值，支持 repeatable section 嵌套取值 */
 function getFieldValue(rec: MassRecord, fieldId: string, fields: FieldDefinition[]): FieldValue {
@@ -207,14 +218,20 @@ export default function ModulePage() {
   const visibleFields = useMemo(() => filterVisibleFields(fields, userRole), [fields, userRole]);
   const dataFields = useMemo(() => getDataFields(visibleFields, 6), [visibleFields]);
 
+  // 调证登记：列表直接呈现《资金查控情况登记台账（周五报送）》口径（列定义在 utils/requestLedger），
+  // 其中「备注」列即调证状态。故它**不参与**通用的「状态徽标 / 状态筛选 / 已办结 KPI」——
+  // 否则会凭空多出「办理中 / 待补充 / 已办结」三个与调证口径不搭的筛选项。
+  const isRequestLedger = module.id === 'evidence-request';
+
   // 派生每条记录的真实状态（徽标 / 统计 / 筛选共用单一数据源）
   // 注意：基于模块全部字段(fields)而非可见列(visibleFields)，避免状态列被隐藏后状态全部丢失
   const statusByRecord = useMemo(() => {
     const m = new Map<string, { label: string; kind: StatusKind } | null>();
+    if (isRequestLedger) return m;
     for (const rec of realRecords) m.set(rec.id, deriveStatus(rec, fields));
     return m;
-  }, [realRecords, fields]);
-  const hasStatusField = !!findStatusField(fields);
+  }, [realRecords, fields, isRequestLedger]);
+  const hasStatusField = !isRequestLedger && !!findStatusField(fields);
 
   // ─── 筛选逻辑 ────────────────────────────────
   const filteredRecords = useMemo(() => {
@@ -291,6 +308,10 @@ export default function ModulePage() {
 
   // 可切换显示的列（编号与操作始终固定）
   const toggleableCols = useMemo(() => {
+    // 调证登记：列设置项 = 列表工作列（与表格表头同一口径）
+    if (module.id === 'evidence-request') {
+      return REQUEST_LIST_COLUMNS.map((c) => ({ key: c.key, label: c.title }));
+    }
     const arr = dataFields.map((f) => ({ key: f.id, label: f.label }));
     if (module.departmentId === 'office') arr.push({ key: '_handler', label: '经办人' });
     arr.push({ key: '_updatedAt', label: '更新时间' });
@@ -303,28 +324,238 @@ export default function ModulePage() {
   // 打印态：必须在 dynamicColumns 之前声明，否则 useMemo 闭包访问到尚未初始化的 printing（TDZ 报错）
   const [printing, setPrinting] = useState(false);
 
+  // ─── 行内编辑：点「哪一格」改「哪一格」 ────────────────────────
+  // 原来是「点行 → 案件 360° 全屏视图 → 再点编辑 → 抽屉」，改一个字段要四步；
+  // 后改为点行整行变控件（一行里所有列同时变输入框，容易误改、也不清楚在改什么）。
+  // 现在：点某一格只把这一格换成控件，其余列保持只读；点到别的格 / 行外自动保存当前格。
+  // 「操作」列的 查看 / 编辑 / 删除 按钮保持不变（抽屉仍负责附件等复杂字段）。
+  const [inlineId, setInlineId] = useState<string | null>(null);
+  /** 正在编辑的列 key（配合 inlineId 定位唯一单元格） */
+  const [inlineField, setInlineField] = useState<string | null>(null);
+  const [inlineDraft, setInlineDraft] = useState<Record<string, unknown>>({});
+
+  /**
+   * 同步态的编辑定位：state 更新是异步的，而「点行外自动提交」与
+   * 「点另一格先提交上一格」可能在同一 tick 内先后触发 commitInline，
+   * 用 state 判断会重复提交（两次写库 + 两次提示）。故用 ref 保存唯一真值。
+   */
+  const inlineStateRef = useRef<{ id: string | null; field: string | null }>({ id: null, field: null });
+
+  /** 可编辑字段：附件与分组没有单值控件，行内不改（附件仍在抽屉里管） */
+  const isFieldEditable = (t: FieldDefinition['type']) => t !== 'section' && t !== 'attachment';
+
+  /** 行内编辑草稿：一律取记录原始存储值（不能用 formatValue 的展示值，金额会带千分位） */
+  const buildDraft = (rec: MassRecord): Record<string, unknown> => {
+    if (isRequestLedger) return buildLedgerDraft((rec.data || {}) as Record<string, unknown>);
+    const draft: Record<string, unknown> = {};
+    for (const f of dataFields) {
+      if (!isFieldEditable(f.type)) continue;
+      draft[f.id] = getFieldValue(rec, f.id, fields) ?? '';
+    }
+    return draft;
+  };
+
+  const exitInline = () => {
+    inlineStateRef.current = { id: null, field: null };
+    setInlineId(null);
+    setInlineField(null);
+    setInlineDraft({});
+  };
+
+  /** 提交当前单元格；与库中数据一致时静默退出，不写库也不弹提示 */
+  const commitInline = () => {
+    const id = inlineStateRef.current.id;
+    if (!id) return;
+    const rec = realRecords.find((r) => r.id === id);
+    const draft = inlineDraft;
+    exitInline();
+    if (!rec) return;
+    const prev = (rec.data || {}) as Record<string, unknown>;
+    const next = isRequestLedger ? mergeInlineEdit(prev, draft) : { ...prev, ...draft };
+    if (JSON.stringify(next) === JSON.stringify(prev)) return;
+    updateMassRecord(rec.id, next);
+    // 行内改的值同样要进全局池：案件名称/编号由 rebuildCaseIndex 兜底，
+    // 但线索名称/线索编号这类只认历史池的字段，不写就联想不到。
+    recordFieldValues(
+      Object.entries(draft)
+        .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+        .map(([k, v]) => [k, v] as const)
+    );
+    const all = getMassRecords();
+    rebuildCaseIndex(all);
+    rebuildSuspectIndex(all);
+    setRefreshKey((k) => k + 1);
+    showToast('已保存修改', 'success');
+  };
+
+  /**
+   * 点某格进入该格编辑。若已有别的格在编辑，先把它存了。
+   * `initNow` 为真时（反馈时间）以**当前日期**初始化 —— 点一下就是当下。
+   */
+  const startInlineCell = (row: DynamicRow, fieldKey: string, initNow?: boolean) => {
+    if (printing) return;
+    const cur = inlineStateRef.current;
+    if (cur.id === row.key && cur.field === fieldKey) return;
+    if (cur.id) commitInline();
+    const draft = buildDraft(row._record);
+    if (initNow) {
+      const col = REQUEST_LIST_COLUMNS.find((c) => c.key === fieldKey);
+      const edit = col?.edit;
+      if (edit?.field) {
+        const writeKey =
+          ledgerEditField((row._record.data || {}) as Record<string, unknown>, edit) || edit.field;
+        draft[writeKey] = toDateStr(new Date());
+      }
+    }
+    inlineStateRef.current = { id: row.key, field: fieldKey };
+    setInlineDraft(draft);
+    setInlineId(row.key);
+    setInlineField(fieldKey);
+  };
+
+  // 编辑态点「行外」（侧栏 / 其他区域 / 分页）自动提交，避免改一半切走丢数据。
+  // 日期与下拉的弹层是 portal 到 body 的，必须排除，否则选项还没点完就被提交。
+  // 用 ref 读最新闭包，事件只挂一次。
+  const commitRef = useRef<() => void>(() => {});
+  commitRef.current = commitInline;
+  useEffect(() => {
+    const onDocMouseDown = (e: MouseEvent) => {
+      if (!inlineStateRef.current.id) return;
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      if (t.closest('.mp-row-editing') || t.closest('.ant-picker-dropdown') || t.closest('.ant-select-dropdown')) return;
+      commitRef.current();
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, []);
+
   const dynamicColumns = useMemo<ColumnsType<DynamicRow>>(() => {
     const base: ColumnsType<DynamicRow> = [
-      { title: '编号', dataIndex: 'code', ...(printing ? {} : { width: 60, fixed: 'left' as const }), sorter: (a: DynamicRow, b: DynamicRow) => Number(a.code) - Number(b.code) },
-      ...dataFields.map((f) => {
+      {
+        title: isRequestLedger ? '序号' : '编号',
+        dataIndex: 'code',
+        ...(printing ? {} : { width: 60, fixed: 'left' as const }),
+        sorter: (a: DynamicRow, b: DynamicRow) => Number(a.code) - Number(b.code),
+        // 台账序号为纯数字（1、2、3…），去掉列表编号的 4 位补零
+        ...(isRequestLedger ? { render: (v: string) => String(Number(v)) } : {}),
+      },
+      ...(isRequestLedger
+        ? REQUEST_LIST_COLUMNS.map((c) => {
+            // 列表列一律直接从记录原文取值（与导出共用同一批取值函数，口径不漂）
+            const val = (row: DynamicRow) => c.get((row._record.data || {}) as Record<string, unknown>);
+            const edit = c.edit;
+            // 只有「正在编辑的那一格」变控件，其余列保持只读
+            const cellEditing = !printing && !!edit && inlineId !== null && inlineField === c.key;
+            return {
+              title: c.title,
+              dataIndex: c.key,
+              // 编辑态给控件留出更宽的列，且不能 ellipsis，否则输入框被裁
+              ...(printing
+                ? {}
+                : cellEditing
+                  ? { width: edit?.editWidth || c.width }
+                  : { width: c.width, ellipsis: true }),
+              render: (_: unknown, row: DynamicRow) => {
+                const text = val(row);
+                if (!edit) return text;
+                if (!printing && inlineId === row.key && inlineField === c.key) {
+                  if (edit.type === 'result') {
+                    return (
+                      <InlineEditCell
+                        type="result"
+                        resultValues={inlineDraft}
+                        onChange={() => {}}
+                        onResultChange={(k, v) => setInlineDraft((d) => ({ ...d, [k]: v == null ? '' : v }))}
+                        onCommit={commitInline}
+                        onCancel={exitInline}
+                      />
+                    );
+                  }
+                  // 写回键：主字段为空而备选有值时写备选（线索调证不写成案件字段）
+                  const writeKey = ledgerEditField((row._record.data || {}) as Record<string, unknown>, edit) || edit.field;
+                  if (!writeKey) return text;
+                  // 下拉选项优先取**列定义自带**的 options / customOptionKey（台账口径单一事实源），
+                  // 缺省再回退字段定义（申请单位复用「协查单位」下拉与自定义添加）
+                  const fd = edit.field ? fields.find((x) => x.id === edit.field) : undefined;
+                  return (
+                    <InlineEditCell
+                      type={edit.type}
+                      value={inlineDraft[writeKey]}
+                      options={edit.options ?? fd?.options}
+                      customOptionKey={edit.customOptionKey ?? fd?.customOptionKey}
+                      onChange={(v) => setInlineDraft((d) => ({ ...d, [writeKey]: v }))}
+                      onCommit={commitInline}
+                      onCancel={exitInline}
+                    />
+                  );
+                }
+                return (
+                  <span
+                    className="mp-cell-edit"
+                    title={edit.hint || '点击修改'}
+                    onClick={(e) => { e.stopPropagation(); startInlineCell(row, c.key, edit.initNow); }}
+                  >
+                    {text || <span className="mp-cell-empty">—</span>}
+                  </span>
+                );
+              },
+              sorter: (a: DynamicRow, b: DynamicRow) => val(a).localeCompare(val(b), 'zh-Hans-CN'),
+            };
+          })
+        : dataFields.map((f) => {
         // 调证登记：案件/线索调证共用列表列，按记录实际取值在 case*/clue* 间回退，避免线索记录空白
         const isRequestInfo = module.id === 'evidence-request' && ['caseNo', 'caseName', 'caseSource', 'caseType'].includes(f.id);
         const neutralTitle = isRequestInfo
           ? ({ caseNo: '编号', caseName: '名称', caseSource: '来源', caseType: '类型' } as Record<string, string>)[f.id]
           : f.label;
+        const editable = isFieldEditable(f.type);
+        // 只有被点中的那一格进入编辑态
+        const cellEditing = !printing && editable && inlineId !== null && inlineField === f.id;
         return {
           title: neutralTitle,
           dataIndex: f.id,
-          ...(printing ? {} : { width: 120, ellipsis: true }),
-          render: isRequestInfo
-            ? (_v: unknown, record: DynamicRow) => {
-                const main = (record as Record<string, unknown>)[f.id];
-                if (main != null && main !== '') return String(main);
-                const clueKey = 'clue' + f.id.slice(4);
-                const alt = (record as Record<string, unknown>)[clueKey];
-                return alt != null && alt !== '' ? String(alt) : '';
-              }
-            : undefined,
+          ...(printing
+            ? {}
+            : cellEditing
+              ? { width: f.type === 'date' || f.type === 'select' ? 170 : 140 }
+              : { width: 120, ellipsis: true }),
+          render: (_v: unknown, record: DynamicRow) => {
+            // 该行该列正在编辑 → 换成控件（附件列没有单值控件，保持只读展示）
+            if (!printing && inlineId === record.key && inlineField === f.id && editable) {
+              return (
+                <InlineEditCell
+                  type={f.type as 'text' | 'textarea' | 'number' | 'date' | 'select'}
+                  value={inlineDraft[f.id]}
+                  options={f.options}
+                  customOptionKey={f.customOptionKey}
+                  onChange={(v) => setInlineDraft((d) => ({ ...d, [f.id]: v }))}
+                  onCommit={commitInline}
+                  onCancel={exitInline}
+                />
+              );
+            }
+            const main = (record as Record<string, unknown>)[f.id];
+            let text = '';
+            if (main != null && main !== '') text = String(main);
+            else if (isRequestInfo) {
+              // 线索调证记录：案件字段为空时回退到同名的 clue* 字段
+              const alt = (record as Record<string, unknown>)['clue' + f.id.slice(4)];
+              text = alt != null && alt !== '' ? String(alt) : '';
+            } else {
+              text = main == null ? '' : String(main);
+            }
+            if (!editable) return text;
+            return (
+              <span
+                className="mp-cell-edit"
+                title="点击修改"
+                onClick={(e) => { e.stopPropagation(); startInlineCell(record, f.id); }}
+              >
+                {text || <span className="mp-cell-empty">—</span>}
+              </span>
+            );
+          },
           sorter: (a: DynamicRow, b: DynamicRow) => {
             const va = a[f.id];
             const vb = b[f.id];
@@ -336,30 +567,47 @@ export default function ModulePage() {
           },
           defaultSortOrder: f.type === 'date' ? ('descend' as const) : undefined,
         };
-      }),
-      ...(module.departmentId === 'office'
+      })),
+      ...(module.departmentId === 'office' && !isRequestLedger
         ? [{ title: '经办人' as const, dataIndex: '_handler' as const, ...(printing ? {} : { width: 80, ellipsis: true }),
             sorter: (a: DynamicRow, b: DynamicRow) => a._handler.localeCompare(b._handler) }]
         : []),
-      { title: '更新时间', dataIndex: '_updatedAt', ...(printing ? {} : { width: 130 }), sorter: (a: DynamicRow, b: DynamicRow) => a._updatedAt.localeCompare(b._updatedAt), defaultSortOrder: 'descend' as const, render: (v: string) => formatBySetting(v, { withTime: true }) },
+      ...(isRequestLedger
+        ? []
+        : [{ title: '更新时间', dataIndex: '_updatedAt', ...(printing ? {} : { width: 130 }), sorter: (a: DynamicRow, b: DynamicRow) => a._updatedAt.localeCompare(b._updatedAt), defaultSortOrder: 'descend' as const, render: (v: string) => formatBySetting(v, { withTime: true }) }]),
       {
         title: '操作',
         dataIndex: '_action',
-        ...(printing ? {} : { width: 180, fixed: 'right' as const }),
+        ...(printing ? {} : { width: 200, fixed: 'right' as const }),
         className: 'mp-act-col',
-        render: (_: unknown, record: DynamicRow) => (
-          <div className="mp-act-col">
-            <button className="mp-act-btn" title="查看" onClick={(e) => { e.stopPropagation(); setCaseDetail(record._record); }}>
-              <Eye size={16} />
-            </button>
-            <button className="mp-act-btn" title="编辑" onClick={(e) => { e.stopPropagation(); setEditRecord(record._record); openModal('newRecord'); }}>
-              <Pen size={16} />
-            </button>
-            <button className="mp-act-btn danger" title="删除" onClick={(e) => { e.stopPropagation(); handleDeleteSingle(record._record); }}>
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ),
+        render: (_: unknown, record: DynamicRow) => {
+          const editing = !printing && inlineId === record.key;
+          return (
+            <div className="mp-act-col">
+              {/* 有格子在编辑时，额外给保存 / 放弃两个出口（回车与 Esc 同样有效）；
+                  查看 / 编辑 / 删除 恒定保留 */}
+              {editing && (
+                <>
+                  <button className="mp-act-btn primary" title="保存修改（回车）" onClick={(e) => { e.stopPropagation(); commitInline(); }}>
+                    <Check size={16} />
+                  </button>
+                  <button className="mp-act-btn" title="放弃修改（Esc）" onClick={(e) => { e.stopPropagation(); exitInline(); }}>
+                    <X size={16} />
+                  </button>
+                </>
+              )}
+              <button className="mp-act-btn" title="查看" onClick={(e) => { e.stopPropagation(); setCaseDetail(record._record); }}>
+                <Eye size={16} />
+              </button>
+              <button className="mp-act-btn" title="编辑（完整表单）" onClick={(e) => { e.stopPropagation(); setEditRecord(record._record); openModal('newRecord'); }}>
+                <Pen size={16} />
+              </button>
+              <button className="mp-act-btn danger" title="删除" onClick={(e) => { e.stopPropagation(); handleDeleteSingle(record._record); }}>
+                <Trash2 size={16} />
+              </button>
+            </div>
+          );
+        },
       },
     ];
     return base.filter((col) => {
@@ -368,7 +616,10 @@ export default function ModulePage() {
       return true;
     });
   },
-  [dataFields, module, hiddenCols, printing]);
+  // inlineId / inlineField / inlineDraft 必须进依赖：列的 render 闭包要读到当前编辑的
+  // 单元格与草稿，否则点格进入编辑后表格不会重渲染成编辑态。
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [dataFields, module, fields, hiddenCols, printing, isRequestLedger, inlineId, inlineField, inlineDraft]);
 
   // ─── 经办人选项 ───────────────────────────────
   const handlerOptions = useMemo(() => {
@@ -666,10 +917,10 @@ export default function ModulePage() {
           >
             <Plus size={16} /> 新建{active?.label || module.label}
           </button>
-          <button className="mp-btn" onClick={() => fileInputRef.current?.click()}>
+          <button className="mp-btn" title="按本页字段导出 Excel（文件名带日期时分秒，同日多次导出不重名）；也可先在「导入导出」页下载本模块空白模板，填好后导入快速录入" onClick={() => fileInputRef.current?.click()}>
             <Upload size={15} /> 导入
           </button>
-          <button className="mp-btn" onClick={() => { exportModuleToExcel(module.id, activeTab); showToast('正在生成 Excel...', 'info'); }}>
+          <button className="mp-btn" title="导出本页数据为 Excel（文件名含 yyyy-MM-dd_HH-mm-ss，同日多次导出不会重名）；导出文件可在「导入导出」页改后重新导入" onClick={() => { exportModuleToExcel(module.id, activeTab); showToast('正在生成 Excel...', 'info'); }}>
             <Download size={15} /> 导出
           </button>
           {module.id === 'evidence-report' ? (
@@ -902,7 +1153,7 @@ export default function ModulePage() {
                 <div
                   key={row.key}
                   className={`mp-card ${selectedRowKeys.includes(row.key) ? 'sel' : ''}`}
-                  onClick={() => setCaseDetail(row._record)}
+                  onClick={() => { setEditRecord(row._record); openModal('newRecord'); }}
                 >
                   <div className="mp-card-top">
                     <input
@@ -974,13 +1225,7 @@ export default function ModulePage() {
                   selectedRowKeys,
                   onChange: (keys) => setSelectedRowKeys(keys),
                 }}
-                onRow={(row) => ({
-                  onClick: (e) => {
-                    const t = e.target as HTMLElement;
-                    if (t.closest('.ant-table-selection-column') || t.closest('.mp-act-col')) return;
-                    setCaseDetail(row._record);
-                  },
-                })}
+                rowClassName={(row) => (inlineId === row.key ? 'mp-row-editing' : '')}
               />
             </div>
           )}

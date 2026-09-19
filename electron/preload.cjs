@@ -36,6 +36,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setAttachmentsPath: (newPath) =>
     ipcRenderer.invoke('set-attachments-path', newPath),
 
+  // 文书库 / 典法查阅 自定义资源（V2.49.0）：上传文件落盘、按系统默认程序预览
+  saveLegalFile: (buffer, fileName, kind) =>
+    ipcRenderer.invoke('save-legal-file', { buffer, fileName, kind }),
+  openLegalPath: (filePath) =>
+    ipcRenderer.invoke('open-legal-path', filePath),
+  getLegalDir: () =>
+    ipcRenderer.invoke('get-legal-dir'),
+
   // 以下 on* 包装统一返回「取消监听」函数，便于组件 cleanup 时对称移除（M-1 防泄漏）
   onTriggerQuitBackup: (callback) => {
     const handler = () => callback();
@@ -49,6 +57,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // 关闭窗口行为（V2.41.15）
   setCloseBehavior: (behavior) => ipcRenderer.send('set-close-behavior', behavior),
+
+  // 关闭确认弹窗（V2.49.0）：主进程请求渲染进程用应用内 Modal 询问，用户选择后回传
+  onAskCloseBehavior: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('ask-close-behavior', handler);
+    return () => ipcRenderer.removeListener('ask-close-behavior', handler);
+  },
+  closeBehaviorChoice: (choice) => ipcRenderer.send('close-behavior-choice', choice),
 
   // 提醒系统
   showReminder: (title, body, soundFile, noteId, extra) => ipcRenderer.invoke('show-reminder', { title, body, soundFile, noteId, extra: extra || {} }),

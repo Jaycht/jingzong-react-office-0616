@@ -211,6 +211,10 @@ function safePath(filePath) {
   for (const dir of allowedAttachmentDirs) {
     if (resolved.startsWith(path.resolve(dir))) return resolved;
   }
+  // 文书库 / 典法查阅 的自定义资源目录（V2.49.0）
+  try {
+    if (resolved.startsWith(path.resolve(legalDirPath()))) return resolved;
+  } catch {}
   throw new Error('Access denied: path outside attachments directory');
 }
 
@@ -299,6 +303,48 @@ ipcMain.handle("check-attachment-file", async (_event, filePath) => {
   }
 });
 
+// ======================== 文书库 / 典法查阅 自定义资源 ========================
+// 上传的文书（PDF/Word）与法条文本（txt）落在数据目录下的 legal/ 子目录，
+// 与附件同根，便于统一备份、卸载时一并清理。
+function legalDirPath() {
+  return path.join(path.dirname(attachmentsDir), "legal");
+}
+function legalDir() {
+  const dir = legalDirPath();
+  try { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); } catch {}
+  return dir;
+}
+
+// 保存上传的文书 / 法条文件
+ipcMain.handle("save-legal-file", async (_event, { buffer, fileName, kind }) => {
+  try {
+    const dir = legalDir();
+    const raw = String(fileName || "file");
+    const safeName = raw.replace(/[<>:"/\\|?*]/g, "_").replace(/^\.+/, "");
+    const finalName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+    const filePath = path.join(dir, String(kind || "misc").replace(/[^a-zA-Z0-9_-]/g, ""), finalName);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    await fsp.writeFile(filePath, Buffer.from(buffer));
+    return { success: true, filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// 用系统默认程序打开（预览 PDF / Word / txt）
+ipcMain.handle("open-legal-path", async (_event, filePath) => {
+  try {
+    const resolved = safePath(filePath);
+    const err = await shell.openPath(resolved);
+    if (err) return { success: false, error: err };
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("get-legal-dir", () => legalDir());
+
 // 弹出保存文件对话框（下载附件时使用）
 ipcMain.handle("show-save-dialog", async (_event, { defaultName, buffer }) => {
   try {
@@ -327,6 +373,20 @@ ipcMain.on('set-close-behavior', (_event, behavior) => {
 });
 
 // ======================== 关闭行为 ========================
+// 退出应用（带退出前备份）：主进程与托盘、渲染进程选择三处共用
+function quitApp() {
+  app.isQuitting = true;
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send("trigger-quit-backup");
+    setTimeout(() => { app.quit(); }, 3000);
+  } else {
+    app.quit();
+  }
+}
+
+// 询问中的关闭请求是否还在等待用户选择：避免用户连点关闭按钮堆出多个弹窗
+let closeAskPending = false;
+
 // 窗口关闭处理器：独立于托盘创建，无论托盘是否可用都会注册（V2.41.17 修复 #2）
 function registerCloseHandler(win) {
   if (!win) return;
@@ -334,32 +394,20 @@ function registerCloseHandler(win) {
     if (app.isQuitting) return;
     e.preventDefault();
 
-    const doQuit = () => {
-      app.isQuitting = true;
-      if (win && win.webContents) {
-        win.webContents.send("trigger-quit-backup");
-        setTimeout(() => { app.quit(); }, 3000);
-      } else {
-        app.quit();
-      }
-    };
-
     if (appCloseBehavior === 'exit') {
-      doQuit();
+      quitApp();
     } else if (appCloseBehavior === 'ask') {
-      const { dialog } = require('electron');
-      const choice = dialog.showMessageBoxSync(win, {
-        type: 'question',
-        buttons: ['最小化到托盘', '退出软件'],
-        defaultId: 0,
-        cancelId: 0,
-        title: '关闭程序',
-        message: '您希望如何关闭本程序？',
-        detail: '选择「最小化到托盘」可保留后台运行，双击托盘图标恢复。',
-        noLink: true,
-      });
-      if (choice === 1) {
-        doQuit();
+      // 交给渲染进程用应用内弹窗呈现（与软件整体风格一致，且比原生 MessageBox 多一个「取消」）
+      // V2.49.0：原来用 dialog.showMessageBoxSync 弹出的是 Windows 原生对话框，样式与软件不符
+      if (closeAskPending) return;
+      if (win && win.webContents) {
+        closeAskPending = true;
+        if (win.isMinimized()) win.restore();
+        win.show();
+        win.focus();
+        win.webContents.send("ask-close-behavior");
+        // 兜底：渲染进程若未回信（异常/崩溃），15 秒后解除「等待中」状态，避免以后再也关不掉窗口
+        setTimeout(() => { closeAskPending = false; }, 15000);
       } else {
         win.hide();
       }
@@ -368,11 +416,23 @@ function registerCloseHandler(win) {
       if (tray) {
         win.hide();
       } else {
-        doQuit();
+        quitApp();
       }
     }
   });
 }
+
+// 渲染进程在弹窗里做出的选择：tray 最小化到托盘 / quit 退出 / cancel 取消关闭
+ipcMain.on("close-behavior-choice", (event, choice) => {
+  const win = getWin(event);
+  closeAskPending = false;
+  if (choice === "quit") {
+    quitApp();
+  } else if (choice === "tray") {
+    if (win && !win.isDestroyed()) win.hide();
+  }
+  // cancel：什么都不做，窗口保持打开
+});
 
 // ======================== 托盘功能 ========================
 function createTray() {
@@ -402,15 +462,8 @@ function createTray() {
     { label: "显示窗口", click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
     { type: "separator" },
     { label: "退出", click: () => {
-      app.isQuitting = true;
-      // 通知渲染进程执行退出前备份
-      if (mainWindow && mainWindow.webContents) {
-        mainWindow.webContents.send("trigger-quit-backup");
-        // 给渲染进程 3 秒执行备份，然后强制退出
-        setTimeout(() => { app.quit(); }, 3000);
-      } else {
-        app.quit();
-      }
+      // 通知渲染进程执行退出前备份，3 秒后强制退出
+      quitApp();
     }},
   ]);
 
@@ -458,6 +511,8 @@ function createNotifWindow(title, body, soundFile, noteId, extra) {
     type: (extra && extra.type) || "",
     priority: (extra && extra.priority) || "",
     date: (extra && extra.date) || "",
+    // kind='legal' → 通知窗口渲染「下次登录提醒 / 不再提醒」两档（案件时限预警）
+    kind: (extra && extra.kind) || "",
   });
 
   const notifWin = new BrowserWindow({

@@ -12,10 +12,10 @@ import Drawer from "./Drawer";
 import Breadcrumb from "./Breadcrumb";
 import ErrorBoundary from "./ErrorBoundary";
 import NotificationPanel from "./NotificationPanel";
+import CloseConfirmModal from "./CloseConfirmModal";
 import GlobalSearch from "./GlobalSearch";
 import badgeIcon from '../assets/badge-icon.png';
 import { User, LogOut, Sun, Moon, Gauge } from "lucide-react";
-import { BRAND } from "../constants/theme";
 import { useReminderService } from "../hooks/useReminderService";
 import { isElectron as isElectronEnv } from "../lib/env";
 
@@ -284,6 +284,9 @@ export default function AppLayout() {
       {drawerOpen && <Drawer onClose={closeDrawer} />}
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
+
+      {/* 关闭程序确认（V2.49.0：替代主进程原生 MessageBox，风格统一并增加「取消」） */}
+      <CloseConfirmModal />
     </div>
   );
 }

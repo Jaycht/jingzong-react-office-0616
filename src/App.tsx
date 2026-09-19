@@ -98,7 +98,6 @@ function AppContent() {
   const toasts = useAppStore((s) => s.toasts);
   const removeToast = useAppStore((s) => s.removeToast);
   const lowPerfMode = useAppStore((s) => s.lowPerfMode);
-  const { modal } = AntApp.useApp();
 
   // 把关闭行为设置同步给 Electron 主进程（主进程无法直接读 localStorage）
   useEffect(() => {

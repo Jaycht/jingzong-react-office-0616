@@ -29,13 +29,22 @@ declare global {
       getDocumentsDir: () => Promise<string>;
       showDirectoryDialog: () => Promise<{ success: boolean; path?: string; canceled?: boolean; error?: string }>;
       setAttachmentsPath: (newPath: string) => Promise<{ success: boolean; error?: string }>;
+      // 此前遗漏：preload.cjs 已暴露 getAttachmentsPath，AutoBackupPanel 直接调用
+      getAttachmentsPath: () => Promise<string>;
       onTriggerQuitBackup: (callback: () => void) => () => void;
       getAutoStart: () => Promise<boolean>;
       setAutoStart: (enabled: boolean) => Promise<boolean>;
       setCloseBehavior: (behavior: 'exit' | 'tray' | 'ask') => void;
+      // 关闭确认弹窗（V2.49.0）：主进程请求渲染进程用应用内 Modal 询问
+      onAskCloseBehavior: (callback: () => void) => () => void;
+      closeBehaviorChoice: (choice: 'tray' | 'quit' | 'cancel') => void;
+      // 文书库 / 典法查阅 自定义资源（V2.49.0）
+      saveLegalFile: (buffer: number[], fileName: string, kind: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
+      openLegalPath: (filePath: string) => Promise<{ success: boolean; error?: string }>;
+      getLegalDir: () => Promise<string>;
       createNoteWindow: (noteData: { id: string; title: string; text: string; date: string; type?: string; priority?: string }) => Promise<{ success: boolean; error?: string }>;
       // 提醒系统（M-15：去除 as any 后 useReminderService/DailyNotes 的调用需要真实签名）
-      showReminder: (title: string, body: string, soundFile: string, noteId: string, extra?: { type?: string; priority?: string; date?: string }) => Promise<{ success: boolean; error?: string }>;
+      showReminder: (title: string, body: string, soundFile: string, noteId: string, extra?: { type?: string; priority?: string; date?: string; kind?: string }) => Promise<{ success: boolean; error?: string }>;
       cancelReminder: (id: string) => Promise<{ success: boolean; error?: string }>;
       onNoteContentChanged: (callback: (data: { id: string; text: string }) => void) => () => void;
       // 文件导出（M-15：Backup.tsx 调用，去除 as any 后需声明）

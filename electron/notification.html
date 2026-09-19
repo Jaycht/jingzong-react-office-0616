@@ -101,6 +101,7 @@ function closeWindow(){
   if(closeTimer){ clearTimeout(closeTimer); closeTimer = null; }
   if(window.electronAPI) window.electronAPI.closeNotifWindow();
 }
+// minutes = -1 表示「下次登录提醒」（本次不再提醒，下次启动重新提醒）
 function snooze(minutes){ if(window.electronAPI) window.electronAPI.notifSnooze(minutes, noteIdGlobal); }
 function dismiss(){ if(window.electronAPI) window.electronAPI.notifDismiss(noteIdGlobal); }
 
@@ -115,6 +116,7 @@ window.addEventListener('DOMContentLoaded', function(){
   const type = params.get('type') || '';
   const priority = params.get('priority') || 'normal';
   const date = params.get('date') || '';
+  const kind = params.get('kind') || '';
   noteIdGlobal = noteId;
 
   setAccent(priority);
@@ -132,7 +134,22 @@ window.addEventListener('DOMContentLoaded', function(){
   if(soundFile) playSound(soundFile);
 
   const actions = document.getElementById('actions');
-  if(noteId){
+  if(kind === 'legal'){
+    // 案件法律时限预警：两档处置 —— 本次不再提醒 / 彻底不再提醒
+    const laterBtn = document.createElement('button');
+    laterBtn.className = 'btn btn-ghost';
+    laterBtn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>下次登录提醒';
+    laterBtn.title = '本次登录不再提示，下次打开软件时重新提醒';
+    laterBtn.onclick = function(){ snooze(-1); };
+    actions.appendChild(laterBtn);
+
+    const neverBtn = document.createElement('button');
+    neverBtn.className = 'btn btn-solid';
+    neverBtn.textContent = '不再提醒';
+    neverBtn.title = '该预警不再弹出（工作台「到期预警」中仍可查看）';
+    neverBtn.onclick = function(){ dismiss(); };
+    actions.appendChild(neverBtn);
+  } else if(noteId){
     const snoozeBtn = document.createElement('button');
     snoozeBtn.className = 'btn btn-ghost';
     snoozeBtn.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>稍后 5 分钟';

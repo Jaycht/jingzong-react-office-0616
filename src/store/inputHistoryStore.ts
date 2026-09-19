@@ -35,19 +35,33 @@ export function getFieldHistory(fieldId: string): string[] {
  * 记录一个字段的输入值到历史
  */
 export function recordFieldValue(fieldId: string, value: string): void {
-  const v = (value || '').trim();
-  if (!v) return;
+  recordFieldValues([[fieldId, value]]);
+}
 
+/**
+ * 批量记录若干字段的输入值：单次读取 + 单次落盘。
+ *
+ * 一次要写多个字段时用它（粘贴导入、Excel 导入、列表行内编辑），
+ * 避免每写一个字段就把整个历史池 JSON 落盘一次。
+ * 空值/空字段名直接跳过；已在池顶的值不产生写入。
+ */
+export function recordFieldValues(entries: Iterable<readonly [string, string]>): void {
   const store = loadStore();
-  const history = store[fieldId] || [];
+  let changed = false;
 
-  // 去重：如果已存在则移除旧位置
-  const filtered = history.filter((item) => item !== v);
-  // 插入到最前面
-  filtered.unshift(v);
-  // 截断长度
-  store[fieldId] = filtered.slice(0, MAX_HISTORY_PER_FIELD);
-  saveStore(store);
+  for (const [fieldId, raw] of entries) {
+    const v = (raw || '').trim();
+    if (!fieldId || !v) continue;
+
+    const history = store[fieldId] || [];
+    if (history[0] === v) continue; // 已在最前，无需改动
+
+    // 去重：如果已存在则移除旧位置；插入到最前面；截断长度
+    store[fieldId] = [v, ...history.filter((item) => item !== v)].slice(0, MAX_HISTORY_PER_FIELD);
+    changed = true;
+  }
+
+  if (changed) saveStore(store);
 }
 
 /**
@@ -109,11 +123,13 @@ export function recordFormFields(
   fieldsIds: string[],
   data: Record<string, unknown>,
 ): void {
+  const entries: Array<readonly [string, string]> = [];
+
   // 1) 记录顶层扁平字段
   for (const id of fieldsIds) {
     const raw = data[id];
     if (typeof raw === 'string') {
-      recordFieldValue(id, raw);
+      entries.push([id, raw]);
     }
   }
 
@@ -125,13 +141,15 @@ export function recordFormFields(
         if (typeof item === 'object' && item !== null) {
           for (const [k, v] of Object.entries(item as Record<string, unknown>)) {
             if (typeof v === 'string' && v.trim()) {
-              recordFieldValue(k, v);
+              entries.push([k, v]);
             }
           }
         }
       }
     }
   }
+
+  recordFieldValues(entries);
 }
 
 /**
@@ -221,34 +239,44 @@ function extractCaseDetail(data: Record<string, unknown>): CaseDetail {
 
 /**
  * 根据所有已保存的记录，重建案件编号 / 案件名称映射索引
+ *
+ * 案件与线索是同一业务主键的两条腿：调证登记的「案件（线索）名称」、
+ * 「线索\案件编号」本来就是 case* / clue* 互相回退（见 utils/requestLedger.ts）。
+ * 故两对字段**都进同一张索引**——否则「线索调证」的记录只在 clueName / clueNo 上留值，
+ * 名称与编号映射表里查不到，其它模块的案件名称下拉既看不到、也自动填充不了。
  */
 export function rebuildCaseIndex(records: Array<{ data: Record<string, unknown> }>): void {
   const map: CaseDataMap = { caseNoToName: {}, caseNameToNo: {}, caseDetails: {} };
 
   for (const rec of records) {
     const data = rec.data || {};
-    const caseNo = str(data, 'caseNo') || '';
-    const caseName = str(data, 'caseName') || '';
+    // [编号, 名称]：先案件、后线索
+    const pairs: Array<[string, string]> = [
+      [str(data, 'caseNo') || '', str(data, 'caseName') || ''],
+      [str(data, 'clueNo') || '', str(data, 'clueName') || ''],
+    ];
 
-    if (caseNo || caseName) {
-      // 建立编号↔名称双向映射
-      if (caseNo && caseName) {
-        if (!map.caseNoToName[caseNo]) map.caseNoToName[caseNo] = [];
-        if (!map.caseNoToName[caseNo].includes(caseName)) {
-          map.caseNoToName[caseNo].push(caseName);
+    for (const [no, name] of pairs) {
+      if (!no && !name) continue;
+
+      if (no && name) {
+        // 建立编号↔名称双向映射
+        if (!map.caseNoToName[no]) map.caseNoToName[no] = [];
+        if (!map.caseNoToName[no].includes(name)) {
+          map.caseNoToName[no].push(name);
         }
-        if (!map.caseNameToNo[caseName]) map.caseNameToNo[caseName] = [];
-        if (!map.caseNameToNo[caseName].includes(caseNo)) {
-          map.caseNameToNo[caseName].push(caseNo);
+        if (!map.caseNameToNo[name]) map.caseNameToNo[name] = [];
+        if (!map.caseNameToNo[name].includes(no)) {
+          map.caseNameToNo[name].push(no);
         }
-      } else if (caseNo) {
-        if (!map.caseNoToName[caseNo]) map.caseNoToName[caseNo] = [];
-      } else if (caseName) {
-        if (!map.caseNameToNo[caseName]) map.caseNameToNo[caseName] = [];
+      } else if (no) {
+        if (!map.caseNoToName[no]) map.caseNoToName[no] = [];
+      } else if (name) {
+        if (!map.caseNameToNo[name]) map.caseNameToNo[name] = [];
       }
 
-      // 提取案件详情（以 caseNo 为 key，无 caseNo 时用 caseName）
-      const detailKey = caseNo || caseName;
+      // 提取案件详情（以编号为 key，无编号时用名称）
+      const detailKey = no || name;
       if (detailKey) {
         const existing = map.caseDetails[detailKey];
         const detail = extractCaseDetail(data);

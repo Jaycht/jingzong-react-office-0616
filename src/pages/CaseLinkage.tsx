@@ -34,11 +34,7 @@ const KEY_TEXT: Record<LinkKeyType, string> = {
 type FilterType = 'all' | LinkKeyType;
 
 export default function CaseLinkage() {
-  const setCurrentPage = useAppStore((s) => s.setCurrentPage);
-  const openModal = useAppStore((s) => s.openModal);
-  const setEditRecord = useAppStore((s) => s.setEditRecord);
   const showToast = useAppStore((s) => s.showToast);
-  const darkMode = useAppStore((s) => s.darkMode);
   const dataVersion = useDataChanged();
 
   const [filter, setFilter] = useState<FilterType>('all');
@@ -74,12 +70,6 @@ export default function CaseLinkage() {
     }
     if (changed > 0) showToast(`已建立关联，共串联 ${ids.length} 条记录`, 'success');
     else showToast('这些记录已关联，无需重复操作', 'info');
-  };
-
-  const openRecord = (rec: MassRecord) => {
-    setEditRecord(rec);
-    setCurrentPage(rec.moduleId);
-    openModal('newRecord');
   };
 
   /* ── 空状态 ── */

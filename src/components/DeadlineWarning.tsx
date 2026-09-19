@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Clock, CalendarClock } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
-import { getMassRecords, getMassRecordById } from '../store/massStore';
+import { getMassRecords, getMassRecordById, isDemoRecord } from '../store/massStore';
 import { useDataChanged } from '../store/dataEvents';
 import { daysBetween } from '../utils/format';
 import { LEGAL_DEADLINE_RULES, getDeadlineSeverity } from '../constants/legalDeadlines';
@@ -53,6 +53,8 @@ export default function DeadlineWarning() {
     for (const rule of LEGAL_DEADLINE_RULES) {
       const targetRecords = allRecords.filter((r) => rule.moduleIds.includes(r.moduleId));
       for (const rec of targetRecords) {
+        // 演示数据不产生到期预警（与预警弹窗、工作台口径一致）
+        if (isDemoRecord(rec)) continue;
         const rawDate = rec.data?.[rule.dateField];
         if (!rawDate || typeof rawDate !== 'string') continue;
         try {

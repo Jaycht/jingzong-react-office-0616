@@ -17,13 +17,19 @@ import * as XLSX from 'xlsx';
 import { Select } from 'antd';
 import { formatChineseDate } from '../utils/format';
 import { useAppStore } from '../store/appStore';
-import { getMassRecords } from '../store/massStore';
+import { getMassRecords, isInternalKey } from '../store/massStore';
 import type { MassRecord } from '../store/massStore';
 import { getAllCaseNames } from '../store/inputHistoryStore';
 import { FIELD_LABELS as SHARED_FIELD_LABELS } from '../constants/fieldLabels';
+import { resolveFieldLabel, getModuleSectionListNames, pickTitleFieldId, deriveRecordTitle } from '../utils/fieldIndex';
 import { MODULE_INFO } from '../moduleConfig';
 
-/** 字段中文标签：以统一映射为基准，叠加时间轴场景的特化标签（H-8 去重） */
+/**
+ * 字段中文标签兜底层：**字段真名以 moduleConfig 的字段定义为准**（经 utils/fieldIndex 解析），
+ * 这里只保留少数「定义里查不到、历史上靠手写映射补的中文名」，以及时间轴场景的特化标签。
+ * 过去这份手写表是唯一来源，新模块字段（objectName / docTitle / lifeName 等）没登记就显示英文，
+ * 现在改成「字段定义优先、手写表兜底」，新增字段自动带中文标签（H-8 / 时间轴英文标签修复）。
+ */
 const FIELD_LABELS: Record<string, string> = {
   ...SHARED_FIELD_LABELS,
   actualLoss: '实际损失金额（元）',
@@ -130,10 +136,17 @@ function catOf(moduleId: string): CatKey | 'other' {
   return (CAT_ALL as readonly string[]).includes(p) ? (p as CatKey) : 'other';
 }
 
+/**
+ * 标题字段优先链与「模块字段定义回退」都已收敛到 utils/fieldIndex（时间轴 / 案件详情 / 全局搜索共用），
+ * 这里只做一层记录包装。
+ */
+function titleFieldId(rec: MassRecord): string | null {
+  return pickTitleFieldId(rec.data as Record<string, unknown> | undefined, rec.moduleId);
+}
+
 /** 从记录中提取最佳展示标题 */
 function recordTitle(rec: MassRecord): string {
-  const d = rec.data || {};
-  return String(d.caseName || d.suspect || d.reportMatter || d.projectName || d.clueName || d.title || d.matterName || '未命名');
+  return deriveRecordTitle(rec.data as Record<string, unknown> | undefined, rec.moduleId);
 }
 
 /** 跳过不展示的字段名 */
@@ -223,36 +236,53 @@ function tsToMonthKey(ts: number): string {
 
 /**
  * 从记录中提取有值的字段（含 repeatable section），limit 控制条数（0 表示不限制）。
+ *
+ * 标签一律经 utils/fieldIndex 解析（**本模块字段定义优先** → 全库定义 → 手写兜底表 → 原样），
+ * 所以法制室「考核管理」的 objectName、大队办公室「公文处理」的 docTitle 之类
+ * 不会再以英文 id 的样子出现在界面上。
  */
 function recordFields(rec: MassRecord, limit = 10): { label: string; value: string }[] {
   const d = rec.data || {};
   const items: { label: string; value: string }[] = [];
+  const labelOf = (key: string) => resolveFieldLabel(key, rec.moduleId, FIELD_LABELS);
+
+  // 已作为标题展示的字段不再重复出现在字段行里
+  const titleKey = titleFieldId(rec);
+
+  // 该模块自身的可重复段 listName ∪ 通用段名表（新模块无需再回来登记）
+  const sectionNames = new Set<string>(SECTION_LIST_NAMES);
+  for (const n of getModuleSectionListNames(rec.moduleId)) sectionNames.add(n);
 
   for (const [key, raw] of Object.entries(d)) {
+    // 内部元数据键（__demo / __oldCaseId 等）不是业务字段，一律不展示：
+    // 之前「__demo」会以「—demo：v1」的样子混进时间轴字段行里
+    if (isInternalKey(key)) continue;
     if (SKIP_FIELDS.has(key)) continue;
+    if (key === titleKey) continue;
     if (raw === null || raw === undefined) continue;
-    if (SECTION_LIST_NAMES.has(key)) continue;
+    if (sectionNames.has(key)) continue;
     const str = String(raw).trim();
     if (!str || str === '—') continue;
     if (/^\d{4}-\d{2}-\d{2}T/.test(str)) continue;
     if (Array.isArray(raw) && raw.length === 0) continue;
     if (typeof raw === 'object') continue;
-    const label = FIELD_LABELS[key] || key;
+    const label = labelOf(key);
     const value = str.length > 40 ? str.slice(0, 40) + '…' : str;
     items.push({ label, value });
   }
 
-  for (const listName of SECTION_LIST_NAMES) {
+  for (const listName of sectionNames) {
     const arr = d[listName];
     if (!Array.isArray(arr) || arr.length === 0) continue;
     const first = arr[0];
     if (typeof first !== 'object' || first === null) continue;
     for (const [key, raw] of Object.entries(first)) {
+      if (isInternalKey(key)) continue;
       if (raw === null || raw === undefined) continue;
       const str = String(raw).trim();
       if (!str || str === '—') continue;
       if (/^\d{4}-\d{2}-\d{2}T/.test(str)) continue;
-      const label = FIELD_LABELS[key] || key;
+      const label = labelOf(key);
       const value = str.length > 40 ? str.slice(0, 40) + '…' : str;
       if (!items.some((i) => i.label === label && i.value === value)) {
         items.push({ label, value });

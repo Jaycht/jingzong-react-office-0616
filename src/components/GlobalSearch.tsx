@@ -11,6 +11,7 @@ import type { MassRecord } from '../store/massStore';
 import { getAllAttachments } from '../store/attachmentStore';
 import { MODULE_INFO } from '../moduleConfig';
 import { FIELD_LABELS as SHARED_FIELD_LABELS } from '../constants/fieldLabels';
+import { resolveFieldLabel } from '../utils/fieldIndex';
 
 interface SearchResult {
   moduleId: string;
@@ -74,10 +75,13 @@ function highlightText(text: string, keyword: string): (string | ReactElement)[]
 
 /**
  * 扁平化一条记录的所有文本字段，过滤出匹配关键词的字段
+ *
+ * 标签经 utils/fieldIndex 解析（**该记录所属模块的字段定义优先**），
+ * 所以新模块字段（objectName / docTitle / lifeName …）不会再显示成英文 id。
  */
 function matchRecord(record: MassRecord, keyword: string): Array<{ label: string; value: string }> {
   const lowerKw = keyword.toLowerCase();
-  const matches: Array<{ label: string; value: string }> = [];
+  const matches: Array<{ label: string; value: string; fieldId: string }> = [];
 
   for (const [key, raw] of Object.entries(record.data || {})) {
     if (raw === null || raw === undefined) continue;
@@ -85,20 +89,20 @@ function matchRecord(record: MassRecord, keyword: string): Array<{ label: string
     if (key === 'attachment' || key === 'fileList') continue;
     const str = String(raw);
     if (str.toLowerCase().includes(lowerKw)) {
-      const label = FIELD_LABELS[key] || key;
+      const label = resolveFieldLabel(key, record.moduleId, FIELD_LABELS);
       const display = str.length > 80 ? str.slice(0, 80) + '…' : str;
-      matches.push({ label, value: display });
+      matches.push({ label, value: display, fieldId: key });
     }
   }
 
-  // 优先级排序：优先字段在前
+  // 优先级排序：优先字段在前（按字段 id 判定，不能拿中文标签去比对英文白名单）
   matches.sort((a, b) => {
-    const aP = PRIORITY_FIELDS.has(a.label) ? 0 : 1;
-    const bP = PRIORITY_FIELDS.has(b.label) ? 0 : 1;
+    const aP = PRIORITY_FIELDS.has(a.fieldId) ? 0 : 1;
+    const bP = PRIORITY_FIELDS.has(b.fieldId) ? 0 : 1;
     return aP - bP;
   });
 
-  return matches;
+  return matches.map(({ label, value }) => ({ label, value }));
 }
 
 export default function GlobalSearch() {

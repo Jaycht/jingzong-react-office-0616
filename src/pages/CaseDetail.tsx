@@ -13,6 +13,7 @@ import { getMassRecords, updateMassRecord } from '../store/massStore';
 import { MODULE_NAMES, findModule } from '../moduleConfig';
 import { useCustomModules } from '../customModules';
 import { FIELD_LABELS } from '../constants/fieldLabels';
+import { deriveRecordTitle } from '../utils/fieldIndex';
 
 type MassRecord = import('../store/massStore').MassRecord;
 
@@ -85,16 +86,14 @@ function fmtValue(val: unknown): string {
   return String(val);
 }
 
-/** 派生记录标题：兼容各模块主键字段，回退到首个有值文本字段 */
-function deriveRecordTitle(d: Record<string, unknown>): string {
-  const cands = [d.caseName, d.suspect, d.subjectName, d.projectName, d.reporterName, d.name, d.title];
-  for (const c of cands) {
-    if (c != null && String(c).trim() !== '') return String(c).trim();
-  }
-  for (const [k, v] of Object.entries(d)) {
-    if (!k.startsWith('__') && typeof v === 'string' && v.trim() !== '') return v.trim().slice(0, 40);
-  }
-  return '未命名';
+/**
+ * 派生记录标题：优先链 + **该模块字段定义回退**（统一实现在 utils/fieldIndex）。
+ * 原实现只认 caseName/suspect/subjectName/projectName/reporterName/name/title，
+ * 法制室「考核管理」(objectName)、大队办公室「公文处理」(docTitle)、
+ * 党建与考勤 (lifeName) 全部落空 → 一律显示「未命名」。
+ */
+function deriveRecordTitleFor(rec: MassRecord): string {
+  return deriveRecordTitle(rec.data as Record<string, unknown> | undefined, rec.moduleId);
 }
 
 type CdStatusKind = 'done' | 'warning' | 'danger' | 'info';
@@ -140,19 +139,10 @@ export default function CaseDetail({ record, onClose, onOpenRelated }: Props) {
   const showToast = useAppStore((s) => s.showToast);
   const { allModules } = useCustomModules();
 
-  const caseName = useMemo(() => {
-    const d = record.data || {};
-    // 优先业务主键字段（兼容各模块：案件/嫌疑人/涉众主体/项目/举报人等）
-    const cands = [d.caseName, d.suspect, d.subjectName, d.projectName, d.reporterName, d.name, d.title];
-    for (const c of cands) {
-      if (c != null && String(c).trim() !== '') return String(c).trim();
-    }
-    // 回退：第一个有值的文本字段
-    for (const [k, v] of Object.entries(d)) {
-      if (!k.startsWith('__') && typeof v === 'string' && v.trim() !== '') return v.trim().slice(0, 40);
-    }
-    return '未命名';
-  }, [record]);
+  const caseName = useMemo(
+    () => deriveRecordTitle(record.data as Record<string, unknown> | undefined, record.moduleId),
+    [record],
+  );
   const moduleName = MODULE_NAMES[record.moduleId] || record.moduleId;
 
   // 关联记录 + 时间线：用「多条关键身份词(姓名/身份证/电话/案件名/项目名/主体名等)」匹配，比单标题串鲁棒
@@ -477,7 +467,7 @@ export default function CaseDetail({ record, onClose, onOpenRelated }: Props) {
                 {displayedRelated.map((r) => (
                   <div key={r.id} className="cd-rel-item">
                     <div className="cd-rel-main" onClick={() => onOpenRelated?.(r)}>
-                      <span className="cd-rel-title">{deriveRecordTitle(r.data || {})}</span>
+                      <span className="cd-rel-title">{deriveRecordTitleFor(r)}</span>
                       <span className="cd-rel-meta">{MODULE_NAMES[r.moduleId] || r.moduleId}</span>
                     </div>
                     <button
@@ -502,7 +492,7 @@ export default function CaseDetail({ record, onClose, onOpenRelated }: Props) {
                 {timeline.map(r => (
                   <div key={r.id} className="cd-tl-item" onClick={() => onOpenRelated?.(r)}>
                     <span className="cd-tl-dot" />
-                    <span className="cd-tl-title">{deriveRecordTitle(r.data || {})}</span>
+                    <span className="cd-tl-title">{deriveRecordTitleFor(r)}</span>
                     <span className="cd-tl-time">{fmtDateTime(String(r.updatedAt))}</span>
                   </div>
                 ))}

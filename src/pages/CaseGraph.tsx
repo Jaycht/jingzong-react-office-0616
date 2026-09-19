@@ -98,7 +98,8 @@ export default function CaseGraph() {
   const degreeRef = useRef<Map<string, number>>(new Map());
 
   const [search, setSearch] = useState('');
-  const [full, setFull] = useState(false);
+  // 默认就用全屏画布：默认尺寸（min(560px, 62vh)）装不下节点较多的图谱，看起来「显示不完整」
+  const [full, setFull] = useState(true);
   const [rk, setRk] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [layout, setLayout] = useState<LayoutMode>('force');

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Settings, Power, Monitor, ShieldCheck, Boxes,
+  Settings, Power, ShieldCheck, Boxes,
   FileArchive, DatabaseBackup,
-  Volume2, ListOrdered, Clock,
+  Volume2, ListOrdered,
 } from 'lucide-react';
 import { Switch, Select } from 'antd';
 import { useAppStore } from '../store/appStore';

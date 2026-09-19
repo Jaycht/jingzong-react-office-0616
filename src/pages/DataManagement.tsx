@@ -3,6 +3,7 @@ import { DatabaseBackup } from 'lucide-react';
 import ImportExport from './ImportExport';
 import Backup from './Backup';
 import AutoBackupPanel from '../components/AutoBackupPanel';
+import DemoDataPanel from '../components/DemoDataPanel';
 
 export default function DataManagement() {
   return (
@@ -38,6 +39,7 @@ export default function DataManagement() {
       </motion.div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <DemoDataPanel />
         <ImportExport noHeader />
         <AutoBackupPanel />
         <Backup noHeader />
